@@ -10,6 +10,7 @@ import FirebaseCore
 
 @main
 struct GutCheckApp: App {
+    @StateObject private var authService = AuthService()
     
     init() {
         FirebaseApp.configure()
@@ -17,7 +18,17 @@ struct GutCheckApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            Group {
+                if authService.isAuthenticated {
+                    ContentView()
+                        .environmentObject(authService)
+                } else {
+                    AuthenticationView(authService: authService)
+                }
+            }
+            .onAppear {
+                // Any app startup logic
+            }
         }
     }
 }
