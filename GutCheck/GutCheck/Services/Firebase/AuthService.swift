@@ -246,8 +246,8 @@ class AuthService: ObservableObject {
             "firstName": firstName,
             "lastName": lastName,
             "signInMethod": signInMethod.rawValue,
-            "createdAt": Timestamp(),
-            "updatedAt": Timestamp()
+            "createdAt": FieldValue.serverTimestamp(),
+            "updatedAt": FieldValue.serverTimestamp()
         ]
         
         try await firestore.collection("users").document(userId).setData(userData, merge: true)
