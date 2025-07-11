@@ -26,13 +26,23 @@ class AuthService: ObservableObject {
     // Apple Sign In
     private var currentNonce: String?
     
+    // Auth state listener handle
+    private var authStateListenerHandle: AuthStateDidChangeListenerHandle?
+    
     init() {
         // Listen for auth state changes
-        auth.addStateDidChangeListener { [weak self] _, user in
+        authStateListenerHandle = auth.addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
                 self?.user = user
                 self?.isAuthenticated = user != nil
             }
+        }
+    }
+    
+    deinit {
+        // Clean up auth state listener
+        if let handle = authStateListenerHandle {
+            auth.removeStateDidChangeListener(handle)
         }
     }
     
@@ -148,7 +158,7 @@ class AuthService: ObservableObject {
                 }
                 
                 let credential = OAuthProvider.credential(
-                    withProviderID: "apple.com",
+                    providerID: .apple,
                     idToken: idTokenString,
                     rawNonce: nonce
                 )
