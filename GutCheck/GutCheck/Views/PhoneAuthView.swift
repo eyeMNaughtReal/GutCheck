@@ -164,11 +164,10 @@ struct PhoneAuthView: View {
     
     // MARK: - Helper Methods
     
-    private func formatPhoneDisplay(_ phone: String) -> String {
+    private func formatPhoneDisplay(_ phone: String, mask: String = "(XXX) XXX-XXXX") -> String {
         let digits = phone.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
         
         var formatted = ""
-        let mask = "(XXX) XXX-XXXX"
         var index = digits.startIndex
         
         for char in mask where index < digits.endIndex {
