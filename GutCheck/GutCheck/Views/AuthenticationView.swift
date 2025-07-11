@@ -270,8 +270,9 @@ struct AuthenticationView: View {
                             await viewModel.signInWithApple(authorization)
                         }
                     case .failure(let error):
-                        // Handle error
-                        print("Apple Sign-In failed: \(error)")
+                        // Propagate error to view model
+                        viewModel.errorMessage = "Apple Sign-In failed: \(error.localizedDescription)"
+                        viewModel.showingErrorAlert = true
                     }
                 }
             )
