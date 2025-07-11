@@ -65,6 +65,16 @@ GutCheck is built with privacy in mind:
 
 ---
 
+## UI
+
+Primary: Plum #7D5BA6
+Accent: Mint Green #A1E3D8
+Background: Ivory #FFFDF6
+Text: Dark Plum #2D1B4E
+Secondary: Pale Orange #FFD6A5
+
+---
+
 ## 🙋‍♂️ Author
 
 Built by Mark Conley for personal health management.  

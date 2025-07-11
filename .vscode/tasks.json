@@ -1,0 +1,26 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build GutCheck",
+			"type": "shell",
+			"command": "xcodebuild",
+			"args": [
+				"-project",
+				"GutCheck.xcodeproj",
+				"-scheme",
+				"GutCheck",
+				"-configuration",
+				"Debug",
+				"build",
+				"-destination",
+				"platform=iOS Simulator,name=iPhone 15"
+			],
+			"group": "build",
+			"problemMatcher": [
+				"$gcc"
+			],
+			"isBackground": false
+		}
+	]
+}
