@@ -24,7 +24,9 @@ class AuthService: ObservableObject {
     private let firestore = Firestore.firestore()
     
     // Apple Sign In
+    /*
     private var currentNonce: String?
+    */
     
     // Auth state listener handle
     private var authStateListenerHandle: AuthStateDidChangeListenerHandle?
@@ -136,60 +138,164 @@ class AuthService: ObservableObject {
     }
     
     // MARK: - Apple Sign In
-    
+    /*
     func signInWithApple(_ authorization: ASAuthorization) async throws {
         isLoading = true
         errorMessage = nil
+        
+        let logPrefix = "🍎 [AuthService]"
+        print("\(logPrefix) Starting Apple Sign In process")
+        NSLog("\(logPrefix) Starting Apple Sign In process")
         
         defer { isLoading = false }
         
         do {
             if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
+                print("\(logPrefix) Received Apple ID credential")
+                NSLog("\(logPrefix) Received Apple ID credential")
+                
+                // Debug credential details
+                let user = appleIDCredential.user
+                print("\(logPrefix) User identifier: \(user)")
+                NSLog("\(logPrefix) User identifier: \(user)")
+                
+                // Check if authorization code is present
+                if let authCode = appleIDCredential.authorizationCode {
+                    print("\(logPrefix) Auth code present, length: \(authCode.count)")
+                    NSLog("\(logPrefix) Auth code present, length: \(authCode.count)")
+                } else {
+                    print("\(logPrefix) No auth code in credential")
+                    NSLog("\(logPrefix) No auth code in credential")
+                }
+                
                 guard let nonce = currentNonce else {
+                    print("\(logPrefix) ERROR: No current nonce available")
+                    NSLog("\(logPrefix) ERROR: No current nonce available")
+                    
+                    // Check if we have a stored nonce in UserDefaults
+                    if let storedNonce = UserDefaults.standard.string(forKey: "lastAppleSignInNonce") {
+                        print("\(logPrefix) Found stored nonce: \(storedNonce.prefix(10))...")
+                        NSLog("\(logPrefix) Found stored nonce: \(storedNonce.prefix(10))...")
+                    }
+                    
                     throw AuthError.invalidNonce
                 }
                 
+                print("\(logPrefix) Nonce verified, processing identity token")
+                NSLog("\(logPrefix) Nonce verified, processing identity token")
+                
                 guard let appleIDToken = appleIDCredential.identityToken else {
+                    print("\(logPrefix) ERROR: No identity token in credential")
+                    NSLog("\(logPrefix) ERROR: No identity token in credential")
                     throw AuthError.noIDToken
                 }
                 
+                print("\(logPrefix) Identity token present, length: \(appleIDToken.count) bytes")
+                NSLog("\(logPrefix) Identity token present, length: \(appleIDToken.count) bytes")
+                
                 guard let idTokenString = String(data: appleIDToken, encoding: .utf8) else {
+                    print("\(logPrefix) ERROR: Could not convert identity token to string")
+                    NSLog("\(logPrefix) ERROR: Could not convert identity token to string")
                     throw AuthError.invalidIDToken
                 }
                 
-                let credential = OAuthProvider.credential(
-                    providerID: .apple,
-                    idToken: idTokenString,
-                    rawNonce: nonce
-                )
+                print("\(logPrefix) Creating Firebase credential")
+                NSLog("\(logPrefix) Creating Firebase credential")
                 
-                let authResult = try await auth.signIn(with: credential)
-                self.user = authResult.user
-                isAuthenticated = true
+                // Use the modern non-deprecated API
+                print("🍎 [AuthService] Using providerID .apple for credential")
+                NSLog("🍎 [AuthService] Using providerID .apple for credential")
                 
-                // Extract name from Apple ID credential
-                let firstName = appleIDCredential.fullName?.givenName ?? ""
-                let lastName = appleIDCredential.fullName?.familyName ?? ""
+                // Log detailed debug info about raw parameters
+                print("🍎 [AuthService] idToken length: \(idTokenString.count)")
+                print("🍎 [AuthService] rawNonce length: \(nonce.count)")
+                NSLog("🍎 [AuthService] idToken length: \(idTokenString.count)")
+                NSLog("🍎 [AuthService] rawNonce length: \(nonce.count)")
                 
-                try await createOrUpdateUserProfile(
-                    userId: authResult.user.uid,
-                    email: authResult.user.email ?? appleIDCredential.email ?? "",
-                    firstName: firstName,
-                    lastName: lastName,
-                    signInMethod: .apple
-                )
+                do {
+                    let credential = OAuthProvider.credential(
+                        providerID: .apple,
+                        idToken: idTokenString,
+                        rawNonce: nonce
+                    )
+                    
+                    print("🍎 [AuthService] Credential created successfully")
+                    NSLog("🍎 [AuthService] Credential created successfully")
+                    
+                    print("🍎 [AuthService] Signing in with Firebase")
+                    NSLog("🍎 [AuthService] Signing in with Firebase")
+                    
+                    let authResult = try await auth.signIn(with: credential)
+                    print("🍎 [AuthService] Firebase auth returned a result")
+                    NSLog("🍎 [AuthService] Firebase auth returned a result")
+                    
+                    self.user = authResult.user
+                    isAuthenticated = true
+                    
+                    print("🍎 [AuthService] Successfully signed in with Firebase, UID: \(authResult.user.uid)")
+                    NSLog("🍎 [AuthService] Successfully signed in with Firebase, UID: \(authResult.user.uid)")
+                    
+                    // Extract name from Apple ID credential
+                    let firstName = appleIDCredential.fullName?.givenName ?? ""
+                    let lastName = appleIDCredential.fullName?.familyName ?? ""
+                    let email = authResult.user.email ?? appleIDCredential.email ?? ""
+                    
+                    print("🍎 [AuthService] User info - Email: \(email), First Name: \(firstName), Last Name: \(lastName)")
+                    NSLog("🍎 [AuthService] User info - Email: \(email), First Name: \(firstName), Last Name: \(lastName)")
+                    
+                    try await createOrUpdateUserProfile(
+                        userId: authResult.user.uid,
+                        email: email,
+                        firstName: firstName,
+                        lastName: lastName,
+                        signInMethod: .apple
+                    )
+                    
+                    print("🍎 [AuthService] User profile created/updated successfully")
+                    NSLog("🍎 [AuthService] User profile created/updated successfully")
+                    
+                    // Save successful login info to UserDefaults for debugging
+                    UserDefaults.standard.set(authResult.user.uid, forKey: "lastSignedInUserID")
+                    UserDefaults.standard.set(Date(), forKey: "lastSuccessfulSignIn")
+                } catch {
+                    print("🍎 [AuthService] ERROR in Firebase sign-in: \(error.localizedDescription)")
+                    NSLog("🍎 [AuthService] ERROR in Firebase sign-in: \(error.localizedDescription)")
+                    
+                    // Try to get more detailed error information
+                    if let authError = error as? AuthErrorCode {
+                        print("🍎 [AuthService] Firebase auth error code: \(authError.code.rawValue)")
+                        NSLog("🍎 [AuthService] Firebase auth error code: \(authError.code.rawValue)")
+                    }
+                    
+                    throw error
+                }
             }
         } catch {
+            print("🍎 [AuthService] ERROR: Sign in failed: \(error.localizedDescription)")
             errorMessage = handleAuthError(error)
             throw error
         }
     }
+    */
     
+    /*
     func prepareAppleSignIn() -> String {
         let nonce = randomNonceString()
         currentNonce = nonce
-        return sha256(nonce)
+        let hashedNonce = sha256(nonce)
+        
+        // Use multiple logging methods to ensure visibility
+        print("🍎 [AuthService] Generated nonce: \(nonce.prefix(10))..., hashed: \(hashedNonce.prefix(10))...")
+        NSLog("🍎 [AuthService] Generated nonce: \(nonce.prefix(10))..., hashed: \(hashedNonce.prefix(10))...")
+        debugPrint("🍎 [AuthService] Generated nonce: \(nonce.prefix(10))..., hashed: \(hashedNonce.prefix(10))...")
+        
+        // Store nonce in UserDefaults for debugging
+        UserDefaults.standard.set(nonce, forKey: "lastAppleSignInNonce")
+        UserDefaults.standard.set(Date(), forKey: "lastAppleSignInAttempt")
+        
+        return hashedNonce
     }
+    */
     
     // MARK: - Phone Sign In
     

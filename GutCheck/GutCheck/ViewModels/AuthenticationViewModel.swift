@@ -106,6 +106,7 @@ class AuthenticationViewModel: ObservableObject {
         }
     }
     
+    /*
     func signInWithApple(_ authorization: ASAuthorization) async {
         do {
             try await authService.signInWithApple(authorization)
@@ -114,6 +115,7 @@ class AuthenticationViewModel: ObservableObject {
             // Error is handled by AuthService
         }
     }
+    */
     
     func sendPhoneVerification() async {
         guard isPhoneNumberValid else { return }
