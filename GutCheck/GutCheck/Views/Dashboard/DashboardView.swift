@@ -1,11 +1,7 @@
-
 import SwiftUI
 
 struct DashboardView: View {
-    @State private var todaysMeals: [Meal] = [] // Loaded from Firebase/Core Data
-    @State private var todaysSymptoms: [Symptom] = []
-    @State private var triggerAlerts: [String] = [] // AI-generated
-    @State private var insightMessage: String? = nil
+    @StateObject private var dashboardStore = DashboardDataStore()
     @State private var selectedTab: CustomTabBar.Tab = .home
     
     var body: some View {
@@ -14,35 +10,43 @@ struct DashboardView: View {
                 ScrollView {
                     VStack(spacing: 20) {
                         GreetingHeaderView()
+                        
                         TodaySummaryView(
-                            mealsCount: todaysMeals.count,
-                            symptomsCount: todaysSymptoms.count
+                            mealsCount: dashboardStore.todaysMeals.count,
+                            symptomsCount: dashboardStore.todaysSymptoms.count
                         )
-                        if let insight = insightMessage {
+                        
+                        if let insight = dashboardStore.insightMessage {
                             InsightsCardView(message: insight)
                         }
-                        if !triggerAlerts.isEmpty {
-                            TriggerAlertView(alerts: triggerAlerts)
+
+                        if !dashboardStore.triggerAlerts.isEmpty {
+                            TriggerAlertView(alerts: dashboardStore.triggerAlerts)
                         }
-                        RecentActivityListView(meals: todaysMeals, symptoms: todaysSymptoms)
-                        GraphPreviewView(meals: todaysMeals, symptoms: todaysSymptoms)
+
+                        RecentActivityListView(
+                            meals: dashboardStore.todaysMeals,
+                            symptoms: dashboardStore.todaysSymptoms
+                        )
+
+                        GraphPreviewView(
+                            meals: dashboardStore.todaysMeals,
+                            symptoms: dashboardStore.todaysSymptoms
+                        )
+
                         CalendarShortcutButton()
                     }
-                    .padding(.bottom, 80) // Space for tab bar
+                    .padding(.bottom, 80)
                     .padding(.top)
                 }
                 .navigationTitle("Dashboard")
                 .onAppear {
-                    loadDashboardData()
+                    dashboardStore.refresh()
                 }
             }
+
             CustomTabBar(selectedTab: $selectedTab)
         }
-    }
-
-    private func loadDashboardData() {
-        // TODO: Load meals and symptoms from local Core Data or Firebase
-        // TODO: Query AI trigger insights
     }
 }
 
