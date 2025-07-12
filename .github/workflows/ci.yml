@@ -30,11 +30,11 @@ jobs:
 
       - name: Build
         run: |
-          xcodebuild -project GutCheck/GutCheck.xcodeproj -scheme GutCheck -destination 'platform=iOS Simulator,name=iPhone 15' build
+          xcodebuild -project GutCheck/GutCheck.xcodeproj -scheme GutCheck -destination 'platform=iOS Simulator,name=iPhone 16' build
 
       - name: Run Unit Tests
         run: |
-          xcodebuild test -project GutCheck/GutCheck.xcodeproj -scheme GutCheck -destination 'platform=iOS Simulator,name=iPhone 15' -enableCodeCoverage YES
+          xcodebuild test -project GutCheck/GutCheck.xcodeproj -scheme GutCheck -destination 'platform=iOS Simulator,name=iPhone 16' -enableCodeCoverage YES
 
       - name: Upload code coverage (optional)
         if: always()
