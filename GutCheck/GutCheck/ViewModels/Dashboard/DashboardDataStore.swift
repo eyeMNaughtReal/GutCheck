@@ -9,6 +9,7 @@ final class DashboardDataStore: ObservableObject {
     @Published var todaysSymptoms: [Symptom] = []
     @Published var triggerAlerts: [String] = []
     @Published var insightMessage: String? = nil
+    @Published var selectedDate: Date = Date()
 
     private var cancellables = Set<AnyCancellable>()
 
