@@ -28,13 +28,17 @@ jobs:
         run: |
           xcodebuild -resolvePackageDependencies -project GutCheck/GutCheck.xcodeproj
 
+      - name: List available simulators
+        run: |
+          xcrun simctl list devices
+
       - name: Build
         run: |
-          xcodebuild -project GutCheck/GutCheck.xcodeproj -scheme GutCheck -destination 'platform=iOS Simulator' build
+          xcodebuild -project GutCheck/GutCheck.xcodeproj -scheme GutCheck -destination 'platform=iOS Simulator,name=Any iOS Simulator Device' build
 
       - name: Run Unit Tests
         run: |
-          xcodebuild test -project GutCheck/GutCheck.xcodeproj -scheme GutCheck -destination 'platform=iOS Simulator' -enableCodeCoverage YES
+          xcodebuild test -project GutCheck/GutCheck.xcodeproj -scheme GutCheck -destination 'platform=iOS Simulator,name=Any iOS Simulator Device' -enableCodeCoverage YES
 
       - name: Upload code coverage (optional)
         if: always()
