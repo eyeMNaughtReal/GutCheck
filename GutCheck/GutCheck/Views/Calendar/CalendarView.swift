@@ -7,8 +7,6 @@
 
 import SwiftUI
 
-import SwiftUI
-
 struct CalendarView: View {
     let selectedDate: Date
     private let calendar = Calendar.current
@@ -21,8 +19,9 @@ struct CalendarView: View {
         }
     }
 
+    @State private var showProfileSheet = false
     var body: some View {
-        VStack(spacing: 0) {
+    VStack(spacing: 0) {
             // Month label
             ZStack {
                 Text(monthYearString(for: selectedDate))
@@ -95,9 +94,12 @@ struct CalendarView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 ProfileAvatarButton {
-                    // Profile action
+                    showProfileSheet = true
                 }
             }
+        }
+        .sheet(isPresented: $showProfileSheet) {
+            UserProfileView(user: UserProfile(id: "1", email: "jenny@email.com", fullName: "Jenny Wilson", age: 20, weight: 76, height: 176))
         }
     }
 

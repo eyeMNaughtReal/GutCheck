@@ -8,8 +8,19 @@
 import SwiftUI
 
 struct InsightsView: View {
+    @State private var showProfileSheet = false
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationView {
+            Text("Hello, World!")
+                .navigationBarItems(trailing:
+                    ProfileAvatarButton {
+                        showProfileSheet = true
+                    }
+                )
+                .sheet(isPresented: $showProfileSheet) {
+                    UserProfileView(user: UserProfile(id: "1", email: "jenny@email.com", fullName: "Jenny Wilson", age: 20, weight: 76, height: 176))
+                }
+        }
     }
 }
 

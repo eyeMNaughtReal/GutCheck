@@ -18,6 +18,9 @@ struct ProfileMenuSheet: View {
                         // TODO: Trigger export
                         dismiss()
                     }
+                    NavigationLink(destination: UserRemindersView()) {
+                        Label("Reminders", systemImage: "bell.badge")
+                    }
                 }
 
                 Section {

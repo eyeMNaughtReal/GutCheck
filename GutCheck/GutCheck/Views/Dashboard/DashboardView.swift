@@ -43,7 +43,7 @@ struct DashboardView: View {
                     }
                 )
                 .sheet(isPresented: $showProfileSheet) {
-                    ProfileMenuSheet()
+                    UserProfileView(user: UserProfile(id: "1", email: "jenny@email.com", fullName: "Jenny Wilson", age: 20, weight: 76, height: 176))
                 }
                 .navigationDestination(isPresented: $showCalendar) {
                     if let date = selectedCalendarDate {
