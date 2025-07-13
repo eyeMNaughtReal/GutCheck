@@ -18,13 +18,17 @@ jobs:
       with:
         xcode-version: latest-stable
 
+
+    - name: List available simulators
+      run: xcrun simctl list devices
+
     - name: Build GutCheck
       working-directory: GutCheck
       run: |
         xcodebuild clean build \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
-          -destination 'platform=iOS Simulator,name=iPhone 14' \
+          -destination 'platform=iOS Simulator' \
           ONLY_ACTIVE_ARCH=NO
 
     - name: Run Unit Tests
@@ -33,5 +37,5 @@ jobs:
         xcodebuild test \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
-          -destination 'platform=iOS Simulator,name=iPhone 14' \
+          -destination 'platform=iOS Simulator' \
           ONLY_ACTIVE_ARCH=NO
