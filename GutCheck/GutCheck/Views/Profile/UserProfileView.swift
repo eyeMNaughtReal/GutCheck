@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct UserProfileView: View {
-    let user: UserProfile
+    let user: User
     var body: some View {
         VStack(spacing: 24) {
             // Profile section

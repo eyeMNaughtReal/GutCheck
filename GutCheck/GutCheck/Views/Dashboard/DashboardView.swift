@@ -43,7 +43,9 @@ struct DashboardView: View {
                     }
                 )
                 .sheet(isPresented: $showProfileSheet) {
-                    UserProfileView(user: UserProfile(id: "1", email: "jenny@email.com", fullName: "Jenny Wilson", age: 20, weight: 76, height: 176))
+                    if let currentUser = authService.currentUser {
+                        UserProfileView(user: currentUser)
+                    }
                 }
                 .navigationDestination(isPresented: $showCalendar) {
                     if let date = selectedCalendarDate {

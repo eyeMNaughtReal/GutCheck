@@ -1,12 +1,41 @@
+//
+//  CustomTabBar.swift
+//  GutCheck
+//
+//  Updated CustomTabBar with improved action handling and cleaner architecture
+//
+
 import SwiftUI
 
 struct CustomTabBar: View {
     @Binding var selectedTab: Tab
+    let actionHandler: (TabBarAction) -> Void
+    
     @State private var showActions = false
     @Namespace private var animation
 
-    enum Tab: Int {
+    enum Tab: Int, CaseIterable {
         case home, meal, plus, symptoms, insights
+        
+        var title: String {
+            switch self {
+            case .home: return "Home"
+            case .meal: return "Meals"
+            case .plus: return ""
+            case .symptoms: return "Symptoms"
+            case .insights: return "Insights"
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .home: return "house"
+            case .meal: return "list.bullet"
+            case .plus: return "plus"
+            case .symptoms: return "waveform.path.ecg"
+            case .insights: return "chart.bar.xaxis"
+            }
+        }
     }
 
     var body: some View {
@@ -25,79 +54,104 @@ struct CustomTabBar: View {
                 }
 
                 // Action Buttons (fly up and out)
-                // Animate buttons flying out from the plus button and retracting back in
-                let offsetY: CGFloat = -87
-                let offsetX: CGFloat = 60
-                ZStack {
-                    ActionFlyButton(
-                        icon: "fork.knife",
-                        label: "Log Meal",
-                        color: ColorTheme.accent,
-                        action: { /* Log Meal Action */ }
-                    )
-                    .offset(x: showActions ? -offsetX : 0, y: showActions ? (showActions ? offsetY : 0) : 0)
-                    .scaleEffect(showActions ? 1.0 : 0.1)
-                    .opacity(showActions ? 1 : 0)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.7), value: showActions)
-
-                    ActionFlyButton(
-                        icon: "stethoscope",
-                        label: "Log Symptom",
-                        color: ColorTheme.secondary,
-                        action: { /* Log Symptom Action */ }
-                    )
-                    .offset(x: showActions ? offsetX : 0, y: showActions ? (showActions ? offsetY : 0) : 0)
-                    .scaleEffect(showActions ? 1.0 : 0.1)
-                    .opacity(showActions ? 1 : 0)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.7).delay(0.05), value: showActions)
+                if showActions {
+                    actionButtonsView
+                        .frame(width: geo.size.width, height: geo.size.height, alignment: .bottom)
+                        .allowsHitTesting(showActions)
+                        .zIndex(1)
                 }
-                .frame(width: geo.size.width, height: geo.size.height, alignment: .bottom)
-                .allowsHitTesting(showActions)
-                .zIndex(1)
 
                 // Tab Bar (always fixed to bottom)
                 VStack {
                     Spacer()
-                    HStack {
-                        TabBarItem(icon: "house", label: "Home", isSelected: selectedTab == .home) {
-                            selectedTab = .home
-                        }
-                        TabBarItem(icon: "list.bullet", label: "Meal", isSelected: selectedTab == .meal) {
-                            selectedTab = .meal
-                        }
-
-                        ZStack {
-                            Circle()
-                                .fill(ColorTheme.accent)
-                                .frame(width: 56, height: 56)
-                                .shadow(color: ColorTheme.accent.opacity(0.3), radius: 8, x: 0, y: 4)
-                            Image(systemName: "plus")
-                                .font(.system(size: 28, weight: .bold))
-                                .foregroundColor(ColorTheme.lightText)
-                        }
-                        .offset(y: -16) // Move the plus button up by 6px
-                        .onTapGesture {
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
-                                showActions.toggle()
-                            }
-                        }
-
-                        TabBarItem(icon: "waveform.path.ecg", label: "Symptoms", isSelected: selectedTab == .symptoms) {
-                            selectedTab = .symptoms
-                        }
-                        TabBarItem(icon: "chart.bar.xaxis", label: "Insights", isSelected: selectedTab == .insights) {
-                            selectedTab = .insights
-                        }
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.top, 4)
-                    .padding(.bottom, 8)
-                    .background(
-                        ColorTheme.cardBackground
-                            .shadow(color: ColorTheme.shadowColor, radius: 8, x: 0, y: -2)
-                            .edgesIgnoringSafeArea(.bottom)
-                    )
+                    tabBarView
                 }
+            }
+        }
+    }
+    
+    private var actionButtonsView: some View {
+        let offsetY: CGFloat = -87
+        let offsetX: CGFloat = 60
+        
+        return ZStack {
+            ActionFlyButton(
+                icon: "fork.knife",
+                label: "Log Meal",
+                color: ColorTheme.accent,
+                action: {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                        showActions = false
+                    }
+                    actionHandler(.logMeal)
+                }
+            )
+            .offset(x: showActions ? -offsetX : 0, y: showActions ? offsetY : 0)
+            .scaleEffect(showActions ? 1.0 : 0.1)
+            .opacity(showActions ? 1 : 0)
+            .animation(.spring(response: 0.4, dampingFraction: 0.7), value: showActions)
+
+            ActionFlyButton(
+                icon: "stethoscope",
+                label: "Log Symptom",
+                color: ColorTheme.secondary,
+                action: {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                        showActions = false
+                    }
+                    actionHandler(.logSymptom)
+                }
+            )
+            .offset(x: showActions ? offsetX : 0, y: showActions ? offsetY : 0)
+            .scaleEffect(showActions ? 1.0 : 0.1)
+            .opacity(showActions ? 1 : 0)
+            .animation(.spring(response: 0.4, dampingFraction: 0.7).delay(0.05), value: showActions)
+        }
+    }
+    
+    private var tabBarView: some View {
+        HStack {
+            ForEach(Tab.allCases, id: \.self) { tab in
+                if tab == .plus {
+                    plusButton
+                } else {
+                    TabBarItem(
+                        icon: tab.icon,
+                        label: tab.title,
+                        isSelected: selectedTab == tab
+                    ) {
+                        selectedTab = tab
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 4)
+        .padding(.bottom, 8)
+        .background(
+            ColorTheme.cardBackground
+                .shadow(color: ColorTheme.shadowColor, radius: 8, x: 0, y: -2)
+                .edgesIgnoringSafeArea(.bottom)
+        )
+    }
+    
+    private var plusButton: some View {
+        ZStack {
+            Circle()
+                .fill(ColorTheme.accent)
+                .frame(width: 56, height: 56)
+                .shadow(color: ColorTheme.accent.opacity(0.3), radius: 8, x: 0, y: 4)
+            
+            Image(systemName: showActions ? "xmark" : "plus")
+                .font(.system(size: 28, weight: .bold))
+                .foregroundColor(ColorTheme.lightText)
+                .rotationEffect(.degrees(showActions ? 45 : 0))
+                .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showActions)
+        }
+        .offset(y: -16)
+        .onTapGesture {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                showActions.toggle()
             }
         }
     }
