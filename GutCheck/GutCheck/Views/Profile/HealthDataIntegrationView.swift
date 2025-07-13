@@ -1,11 +1,11 @@
 import SwiftUI
 import HealthKit
 
-struct SettingsView: View {
+struct HealthDataIntegrationView: View {
     @StateObject private var healthKitVM = HealthKitViewModel()
-
+    @Environment(\.dismiss) private var dismiss
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("Health Data")) {
                     if let _ = healthKitVM.healthData {
@@ -20,12 +20,13 @@ struct SettingsView: View {
                         }
                     }
                 }
-
-                // MARK: - Add other settings sections here
-                // Example:
-                // Section(header: Text("Preferences")) { ... }
             }
-            .navigationTitle("Settings")
+            .navigationTitle("Health Data")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Close") { dismiss() }
+                }
+            }
             .alert("HealthKit permission denied or unavailable.", isPresented: $healthKitVM.showPermissionError) {
                 Button("OK", role: .cancel) {}
             }
@@ -36,8 +37,4 @@ struct SettingsView: View {
             }
         }
     }
-}
-
-#Preview {
-    SettingsView()
 }

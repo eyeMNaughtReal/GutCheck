@@ -13,5 +13,6 @@ struct InsightsCardView: View {
         .padding()
         .background(RoundedRectangle(cornerRadius: 12).fill(Color.yellow.opacity(0.1)))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.yellow, lineWidth: 1))
+        .frame(maxWidth: .infinity)
     }
 }

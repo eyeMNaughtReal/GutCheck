@@ -11,6 +11,7 @@ import FirebaseCore
 @main
 struct GutCheckApp: App {
     @StateObject private var authService = AuthService()
+    @StateObject private var settingsVM = SettingsViewModel()
     
     init() {
         FirebaseApp.configure()
@@ -22,6 +23,7 @@ struct GutCheckApp: App {
                 if authService.isAuthenticated {
                     ContentView()
                         .environmentObject(authService)
+                        .environmentObject(settingsVM)
                 } else {
                     AuthenticationView(authService: authService)
                 }

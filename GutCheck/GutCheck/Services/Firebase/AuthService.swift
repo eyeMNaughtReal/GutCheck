@@ -219,7 +219,7 @@ class AuthService: ObservableObject {
     }
     
     @discardableResult
-    private func createUserProfile(userId: String, email: String, firstName: String, lastName: String, signInMethod: SignInMethod) async throws -> User {
+    func createUserProfile(userId: String, email: String, firstName: String, lastName: String, signInMethod: SignInMethod) async throws -> User {
         let userData: [String: Any] = [
             "id": userId,
             "email": email,

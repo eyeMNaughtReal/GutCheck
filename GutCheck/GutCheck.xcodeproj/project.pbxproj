@@ -36,9 +36,22 @@
 		6DEADC042E1F312500CAF395 /* GutCheckUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GutCheckUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		6DF477172E2452FB00E72131 /* Exceptions for "GutCheck" folder in "GutCheck" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 6DEADBEC2E1F312300CAF395 /* GutCheck */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		6DEADBEF2E1F312300CAF395 /* GutCheck */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				6DF477172E2452FB00E72131 /* Exceptions for "GutCheck" folder in "GutCheck" target */,
+			);
 			path = GutCheck;
 			sourceTree = "<group>";
 		};
@@ -552,7 +565,7 @@
 				6DEADC0D2E1F312500CAF395 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		6DEADC0E2E1F312500CAF395 /* Build configuration list for PBXNativeTarget "GutCheck" */ = {
 			isa = XCConfigurationList;
@@ -561,7 +574,7 @@
 				6DEADC102E1F312500CAF395 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		6DEADC112E1F312500CAF395 /* Build configuration list for PBXNativeTarget "GutCheckTests" */ = {
 			isa = XCConfigurationList;
@@ -570,7 +583,7 @@
 				6DEADC132E1F312500CAF395 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 		6DEADC142E1F312500CAF395 /* Build configuration list for PBXNativeTarget "GutCheckUITests" */ = {
 			isa = XCConfigurationList;
@@ -579,7 +592,7 @@
 				6DEADC162E1F312500CAF395 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
+			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
 

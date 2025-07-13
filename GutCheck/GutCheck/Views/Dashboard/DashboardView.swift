@@ -52,18 +52,8 @@ struct DashboardView: View {
                     }
                 }
                 .sheet(isPresented: $showProfileSheet) {
-                    if let currentUser = authService.currentUser {
-                        UserProfileView(user: currentUser)
-                            .environmentObject(authService)
-                    } else {
-                        VStack(spacing: 20) {
-                            ProgressView()
-                            Text("Loading profile...")
-                                .foregroundColor(ColorTheme.secondaryText)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(ColorTheme.background)
-                    }
+                    ProfileSheetView()
+                        .environmentObject(authService)
                 }
                 .navigationDestination(isPresented: $showCalendar) {
                     if let date = selectedCalendarDate {
