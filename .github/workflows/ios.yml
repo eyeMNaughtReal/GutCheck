@@ -1,6 +1,5 @@
-permissions:
-  contents: read
 name: iOS Build & Test
+
 on:
   push:
     branches: [main, develop]
@@ -8,9 +7,10 @@ on:
     branches: [main, develop]
 
 jobs:
-  build:
-    runs-on: macos-14  # For Xcode 16+
-
+  build-and-test:
+    name: Build and Test
+    runs-on: macos-14
+    
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
@@ -20,24 +20,119 @@ jobs:
       with:
         xcode-version: latest-stable
 
+    - name: Cache Swift Package Manager
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/Library/Caches/org.swift.swiftpm/
+          GutCheck/.build
+        key: ${{ runner.os }}-spm-${{ hashFiles('GutCheck/GutCheck.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+        restore-keys: |
+          ${{ runner.os }}-spm-
+
+    - name: Cache DerivedData
+      uses: actions/cache@v4
+      with:
+        path: ~/Library/Developer/Xcode/DerivedData
+        key: ${{ runner.os }}-deriveddata-${{ hashFiles('GutCheck/GutCheck.xcodeproj/project.pbxproj') }}
+        restore-keys: |
+          ${{ runner.os }}-deriveddata-
 
     - name: List available simulators
       run: xcrun simctl list devices
+      working-directory: GutCheck
+
+    - name: Create GoogleService-Info.plist (Mock)
+      run: |
+        cat > GoogleService-Info.plist << EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+          <key>CLIENT_ID</key>
+          <string>mock-client-id</string>
+          <key>REVERSED_CLIENT_ID</key>
+          <string>mock-reversed-client-id</string>
+          <key>API_KEY</key>
+          <string>mock-api-key</string>
+          <key>GCM_SENDER_ID</key>
+          <string>mock-sender-id</string>
+          <key>PLIST_VERSION</key>
+          <string>1</string>
+          <key>BUNDLE_ID</key>
+          <string>com.MarkConley.GutCheck</string>
+          <key>PROJECT_ID</key>
+          <string>mock-project-id</string>
+          <key>STORAGE_BUCKET</key>
+          <string>mock-storage-bucket</string>
+          <key>IS_ADS_ENABLED</key>
+          <false/>
+          <key>IS_ANALYTICS_ENABLED</key>
+          <false/>
+          <key>IS_APPINVITE_ENABLED</key>
+          <true/>
+          <key>IS_GCM_ENABLED</key>
+          <true/>
+          <key>IS_SIGNIN_ENABLED</key>
+          <true/>
+          <key>GOOGLE_APP_ID</key>
+          <string>mock-app-id</string>
+        </dict>
+        </plist>
+        EOF
+      working-directory: GutCheck/GutCheck
+
+    - name: Resolve Swift Package Dependencies
+      run: |
+        xcodebuild -resolvePackageDependencies \
+          -project GutCheck.xcodeproj \
+          -scheme GutCheck
+      working-directory: GutCheck
 
     - name: Build GutCheck
-      working-directory: GutCheck
       run: |
         xcodebuild clean build \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
-          -destination 'platform=iOS Simulator,OS=latest' \
+          -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+          -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
+          CODE_SIGNING_ALLOWED=NO \
           ONLY_ACTIVE_ARCH=NO
+      working-directory: GutCheck
 
     - name: Run Unit Tests
-      working-directory: GutCheck
       run: |
         xcodebuild test \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
-          -destination 'platform=iOS Simulator,OS=latest' \
-          ONLY_ACTIVE_ARCH=NO
+          -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+          -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
+          CODE_SIGNING_ALLOWED=NO \
+          ONLY_ACTIVE_ARCH=NO \
+          -enableCodeCoverage YES
+      working-directory: GutCheck
+
+    - name: Generate Code Coverage Report
+      run: |
+        xcrun xccov view --report --json ~/Library/Developer/Xcode/DerivedData/Build/Logs/Test/*.xcresult > coverage.json
+        xcrun xccov view --report ~/Library/Developer/Xcode/DerivedData/Build/Logs/Test/*.xcresult
+      working-directory: GutCheck
+      continue-on-error: true
+
+    - name: Upload Coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: GutCheck/coverage.json
+        flags: ios
+        name: ios-coverage
+      continue-on-error: true
+
+    - name: Archive Build Artifacts
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-logs
+        path: |
+          ~/Library/Developer/Xcode/DerivedData/Build/Logs/
+          GutCheck/coverage.json
+        retention-days: 5
