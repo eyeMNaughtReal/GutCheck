@@ -23,7 +23,7 @@ struct ContentView: View {
                 case .symptoms:
                     Text("Analytics View")
                 case .insights:
-                    SettingsView()
+                    InsightsView()
                 default:
                     DashboardView()
                 }
