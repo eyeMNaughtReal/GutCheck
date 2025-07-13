@@ -19,6 +19,7 @@ jobs:
         xcode-version: latest-stable
 
     - name: Build GutCheck
+      working-directory: GutCheck/GutCheck
       run: |
         xcodebuild clean build \
           -project GutCheck.xcodeproj \
@@ -27,6 +28,7 @@ jobs:
           ONLY_ACTIVE_ARCH=NO
 
     - name: Run Unit Tests
+      working-directory: GutCheck/GutCheck
       run: |
         xcodebuild test \
           -project GutCheck.xcodeproj \
