@@ -1,0 +1,34 @@
+name: iOS Build & Test
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build:
+    runs-on: macos-14  # For Xcode 16+
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set Xcode 16.4
+      run: sudo xcode-select -s /Applications/Xcode_16.4.app
+
+    - name: Build GutCheck
+      run: |
+        xcodebuild clean build \
+          -project GutCheck.xcodeproj \
+          -scheme GutCheck \
+          -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.4' \
+          ONLY_ACTIVE_ARCH=NO
+
+    - name: Run Unit Tests
+      run: |
+        xcodebuild test \
+          -project GutCheck.xcodeproj \
+          -scheme GutCheck \
+          -destination 'platform=iOS Simulator,name=iPhone 15,OS=17.4' \
+          ONLY_ACTIVE_ARCH=NO
