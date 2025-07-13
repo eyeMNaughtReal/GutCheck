@@ -1,14 +1,24 @@
 import SwiftUI
 
 struct GreetingHeaderView: View {
+    @EnvironmentObject var authService: AuthService
+    
+    private var greeting: String {
+        if let user = authService.currentUser {
+            return "Welcome back, \(user.firstName)!"
+        } else {
+            return "Welcome back!"
+        }
+    }
+    
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Welcome back, Mark!")
+                Text(greeting)
                     .font(.title2)
                     .fontWeight(.semibold)
                     .foregroundColor(ColorTheme.primaryText)
-                Text("Here’s how your day is going so far:")
+                Text("Here's how your day is going so far:")
                     .font(.subheadline)
                     .foregroundColor(ColorTheme.secondaryText)
             }

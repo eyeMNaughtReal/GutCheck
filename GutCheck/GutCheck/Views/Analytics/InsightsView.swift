@@ -29,14 +29,29 @@ struct InsightsView: View {
             .navigationTitle("Insights")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    ProfileAvatarButton {
+                    Button(action: {
                         showProfileSheet = true
+                    }) {
+                        Image(systemName: "person.circle.fill")
+                            .resizable()
+                            .frame(width: 36, height: 36)
+                            .clipShape(Circle())
+                            .foregroundColor(ColorTheme.accent)
                     }
                 }
             }
             .sheet(isPresented: $showProfileSheet) {
                 if let currentUser = authService.currentUser {
                     UserProfileView(user: currentUser)
+                        .environmentObject(authService)
+                } else {
+                    VStack(spacing: 20) {
+                        ProgressView()
+                        Text("Loading profile...")
+                            .foregroundColor(ColorTheme.secondaryText)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(ColorTheme.background)
                 }
             }
         }

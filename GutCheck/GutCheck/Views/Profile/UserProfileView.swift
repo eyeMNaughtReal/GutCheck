@@ -1,67 +1,105 @@
 import SwiftUI
 
 struct UserProfileView: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var authService: AuthService
     let user: User
+    
     var body: some View {
-        VStack(spacing: 24) {
-            // Profile section
-            VStack(spacing: 8) {
-                ZStack(alignment: .bottom) {
-                    Circle()
-                        .strokeBorder(ColorTheme.accent, lineWidth: 5)
-                        .frame(width: 110, height: 110)
-                        .background(
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Profile section
+                    VStack(spacing: 8) {
+                        ZStack(alignment: .bottom) {
                             Circle()
-                                .fill(ColorTheme.cardBackground)
+                                .strokeBorder(ColorTheme.accent, lineWidth: 5)
                                 .frame(width: 110, height: 110)
-                        )
-                        .overlay(
-                            Image(systemName: "person.crop.circle.fill")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 100, height: 100)
-                                .foregroundColor(ColorTheme.accent)
-                        )
-                    Text("Pro")
-                        .font(.caption2.bold())
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(ColorTheme.accent))
-                        .offset(y: 18)
+                                .background(
+                                    Circle()
+                                        .fill(ColorTheme.cardBackground)
+                                        .frame(width: 110, height: 110)
+                                )
+                                .overlay(
+                                    Text(user.initials)
+                                        .font(.system(size: 36, weight: .bold))
+                                        .foregroundColor(ColorTheme.accent)
+                                )
+                            Text("Pro")
+                                .font(.caption2.bold())
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 4)
+                                .background(Capsule().fill(ColorTheme.accent))
+                                .offset(y: 18)
+                        }
+                        .padding(.top, 16)
+                        
+                        Text(user.fullName)
+                            .font(.title2.bold())
+                            .foregroundColor(ColorTheme.primaryText)
+                        
+                        Text(user.email)
+                            .font(.subheadline)
+                            .foregroundColor(ColorTheme.secondaryText)
+                    }
+                    
+                    // Info cards
+                    VStack(spacing: 16) {
+                        HStack(spacing: 16) {
+                            ProfileInfoCard(title: "Gender", value: user.genderString, icon: "person.fill")
+                            ProfileInfoCard(title: "Age", value: user.age != nil ? "\(user.age!) Years" : "Not Set", icon: "calendar")
+                        }
+                        HStack(spacing: 16) {
+                            ProfileInfoCard(title: "Weight", value: user.formattedWeight, icon: "scalemass")
+                            ProfileInfoCard(title: "Height", value: user.formattedHeight, icon: "ruler")
+                        }
+                    }
+                    
+                    // Action rows
+                    VStack(spacing: 4) {
+                        Button(action: {
+                            // Health data integration action
+                        }) {
+                            ProfileActionRow(icon: "heart", title: "Health Data Integration")
+                        }
+                        
+                        Button(action: {
+                            // Navigate to Reminders
+                        }) {
+                            ProfileActionRow(icon: "bell.badge", title: "Reminders")
+                        }
+                        
+                        Button(action: {
+                            // Sign out action
+                            Task {
+                                do {
+                                    try authService.signOut()
+                                    dismiss()
+                                } catch {
+                                    print("Error signing out: \(error)")
+                                }
+                            }
+                        }) {
+                            ProfileActionRow(icon: "arrow.right.square", title: "Sign Out", textColor: ColorTheme.error)
+                        }
+                    }
+                    
+                    Spacer()
                 }
-                .padding(.top, 16)
-                Text(user.fullName)                    .font(.title2.bold())
-                    .foregroundColor(ColorTheme.primaryText)
-                Text(user.email)
-                    .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                .padding()
             }
-            // Info cards
-            VStack(spacing: 16) {
-                HStack(spacing: 16) {
-                    ProfileInfoCard(title: "Gender", value: "Male", icon: "person.fill")
-                    ProfileInfoCard(title: "Age", value: "\(user.age ?? 0) Years", icon: "calendar")
-                }
-                HStack(spacing: 16) {
-                    ProfileInfoCard(title: "Weight", value: "\(Int(user.weight ?? 0)) kg", icon: "scalemass")
-                    ProfileInfoCard(title: "Height", value: "\(Int(user.height ?? 0)) cm", icon: "ruler")
-                }
-            }
-            // Action rows
-            VStack(spacing: 4) {
-                ProfileActionRow(icon: "heart", title: "Track with Watch")
-                ProfileActionRow(icon: "bell", title: "Notification")
-                NavigationLink(destination: UserRemindersView()) {
-                    ProfileActionRow(icon: "bell.badge", title: "Reminders")
+            .background(ColorTheme.background)
+            .navigationTitle("Profile")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Close") {
+                        dismiss()
+                    }
                 }
             }
-            Spacer()
         }
-        .padding()
-        .background(ColorTheme.background.ignoresSafeArea())
-        .navigationTitle("Profile")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -94,6 +132,8 @@ struct ProfileInfoCard: View {
 struct ProfileActionRow: View {
     let icon: String
     let title: String
+    var textColor: Color = ColorTheme.primaryText
+    
     var body: some View {
         HStack {
             Image(systemName: icon)
@@ -103,7 +143,7 @@ struct ProfileActionRow: View {
                 .background(Circle().fill(ColorTheme.accent.opacity(0.08)))
             Text(title)
                 .font(.body)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundColor(textColor)
             Spacer()
             Image(systemName: "chevron.right")
                 .foregroundColor(ColorTheme.secondaryText)

@@ -10,7 +10,7 @@ struct ProfileAvatarButton: View {
                 .resizable()
                 .frame(width: 36, height: 36)
                 .clipShape(Circle())
-                .foregroundColor(.accentColor)
+                .foregroundColor(ColorTheme.accent)
                 .accessibilityLabel("Profile Menu")
         }
     }
