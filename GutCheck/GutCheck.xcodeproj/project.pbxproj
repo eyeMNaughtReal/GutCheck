@@ -36,22 +36,9 @@
 		6DEADC042E1F312500CAF395 /* GutCheckUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GutCheckUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		6DF476202E22EBD600E72131 /* Exceptions for "GutCheck" folder in "GutCheck" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 6DEADBEC2E1F312300CAF395 /* GutCheck */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		6DEADBEF2E1F312300CAF395 /* GutCheck */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				6DF476202E22EBD600E72131 /* Exceptions for "GutCheck" folder in "GutCheck" target */,
-			);
 			path = GutCheck;
 			sourceTree = "<group>";
 		};
