@@ -31,8 +31,7 @@ struct UserProfileView: View {
                         .offset(y: 18)
                 }
                 .padding(.top, 16)
-                Text(user.fullName ?? "Name")
-                    .font(.title2.bold())
+                Text(user.fullName)                    .font(.title2.bold())
                     .foregroundColor(ColorTheme.primaryText)
                 Text(user.email)
                     .font(.subheadline)
@@ -120,7 +119,12 @@ struct ProfileActionRow: View {
 struct UserProfileView_Previews: PreviewProvider {
     static var previews: some View {
         NavigationStack {
-            UserProfileView(user: UserProfile(id: "1", email: "jenny@email.com", fullName: "Jenny Wilson", age: 20, weight: 76, height: 176))
+            UserProfileView(user: User(
+                id: "1",
+                email: "jenny@email.com",
+                firstName: "Jenny",
+                lastName: "Wilson"
+            ))
         }
     }
 }

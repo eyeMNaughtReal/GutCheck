@@ -8,7 +8,7 @@ enum MealSource: String, Codable {
     case manual, barcode, lidar, ai
 }
 
-struct Meal: Identifiable, Codable {
+struct Meal: Identifiable, Codable, Hashable, Equatable {
     var id: String = UUID().uuidString
     var name: String
     var date: Date

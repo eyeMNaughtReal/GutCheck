@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - Nutrition Info
-struct NutritionInfo: Codable {
+struct NutritionInfo: Codable, Hashable, Equatable {
     var calories: Int? = nil
     var protein: Double? = nil     // grams
     var carbs: Double? = nil       // grams
@@ -20,7 +20,7 @@ enum FoodInputSource: String, Codable {
 }
 
 // MARK: - Food Item
-struct FoodItem: Identifiable, Codable {
+struct FoodItem: Identifiable, Codable, Hashable, Equatable {
     var id: String = UUID().uuidString
     var name: String
     var quantity: String                  // e.g., "1 cup", "3 oz"

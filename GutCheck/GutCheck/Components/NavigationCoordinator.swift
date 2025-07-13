@@ -24,15 +24,30 @@ class NavigationCoordinator: ObservableObject {
     var currentNavigationPath: Binding<NavigationPath> {
         switch selectedTab {
         case .home:
-            return $homeNavigationPath
+            return Binding(
+                get: { self.homeNavigationPath },
+                set: { self.homeNavigationPath = $0 }
+            )
         case .meal:
-            return $mealNavigationPath
+            return Binding(
+                get: { self.mealNavigationPath },
+                set: { self.mealNavigationPath = $0 }
+            )
         case .symptoms:
-            return $symptomsNavigationPath
+            return Binding(
+                get: { self.symptomsNavigationPath },
+                set: { self.symptomsNavigationPath = $0 }
+            )
         case .insights:
-            return $insightsNavigationPath
+            return Binding(
+                get: { self.insightsNavigationPath },
+                set: { self.insightsNavigationPath = $0 }
+            )
         case .plus:
-            return $homeNavigationPath // Plus button doesn't navigate
+            return Binding(
+                get: { self.homeNavigationPath },
+                set: { self.homeNavigationPath = $0 }
+            )
         }
     }
     
@@ -86,7 +101,7 @@ class NavigationCoordinator: ObservableObject {
 
 // MARK: - NavigationCoordinator Environment Key
 struct NavigationCoordinatorKey: EnvironmentKey {
-    static let defaultValue = NavigationCoordinator()
+    @MainActor static var defaultValue: NavigationCoordinator = NavigationCoordinator()
 }
 
 extension EnvironmentValues {

@@ -12,7 +12,7 @@ enum UrgencyLevel: Int, Codable, CaseIterable {
     case none = 0, mild = 1, moderate = 2, urgent = 3
 }
 
-struct Symptom: Identifiable, Codable {
+struct Symptom: Identifiable, Codable, Hashable, Equatable {
     var id: String = UUID().uuidString
     var date: Date
     var stoolType: StoolType

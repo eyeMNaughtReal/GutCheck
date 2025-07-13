@@ -1,5 +1,9 @@
 name: iOS Build & Test
 
+permissions:
+  contents: read
+  actions: write
+
 on:
   push:
     branches: [main, develop]

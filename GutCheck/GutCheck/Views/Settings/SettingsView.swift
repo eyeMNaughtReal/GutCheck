@@ -8,7 +8,7 @@ struct SettingsView: View {
         NavigationView {
             Form {
                 Section(header: Text("Health Data")) {
-                    if let _ = healthKitVM.profile {
+                    if let _ = healthKitVM.healthData {
                         Text("Age: \(healthKitVM.formattedAge())")
                         Text("Height: \(healthKitVM.formattedHeight())")
                         Text("Weight: \(healthKitVM.formattedWeight())")
@@ -31,7 +31,7 @@ struct SettingsView: View {
             }
             .onAppear {
                 Task {
-                    await healthKitVM.fetchProfile()
+                    await healthKitVM.fetchHealthData()
                 }
             }
         }
