@@ -1,7 +1,8 @@
 import SwiftUI
+
 @MainActor
 final class HealthKitViewModel: ObservableObject {
-    @Published var profile: UserHealthProfile?
+    @Published var healthData: UserHealthData?
     @Published var isAuthorized = false
     @Published var showPermissionError = false
 
@@ -13,18 +14,18 @@ final class HealthKitViewModel: ObservableObject {
         }
 
         if granted {
-            await fetchProfile()
+            await fetchHealthData()
             isAuthorized = true
         } else {
             showPermissionError = true
         }
     }
 
-    func fetchProfile() async {
+    func fetchHealthData() async {
         await withCheckedContinuation { continuation in
-            HealthKitManager.shared.fetchUserProfile { profile in
+            HealthKitManager.shared.fetchUserHealthData { healthData in
                 DispatchQueue.main.async {
-                    self.profile = profile
+                    self.healthData = healthData
                     continuation.resume()
                 }
             }
@@ -33,7 +34,7 @@ final class HealthKitViewModel: ObservableObject {
 
     // Formatting helpers...
     func formattedAge() -> String {
-        guard let dob = profile?.dateOfBirth else { return "-" }
+        guard let dob = healthData?.dateOfBirth else { return "-" }
         let calendar = Calendar.current
         let ageComponents = calendar.dateComponents([.year], from: dob, to: Date())
         if let years = ageComponents.year {
@@ -43,14 +44,14 @@ final class HealthKitViewModel: ObservableObject {
     }
 
     func formattedHeight() -> String {
-        guard let height = profile?.height else { return "-" }
+        guard let height = healthData?.height else { return "-" }
         let formatter = LengthFormatter()
         formatter.unitStyle = .short
         return formatter.string(fromValue: height, unit: .meter)
     }
 
     func formattedWeight() -> String {
-        guard let weight = profile?.weight else { return "-" }
+        guard let weight = healthData?.weight else { return "-" }
         let formatter = MassFormatter()
         formatter.unitStyle = .short
         return formatter.string(fromValue: weight, unit: .kilogram)

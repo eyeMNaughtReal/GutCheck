@@ -2,14 +2,14 @@
 //  User.swift
 //  GutCheck
 //
-//  Consolidated user model replacing User.swift, UserProfile.swift, and UserHealthProfile.swift
+//  Fixed User model with proper Codable compliance
 //
 
 import Foundation
 import FirebaseFirestore
 import HealthKit
 
-struct User: Codable, Identifiable {
+struct User: Codable, Identifiable, Hashable, Equatable {
     let id: String
     let email: String
     let firstName: String
@@ -18,9 +18,9 @@ struct User: Codable, Identifiable {
     let createdAt: Date
     let updatedAt: Date
     
-    // Health data (optional)
+    // Health data (optional) - using raw values for Codable compliance
     var dateOfBirth: Date?
-    var biologicalSex: HKBiologicalSex?
+    var biologicalSexRawValue: Int? // Store HKBiologicalSex as raw value
     var weight: Double? // in kg
     var height: Double? // in meters
     
@@ -61,6 +61,35 @@ struct User: Codable, Identifiable {
         return formatter.string(fromValue: weight, unit: .kilogram)
     }
     
+    // Computed property for biological sex
+    var biologicalSex: HKBiologicalSex? {
+        get {
+            guard let rawValue = biologicalSexRawValue else { return nil }
+            return HKBiologicalSex(rawValue: rawValue)
+        }
+        set {
+            biologicalSexRawValue = newValue?.rawValue
+        }
+    }
+    
+    var genderString: String {
+        guard let biologicalSex = biologicalSex else { return "Not Set" }
+        switch biologicalSex {
+        case .male:
+            return "Male"
+        case .female:
+            return "Female"
+        case .other:
+            return "Other"
+        case .notSet:
+            return "Not Set"
+        @unknown default:
+            return "Unknown"
+        }
+    }
+    
+    // MARK: - Initializers
+    
     // Firebase timestamp conversion initializer
     init(id: String, email: String, firstName: String, lastName: String, signInMethod: SignInMethod, createdAt: Timestamp, updatedAt: Timestamp) {
         self.id = id
@@ -82,6 +111,36 @@ struct User: Codable, Identifiable {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
+    
+    // MARK: - Firestore Conversion
+    
+    func toFirestoreData() -> [String: Any] {
+        var data: [String: Any] = [
+            "id": id,
+            "email": email,
+            "firstName": firstName,
+            "lastName": lastName,
+            "signInMethod": signInMethod.rawValue,
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+        
+        // Add optional health data
+        if let dateOfBirth = dateOfBirth {
+            data["dateOfBirth"] = Timestamp(date: dateOfBirth)
+        }
+        if let weight = weight {
+            data["weight"] = weight
+        }
+        if let height = height {
+            data["height"] = height
+        }
+        if let biologicalSexRawValue = biologicalSexRawValue {
+            data["biologicalSexRawValue"] = biologicalSexRawValue
+        }
+        
+        return data
+    }
+    
 }
 
 // MARK: - Sign In Methods

@@ -1,6 +1,14 @@
 import Foundation
 import HealthKit
 
+// MARK: - UserHealthData Model (renamed to avoid conflicts)
+struct UserHealthData {
+    var dateOfBirth: Date?
+    var biologicalSex: HKBiologicalSex?
+    var weight: Double? // in kg
+    var height: Double? // in meters
+}
+
 final class HealthKitManager {
     static let shared = HealthKitManager()
     private let healthStore = HKHealthStore()
@@ -26,35 +34,35 @@ final class HealthKitManager {
         }
     }
 
-    // MARK: - Fetch User Profile
-    func fetchUserProfile(completion: @escaping (UserHealthProfile?) -> Void) {
-        var profile = UserHealthProfile()
+    // MARK: - Fetch User Health Profile
+    func fetchUserHealthData(completion: @escaping (UserHealthData?) -> Void) {
+        var healthData = UserHealthData()
 
         do {
             if let dob = try healthStore.dateOfBirthComponents().date {
-                profile.dateOfBirth = dob
+                healthData.dateOfBirth = dob
             }
 
             if let biologicalSex = try? healthStore.biologicalSex().biologicalSex {
-                profile.biologicalSex = biologicalSex
+                healthData.biologicalSex = biologicalSex
             }
 
             let group = DispatchGroup()
 
             group.enter()
             fetchLatestQuantity(for: .bodyMass) { quantity in
-                profile.weight = quantity?.doubleValue(for: .gramUnit(with: .kilo))
+                healthData.weight = quantity?.doubleValue(for: .gramUnit(with: .kilo))
                 group.leave()
             }
 
             group.enter()
             fetchLatestQuantity(for: .height) { quantity in
-                profile.height = quantity?.doubleValue(for: .meter())
+                healthData.height = quantity?.doubleValue(for: .meter())
                 group.leave()
             }
 
             group.notify(queue: .main) {
-                completion(profile)
+                completion(healthData)
             }
 
         } catch {
@@ -87,11 +95,4 @@ final class HealthKitManager {
 
         healthStore.execute(query)
     }
-}
-
-// ...existing code...
-
-// MARK: - Custom Error
-enum HealthKitError: Error {
-    case notAvailable
 }

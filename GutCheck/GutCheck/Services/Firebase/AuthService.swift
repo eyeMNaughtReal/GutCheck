@@ -2,7 +2,7 @@
 //  AuthService.swift
 //  GutCheck
 //
-//  Cleaned up AuthService with Apple Sign-In code removed and simplified structure
+//  Complete AuthService with all methods properly implemented
 //
 
 import Foundation
@@ -247,17 +247,7 @@ class AuthService: ObservableObject {
             throw AuthError.noUser
         }
         
-        let userData: [String: Any] = [
-            "firstName": updatedUser.firstName,
-            "lastName": updatedUser.lastName,
-            "email": updatedUser.email,
-            "dateOfBirth": updatedUser.dateOfBirth as Any,
-            "weight": updatedUser.weight as Any,
-            "height": updatedUser.height as Any,
-            "updatedAt": FieldValue.serverTimestamp()
-        ]
-        
-        try await firestore.collection("users").document(currentFirebaseUser.uid).updateData(userData)
+        try await firestore.collection("users").document(currentFirebaseUser.uid).updateData(updatedUser.toFirestoreData())
         currentUser = updatedUser
     }
     
@@ -293,6 +283,10 @@ class AuthService: ObservableObject {
         
         if let height = data["height"] as? Double {
             user.height = height
+        }
+        
+        if let biologicalSexRawValue = data["biologicalSexRawValue"] as? Int {
+            user.biologicalSexRawValue = biologicalSexRawValue
         }
         
         return user
