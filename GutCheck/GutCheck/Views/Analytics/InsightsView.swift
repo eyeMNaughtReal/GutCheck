@@ -1,5 +1,5 @@
 //
-//  LogSymptomView.swift
+//  InsightsView.swift
 //  GutCheck
 //
 //  Created by Mark Conley on 7/12/25.
@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct LogSymptomView: View {
+struct InsightsView: View {
     @State private var showProfileSheet = false
     var body: some View {
         NavigationView {
@@ -25,5 +25,5 @@ struct LogSymptomView: View {
 }
 
 #Preview {
-    LogSymptomView()
+    InsightsView()
 }

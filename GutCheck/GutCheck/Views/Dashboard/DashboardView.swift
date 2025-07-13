@@ -1,48 +1,59 @@
-
 import SwiftUI
 
 struct DashboardView: View {
-    @State private var todaysMeals: [Meal] = [] // Loaded from Firebase/Core Data
-    @State private var todaysSymptoms: [Symptom] = []
-    @State private var triggerAlerts: [String] = [] // AI-generated
-    @State private var insightMessage: String? = nil
+    @State private var showProfileSheet = false
+    @StateObject private var dashboardStore = DashboardDataStore()
     @State private var selectedTab: CustomTabBar.Tab = .home
+    @State private var showCalendar = false
+    @State private var selectedCalendarDate: Date? = nil
     
     var body: some View {
         ZStack(alignment: .bottom) {
-            NavigationView {
+            NavigationStack {
                 ScrollView {
                     VStack(spacing: 20) {
                         GreetingHeaderView()
+                        // Horizontal week selector with navigation on date tap
+                        WeekSelector(selectedDate: $dashboardStore.selectedDate) { date in
+                            dashboardStore.selectedDate = date
+                            selectedCalendarDate = date
+                            showCalendar = true
+                        }
                         TodaySummaryView(
-                            mealsCount: todaysMeals.count,
-                            symptomsCount: todaysSymptoms.count
+                            mealsCount: dashboardStore.todaysMeals.count,
+                            symptomsCount: dashboardStore.todaysSymptoms.count
                         )
-                        if let insight = insightMessage {
+
+                        if let insight = dashboardStore.insightMessage {
                             InsightsCardView(message: insight)
                         }
-                        if !triggerAlerts.isEmpty {
-                            TriggerAlertView(alerts: triggerAlerts)
+                        if !dashboardStore.triggerAlerts.isEmpty {
+                            TriggerAlertView(alerts: dashboardStore.triggerAlerts)
                         }
-                        RecentActivityListView(meals: todaysMeals, symptoms: todaysSymptoms)
-                        GraphPreviewView(meals: todaysMeals, symptoms: todaysSymptoms)
-                        CalendarShortcutButton()
+                        RecentActivityListView(meals: dashboardStore.todaysMeals, symptoms: dashboardStore.todaysSymptoms)
+                        GraphPreviewView(meals: dashboardStore.todaysMeals, symptoms: dashboardStore.todaysSymptoms)
                     }
-                    .padding(.bottom, 80) // Space for tab bar
+                    .padding(.bottom, 80)
                     .padding(.top)
                 }
                 .navigationTitle("Dashboard")
-                .onAppear {
-                    loadDashboardData()
+                .navigationBarItems(
+                    trailing: ProfileAvatarButton {
+                        showProfileSheet = true
+                    }
+                )
+                .sheet(isPresented: $showProfileSheet) {
+                    UserProfileView(user: UserProfile(id: "1", email: "jenny@email.com", fullName: "Jenny Wilson", age: 20, weight: 76, height: 176))
+                }
+                .navigationDestination(isPresented: $showCalendar) {
+                    if let date = selectedCalendarDate {
+                        CalendarView(selectedDate: date)
+                    }
                 }
             }
             CustomTabBar(selectedTab: $selectedTab)
         }
-    }
 
-    private func loadDashboardData() {
-        // TODO: Load meals and symptoms from local Core Data or Firebase
-        // TODO: Query AI trigger insights
     }
 }
 

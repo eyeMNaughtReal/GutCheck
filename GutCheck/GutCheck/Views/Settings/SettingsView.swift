@@ -1,49 +1,43 @@
 import SwiftUI
+import HealthKit
 
 struct SettingsView: View {
-    @EnvironmentObject var authService: AuthService
-    
+    @StateObject private var healthKitVM = HealthKitViewModel()
+
     var body: some View {
         NavigationView {
-            List {
-                Section {
-                    HStack {
-                        Circle()
-                            .fill(ColorTheme.primary)
-                            .frame(width: 50, height: 50)
-                            .overlay(
-                                Text(authService.user?.displayName?.prefix(2).uppercased() ?? "??")
-                                    .foregroundColor(.white)
-                                    .fontWeight(.semibold)
-                            )
-                        
-                        VStack(alignment: .leading) {
-                            Text(authService.user?.displayName ?? "Unknown User")
-                                .font(.headline)
-                            Text(authService.user?.email ?? "")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+            Form {
+                Section(header: Text("Health Data")) {
+                    if let _ = healthKitVM.profile {
+                        Text("Age: \(healthKitVM.formattedAge())")
+                        Text("Height: \(healthKitVM.formattedHeight())")
+                        Text("Weight: \(healthKitVM.formattedWeight())")
+                    } else {
+                        Button("Enable HealthKit Access") {
+                            Task {
+                                await healthKitVM.requestHealthKitAccess()
+                            }
                         }
                     }
-                    .padding(.vertical, 8)
                 }
-                
-                Section("Account") {
-                    Button("Sign Out") {
-                        try? authService.signOut()
-                    }
-                    .foregroundColor(ColorTheme.error)
-                }
+
+                // MARK: - Add other settings sections here
+                // Example:
+                // Section(header: Text("Preferences")) { ... }
             }
             .navigationTitle("Settings")
+            .alert("HealthKit permission denied or unavailable.", isPresented: $healthKitVM.showPermissionError) {
+                Button("OK", role: .cancel) {}
+            }
+            .onAppear {
+                Task {
+                    await healthKitVM.fetchProfile()
+                }
+            }
         }
     }
 }
 
-#if DEBUG
-struct SettingsView_Previews: PreviewProvider {
-    static var previews: some View {
-        SettingsView().environmentObject(AuthService())
-    }
+#Preview {
+    SettingsView()
 }
-#endif
