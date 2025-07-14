@@ -13,11 +13,13 @@ struct DashboardView: View {
                 ScrollView {
                     VStack(spacing: 20) {
                         GreetingHeaderView()
+                        
                         WeekSelector(selectedDate: $dashboardStore.selectedDate) { date in
                             dashboardStore.selectedDate = date
                             selectedCalendarDate = date
                             showCalendar = true
                         }
+                        
                         TodaySummaryView(
                             mealsCount: dashboardStore.todaysMeals.count,
                             symptomsCount: dashboardStore.todaysSymptoms.count
@@ -26,12 +28,15 @@ struct DashboardView: View {
                         if let insight = dashboardStore.insightMessage {
                             InsightsCardView(message: insight)
                         }
+                        
                         if !dashboardStore.triggerAlerts.isEmpty {
                             TriggerAlertView(alerts: dashboardStore.triggerAlerts)
                         }
-                        RecentActivityListView(meals: dashboardStore.todaysMeals, symptoms: dashboardStore.todaysSymptoms)
                         
-                        // Spacer instead of GraphPreviewView if needed
+                        // Use the enhanced RecentActivityListView
+                        RecentActivityListView(selectedDate: dashboardStore.selectedDate)
+                        
+                        // Spacer for tab bar
                         Spacer(minLength: 80)
                     }
                     .padding(.horizontal)
@@ -67,4 +72,5 @@ struct DashboardView: View {
 
 #Preview {
     DashboardView()
+        .environmentObject(AuthService())
 }
