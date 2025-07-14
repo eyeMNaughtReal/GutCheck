@@ -2,7 +2,7 @@
 //  MealLoggingOptionsView.swift
 //  GutCheck
 //
-//  Created on 7/14/25.
+//  Fixed navigation to properly connect to existing views
 //
 
 import SwiftUI
@@ -12,7 +12,7 @@ struct MealLoggingOptionsView: View {
     @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: navigationCoordinator.currentNavigationPath) {
             VStack(spacing: 24) {
                 // Header
                 Text("How would you like to log your meal?")
@@ -29,7 +29,10 @@ struct MealLoggingOptionsView: View {
                         description: "Search for food items",
                         color: ColorTheme.primary
                     ) {
-                        navigationCoordinator.mealNavigationPath.append(MealLoggingDestination.search)
+                        dismiss() // Close the sheet first
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            navigationCoordinator.currentNavigationPath.wrappedValue.append(MealLoggingDestination.search)
+                        }
                     }
                     
                     // Barcode scan
@@ -39,7 +42,10 @@ struct MealLoggingOptionsView: View {
                         description: "Scan product barcode",
                         color: ColorTheme.secondary
                     ) {
-                        navigationCoordinator.mealNavigationPath.append(MealLoggingDestination.barcode)
+                        dismiss() // Close the sheet first
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            navigationCoordinator.currentNavigationPath.wrappedValue.append(MealLoggingDestination.barcode)
+                        }
                     }
                     
                     // LiDAR scan
@@ -49,7 +55,10 @@ struct MealLoggingOptionsView: View {
                         description: "Estimate portions with camera",
                         color: ColorTheme.accent
                     ) {
-                        navigationCoordinator.mealNavigationPath.append(MealLoggingDestination.lidar)
+                        dismiss() // Close the sheet first
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            navigationCoordinator.currentNavigationPath.wrappedValue.append(MealLoggingDestination.lidar)
+                        }
                     }
                     
                     // Recent items
@@ -59,7 +68,10 @@ struct MealLoggingOptionsView: View {
                         description: "Previously logged foods",
                         color: ColorTheme.primary.opacity(0.8)
                     ) {
-                        navigationCoordinator.mealNavigationPath.append(MealLoggingDestination.recent)
+                        dismiss() // Close the sheet first
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            navigationCoordinator.currentNavigationPath.wrappedValue.append(MealLoggingDestination.recent)
+                        }
                     }
                     
                     // Favorites
@@ -69,7 +81,10 @@ struct MealLoggingOptionsView: View {
                         description: "Your favorite meals",
                         color: ColorTheme.secondary.opacity(0.8)
                     ) {
-                        navigationCoordinator.mealNavigationPath.append(MealLoggingDestination.favorites)
+                        dismiss() // Close the sheet first
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            navigationCoordinator.currentNavigationPath.wrappedValue.append(MealLoggingDestination.favorites)
+                        }
                     }
                     
                     // Templates
@@ -79,7 +94,10 @@ struct MealLoggingOptionsView: View {
                         description: "Saved meal templates",
                         color: ColorTheme.accent.opacity(0.8)
                     ) {
-                        navigationCoordinator.mealNavigationPath.append(MealLoggingDestination.templates)
+                        dismiss() // Close the sheet first
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            navigationCoordinator.currentNavigationPath.wrappedValue.append(MealLoggingDestination.templates)
+                        }
                     }
                 }
                 
@@ -98,23 +116,23 @@ struct MealLoggingOptionsView: View {
             .padding()
             .navigationTitle("Log Meal")
             .navigationBarTitleDisplayMode(.inline)
-        }
-        .navigationDestination(for: MealLoggingDestination.self) { destination in
-            switch destination {
-            case .search:
-                FoodSearchView()
-            case .barcode:
-                BarcodeScannerView()
-            case .lidar:
-                LiDARScannerView()
-            case .recent:
-                RecentItemsView()
-            case .favorites:
-                FavoriteMealsView()
-            case .templates:
-                MealTemplatesView()
-            case .mealBuilder:
-                MealBuilderView()
+            .navigationDestination(for: MealLoggingDestination.self) { destination in
+                switch destination {
+                case .search:
+                    FoodSearchView()
+                case .barcode:
+                    BarcodeScannerView()
+                case .lidar:
+                    LiDARScannerView()
+                case .recent:
+                    RecentItemsView()
+                case .favorites:
+                    FavoriteMealsView()
+                case .templates:
+                    MealTemplatesView()
+                case .mealBuilder:
+                    MealBuilderView()
+                }
             }
         }
     }
@@ -173,22 +191,138 @@ enum MealLoggingDestination: Hashable {
     case mealBuilder
 }
 
-// Placeholder views
+// MARK: - Missing Views (Placeholder implementations)
+
 struct RecentItemsView: View {
+    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
+    @StateObject private var viewModel = RecentItemsViewModel()
+    
     var body: some View {
-        Text("Recent Items View")
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                if viewModel.recentItems.isEmpty {
+                    emptyStateView
+                } else {
+                    ForEach(viewModel.recentItems) { item in
+                        FoodItemResultRow(item: item) {
+                            // Navigate to food detail or add to meal
+                            navigationCoordinator.currentNavigationPath.wrappedValue.append(MealLoggingDestination.mealBuilder)
+                        }
+                    }
+                }
+            }
+            .padding()
+        }
+        .navigationTitle("Recent Items")
+        .onAppear {
+            viewModel.loadRecentItems()
+        }
+    }
+    
+    private var emptyStateView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "clock")
+                .font(.system(size: 48))
+                .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
+            
+            Text("No Recent Items")
+                .font(.headline)
+                .foregroundColor(ColorTheme.primaryText)
+            
+            Text("Items you've previously logged will appear here")
+                .font(.subheadline)
+                .foregroundColor(ColorTheme.secondaryText)
+                .multilineTextAlignment(.center)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, minHeight: 200)
     }
 }
 
 struct FavoriteMealsView: View {
     var body: some View {
-        Text("Favorite Meals View")
+        ScrollView {
+            VStack(spacing: 16) {
+                Image(systemName: "star")
+                    .font(.system(size: 48))
+                    .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
+                
+                Text("No Favorite Meals")
+                    .font(.headline)
+                    .foregroundColor(ColorTheme.primaryText)
+                
+                Text("Mark meals as favorites to quickly log them again")
+                    .font(.subheadline)
+                    .foregroundColor(ColorTheme.secondaryText)
+                    .multilineTextAlignment(.center)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, minHeight: 200)
+        }
+        .navigationTitle("Favorite Meals")
     }
 }
 
 struct MealTemplatesView: View {
     var body: some View {
-        Text("Meal Templates View")
+        ScrollView {
+            VStack(spacing: 16) {
+                Image(systemName: "square.on.square")
+                    .font(.system(size: 48))
+                    .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
+                
+                Text("No Meal Templates")
+                    .font(.headline)
+                    .foregroundColor(ColorTheme.primaryText)
+                
+                Text("Create meal templates for recurring meals")
+                    .font(.subheadline)
+                    .foregroundColor(ColorTheme.secondaryText)
+                    .multilineTextAlignment(.center)
+            }
+            .padding()
+            .frame(maxWidth: .infinity, minHeight: 200)
+        }
+        .navigationTitle("Meal Templates")
+    }
+}
+
+// MARK: - Recent Items ViewModel
+
+@MainActor
+class RecentItemsViewModel: ObservableObject {
+    @Published var recentItems: [FoodItem] = []
+    @Published var isLoading = false
+    
+    func loadRecentItems() {
+        isLoading = true
+        
+        // For now, we'll use mock data
+        // In a real app, this would load from UserDefaults or Firebase
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.recentItems = [
+                FoodItem(
+                    name: "Oatmeal with Banana",
+                    quantity: "1 cup",
+                    estimatedWeightInGrams: 240,
+                    nutrition: NutritionInfo(calories: 200, protein: 6, carbs: 35, fat: 4)
+                ),
+                FoodItem(
+                    name: "Grilled Chicken Breast",
+                    quantity: "6 oz",
+                    estimatedWeightInGrams: 170,
+                    nutrition: NutritionInfo(calories: 280, protein: 54, carbs: 0, fat: 6)
+                ),
+                FoodItem(
+                    name: "Greek Yogurt",
+                    quantity: "1 cup",
+                    estimatedWeightInGrams: 245,
+                    nutrition: NutritionInfo(calories: 150, protein: 20, carbs: 9, fat: 4)
+                )
+            ]
+            self.isLoading = false
+        }
     }
 }
 
