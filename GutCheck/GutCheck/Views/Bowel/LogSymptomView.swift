@@ -9,7 +9,7 @@ import SwiftUI
 
 struct LogSymptomView: View {
     @EnvironmentObject var authService: AuthService
-    @StateObject private var coordinator = SymptomLoggingCoordinator()
+    @State private var coordinator = LogSymptomViewModel()
     @State private var showProfileSheet = false
 
     var body: some View {
@@ -20,16 +20,16 @@ struct LogSymptomView: View {
                     dateTimeSection
                     
                     // Bristol Stool Scale
-                    BristolScaleSelectionView(viewModel: coordinator.bristolScaleVM)
+                    BristolScaleSelectionView(selectedStoolType: $coordinator.selectedStoolType)
                     
                     // Pain Level
-                    PainLevelSliderView(viewModel: coordinator.painLevelVM)
+                    PainLevelSliderView(selectedPainLevel: $coordinator.selectedPainLevel)
                     
                     // Urgency Level
-                    UrgencyLevelSelectionView(viewModel: coordinator.urgencyLevelVM)
+                    UrgencyLevelSelectionView(selectedUrgencyLevel: $coordinator.selectedUrgencyLevel)
                     
                     // Tag selection
-                    TagSelectionView(viewModel: coordinator.tagSelectionVM)
+                    TagSelectionView(selectedTags: $coordinator.selectedTags)
                     
                     // Notes
                     notesSection
