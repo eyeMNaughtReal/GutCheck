@@ -129,6 +129,7 @@ class MealBuilderViewModel: ObservableObject {
         guard !mealName.isEmpty else {
             // Generate a default name if empty
             mealName = "\(mealType.rawValue.capitalized) \(formattedDateTime)"
+            return
         }
         
         isSaving = true

@@ -62,6 +62,7 @@ struct UserProfileView: View {
     @State private var showImagePicker = false
     @State private var showSettings = false
     @State private var showHealthData = false
+    @State private var showReminder = false
     @EnvironmentObject var settingsVM: SettingsViewModel
 
     var body: some View {
@@ -147,7 +148,7 @@ struct UserProfileView: View {
                         }
                         
                         Button(action: {
-                            // Navigate to Reminders
+                            showReminder = true
                         }) {
                             ProfileActionRow(icon: "bell.badge", title: "Reminders")
                         }
@@ -187,6 +188,9 @@ struct UserProfileView: View {
             }
             .sheet(isPresented: $showHealthData) {
                 HealthDataIntegrationView()
+            }
+            .sheet(isPresented: $showReminder) {
+                UserRemindersView()
             }
         }
     }

@@ -10,9 +10,10 @@ struct InsightsCardView: View {
             Text(message)
                 .font(.subheadline)
         }
-        .frame(maxWidth: .infinity) // Move this BEFORE padding and background
+        .frame(maxWidth: .infinity)
         .padding()
         .background(RoundedRectangle(cornerRadius: 12).fill(Color.yellow.opacity(0.1)))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.yellow, lineWidth: 1))
+
     }
 }

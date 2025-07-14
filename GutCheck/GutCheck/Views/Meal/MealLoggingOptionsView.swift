@@ -174,24 +174,6 @@ enum MealLoggingDestination: Hashable {
 }
 
 // Placeholder views
-struct FoodSearchView: View {
-    var body: some View {
-        Text("Food Search View")
-    }
-}
-
-struct BarcodeScannerView: View {
-    var body: some View {
-        Text("Barcode Scanner View")
-    }
-}
-
-struct LiDARScannerView: View {
-    var body: some View {
-        Text("LiDAR Scanner View")
-    }
-}
-
 struct RecentItemsView: View {
     var body: some View {
         Text("Recent Items View")

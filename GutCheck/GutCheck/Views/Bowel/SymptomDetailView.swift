@@ -17,82 +17,136 @@ import SwiftUI
 
 struct SymptomDetailView: View {
     let symptom: Symptom
-    
+    var onEdit: ((Symptom) -> Void)? = nil
+    var onDelete: ((Symptom) -> Void)? = nil
+
+    @State private var isEditing = false
+    @State private var showDeleteAlert = false
+
     var body: some View {
-        VStack {
-            Text("Symptom Detail")
-                .font(.title)
-                .padding()
-            
-            // Symptom information
-            VStack(alignment: .leading, spacing: 16) {
-                // Date
-                HStack {
-                    Text("Date:")
-                        .font(.headline)
-                    Spacer()
-                    Text(formattedDate)
-                        .font(.body)
-                }
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(8)
-                
-                // Stool Type
-                HStack {
-                    Text("Bristol Stool Type:")
-                        .font(.headline)
-                    Spacer()
-                    Text("Type \(symptom.stoolType.rawValue)")
-                        .font(.body)
-                }
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(8)
-                
-                // Pain Level
-                HStack {
-                    Text("Pain Level:")
-                        .font(.headline)
-                    Spacer()
-                    PainLevelIndicator(level: symptom.painLevel)
-                }
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(8)
-                
-                // Urgency Level
-                HStack {
-                    Text("Urgency Level:")
-                        .font(.headline)
-                    Spacer()
-                    UrgencyLevelIndicator(level: symptom.urgencyLevel)
-                }
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(8)
-                
-                // Notes
-                if let notes = symptom.notes, !notes.isEmpty {
-                    VStack(alignment: .leading) {
-                        Text("Notes:")
+        ScrollView {
+            VStack(spacing: 24) {
+                Text("Symptom Detail")
+                    .font(.title)
+                    .padding(.top)
+
+                // Symptom information
+                VStack(alignment: .leading, spacing: 16) {
+                    // Date
+                    HStack {
+                        Text("Date:")
                             .font(.headline)
-                        Text(notes)
+                        Spacer()
+                        Text(formattedDate)
                             .font(.body)
-                            .padding()
-                            .background(Color.gray.opacity(0.1))
-                            .cornerRadius(8)
+                    }
+                    .padding()
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
+
+                    // Stool Type
+                    HStack {
+                        Text("Bristol Stool Type:")
+                            .font(.headline)
+                        Spacer()
+                        Text("Type \(symptom.stoolType.rawValue)")
+                            .font(.body)
+                    }
+                    .padding()
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
+
+                    // Pain Level
+                    HStack {
+                        Text("Pain Level:")
+                            .font(.headline)
+                        Spacer()
+                        PainLevelIndicator(level: symptom.painLevel)
+                    }
+                    .padding()
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
+
+                    // Urgency Level
+                    HStack {
+                        Text("Urgency Level:")
+                            .font(.headline)
+                        Spacer()
+                        UrgencyLevelIndicator(level: symptom.urgencyLevel)
+                    }
+                    .padding()
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
+
+                    // Notes
+                    if let notes = symptom.notes, !notes.isEmpty {
+                        VStack(alignment: .leading) {
+                            Text("Notes:")
+                                .font(.headline)
+                            Text(notes)
+                                .font(.body)
+                                .padding()
+                                .background(Color.gray.opacity(0.1))
+                                .cornerRadius(8)
+                        }
                     }
                 }
+                .padding(.horizontal)
+
+                Spacer()
+
+                // Action buttons
+                HStack(spacing: 16) {
+                    Button(action: {
+                        isEditing = true
+                    }) {
+                        Text("Edit")
+                            .font(.headline)
+                            .foregroundColor(ColorTheme.primaryText)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(ColorTheme.surface)
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(ColorTheme.border, lineWidth: 1)
+                            )
+                    }
+
+                    Button(action: {
+                        showDeleteAlert = true
+                    }) {
+                        Text("Delete")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(ColorTheme.error)
+                            .cornerRadius(12)
+                    }
+                }
+                .padding(.horizontal)
+                .padding(.bottom, 20)
             }
-            .padding()
-            
-            Spacer()
         }
         .navigationTitle("Symptom Details")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Delete Symptom?", isPresented: $showDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                onDelete?(symptom)
+            }
+        } message: {
+            Text("Are you sure you want to delete this symptom? This action cannot be undone.")
+        }
+        .sheet(isPresented: $isEditing) {
+            SymptomEditView(symptom: symptom) { updatedSymptom in
+                onEdit?(updatedSymptom)
+                isEditing = false
+            }
+        }
     }
-    
+
     private var formattedDate: String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium

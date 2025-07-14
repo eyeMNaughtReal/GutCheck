@@ -218,12 +218,11 @@ class BarcodeScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutp
     // MARK: - Food Item Creation
     
     func createFoodItemFromScannedProduct() {
-        // Create a FoodItem from the scanned product
+        // Create a FoodItem from the scanned product - FIXED PARAMETER ORDER
         let foodItem = FoodItem(
             name: productName,
             quantity: "1 serving",
             estimatedWeightInGrams: 100,
-            barcodeValue: scannedBarcode,
             nutrition: NutritionInfo(
                 calories: productCalories,
                 // Generate reasonable mock values for other nutrients
@@ -231,7 +230,8 @@ class BarcodeScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutp
                 carbs: Double(productCalories) * 0.5,
                 fat: Double(productCalories) * 0.3
             ),
-            source: .barcode
+            source: .barcode,
+            barcodeValue: scannedBarcode
         )
         
         // Show the food item detail view
@@ -255,6 +255,3 @@ class BarcodeScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutp
         MealBuilder.shared.addFoodItem(foodItem)
     }
 }
-
-
-            

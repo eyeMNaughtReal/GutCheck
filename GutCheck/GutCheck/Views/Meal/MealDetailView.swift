@@ -19,6 +19,7 @@ import FirebaseFirestore
 struct MealDetailView: View {
     @StateObject private var viewModel: MealDetailViewModel
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     
     init(meal: Meal) {
         self._viewModel = StateObject(wrappedValue: MealDetailViewModel(meal: meal))
@@ -84,16 +85,30 @@ struct MealDetailView: View {
                         emptyFoodItemsView
                     } else {
                         ForEach(viewModel.meal.foodItems) { item in
-                            FoodItemDetailRow(
-                                foodItem: item,
-                                isEditing: viewModel.isEditing,
-                                onEdit: {
-                                    viewModel.editFoodItem(item)
-                                },
-                                onDelete: {
-                                    viewModel.removeFoodItem(item)
+                            if viewModel.isEditing {
+                                FoodItemDetailRow(
+                                    foodItem: item,
+                                    isEditing: true,
+                                    onEdit: {
+                                        viewModel.editFoodItem(item)
+                                    },
+                                    onDelete: {
+                                        viewModel.removeFoodItem(item)
+                                    }
+                                )
+                            } else {
+                                Button(action: {
+                                    navigationCoordinator.navigateTo(.foodDetail(item))
+                                }) {
+                                    FoodItemDetailRow(
+                                        foodItem: item,
+                                        isEditing: false,
+                                        onEdit: {},
+                                        onDelete: {}
+                                    )
                                 }
-                            )
+                                .buttonStyle(PlainButtonStyle())
+                            }
                         }
                     }
                 }

@@ -60,6 +60,7 @@ class NavigationCoordinator: ObservableObject {
         case settings
         case mealDetail(Meal)
         case symptomDetail(Symptom)
+        case foodDetail(FoodItem)
         case logMeal
         case logSymptom
         case calendar(Date)
@@ -79,7 +80,7 @@ class NavigationCoordinator: ObservableObject {
         case .logSymptom:
             selectedTab = .symptoms
             symptomsNavigationPath.append(destination)
-        case .calendar, .mealDetail, .symptomDetail, .insights, .userReminders:
+        case .calendar, .mealDetail, .symptomDetail, .foodDetail, .insights, .userReminders:
             currentNavigationPath.wrappedValue.append(destination)
         }
     }
