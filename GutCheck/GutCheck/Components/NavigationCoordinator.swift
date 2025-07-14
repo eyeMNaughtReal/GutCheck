@@ -14,6 +14,9 @@ class NavigationCoordinator: ObservableObject {
     @Published var isShowingProfile = false
     @Published var isShowingSettings = false
     
+    // Additional property for meal logging options
+    @Published var isShowingMealLoggingOptions = false
+    
     // Tab-specific navigation paths
     @Published var homeNavigationPath = NavigationPath()
     @Published var mealNavigationPath = NavigationPath()
@@ -72,8 +75,7 @@ class NavigationCoordinator: ObservableObject {
         case .settings:
             isShowingSettings = true
         case .logMeal:
-            selectedTab = .meal
-            mealNavigationPath.append(destination)
+            isShowingMealLoggingOptions = true
         case .logSymptom:
             selectedTab = .symptoms
             symptomsNavigationPath.append(destination)

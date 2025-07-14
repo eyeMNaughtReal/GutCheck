@@ -31,4 +31,28 @@ struct FoodItem: Identifiable, Codable, Hashable, Equatable {
     var source: FoodInputSource = .manual
     var barcodeValue: String? = nil      // If scanned via barcode
     var isUserEdited: Bool = false       // Indicates manual override
+    
+    init(
+        id: String = UUID().uuidString,
+        name: String,
+        quantity: String,
+        estimatedWeightInGrams: Double? = nil,
+        ingredients: [String] = [],
+        allergens: [String] = [],
+        nutrition: NutritionInfo = NutritionInfo(),
+        source: FoodInputSource = .manual,
+        barcodeValue: String? = nil,
+        isUserEdited: Bool = false
+    ) {
+        self.id = id
+        self.name = name
+        self.quantity = quantity
+        self.estimatedWeightInGrams = estimatedWeightInGrams
+        self.ingredients = ingredients
+        self.allergens = allergens
+        self.nutrition = nutrition
+        self.source = source
+        self.barcodeValue = barcodeValue
+        self.isUserEdited = isUserEdited
+    }
 }
