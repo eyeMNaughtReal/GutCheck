@@ -2,56 +2,38 @@
 //  LogSymptomView.swift
 //  GutCheck
 //
-//  Enhanced UI with improved Bristol Scale, Pain Slider, and Info screens
+//  Refactored symptom logging view using modular ViewModels and components
 //
 
 import SwiftUI
 
 struct LogSymptomView: View {
     @EnvironmentObject var authService: AuthService
+    @StateObject private var coordinator = SymptomLoggingCoordinator()
     @State private var showProfileSheet = false
-
-    @State private var selectedDate = Date()
-    @State private var selectedStoolType: Int? = nil
-    @State private var selectedPainLevel: Double = 0
-    @State private var selectedUrgency: Int? = nil
-    @State private var selectedTags: Set<String> = []
-    @State private var notes: String = ""
-    @State private var showBristolInfo = false
-    @State private var showPainInfo = false
-    @State private var showUrgencyInfo = false
-
-    // Example tags
-    let allTags = ["After Meal", "Stress", "Exercise", "Travel", "New Food", "Medication"]
-    let urgencyLevels = ["None", "Mild", "Moderate", "Severe", "Emergency"]
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     // Date & Time
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Date & Time")
-                            .font(.headline)
-                        DatePicker("", selection: $selectedDate, displayedComponents: [.date, .hourAndMinute])
-                            .labelsHidden()
-                    }
-
+                    dateTimeSection
+                    
                     // Bristol Stool Scale
-                    bristolStoolSection
-
+                    BristolScaleSelectionView(viewModel: coordinator.bristolScaleVM)
+                    
                     // Pain Level
-                    painLevelSection
-
+                    PainLevelSliderView(viewModel: coordinator.painLevelVM)
+                    
                     // Urgency Level
-                    urgencyLevelSection
-
+                    UrgencyLevelSelectionView(viewModel: coordinator.urgencyLevelVM)
+                    
                     // Tag selection
-                    tagSelectionSection
-
+                    TagSelectionView(viewModel: coordinator.tagSelectionVM)
+                    
                     // Notes
                     notesSection
-
+                    
                     // Action buttons
                     actionButtonsSection
                 }
@@ -68,111 +50,133 @@ struct LogSymptomView: View {
             .sheet(isPresented: $showProfileSheet) {
                 if let currentUser = authService.currentUser {
                     UserProfileView(user: currentUser)
+                        .environmentObject(authService)
                 }
             }
-            // Info modals
-            .sheet(isPresented: $showBristolInfo) {
-                BristolStoolInfoView()
+            .alert("Symptom Saved", isPresented: $coordinator.showingSuccessAlert) {
+                Button("OK") { }
+            } message: {
+                Text("Your symptom has been successfully logged.")
             }
-            .sheet(isPresented: $showPainInfo) {
-                PainLevelInfoView()
-            }
-            .sheet(isPresented: $showUrgencyInfo) {
-                UrgencyLevelInfoView()
+            .alert("Error", isPresented: $coordinator.showingErrorAlert) {
+                Button("OK") { }
+            } message: {
+                Text(coordinator.errorMessage)
             }
         }
     }
     
     // MARK: - View Components
     
-    private var bristolStoolSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Bristol Stool Scale")
-                    .font(.headline)
-                Button(action: { showBristolInfo = true }) {
-                    Image(systemName: "info.circle")
-                        .foregroundColor(ColorTheme.primary)
-                }
-                Spacer()
-            }
-            // Show description if type is selected
-            if let selectedType = selectedStoolType {
-                Text(bristolDescription(for: selectedType))
-                    .font(.subheadline)
-                    .foregroundColor(ColorTheme.primaryText)
-                    .padding()
-                    .background(ColorTheme.surface)
-                    .cornerRadius(8)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
-            }
-            // Bristol scale selection (1-7)
-            HStack(spacing: 8) {
-                ForEach(1...7, id: \.self) { type in
-                    Button(action: {
-                        selectedStoolType = type
-                    }) {
-                        Text("\(type)")
-                            .font(.headline)
-                            .frame(width: 36, height: 36)
-                            .background(selectedStoolType == type ? ColorTheme.primary : ColorTheme.surface)
-                            .foregroundColor(selectedStoolType == type ? .white : ColorTheme.primaryText)
-                            .clipShape(Circle())
-                            .overlay(
-                                Circle().stroke(ColorTheme.primary, lineWidth: selectedStoolType == type ? 2 : 1)
-                            )
+    private var dateTimeSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Date & Time")
+                .font(.headline)
+                .foregroundColor(ColorTheme.primaryText)
+            
+            DatePicker(
+                "Symptom Date",
+                selection: $coordinator.symptomDate,
+                displayedComponents: [.date, .hourAndMinute]
+            )
+            .datePickerStyle(.compact)
+            .accentColor(ColorTheme.primary)
+        }
+        .padding()
+        .background(ColorTheme.surface)
+        .cornerRadius(12)
+    }
+    
+    private var notesSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Notes")
+                .font(.headline)
+                .foregroundColor(ColorTheme.primaryText)
+            
+            TextEditor(text: $coordinator.notes)
+                .frame(minHeight: 100)
+                .padding(8)
+                .background(ColorTheme.cardBackground)
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(ColorTheme.border, lineWidth: 1)
+                )
+        }
+        .padding()
+        .background(ColorTheme.surface)
+        .cornerRadius(12)
+    }
+    
+    private var actionButtonsSection: some View {
+        VStack(spacing: 12) {
+            // Save button
+            Button(action: {
+                coordinator.saveSymptom()
+            }) {
+                HStack {
+                    if coordinator.isSaving {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(0.8)
+                    } else {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.title3)
                     }
-                    .accessibilityLabel("Bristol type \(type)")
+                    
+                    Text(coordinator.isSaving ? "Saving..." : "Save Symptom")
+                        .font(.headline)
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(coordinator.isFormValid ? ColorTheme.primary : ColorTheme.disabled)
+                )
+            }
+            .disabled(!coordinator.isFormValid || coordinator.isSaving)
+            
+            HStack(spacing: 12) {
+                // Clear button
+                Button(action: {
+                    coordinator.resetForm()
+                }) {
+                    Text("Clear")
+                        .font(.subheadline)
+                        .foregroundColor(ColorTheme.secondaryText)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(ColorTheme.border, lineWidth: 1)
+                        )
+                }
+                .disabled(!coordinator.hasChanges)
+                
+                // Remind me later button
+                Button(action: {
+                    coordinator.remindMeLater()
+                }) {
+                    Text("Remind Me Later")
+                        .font(.subheadline)
+                        .foregroundColor(ColorTheme.primary)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(ColorTheme.primary, lineWidth: 1)
+                        )
                 }
             }
         }
+        .padding()
+        .background(ColorTheme.surface)
+        .cornerRadius(12)
     }
-    
-    // MARK: - Section Stubs (replace with real implementations as needed)
-    private var painLevelSection: some View {
-        Text("[Pain Level Section]")
-    }
+}
 
-    private var urgencyLevelSection: some View {
-        Text("[Urgency Level Section]")
-    }
-
-    private var tagSelectionSection: some View {
-        Text("[Tag Selection Section]")
-    }
-
-    private var notesSection: some View {
-        Text("[Notes Section]")
-    }
-
-    private var actionButtonsSection: some View {
-        Text("[Action Buttons Section]")
-    }
-
-    private func bristolDescription(for type: Int) -> String {
-        // Stub implementation, replace with real description logic if needed
-        "Description for Bristol type \(type)"
-    }
-
-    // MARK: - Actions
-    private func saveSymptom() {
-        print("Saving symptom...")
-        print("Stool Type: \(selectedStoolType ?? 0)")
-        print("Pain Level: \(Int(selectedPainLevel))")
-        print("Urgency: \(selectedUrgency ?? 0)")
-        print("Tags: \(selectedTags)")
-        print("Notes: \(notes)")
-    }
-
-    private func cancelAction() {
-        selectedStoolType = nil
-        selectedPainLevel = 0
-        selectedUrgency = nil
-        selectedTags.removeAll()
-        notes = ""
-    }
-
-    private func remindMeLaterAction() {
-        print("Remind me later...")
-    }
+#Preview {
+    LogSymptomView()
+        .environmentObject(AuthService())
 }
