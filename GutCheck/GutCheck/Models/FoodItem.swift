@@ -21,6 +21,7 @@ enum FoodInputSource: String, Codable {
 
 // MARK: - Food Item
 struct FoodItem: Identifiable, Codable, Hashable, Equatable {
+    var nutritionDetails: [String: String] = [:]
     var id: String = UUID().uuidString
     var name: String
     var quantity: String                  // e.g., "1 cup", "3 oz"
@@ -42,7 +43,8 @@ struct FoodItem: Identifiable, Codable, Hashable, Equatable {
         nutrition: NutritionInfo = NutritionInfo(),
         source: FoodInputSource = .manual,
         barcodeValue: String? = nil,
-        isUserEdited: Bool = false
+        isUserEdited: Bool = false,
+        nutritionDetails: [String: String] = [:]
     ) {
         self.id = id
         self.name = name
@@ -54,5 +56,6 @@ struct FoodItem: Identifiable, Codable, Hashable, Equatable {
         self.source = source
         self.barcodeValue = barcodeValue
         self.isUserEdited = isUserEdited
+        self.nutritionDetails = nutritionDetails
     }
 }

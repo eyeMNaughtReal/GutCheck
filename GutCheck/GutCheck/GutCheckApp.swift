@@ -31,6 +31,7 @@ struct GutCheckApp: App {
             .onAppear {
                 // Any app startup logic
             }
+            .preferredColorScheme(.light)
         }
     }
 }

@@ -6,6 +6,7 @@ struct DashboardView: View {
     @State private var showProfileSheet = false
     @State private var showCalendar = false
     @State private var selectedCalendarDate: Date? = nil
+    // Removed floating + button state
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -66,6 +67,7 @@ struct DashboardView: View {
                     }
                 }
             }
+            // Floating + button for logging meal
         }
     }
 }

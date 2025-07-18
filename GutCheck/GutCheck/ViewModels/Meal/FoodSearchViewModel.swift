@@ -13,9 +13,11 @@
 //  Created on 7/14/25.
 //
 
+
 import Foundation
 import Combine
 import FirebaseFirestore
+
 
 @MainActor
 class FoodSearchViewModel: ObservableObject {
@@ -24,34 +26,41 @@ class FoodSearchViewModel: ObservableObject {
     @Published var isSearching: Bool = false
     @Published var hasSearched: Bool = false
     @Published var searchResults: [FoodItem] = []
-    
-    // Selected food item
     @Published var selectedFoodItem: FoodItem?
-    
-    // Suggestions
     @Published var recentSearches: [String] = ["Oatmeal", "Chicken breast", "Greek yogurt"]
     @Published var recentItems: [FoodItem] = []
-    
-    // Common food categories
     let foodCategories = [
-        "Fruits", "Vegetables", "Meat", "Dairy", 
+        "Fruits", "Vegetables", "Meat", "Dairy",
         "Grains", "Beverages", "Snacks", "Fast Food"
     ]
-    
-    // Firestore reference
     private let db = Firestore.firestore()
-    
-    // Cancellables
     private var cancellables = Set<AnyCancellable>()
-    
-    // Meal building state
     private var mealBuilder = MealBuilder.shared
-    
+    private let foodSearchService = FoodSearchService()
+
+    // Nutritionix fields to track
+    let nutritionFields: [String] = [
+        "calories", "total_fat", "saturated_fat", "trans_fatty_acid", "cholesterol", "sodium", "total_carbohydrate", "dietary_fiber", "sugars", "protein", "potassium", "phosphorus", "vitamin_a_dv", "vitamin_c_dv", "calcium_dv", "iron_dv", "monounsaturated_fat", "polyunsaturated_fat", "vitamin_d_mcg", "thiamin_mg", "riboflavin_mg", "niacin_mg", "vitamin_b6_mg", "folate_mcg", "vitamin_b12_mcg", "biotin_mcg", "pantothenic_acid_mg", "phosphorus_mg", "iodine_mcg", "magnesium_mg", "zinc_mg", "selenium_mcg", "copper_mg", "manganese_mg", "chromium_mcg", "molybdenum_mcg", "chloride_mg", "vitamin_e_mg", "vitamin_k_mcg"
+    ]
+
+    // Allergen fields to track
+    let allergenFields: [String] = [
+        "allergen_contains_milk", "allergen_contains_eggs", "allergen_contains_fish", "allergen_contains_shellfish", "allergen_contains_tree_nuts", "allergen_contains_peanuts", "allergen_contains_wheat", "allergen_contains_soybeans", "allergen_contains_gluten"
+    ]
+
     init() {
-        // Load recent items
+        // Always load sample data if empty
+        if recentSearches.isEmpty {
+            recentSearches = ["Oatmeal", "Chicken breast", "Greek yogurt"]
+        }
+        if recentItems.isEmpty {
+            recentItems = [
+                FoodItem(name: "Oatmeal", quantity: "1 cup", nutrition: NutritionInfo(calories: 158, protein: 6, carbs: 27, fat: 3)),
+                FoodItem(name: "Banana", quantity: "1 medium", nutrition: NutritionInfo(calories: 105, protein: 1, carbs: 27, fat: 0)),
+                FoodItem(name: "Greek Yogurt", quantity: "1 cup", nutrition: NutritionInfo(calories: 150, protein: 20, carbs: 9, fat: 4))
+            ]
+        }
         loadRecentItems()
-        
-        // Set up search debounce
         $searchQuery
             .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
             .filter { !$0.isEmpty }
@@ -60,7 +69,7 @@ class FoodSearchViewModel: ObservableObject {
             }
             .store(in: &cancellables)
     }
-    
+
     func search() {
         guard !searchQuery.isEmpty else {
             searchResults = []
@@ -68,26 +77,128 @@ class FoodSearchViewModel: ObservableObject {
             isSearching = false
             return
         }
-        
         isSearching = true
         hasSearched = true
-        
-        // In a real app, we would search a database or API
-        // For now, we'll create mock results
-        
         Task {
-            // Simulate network delay
-            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-            
-            // Generate mock results
-            let mockResults = createMockSearchResults(for: searchQuery)
-            
-            // Update on main thread
+            await foodSearchService.searchFoods(query: searchQuery)
+            let foods = foodSearchService.results.map { nfood in
+                // Use top-level NutritionixFood properties for main nutrition fields
+                let servingQty = nfood.servingQty != nil ? String(format: "%g", nfood.servingQty!) : "N/A"
+                let servingUnit = nfood.servingUnit ?? "N/A"
+                let servingWeightGrams = nfood.serving_weight_grams != nil ? String(format: "%g", nfood.serving_weight_grams!) : "N/A"
+
+                // Ingredients (from fullData if available, else empty)
+                let ingredientString: String = {
+                    if let fullData = nfood.fullData, let anyCodable = fullData["ingredients"] {
+                        let mirror = Mirror(reflecting: anyCodable)
+                        if let str = mirror.children.first?.value as? String {
+                            return str
+                        }
+                    }
+                    return "N/A"
+                }()
+                let ingredientList = ingredientString == "N/A" ? [] : ingredientString.lowercased().split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+                // Build nutrition dictionary for all fields
+                var nutritionDict: [String: String] = [:]
+                for field in nutritionFields {
+                    // Try to get from top-level property if available, else from fullData
+                    let value: String? = {
+                        switch field {
+                        case "calories":
+                            if let v = nfood.calories { return String(format: "%g", v) }
+                        case "protein":
+                            if let v = nfood.protein { return String(format: "%g", v) }
+                        case "total_carbohydrate":
+                            if let v = nfood.carbs { return String(format: "%g", v) }
+                        case "total_fat":
+                            if let v = nfood.fat { return String(format: "%g", v) }
+                        default:
+                            break
+                        }
+                        if let fullData = nfood.fullData, let anyCodable = fullData["nf_" + field] {
+                            let mirror = Mirror(reflecting: anyCodable)
+                            if let v = mirror.children.first?.value {
+                                return "\(v)"
+                            }
+                            return "\(anyCodable)"
+                        }
+                        return nil
+                    }()
+                    nutritionDict[field] = value ?? "N/A"
+                }
+
+                // Infer allergens/triggers (same as before, but add food family)
+                var inferredAllergens: [String] = []
+                var inferredTriggers: [String] = []
+                let allergenKeywords: [(String, [String])] = [
+                    ("dairy", ["milk", "cheese", "cream", "butter", "whey", "casein"]),
+                    ("gluten", ["wheat", "barley", "rye", "malt", "bread", "bun", "flour"]),
+                    ("soy", ["soy", "soya", "soybean"]),
+                    ("eggs", ["egg"]),
+                    ("nuts", ["almond", "cashew", "walnut", "pecan", "hazelnut", "nut"]),
+                    ("peanuts", ["peanut"]),
+                    ("fish", ["fish", "salmon", "tuna", "cod", "anchovy"]),
+                    ("shellfish", ["shrimp", "crab", "lobster", "shellfish"]),
+                    ("sesame", ["sesame"])
+                ]
+                let triggerKeywords: [(String, [String])] = [
+                    ("red meat", ["beef", "steak", "burger", "pork", "bacon", "sausage"]),
+                    ("histamine", ["tomato", "cheese", "vinegar", "fermented", "sauerkraut", "cured", "smoked", "spinach", "eggplant"]),
+                    ("processed food", ["maltodextrin", "monosodium glutamate", "preservative", "artificial", "color", "flavor", "emulsifier", "high fructose", "corn syrup", "hydrogenated", "additive"])
+                ]
+                let foodFamilyKeywords: [(String, [String])] = [
+                    ("nightshade", ["tomato", "eggplant", "pepper", "potato", "goji", "tomatillo"])
+                ]
+                for (allergen, keywords) in allergenKeywords {
+                    if keywords.contains(where: { ingredientString.contains($0) }) {
+                        inferredAllergens.append(allergen)
+                    }
+                }
+                for (trigger, keywords) in triggerKeywords {
+                    if keywords.contains(where: { ingredientString.contains($0) }) {
+                        inferredTriggers.append(trigger)
+                    }
+                }
+                // Add food family triggers
+                for (family, keywords) in foodFamilyKeywords {
+                    if keywords.contains(where: { ingredientString.contains($0) || nfood.name.lowercased().contains($0) }) {
+                        inferredTriggers.append(family)
+                    }
+                }
+                let nameLower = nfood.name.lowercased()
+                if ["beef", "burger", "steak", "pork", "bacon", "sausage"].contains(where: { nameLower.contains($0) }) {
+                    if !inferredTriggers.contains("red meat") { inferredTriggers.append("red meat") }
+                }
+                if ["bread", "bun", "flour"].contains(where: { nameLower.contains($0) }) {
+                    if !inferredAllergens.contains("gluten") { inferredAllergens.append("gluten") }
+                }
+                if ingredientList.count > 3 || inferredTriggers.contains("processed food") {
+                    if !inferredTriggers.contains("processed food") { inferredTriggers.append("processed food") }
+                }
+
+                // Compose FoodItem with all fields, including nutritionDetails for UI listing
+                return FoodItem(
+                    id: nfood.id,
+                    name: nfood.name,
+                    quantity: "\(servingQty) \(servingUnit)",
+                    estimatedWeightInGrams: servingWeightGrams == "N/A" ? nil : Double(servingWeightGrams),
+                    ingredients: ingredientList,
+                    allergens: inferredAllergens,
+                    nutrition: NutritionInfo(
+                        calories: nutritionDict["calories"] != "N/A" ? Int(nutritionDict["calories"] ?? "0") : nil,
+                        protein: nutritionDict["protein"] != "N/A" ? Double(nutritionDict["protein"] ?? "0") : nil,
+                        carbs: nutritionDict["total_carbohydrate"] != "N/A" ? Double(nutritionDict["total_carbohydrate"] ?? "0") : nil,
+                        fat: nutritionDict["total_fat"] != "N/A" ? Double(nutritionDict["total_fat"] ?? "0") : nil
+                    ),
+                    source: .manual,
+                    isUserEdited: false,
+                    nutritionDetails: nutritionDict
+                )
+            }
             await MainActor.run {
-                self.searchResults = mockResults
+                self.searchResults = foods
                 self.isSearching = false
-                
-                // Add to recent searches if not already there
                 if !self.recentSearches.contains(self.searchQuery) {
                     self.recentSearches.insert(self.searchQuery, at: 0)
                     if self.recentSearches.count > 5 {
@@ -97,124 +208,66 @@ class FoodSearchViewModel: ObservableObject {
             }
         }
     }
-    
+
     func clearSearch() {
         searchQuery = ""
         searchResults = []
         hasSearched = false
     }
-    
+
     func selectFoodItem(_ item: FoodItem) {
         selectedFoodItem = item
     }
-    
+
     func createCustomFoodItem() {
-        // Create a new empty food item
         let customItem = FoodItem(
             name: searchQuery.isEmpty ? "New Food Item" : searchQuery,
             quantity: "1 serving",
             nutrition: NutritionInfo(calories: 0, protein: 0, carbs: 0, fat: 0)
         )
-        
         selectedFoodItem = customItem
     }
-    
+
     func addToMeal(_ foodItem: FoodItem) {
-        // Add to recent items
         if !recentItems.contains(where: { $0.id == foodItem.id }) {
             recentItems.insert(foodItem, at: 0)
             if recentItems.count > 5 {
                 recentItems.removeLast()
             }
-            
-            // Save recent items to UserDefaults
             saveRecentItems()
         }
-        
-        // Add to meal builder
         MealBuilder.shared.addFoodItem(foodItem)
     }
-    
-    // MARK: - Private helpers
-    
-    private func loadRecentItems() {
-        // In a real app, we would load from UserDefaults or database
-        // For now, we'll create mock items
+
+    // MARK: - Recent Items Loader
+    func loadRecentItems() {
         recentItems = [
             FoodItem(
                 name: "Oatmeal",
                 quantity: "1 cup",
-                estimatedWeightInGrams: 240,
+                estimatedWeightInGrams: 240.0,
                 nutrition: NutritionInfo(calories: 158, protein: 6, carbs: 27, fat: 3)
             ),
             FoodItem(
                 name: "Banana",
                 quantity: "1 medium",
-                estimatedWeightInGrams: 118,
+                estimatedWeightInGrams: 118.0,
                 nutrition: NutritionInfo(calories: 105, protein: 1, carbs: 27, fat: 0)
             ),
             FoodItem(
                 name: "Coffee with Milk",
                 quantity: "8 oz",
-                estimatedWeightInGrams: 240,
+                estimatedWeightInGrams: 240.0,
                 nutrition: NutritionInfo(calories: 40, protein: 2, carbs: 3, fat: 2)
             )
         ]
     }
-    
+
     private func saveRecentItems() {
-        // In a real app, we would save to UserDefaults or database
-        // For now, we'll just print
         print("Saved \(recentItems.count) recent items")
     }
-    
-    private func createMockSearchResults(for query: String) -> [FoodItem] {
-        // Create mock search results based on the query
-        let lowercasedQuery = query.lowercased()
-        
-        // Common food items that might match the query
-        let foodOptions: [(name: String, calories: Int, protein: Double, carbs: Double, fat: Double)] = [
-            ("Apple", 95, 0.5, 25.0, 0.3),
-            ("Banana", 105, 1.3, 27.0, 0.4),
-            ("Orange", 62, 1.2, 15.0, 0.2),
-            ("Chicken Breast", 165, 31.0, 0.0, 3.6),
-            ("Ground Beef", 250, 26.0, 0.0, 17.0),
-            ("Salmon", 206, 22.0, 0.0, 13.0),
-            ("White Rice", 205, 4.3, 45.0, 0.4),
-            ("Brown Rice", 216, 5.0, 45.0, 1.8),
-            ("Quinoa", 222, 8.0, 39.0, 3.6),
-            ("Greek Yogurt", 120, 22.0, 9.0, 0.5),
-            ("Cheddar Cheese", 113, 7.0, 0.4, 9.0),
-            ("Milk", 122, 8.0, 12.0, 5.0),
-            ("Spinach", 23, 2.9, 3.6, 0.4),
-            ("Broccoli", 55, 3.7, 11.2, 0.6),
-            ("Oatmeal", 158, 6.0, 27.0, 3.0),
-            ("Egg", 72, 6.3, 0.6, 5.0),
-            ("Avocado", 240, 3.0, 12.0, 22.0),
-            ("Sweet Potato", 180, 4.0, 41.0, 0.0),
-            ("Almonds", 164, 6.0, 6.0, 14.0),
-            ("Chocolate", 535, 7.8, 59.0, 30.0)
-        ]
-        
-        // Filter options by query
-        let filteredOptions = foodOptions.filter { $0.name.lowercased().contains(lowercasedQuery) }
-        
-        // Convert to FoodItem objects
-        return filteredOptions.map { option in
-            FoodItem(
-                name: option.name,
-                quantity: "1 serving",
-                estimatedWeightInGrams: 100,
-                nutrition: NutritionInfo(
-                    calories: option.calories,
-                    protein: option.protein,
-                    carbs: option.carbs,
-                    fat: option.fat
-                )
-            )
-        }
-    }
 }
+
 
 // MARK: - MealBuilder Singleton
 

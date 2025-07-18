@@ -1,3 +1,39 @@
+// MARK: - Component Stubs
+
+#if DEBUG
+#Preview {
+    LogSymptomView()
+        .environmentObject(AuthService())
+}
+#endif
+
+struct BristolScaleSelectionView: View {
+    @Binding var selectedStoolType: StoolType?
+    var body: some View {
+        Text("[Bristol Scale Selection]")
+    }
+}
+
+struct PainLevelSliderView: View {
+    @Binding var selectedPainLevel: Int
+    var body: some View {
+        Text("[Pain Level Slider]")
+    }
+}
+
+struct UrgencyLevelSelectionView: View {
+    @Binding var selectedUrgencyLevel: UrgencyLevel
+    var body: some View {
+        Text("[Urgency Level Selection]")
+    }
+}
+
+struct TagSelectionView: View {
+    @Binding var selectedTags: Set<String>
+    var body: some View {
+        Text("[Tag Selection]")
+    }
+}
 //
 //  LogSymptomView.swift
 //  GutCheck

@@ -49,6 +49,11 @@ struct ContentView: View {
             MealLoggingOptionsView()
                 .environmentObject(navigationCoordinator)
         }
+        .sheet(isPresented: $navigationCoordinator.isShowingSymptomLoggingSheet) {
+            LogSymptomView()
+                .environmentObject(authService)
+                .environmentObject(navigationCoordinator)
+        }
     }
     
     @ViewBuilder
@@ -68,7 +73,7 @@ struct ContentView: View {
             // This now goes to options view as a sheet instead
             EmptyView()
         case .logSymptom:
-            CalendarView(selectedTab: .symptoms)
+            LogSymptomView()
         case .calendar(let date):
             CalendarView(selectedDate: date)
         case .insights:
@@ -84,7 +89,7 @@ struct ContentView: View {
             // Show meal logging options as a sheet
             navigationCoordinator.isShowingMealLoggingOptions = true
         case .logSymptom:
-            navigationCoordinator.navigateTo(.logSymptom)
+            navigationCoordinator.isShowingSymptomLoggingSheet = true
         }
     }
 }

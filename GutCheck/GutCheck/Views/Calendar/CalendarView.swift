@@ -98,6 +98,8 @@ struct CalendarContentView: View {
                     } else {
                         ForEach(viewModel.symptoms) { symptom in
                             SymptomCalendarRow(symptom: symptom) {
+                                // Ensure we are on the symptoms tab before navigating
+                                navigationCoordinator.selectedTab = .symptoms
                                 navigationCoordinator.navigateTo(.symptomDetail(symptom))
                             }
                             .padding(.horizontal)
