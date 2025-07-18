@@ -16,7 +16,7 @@ struct NutritionixFood: Identifiable, Codable {
     let servingUnit: String?
     let servingQty: Double?
     let serving_weight_grams: Double?
-    let fullData: [String: AnyCodable]?
+    let fullData: [String: String]? // Simplified to String instead of AnyCodable
 }
 
 @MainActor
@@ -30,12 +30,15 @@ class FoodSearchService: ObservableObject {
         isLoading = true
         error = nil
         defer { isLoading = false }
+        
         let urlString = "https://trackapi.nutritionix.com/v2/search/instant?query=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
         guard let url = URL(string: urlString) else { error = "Invalid URL"; return }
+        
         var request = URLRequest(url: url)
         request.setValue(Secrets.nutritionixAppId, forHTTPHeaderField: "x-app-id")
         request.setValue(Secrets.nutritionixApiKey, forHTTPHeaderField: "x-app-key")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
         do {
             let (data, _) = try await URLSession.shared.data(for: request)
             let decoded = try JSONDecoder().decode(NutritionixResponse.self, from: data)
@@ -83,6 +86,3 @@ struct NutritionixFoodItem: Codable {
         )
     }
 }
-
-// Helper for AnyCodable dictionary
-struct AnyCodable: Codable {}

@@ -2,15 +2,7 @@
 //  LiDARScannerView.swift
 //  GutCheck
 //
-//  Created by Mark Conley on 7/14/25.
-//
-
-
-//
-//  LiDARScannerView.swift
-//  GutCheck
-//
-//  Created on 7/14/25.
+//  Fixed to remove MealLoggingDestination references
 //
 
 import SwiftUI
@@ -20,7 +12,7 @@ import RealityKit
 struct LiDARScannerView: View {
     @StateObject private var viewModel = LiDARScannerViewModel()
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
+    @State private var showingMealBuilder = false
     
     var body: some View {
         ZStack {
@@ -127,8 +119,11 @@ struct LiDARScannerView: View {
         .sheet(item: $viewModel.detectedFoodItem) { foodItem in
             FoodItemDetailView(foodItem: foodItem) { updatedItem in
                 viewModel.addToMeal(updatedItem)
-                navigationCoordinator.mealNavigationPath.append(MealLoggingDestination.mealBuilder)
+                showingMealBuilder = true
             }
+        }
+        .sheet(isPresented: $showingMealBuilder) {
+            MealBuilderView()
         }
     }
     
@@ -415,11 +410,4 @@ struct ARViewContainer: UIViewRepresentable {
     func updateUIView(_ uiView: ARView, context: Context) {
         // No updates needed here as the session is managed externally
     }
-}
-
-// MARK: - Preview
-
-#Preview {
-    LiDARScannerView()
-        .environmentObject(NavigationCoordinator())
 }

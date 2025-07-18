@@ -2,15 +2,7 @@
 //  BarcodeScannerView.swift
 //  GutCheck
 //
-//  Created by Mark Conley on 7/14/25.
-//
-
-
-//
-//  BarcodeScannerView.swift
-//  GutCheck
-//
-//  Created on 7/14/25.
+//  Fixed to remove MealLoggingDestination references
 //
 
 import SwiftUI
@@ -19,7 +11,7 @@ import AVFoundation
 struct BarcodeScannerView: View {
     @StateObject private var viewModel = BarcodeScannerViewModel()
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
+    @State private var showingMealBuilder = false
     
     var body: some View {
         ZStack {
@@ -119,10 +111,13 @@ struct BarcodeScannerView: View {
             viewModel.stopScanning()
         }
         .sheet(item: $viewModel.scannedFoodItem) { foodItem in
-            FoodItemDetailView(foodItem: foodItem) { updatedItem in
+            EnhancedFoodItemDetailView(foodItem: foodItem) { updatedItem in
                 viewModel.addToMeal(updatedItem)
-                navigationCoordinator.mealNavigationPath.append(MealLoggingDestination.mealBuilder)
+                showingMealBuilder = true
             }
+        }
+        .sheet(isPresented: $showingMealBuilder) {
+            MealBuilderView()
         }
     }
     
@@ -276,7 +271,10 @@ struct BarcodeScannerView: View {
                     Divider()
                     
                     Button(action: {
-                        navigationCoordinator.mealNavigationPath.append(MealLoggingDestination.search)
+                        dismiss()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            // This will be handled by the parent view
+                        }
                     }) {
                         HStack {
                             Image(systemName: "keyboard")
@@ -337,10 +335,4 @@ extension View {
     func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
         clipShape(RoundedCorner(radius: radius, corners: corners))
     }
-}
-
-// Preview
-#Preview {
-    BarcodeScannerView()
-        .environmentObject(NavigationCoordinator())
 }

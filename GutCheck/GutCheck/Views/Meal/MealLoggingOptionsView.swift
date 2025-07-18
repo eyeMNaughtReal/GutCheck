@@ -10,9 +10,15 @@ import SwiftUI
 struct MealLoggingOptionsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var navigationCoordinator: NavigationCoordinator
+    @State private var showingSearchView = false
+    @State private var showingBarcodeScannerView = false
+    @State private var showingLiDARScannerView = false
+    @State private var showingRecentItemsView = false
+    @State private var showingFavoritesView = false
+    @State private var showingTemplatesView = false
     
     var body: some View {
-        NavigationStack(path: navigationCoordinator.currentNavigationPath) {
+        NavigationStack {
             VStack(spacing: 24) {
                 // Header
                 Text("How would you like to log your meal?")
@@ -29,10 +35,7 @@ struct MealLoggingOptionsView: View {
                         description: "Search for food items",
                         color: ColorTheme.primary
                     ) {
-                        dismiss() // Close the sheet first
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            navigationCoordinator.currentNavigationPath.wrappedValue.append(MealLoggingDestination.search)
-                        }
+                        showingSearchView = true
                     }
                     
                     // Barcode scan
@@ -42,10 +45,7 @@ struct MealLoggingOptionsView: View {
                         description: "Scan product barcode",
                         color: ColorTheme.secondary
                     ) {
-                        dismiss() // Close the sheet first
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            navigationCoordinator.currentNavigationPath.wrappedValue.append(MealLoggingDestination.barcode)
-                        }
+                        showingBarcodeScannerView = true
                     }
                     
                     // LiDAR scan
@@ -55,10 +55,7 @@ struct MealLoggingOptionsView: View {
                         description: "Estimate portions with camera",
                         color: ColorTheme.accent
                     ) {
-                        dismiss() // Close the sheet first
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            navigationCoordinator.currentNavigationPath.wrappedValue.append(MealLoggingDestination.lidar)
-                        }
+                        showingLiDARScannerView = true
                     }
                     
                     // Recent items
@@ -68,10 +65,7 @@ struct MealLoggingOptionsView: View {
                         description: "Previously logged foods",
                         color: ColorTheme.primary.opacity(0.8)
                     ) {
-                        dismiss() // Close the sheet first
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            navigationCoordinator.currentNavigationPath.wrappedValue.append(MealLoggingDestination.recent)
-                        }
+                        showingRecentItemsView = true
                     }
                     
                     // Favorites
@@ -81,10 +75,7 @@ struct MealLoggingOptionsView: View {
                         description: "Your favorite meals",
                         color: ColorTheme.secondary.opacity(0.8)
                     ) {
-                        dismiss() // Close the sheet first
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            navigationCoordinator.currentNavigationPath.wrappedValue.append(MealLoggingDestination.favorites)
-                        }
+                        showingFavoritesView = true
                     }
                     
                     // Templates
@@ -94,10 +85,7 @@ struct MealLoggingOptionsView: View {
                         description: "Saved meal templates",
                         color: ColorTheme.accent.opacity(0.8)
                     ) {
-                        dismiss() // Close the sheet first
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            navigationCoordinator.currentNavigationPath.wrappedValue.append(MealLoggingDestination.templates)
-                        }
+                        showingTemplatesView = true
                     }
                 }
                 
@@ -116,24 +104,29 @@ struct MealLoggingOptionsView: View {
             .padding()
             .navigationTitle("Log Meal")
             .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(for: MealLoggingDestination.self) { destination in
-                switch destination {
-                case .search:
-                    FoodSearchView()
-                case .barcode:
-                    BarcodeScannerView()
-                case .lidar:
-                    LiDARScannerView()
-                case .recent:
-                    RecentItemsView()
-                case .favorites:
-                    FavoriteMealsView()
-                case .templates:
-                    MealTemplatesView()
-                case .mealBuilder:
-                    MealBuilderView()
-                }
-            }
+        }
+        // Present each view as a sheet instead of using navigation
+        .sheet(isPresented: $showingSearchView) {
+            FoodSearchView()
+                .environmentObject(navigationCoordinator)
+        }
+        .sheet(isPresented: $showingBarcodeScannerView) {
+            BarcodeScannerView()
+                .environmentObject(navigationCoordinator)
+        }
+        .sheet(isPresented: $showingLiDARScannerView) {
+            LiDARScannerView()
+                .environmentObject(navigationCoordinator)
+        }
+        .sheet(isPresented: $showingRecentItemsView) {
+            RecentItemsView()
+                .environmentObject(navigationCoordinator)
+        }
+        .sheet(isPresented: $showingFavoritesView) {
+            FavoriteMealsView()
+        }
+        .sheet(isPresented: $showingTemplatesView) {
+            MealTemplatesView()
         }
     }
 }
@@ -180,42 +173,45 @@ struct LoggingOptionCard: View {
     }
 }
 
-// Navigation destinations for meal logging
-enum MealLoggingDestination: Hashable {
-    case search
-    case barcode
-    case lidar
-    case recent
-    case favorites
-    case templates
-    case mealBuilder
-}
-
-// MARK: - Missing Views (Placeholder implementations)
+// MARK: - Missing Views (Updated implementations)
 
 struct RecentItemsView: View {
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     @StateObject private var viewModel = RecentItemsViewModel()
     
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                if viewModel.recentItems.isEmpty {
-                    emptyStateView
-                } else {
-                    ForEach(viewModel.recentItems) { item in
-                        FoodItemResultRow(item: item) {
-                            // Navigate to food detail or add to meal
-                            navigationCoordinator.currentNavigationPath.wrappedValue.append(MealLoggingDestination.mealBuilder)
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 16) {
+                    if viewModel.isLoading {
+                        loadingView
+                    } else if viewModel.recentItems.isEmpty {
+                        emptyStateView
+                    } else {
+                        ForEach(viewModel.recentItems) { item in
+                            FoodItemResultRow(item: item) {
+                                // Add item to meal and navigate to meal builder
+                                viewModel.addToMeal(item)
+                                dismiss()
+                            }
                         }
                     }
                 }
+                .padding()
             }
-            .padding()
-        }
-        .navigationTitle("Recent Items")
-        .onAppear {
-            viewModel.loadRecentItems()
+            .navigationTitle("Recent Items")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
+            .onAppear {
+                viewModel.loadRecentItems()
+            }
         }
     }
     
@@ -237,53 +233,90 @@ struct RecentItemsView: View {
         .padding()
         .frame(maxWidth: .infinity, minHeight: 200)
     }
+    
+    private var loadingView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.5)
+            
+            Text("Loading recent items...")
+                .font(.subheadline)
+                .foregroundColor(ColorTheme.secondaryText)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, minHeight: 200)
+    }
 }
 
 struct FavoriteMealsView: View {
+    @Environment(\.dismiss) private var dismiss
+    
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                Image(systemName: "star")
-                    .font(.system(size: 48))
-                    .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
-                
-                Text("No Favorite Meals")
-                    .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
-                
-                Text("Mark meals as favorites to quickly log them again")
-                    .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
-                    .multilineTextAlignment(.center)
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 16) {
+                    Image(systemName: "star")
+                        .font(.system(size: 48))
+                        .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
+                    
+                    Text("No Favorite Meals")
+                        .font(.headline)
+                        .foregroundColor(ColorTheme.primaryText)
+                    
+                    Text("Mark meals as favorites to quickly log them again")
+                        .font(.subheadline)
+                        .foregroundColor(ColorTheme.secondaryText)
+                        .multilineTextAlignment(.center)
+                }
+                .padding()
+                .frame(maxWidth: .infinity, minHeight: 200)
             }
-            .padding()
-            .frame(maxWidth: .infinity, minHeight: 200)
+            .navigationTitle("Favorite Meals")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
         }
-        .navigationTitle("Favorite Meals")
     }
 }
 
 struct MealTemplatesView: View {
+    @Environment(\.dismiss) private var dismiss
+    
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                Image(systemName: "square.on.square")
-                    .font(.system(size: 48))
-                    .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
-                
-                Text("No Meal Templates")
-                    .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
-                
-                Text("Create meal templates for recurring meals")
-                    .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
-                    .multilineTextAlignment(.center)
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 16) {
+                    Image(systemName: "square.on.square")
+                        .font(.system(size: 48))
+                        .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
+                    
+                    Text("No Meal Templates")
+                        .font(.headline)
+                        .foregroundColor(ColorTheme.primaryText)
+                    
+                    Text("Create meal templates for recurring meals")
+                        .font(.subheadline)
+                        .foregroundColor(ColorTheme.secondaryText)
+                        .multilineTextAlignment(.center)
+                }
+                .padding()
+                .frame(maxWidth: .infinity, minHeight: 200)
             }
-            .padding()
-            .frame(maxWidth: .infinity, minHeight: 200)
+            .navigationTitle("Meal Templates")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+            }
         }
-        .navigationTitle("Meal Templates")
     }
 }
 
@@ -323,6 +356,11 @@ class RecentItemsViewModel: ObservableObject {
             ]
             self.isLoading = false
         }
+    }
+    
+    func addToMeal(_ foodItem: FoodItem) {
+        // Add to meal builder singleton
+        MealBuilder.shared.addFoodItem(foodItem)
     }
 }
 
