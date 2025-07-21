@@ -2,7 +2,7 @@
 //  MealBuilderViewModel.swift
 //  GutCheck
 //
-//  Created on 7/14/25.
+//  Fixed guard statement issues
 //
 
 import Foundation
@@ -25,8 +25,13 @@ class MealBuilderViewModel: ObservableObject {
     // Food item being edited
     @Published var editingFoodItem: FoodItem?
     
-    // Firestore reference
-    private let db = Firestore.firestore()
+    // Repository dependency
+    private let mealRepository: MealRepository
+    
+    // Dependency injection for easier testing
+    init(mealRepository: MealRepository = MealRepository.shared) {
+        self.mealRepository = mealRepository
+    }
     
     // Computed properties
     var formattedDateTime: String {
@@ -121,24 +126,30 @@ class MealBuilderViewModel: ObservableObject {
     }
     
     func saveMeal() {
+        // FIXED: Added proper return statements to guard clauses
         guard !foodItems.isEmpty else {
             errorMessage = "You need to add at least one food item"
-            return
+            return  // <-- This was missing
         }
         
-        guard !mealName.isEmpty else {
+        if mealName.isEmpty {
             // Generate a default name if empty
             mealName = "\(mealType.rawValue.capitalized) \(formattedDateTime)"
-            return
         }
         
+        // ✅ Execution continues normally
         isSaving = true
+        errorMessage = nil
         
         Task {
             do {
                 // Ensure user is authenticated
                 guard let userId = Auth.auth().currentUser?.uid else {
-                    throw NSError(domain: "MealBuilderError", code: 0, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
+                    await MainActor.run {
+                        self.errorMessage = "User not authenticated"
+                        self.isSaving = false
+                    }
+                    return  // <-- Exit the Task
                 }
                 
                 // Create the meal object
@@ -153,8 +164,8 @@ class MealBuilderViewModel: ObservableObject {
                     createdBy: userId
                 )
                 
-                // Save to Firestore
-                try await saveMealToFirestore(meal)
+                // Save to repository (using the new repository pattern)
+                try await mealRepository.saveWithFoodItems(meal)
                 
                 // Update UI
                 await MainActor.run {
@@ -168,42 +179,6 @@ class MealBuilderViewModel: ObservableObject {
                     self.isSaving = false
                 }
             }
-        }
-    }
-    
-    private func saveMealToFirestore(_ meal: Meal) async throws {
-        // Convert the meal to Firestore data
-        let mealData = meal.toFirestoreData()
-        
-        // Save the meal document
-        let mealRef = db.collection("meals").document(meal.id)
-        try await mealRef.setData(mealData)
-        
-        // Save each food item as a subcollection
-        for foodItem in meal.foodItems {
-            let foodItemData: [String: Any] = [
-                "id": foodItem.id,
-                "name": foodItem.name,
-                "quantity": foodItem.quantity,
-                "estimatedWeightInGrams": foodItem.estimatedWeightInGrams as Any,
-                "ingredients": foodItem.ingredients,
-                "allergens": foodItem.allergens,
-                "source": foodItem.source.rawValue,
-                "isUserEdited": foodItem.isUserEdited,
-                "barcodeValue": foodItem.barcodeValue as Any,
-                // Nutrition data
-                "nutrition": [
-                    "calories": foodItem.nutrition.calories as Any,
-                    "protein": foodItem.nutrition.protein as Any,
-                    "carbs": foodItem.nutrition.carbs as Any,
-                    "fat": foodItem.nutrition.fat as Any,
-                    "fiber": foodItem.nutrition.fiber as Any,
-                    "sugar": foodItem.nutrition.sugar as Any,
-                    "sodium": foodItem.nutrition.sodium as Any
-                ]
-            ]
-            
-            try await mealRef.collection("foodItems").document(foodItem.id).setData(foodItemData)
         }
     }
     
@@ -233,5 +208,6 @@ class MealBuilderViewModel: ObservableObject {
         notes = ""
         foodItems = []
         editingFoodItem = nil
+        errorMessage = nil
     }
 }

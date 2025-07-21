@@ -259,14 +259,23 @@ enum ActivityType: Hashable {
 }
 
 // MARK: - Recent Activity ViewModel
+
 @MainActor
 class RecentActivityViewModel: ObservableObject {
     @Published var recentEntries: [ActivityEntry] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     
-    private let firestore = Firestore.firestore()
+    // Repository dependencies
+    private let mealRepository: MealRepository
+    private let symptomRepository: SymptomRepository
     private let maxEntries = 5
+    
+    init(mealRepository: MealRepository = MealRepository.shared,
+         symptomRepository: SymptomRepository = SymptomRepository.shared) {
+        self.mealRepository = mealRepository
+        self.symptomRepository = symptomRepository
+    }
     
     func loadRecentActivity(for date: Date) {
         isLoading = true
@@ -289,52 +298,25 @@ class RecentActivityViewModel: ObservableObject {
         }
     }
     
+    // MARK: - Refactored using Repositories
+    
     private func fetchActivityEntries(for date: Date) async throws -> [ActivityEntry] {
-        // Get current user ID from Firebase Auth
         guard let userId = Auth.auth().currentUser?.uid else {
-            throw NSError(domain: "AuthError", code: 0, userInfo: [NSLocalizedDescriptionKey: "No authenticated user"])
+            throw RepositoryError.noAuthenticatedUser
         }
-        
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: date)
-        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) ?? date
         
         var entries: [ActivityEntry] = []
         
-        // Fetch meals
-        let mealsQuery = firestore.collection("meals")
-            .whereField("createdBy", isEqualTo: userId)
-            .whereField("date", isGreaterThanOrEqualTo: startOfDay)
-            .whereField("date", isLessThan: endOfDay)
-            .order(by: "date", descending: true)
-            .limit(to: maxEntries)
-        
-        let mealsSnapshot = try await mealsQuery.getDocuments()
-        for document in mealsSnapshot.documents {
-            do {
-                let meal = try Meal(from: document)
-                entries.append(ActivityEntry(type: .meal(meal), timestamp: meal.date))
-            } catch {
-                print("Error decoding meal: \(error)")
-            }
+        // Fetch meals using repository
+        let meals = try await mealRepository.fetchMealsForDate(date, userId: userId)
+        for meal in meals {
+            entries.append(ActivityEntry(type: .meal(meal), timestamp: meal.date))
         }
         
-        // Fetch symptoms
-        let symptomsQuery = firestore.collection("symptoms")
-            .whereField("createdBy", isEqualTo: userId)
-            .whereField("date", isGreaterThanOrEqualTo: startOfDay)
-            .whereField("date", isLessThan: endOfDay)
-            .order(by: "date", descending: true)
-            .limit(to: maxEntries)
-        
-        let symptomsSnapshot = try await symptomsQuery.getDocuments()
-        for document in symptomsSnapshot.documents {
-            do {
-                let symptom = try Symptom(from: document)
-                entries.append(ActivityEntry(type: .symptom(symptom), timestamp: symptom.date))
-            } catch {
-                print("Error decoding symptom: \(error)")
-            }
+        // Fetch symptoms using repository
+        let symptoms = try await symptomRepository.fetchSymptomsForDate(date, userId: userId)
+        for symptom in symptoms {
+            entries.append(ActivityEntry(type: .symptom(symptom), timestamp: symptom.date))
         }
         
         // Sort by timestamp (most recent first) and limit

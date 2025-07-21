@@ -1,3 +1,10 @@
+//
+//  Symptom.swift
+//  GutCheck
+//
+//  Updated to include FirestoreModel conformance
+//
+
 import Foundation
 
 enum StoolType: Int, Codable, CaseIterable {
@@ -12,7 +19,7 @@ enum UrgencyLevel: Int, Codable, CaseIterable {
     case none = 0, mild = 1, moderate = 2, urgent = 3
 }
 
-struct Symptom: Identifiable, Codable, Hashable, Equatable {
+struct Symptom: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
     var id: String = UUID().uuidString
     var date: Date
     var stoolType: StoolType

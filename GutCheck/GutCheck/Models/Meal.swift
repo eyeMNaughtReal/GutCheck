@@ -1,3 +1,10 @@
+//
+//  Meal.swift
+//  GutCheck
+//
+//  Updated to include FirestoreModel conformance
+//
+
 import Foundation
 
 enum MealType: String, Codable, CaseIterable {
@@ -8,7 +15,7 @@ enum MealSource: String, Codable {
     case manual, barcode, lidar, ai
 }
 
-struct Meal: Identifiable, Codable, Hashable, Equatable {
+struct Meal: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
     var id: String = UUID().uuidString
     var name: String
     var date: Date

@@ -5,14 +5,6 @@
 //  Created by Mark Conley on 7/14/25.
 //
 
-
-//
-//  LogSymptomViewModel.swift
-//  GutCheck
-//
-//  ViewModel for symptom logging with validation and Firebase integration
-//
-
 import Foundation
 import FirebaseFirestore
 import FirebaseAuth
@@ -20,7 +12,7 @@ import UserNotifications
 
 @MainActor
 class LogSymptomViewModel: ObservableObject {
-    // Form state
+    // Form state (unchanged)
     @Published var symptomDate = Date()
     @Published var selectedStoolType: StoolType?
     @Published var selectedPainLevel: Int = 0
@@ -29,23 +21,27 @@ class LogSymptomViewModel: ObservableObject {
     @Published var customTag: String = ""
     @Published var notes: String = ""
     
-    // UI state
+    // UI state (unchanged)
     @Published var isSaving = false
     @Published var showingSuccessAlert = false
     @Published var showingErrorAlert = false
     @Published var errorMessage = ""
     
-    // Available predefined tags
+    // Available predefined tags (unchanged)
     let availableTags = [
         "Bloating", "Cramping", "Gas", "Nausea", "Fatigue",
         "Stress", "After eating", "Morning", "Evening",
         "Exercise related", "Travel", "Medication"
     ]
     
-    private let firestore = Firestore.firestore()
+    // Repository dependency
+    private let symptomRepository: SymptomRepository
     
-    // MARK: - Computed Properties
+    init(symptomRepository: SymptomRepository = SymptomRepository.shared) {
+        self.symptomRepository = symptomRepository
+    }
     
+    // Computed properties (unchanged)
     var isFormValid: Bool {
         selectedStoolType != nil
     }
@@ -59,7 +55,7 @@ class LogSymptomViewModel: ObservableObject {
         !Calendar.current.isDate(symptomDate, inSameDayAs: Date())
     }
     
-    // MARK: - Tag Management
+    // MARK: - Tag Management (unchanged)
     
     func toggleTag(_ tag: String) {
         if selectedTags.contains(tag) {
@@ -81,7 +77,7 @@ class LogSymptomViewModel: ObservableObject {
         selectedTags.remove(tag)
     }
     
-    // MARK: - Save Symptom
+    // MARK: - Save Symptom (Refactored)
     
     func saveSymptom() {
         guard isFormValid else {
@@ -103,8 +99,8 @@ class LogSymptomViewModel: ObservableObject {
         }
         
         isSaving = true
+        errorMessage = ""
         
-        // Convert pain level to PainLevel enum
         let painLevel: PainLevel
         switch selectedPainLevel {
         case 0:
@@ -117,7 +113,6 @@ class LogSymptomViewModel: ObservableObject {
             painLevel = .severe
         }
         
-        // Create symptom object
         let symptom = Symptom(
             date: symptomDate,
             stoolType: stoolType,
@@ -130,7 +125,8 @@ class LogSymptomViewModel: ObservableObject {
         
         Task {
             do {
-                try await saveSymptomToFirestore(symptom)
+                // Use repository instead of direct Firestore calls
+                try await symptomRepository.save(symptom)
                 
                 await MainActor.run {
                     self.isSaving = false
@@ -139,25 +135,17 @@ class LogSymptomViewModel: ObservableObject {
             } catch {
                 await MainActor.run {
                     self.isSaving = false
-                    self.errorMessage = "Failed to save symptom: \(error.localizedDescription)"
+                    self.errorMessage = error.localizedDescription
                     self.showingErrorAlert = true
                 }
             }
         }
     }
     
-    private func saveSymptomToFirestore(_ symptom: Symptom) async throws {
-        let symptomData = symptom.toFirestoreData()
-        try await firestore.collection("symptoms").document(symptom.id).setData(symptomData)
-    }
-    
-    // MARK: - Remind Me Later
-    
+    // Other methods remain unchanged
     func remindMeLater() {
-        // Get the remind me later interval from user settings (defaulting to 15 minutes)
         let interval = UserDefaults.standard.object(forKey: "remindMeLaterInterval") as? Int ?? 15
         
-        // Schedule a local notification
         let content = UNMutableNotificationContent()
         content.title = "Symptom Reminder"
         content.body = "Don't forget to log your symptoms!"
@@ -172,8 +160,6 @@ class LogSymptomViewModel: ObservableObject {
             }
         }
     }
-    
-    // MARK: - Reset Form
     
     func resetForm() {
         symptomDate = Date()
