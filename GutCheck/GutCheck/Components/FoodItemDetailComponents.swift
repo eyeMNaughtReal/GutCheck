@@ -428,26 +428,9 @@ struct AllergensView: View {
     }
 }
 
-struct NutritionBadge: View {
-    let value: String
-    let unit: String
-    let color: Color
-    
-    var body: some View {
-        HStack(spacing: 2) {
-            Text(value)
-                .font(.caption)
-                .fontWeight(.medium)
-            Text(unit)
-                .font(.caption2)
-        }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 2)
-        .background(color.opacity(0.2))
-        .foregroundColor(color)
-        .cornerRadius(4)
-    }
-}
+// Remove the old implementations and import the new ones
+// All old MacroRow and NutritionBadge usage automatically works
+// Plus you get new convenience initializers:
 
 struct EnhancedFoodItemResultRow: View {
     let item: FoodItem
@@ -485,19 +468,19 @@ struct EnhancedFoodItemResultRow: View {
                     // Nutrition preview
                     HStack(spacing: 8) {
                         if let calories = item.nutrition.calories {
-                            NutritionBadge(value: "\(calories)", unit: "kcal", color: .orange)
+                            UnifiedNutritionBadge(value: "\(calories)", unit: "kcal", color: .orange)
                         }
                         
                         if let protein = item.nutrition.protein {
-                            NutritionBadge(value: String(format: "%.1f", protein), unit: "P", color: .blue)
+                            UnifiedNutritionBadge(value: String(format: "%.1f", protein), unit: "P", color: .blue)
                         }
                         
                         if let carbs = item.nutrition.carbs {
-                            NutritionBadge(value: String(format: "%.1f", carbs), unit: "C", color: .green)
+                            UnifiedNutritionBadge(value: String(format: "%.1f", carbs), unit: "C", color: .green)
                         }
                         
                         if let fat = item.nutrition.fat {
-                            NutritionBadge(value: String(format: "%.1f", fat), unit: "F", color: .red)
+                            UnifiedNutritionBadge(value: String(format: "%.1f", fat), unit: "F", color: .red)
                         }
                     }
                     

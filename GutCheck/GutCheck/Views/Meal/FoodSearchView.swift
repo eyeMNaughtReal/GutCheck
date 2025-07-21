@@ -242,24 +242,8 @@ struct FoodItemResultRow: View {
                         .font(.subheadline)
                         .foregroundColor(ColorTheme.secondaryText)
                     
-                    // Nutrition preview
-                    HStack(spacing: 8) {
-                        if let calories = item.nutrition.calories {
-                            NutritionBadge(value: "\(calories)", unit: "kcal", color: .orange)
-                        }
-                        
-                        if let protein = item.nutrition.protein {
-                            NutritionBadge(value: String(format: "%.1f", protein), unit: "P", color: .blue)
-                        }
-                        
-                        if let carbs = item.nutrition.carbs {
-                            NutritionBadge(value: String(format: "%.1f", carbs), unit: "C", color: .green)
-                        }
-                        
-                        if let fat = item.nutrition.fat {
-                            NutritionBadge(value: String(format: "%.1f", fat), unit: "F", color: .red)
-                        }
-                    }
+                    // Much cleaner with convenience initializers
+                    item.nutrition.compactPreview()
                     
                     // Allergens preview
                     if !item.allergens.isEmpty {

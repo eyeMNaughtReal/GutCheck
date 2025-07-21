@@ -405,15 +405,13 @@ struct FoodItemDetailRow: View {
             
             HStack(spacing: 12) {
                 if let protein = foodItem.nutrition.protein {
-                    nutrientBadge(label: "Protein", value: protein, unit: "g", color: .blue)
+                    UnifiedNutritionBadge(protein: protein)
                 }
-                
                 if let carbs = foodItem.nutrition.carbs {
-                    nutrientBadge(label: "Carbs", value: carbs, unit: "g", color: .green)
+                    UnifiedNutritionBadge(carbs: carbs)
                 }
-                
                 if let fat = foodItem.nutrition.fat {
-                    nutrientBadge(label: "Fat", value: fat, unit: "g", color: .red)
+                    UnifiedNutritionBadge(fat: fat)
                 }
             }
         }
