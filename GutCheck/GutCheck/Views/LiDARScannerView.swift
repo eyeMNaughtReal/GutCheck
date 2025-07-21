@@ -2,7 +2,7 @@
 //  LiDARScannerView.swift
 //  GutCheck
 //
-//  Fixed to remove MealLoggingDestination references
+//  Fixed to use correct component names
 //
 
 import SwiftUI
@@ -117,7 +117,8 @@ struct LiDARScannerView: View {
             viewModel.stopARSession()
         }
         .sheet(item: $viewModel.detectedFoodItem) { foodItem in
-            FoodItemDetailView(foodItem: foodItem) { updatedItem in
+            // Fixed: Use EnhancedFoodItemDetailView instead of FoodItemDetailView
+            EnhancedFoodItemDetailView(foodItem: foodItem) { updatedItem in
                 viewModel.addToMeal(updatedItem)
                 showingMealBuilder = true
             }
@@ -411,3 +412,5 @@ struct ARViewContainer: UIViewRepresentable {
         // No updates needed here as the session is managed externally
     }
 }
+
+// Note: RoundedCorner and cornerRadius extension are already defined elsewhere in the project
