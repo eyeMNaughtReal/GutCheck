@@ -1,8 +1,30 @@
+// Wrapper for presenting the correct info view
+import SwiftUI
+
+// ...existing code...
+
+public struct SymptomInfoViews: View {
+    public let infoType: SymptomInfoType
+    public init(infoType: SymptomInfoType) {
+        self.infoType = infoType
+    }
+    public var body: some View {
+        switch infoType {
+        case .bristol:
+            BristolStoolInfoView()
+        case .pain:
+            PainLevelInfoView()
+        case .urgency:
+            UrgencyLevelInfoView()
+        }
+    }
+}
 //
 //  SymptomInfoViews.swift
 //  GutCheck
 //
 //  Information modal views for Bristol stool scale, pain levels, and urgency
+//  Redesigned for professional medical application
 //
 
 import SwiftUI
@@ -15,96 +37,47 @@ struct BristolStoolInfoView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    // Header
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Bristol Stool Scale")
-                            .font(.title2.bold())
-                            .foregroundColor(ColorTheme.primaryText)
-                        
-                        Text("A medical classification system for human feces. Select the type that best matches your bowel movement.")
-                            .font(.body)
-                            .foregroundColor(ColorTheme.secondaryText)
-                    }
-                    
-                    // Types breakdown
-                    VStack(spacing: 16) {
-                        BristolInfoCard(
-                            type: 1,
-                            title: "Type 1 - Separate hard lumps",
-                            description: "Like nuts, very hard to pass. Indicates severe constipation.",
-                            color: ColorTheme.error,
-                            severity: "Problematic"
-                        )
-                        
-                        BristolInfoCard(
-                            type: 2,
-                            title: "Type 2 - Lumpy sausage",
-                            description: "Sausage-shaped but lumpy. Indicates mild constipation.",
-                            color: ColorTheme.error,
-                            severity: "Problematic"
-                        )
-                        
-                        BristolInfoCard(
-                            type: 3,
-                            title: "Type 3 - Cracked sausage",
-                            description: "Like a sausage but with cracks on surface. Borderline normal.",
-                            color: ColorTheme.warning,
-                            severity: "Borderline"
-                        )
-                        
-                        BristolInfoCard(
-                            type: 4,
-                            title: "Type 4 - Smooth snake",
-                            description: "Like a sausage or snake, smooth and soft. This is ideal!",
-                            color: ColorTheme.success,
-                            severity: "Ideal"
-                        )
-                        
-                        BristolInfoCard(
-                            type: 5,
-                            title: "Type 5 - Soft blobs",
-                            description: "Soft blobs with clear-cut edges. Borderline normal.",
-                            color: ColorTheme.warning,
-                            severity: "Borderline"
-                        )
-                        
-                        BristolInfoCard(
-                            type: 6,
-                            title: "Type 6 - Mushy consistency",
-                            description: "Fluffy pieces with ragged edges, mushy. Indicates mild diarrhea.",
-                            color: ColorTheme.error,
-                            severity: "Problematic"
-                        )
-                        
-                        BristolInfoCard(
-                            type: 7,
-                            title: "Type 7 - Liquid consistency",
-                            description: "Watery, no solid pieces. Indicates diarrhea.",
-                            color: ColorTheme.error,
-                            severity: "Problematic"
-                        )
-                    }
-                    
-                    // Additional info
+                VStack(spacing: 20) {
+                    // Header section
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Understanding the Colors")
+                        Text("Medical Classification System")
                             .font(.headline)
                             .foregroundColor(ColorTheme.primaryText)
                         
-                        HStack(spacing: 16) {
-                            ColorLegendItem(color: ColorTheme.success, title: "Green", subtitle: "Ideal (Type 4)")
-                            ColorLegendItem(color: ColorTheme.warning, title: "Yellow", subtitle: "Borderline (Types 3, 5)")
-                            ColorLegendItem(color: ColorTheme.error, title: "Red", subtitle: "Problematic (Types 1, 2, 6, 7)")
-                        }
+                        Text("Select the type that best matches your bowel movement consistency.")
+                            .font(.subheadline)
+                            .foregroundColor(ColorTheme.secondaryText)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
                     .background(ColorTheme.surface)
-                    .cornerRadius(12)
                     
-                    Spacer(minLength: 20)
+                    // Color legend
+                    HStack(spacing: 20) {
+                        LegendItem(color: ColorTheme.success, text: "Ideal")
+                        LegendItem(color: ColorTheme.warning, text: "Borderline")
+                        LegendItem(color: ColorTheme.error, text: "Problematic")
+                    }
+                    .padding()
+                    .background(ColorTheme.cardBackground)
+                    .cornerRadius(12)
+                    .padding(.horizontal)
+                    
+                    // Detailed guide
+                    LazyVStack(spacing: 8) {
+                        ForEach(1...7, id: \.self) { type in
+                            BristolDetailCard(
+                                type: type,
+                                title: bristolTitle(for: type),
+                                description: bristolDescription(for: type),
+                                color: bristolColor(for: type)
+                            )
+                        }
+                    }
+                    .padding(.horizontal)
+                    
+                    Spacer()
                 }
-                .padding()
             }
             .navigationTitle("Bristol Stool Scale")
             .navigationBarTitleDisplayMode(.inline)
@@ -118,73 +91,42 @@ struct BristolStoolInfoView: View {
             }
         }
     }
-}
-
-struct BristolInfoCard: View {
-    let type: Int
-    let title: String
-    let description: String
-    let color: Color
-    let severity: String
     
-    var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            // Type number
-            Text("\(type)")
-                .font(.title.bold())
-                .foregroundColor(.white)
-                .frame(width: 40, height: 40)
-                .background(Circle().fill(color))
-            
-            // Content
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
-                
-                Text(description)
-                    .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
-                
-                Text(severity)
-                    .font(.caption.bold())
-                    .foregroundColor(color)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
-                    .background(color.opacity(0.2))
-                    .cornerRadius(8)
-            }
-            
-            Spacer()
+
+    
+    // Helper functions
+    private func bristolTitle(for type: Int) -> String {
+        switch type {
+        case 1: return "Hard lumps"
+        case 2: return "Lumpy sausage"
+        case 3: return "Cracked sausage"
+        case 4: return "Smooth sausage"
+        case 5: return "Soft blobs"
+        case 6: return "Mushy pieces"
+        case 7: return "Watery liquid"
+        default: return ""
         }
-        .padding()
-        .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
-        .shadow(color: ColorTheme.shadowColor, radius: 2, x: 0, y: 1)
     }
-}
-
-struct ColorLegendItem: View {
-    let color: Color
-    let title: String
-    let subtitle: String
     
-    var body: some View {
-        VStack(spacing: 4) {
-            Circle()
-                .fill(color)
-                .frame(width: 20, height: 20)
-            
-            Text(title)
-                .font(.caption.bold())
-                .foregroundColor(ColorTheme.primaryText)
-            
-            Text(subtitle)
-                .font(.caption2)
-                .foregroundColor(ColorTheme.secondaryText)
-                .multilineTextAlignment(.center)
+    private func bristolDescription(for type: Int) -> String {
+        switch type {
+        case 1: return "Separate hard lumps, like nuts. Severe constipation."
+        case 2: return "Sausage-shaped but lumpy. Mild constipation."
+        case 3: return "Like a sausage with cracks on surface. Borderline normal."
+        case 4: return "Like a sausage, smooth and soft. Ideal consistency."
+        case 5: return "Soft blobs with clear-cut edges. Borderline normal."
+        case 6: return "Fluffy pieces with ragged edges. Mild diarrhea."
+        case 7: return "Watery, no solid pieces. Diarrhea."
+        default: return ""
         }
-        .frame(maxWidth: .infinity)
+    }
+    
+    private func bristolColor(for type: Int) -> Color {
+        switch type {
+        case 4: return ColorTheme.success
+        case 3, 5: return ColorTheme.warning
+        default: return ColorTheme.error
+        }
     }
 }
 
@@ -196,134 +138,59 @@ struct PainLevelInfoView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
+                VStack(spacing: 20) {
                     // Header
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Pain Level Scale")
-                            .font(.title2.bold())
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("0-10 Numeric Pain Scale")
+                            .font(.headline)
                             .foregroundColor(ColorTheme.primaryText)
                         
-                        Text("Rate your abdominal pain, cramping, or discomfort from 0 to 10.")
-                            .font(.body)
+                        Text("Rate your abdominal pain, cramping, or discomfort.")
+                            .font(.subheadline)
                             .foregroundColor(ColorTheme.secondaryText)
                     }
-                    
-                    // Pain scale breakdown
-                    VStack(spacing: 12) {
-                        PainLevelInfoCard(levels: "0", title: "No Pain", description: "No pain or discomfort", color: ColorTheme.success)
-                        PainLevelInfoCard(levels: "1-2", title: "Mild Pain", description: "Very light pain, barely noticeable", color: ColorTheme.warning)
-                        PainLevelInfoCard(levels: "3-4", title: "Moderate Pain", description: "Noticeable pain that may interfere with daily activities", color: ColorTheme.warning)
-                        PainLevelInfoCard(levels: "5-6", title: "Severe Pain", description: "Strong pain that significantly interferes with activities", color: .orange)
-                        PainLevelInfoCard(levels: "7-8", title: "Very Severe Pain", description: "Intense pain that dominates your attention", color: ColorTheme.error)
-                        PainLevelInfoCard(levels: "9-10", title: "Worst Possible Pain", description: "Unbearable pain, unable to do anything else", color: ColorTheme.error)
-                    }
-                    
-                    // Guidelines
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Guidelines")
-                            .font(.headline)
-                            .foregroundColor(ColorTheme.primaryText)
-
-                        Text("Use your best judgment when rating pain. This helps us correlate symptom severity with potential food or environmental triggers.")
-                            .font(.body)
-                            .foregroundColor(ColorTheme.secondaryText)
-                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
                     .background(ColorTheme.surface)
-                    .cornerRadius(12)
-                Spacer(minLength: 20)
-            }
-            .padding()
-        }
-        .navigationTitle("Pain Level Scale")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Done") {
-                    dismiss()
+                    
+                    // Pain scale visualization
+                    VStack(spacing: 20) {
+                        // Horizontal scale
+                        HStack(spacing: 0) {
+                            ForEach(0...4, id: \.self) { level in
+                                VStack(spacing: 8) {
+                                    Text("\(level)")
+                                        .font(.title2)
+                                        .fontWeight(.bold)
+                                        .foregroundColor(.white)
+                                        .frame(width: 40, height: 40)
+                                        .background(Circle().fill(painColor(for: level)))
+                                    
+                                    Text(painLabel(for: level))
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                        .foregroundColor(ColorTheme.secondaryText)
+                                        .multilineTextAlignment(.center)
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                        }
+                        .padding()
+                        
+                        // Detailed descriptions
+                        VStack(spacing: 12) {
+                            PainRangeCard(range: "0", title: "No Pain", description: "No discomfort", color: ColorTheme.success)
+                            PainRangeCard(range: "1-2", title: "Mild", description: "Slight discomfort", color: Color.green.opacity(0.8))
+                            PainRangeCard(range: "3-4", title: "Moderate", description: "Noticeable pain", color: ColorTheme.warning)
+                            PainRangeCard(range: "5+", title: "Severe", description: "Significant pain", color: ColorTheme.error)
+                        }
+                        .padding()
+                    }
+                    
+                    Spacer()
                 }
-                .foregroundColor(ColorTheme.primary)
             }
-        }
-    }
-}
-}
-
-struct PainLevelInfoCard: View {
-let levels: String
-let title: String
-let description: String
-let color: Color
-
-var body: some View {
-    HStack(alignment: .top, spacing: 16) {
-        Text(levels)
-            .font(.title3.bold())
-            .foregroundColor(.white)
-            .frame(width: 40, height: 40)
-            .background(Circle().fill(color))
-
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
-
-            Text(description)
-                .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
-        }
-
-        Spacer()
-    }
-    .padding()
-    .background(ColorTheme.cardBackground)
-    .cornerRadius(12)
-    .shadow(color: ColorTheme.shadowColor, radius: 2, x: 0, y: 1)
-}
-}
-
-struct UrgencyLevelInfoView: View {
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Urgency Scale")
-                            .font(.title2.bold())
-                            .foregroundColor(ColorTheme.primaryText)
-
-                        Text("Describe how urgently you needed to use the bathroom.")
-                            .font(.body)
-                            .foregroundColor(ColorTheme.secondaryText)
-                    }
-
-                    VStack(spacing: 12) {
-                        UrgencyInfoCard(level: "0", title: "None", description: "No urgency. Could go later without discomfort.", color: ColorTheme.success)
-                        UrgencyInfoCard(level: "1", title: "Mild", description: "Slight urge, could hold it easily.", color: ColorTheme.warning)
-                        UrgencyInfoCard(level: "2", title: "Moderate", description: "Noticeable urge, should find a bathroom soon.", color: .orange)
-                        UrgencyInfoCard(level: "3", title: "Urgent", description: "Severe urge, needed to go immediately.", color: ColorTheme.error)
-                    }
-
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Why it matters")
-                            .font(.headline)
-                            .foregroundColor(ColorTheme.primaryText)
-
-                        Text("Tracking urgency helps detect bowel irregularities, potential IBS, or reaction triggers.")
-                            .font(.body)
-                            .foregroundColor(ColorTheme.secondaryText)
-                    }
-                    .padding()
-                    .background(ColorTheme.surface)
-                    .cornerRadius(12)
-
-                    Spacer(minLength: 20)
-                }
-                .padding()
-            }
-            .navigationTitle("Urgency Scale")
+            .navigationTitle("Pain Assessment")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -335,46 +202,277 @@ struct UrgencyLevelInfoView: View {
             }
         }
     }
+    
+    private func painColor(for level: Int) -> Color {
+        switch level {
+        case 0: return ColorTheme.success
+        case 1: return Color.green.opacity(0.8)
+        case 2: return ColorTheme.warning
+        case 3: return Color.orange
+        case 4: return ColorTheme.error
+        default: return ColorTheme.secondaryText
+        }
+    }
+    
+    private func painLabel(for level: Int) -> String {
+        switch level {
+        case 0: return "None"
+        case 1: return "Mild"
+        case 2: return "Moderate"
+        case 3: return "Severe"
+        case 4: return "Extreme"
+        default: return ""
+        }
+    }
 }
 
-struct UrgencyInfoCard: View {
-    let level: String
+// MARK: - Urgency Level Info View
+
+struct UrgencyLevelInfoView: View {
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Header
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Urgency Classification")
+                            .font(.headline)
+                            .foregroundColor(ColorTheme.primaryText)
+                        
+                        Text("How urgently did you need to use the bathroom?")
+                            .font(.subheadline)
+                            .foregroundColor(ColorTheme.secondaryText)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .background(ColorTheme.surface)
+                    
+                    // Urgency scale
+                    VStack(spacing: 20) {
+                        // Visual scale
+                        HStack(spacing: 16) {
+                            ForEach(0...3, id: \.self) { level in
+                                VStack(spacing: 8) {
+                                    Circle()
+                                        .fill(urgencyColor(for: level))
+                                        .frame(width: 32, height: 32)
+                                    
+                                    Text(urgencyLabel(for: level))
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                        .foregroundColor(ColorTheme.secondaryText)
+                                }
+                                .frame(maxWidth: .infinity)
+                            }
+                        }
+                        .padding()
+                        
+                        // Descriptions
+                        VStack(spacing: 12) {
+                            UrgencyCard(level: "None", description: "No urgency - could wait", color: ColorTheme.success)
+                            UrgencyCard(level: "Mild", description: "Slight urge - easily manageable", color: ColorTheme.warning)
+                            UrgencyCard(level: "Moderate", description: "Notable urge - should find bathroom", color: Color.orange)
+                            UrgencyCard(level: "Urgent", description: "Immediate need - couldn't wait", color: ColorTheme.error)
+                        }
+                        .padding()
+                    }
+                    
+                    Spacer()
+                }
+            }
+            .navigationTitle("Urgency Assessment")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundColor(ColorTheme.primary)
+                }
+            }
+        }
+    }
+    
+    private func urgencyColor(for level: Int) -> Color {
+        switch level {
+        case 0: return ColorTheme.success
+        case 1: return ColorTheme.warning
+        case 2: return Color.orange
+        case 3: return ColorTheme.error
+        default: return ColorTheme.secondaryText
+        }
+    }
+    
+    private func urgencyLabel(for level: Int) -> String {
+        switch level {
+        case 0: return "None"
+        case 1: return "Mild"
+        case 2: return "Moderate"
+        case 3: return "Urgent"
+        default: return ""
+        }
+    }
+}
+
+// MARK: - Supporting Views
+
+struct BristolQuickCard: View {
+    let type: Int
+    let title: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 6) {
+            Text("\(type)")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+                .frame(width: 32, height: 32)
+                .background(Circle().fill(color))
+            
+            Text(title)
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(ColorTheme.secondaryText)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+        }
+        .frame(height: 70)
+        .frame(maxWidth: .infinity)
+        .padding(8)
+        .background(ColorTheme.cardBackground)
+        .cornerRadius(8)
+    }
+}
+
+struct BristolDetailCard: View {
+    let type: Int
     let title: String
     let description: String
     let color: Color
-
+    
     var body: some View {
-        HStack(alignment: .top, spacing: 16) {
-            Text(level)
-                .font(.title3.bold())
+        HStack(spacing: 12) {
+            Text("\(type)")
+                .font(.title3)
+                .fontWeight(.bold)
                 .foregroundColor(.white)
-                .frame(width: 40, height: 40)
+                .frame(width: 28, height: 28)
                 .background(Circle().fill(color))
-
-            VStack(alignment: .leading, spacing: 4) {
+            
+            VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
-
-                Text(description)
                     .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(ColorTheme.primaryText)
+                
+                Text(description)
+                    .font(.caption)
                     .foregroundColor(ColorTheme.secondaryText)
             }
-
+            
             Spacer()
         }
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
-        .shadow(color: ColorTheme.shadowColor, radius: 2, x: 0, y: 1)
+        .cornerRadius(8)
     }
 }
 
-#Preview {
-    Group {
-        BristolStoolInfoView()
-        PainLevelInfoView()
-        UrgencyLevelInfoView()
+struct LegendItem: View {
+    let color: Color
+    let text: String
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(color)
+                .frame(width: 12, height: 12)
+            
+            Text(text)
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(ColorTheme.secondaryText)
+        }
     }
 }
 
+struct PainRangeCard: View {
+    let range: String
+    let title: String
+    let description: String
+    let color: Color
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Text(range)
+                .font(.subheadline)
+                .fontWeight(.bold)
+                .foregroundColor(.white)
+                .frame(width: 36, height: 28)
+                .background(RoundedRectangle(cornerRadius: 6).fill(color))
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(ColorTheme.primaryText)
+                
+                Text(description)
+                    .font(.caption)
+                    .foregroundColor(ColorTheme.secondaryText)
+            }
+            
+            Spacer()
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(ColorTheme.cardBackground)
+        .cornerRadius(8)
+    }
+}
+
+struct UrgencyCard: View {
+    let level: String
+    let description: String
+    let color: Color
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Circle()
+                .fill(color)
+                .frame(width: 20, height: 20)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(level)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(ColorTheme.primaryText)
+                
+                Text(description)
+                    .font(.caption)
+                    .foregroundColor(ColorTheme.secondaryText)
+            }
+            
+            Spacer()
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(ColorTheme.cardBackground)
+        .cornerRadius(8)
+    }
+}
+
+#Preview("Bristol Scale") {
+    BristolStoolInfoView()
+}
+
+#Preview("Pain Level") {
+    PainLevelInfoView()
+}
+
+#Preview("Urgency Level") {
+    UrgencyLevelInfoView()
+}

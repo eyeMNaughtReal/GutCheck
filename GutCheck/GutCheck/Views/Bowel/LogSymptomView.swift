@@ -8,10 +8,10 @@
 
 import SwiftUI
 
+// ...existing code...
+
 struct BristolScaleSelectionView: View {
     @Binding var selectedStoolType: StoolType?
-
-    // Bristol type info with clinical descriptions
     private let bristolInfo: [(type: StoolType, summary: String, description: String)] = [
         (.type1, "Severe constipation", "Hard lumps"),
         (.type2, "Mild constipation", "Lumpy & sausage-like"),
@@ -21,17 +21,11 @@ struct BristolScaleSelectionView: View {
         (.type6, "Mild diarrhea", "Mushy consistency"),
         (.type7, "Diarrhea", "Watery liquid")
     ]
-
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Bristol Stool Scale")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundColor(ColorTheme.primaryText)
-
-            // Professional grid with subtle styling
+            // ...existing code...
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 8)], spacing: 8) {
-                ForEach(bristolInfo, id: \.type) { info in
+                ForEach(bristolInfo, id: \ .type) { info in
                     Button(action: {
                         selectedStoolType = info.type
                     }) {
@@ -40,14 +34,12 @@ struct BristolScaleSelectionView: View {
                                 .font(.title2)
                                 .fontWeight(.bold)
                                 .foregroundColor(selectedStoolType == info.type ? .white : bristolTextColor(for: info.type))
-                            
                             Text(info.summary)
                                 .font(.caption)
                                 .foregroundColor(selectedStoolType == info.type ? .white.opacity(0.9) : ColorTheme.secondaryText)
                                 .multilineTextAlignment(.center)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
-                            
                             Text(info.description)
                                 .font(.caption2)
                                 .foregroundColor(selectedStoolType == info.type ? .white.opacity(0.8) : ColorTheme.secondaryText)
@@ -75,19 +67,16 @@ struct BristolScaleSelectionView: View {
         .background(ColorTheme.surface)
         .cornerRadius(12)
     }
-
-    // Professional medical color scheme
     private func bristolColor(for type: StoolType) -> Color {
         switch type {
         case .type4:
-            return Color(red: 0.2, green: 0.6, blue: 0.4) // Muted green
+            return Color(red: 0.2, green: 0.6, blue: 0.4)
         case .type3, .type5:
-            return Color(red: 0.8, green: 0.6, blue: 0.2) // Muted amber
+            return Color(red: 0.8, green: 0.6, blue: 0.2)
         default:
-            return Color(red: 0.7, green: 0.3, blue: 0.3) // Muted red
+            return Color(red: 0.7, green: 0.3, blue: 0.3)
         }
     }
-    
     private func bristolTextColor(for type: StoolType) -> Color {
         switch type {
         case .type4:
@@ -102,7 +91,6 @@ struct BristolScaleSelectionView: View {
 
 struct PainLevelSliderView: View {
     @Binding var selectedPainLevel: Int
-
     private let labels = ["None", "Mild", "Moderate", "Severe", "Extreme"]
     private let descriptions = [
         "No pain",
@@ -111,23 +99,16 @@ struct PainLevelSliderView: View {
         "Significant pain",
         "Unbearable pain"
     ]
-
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Pain Level")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundColor(ColorTheme.primaryText)
-
-            // Professional numeric scale
+            // ...existing code...
             VStack(spacing: 12) {
                 HStack(spacing: 0) {
-                    ForEach(0..<labels.count, id: \.self) { i in
+                    ForEach(0..<labels.count, id: \ .self) { i in
                         Button(action: {
                             selectedPainLevel = i
                         }) {
                             VStack(spacing: 4) {
-                                // Numeric indicator
                                 Text("\(i)")
                                     .font(.title2)
                                     .fontWeight(.semibold)
@@ -141,7 +122,6 @@ struct PainLevelSliderView: View {
                                         Circle()
                                             .stroke(painColor(for: i), lineWidth: selectedPainLevel == i ? 2 : 1)
                                     )
-                                
                                 Text(labels[i])
                                     .font(.caption2)
                                     .fontWeight(.medium)
@@ -152,8 +132,6 @@ struct PainLevelSliderView: View {
                         .buttonStyle(PlainButtonStyle())
                     }
                 }
-                
-                // Description for selected level
                 if selectedPainLevel < descriptions.count {
                     Text(descriptions[selectedPainLevel])
                         .font(.caption)
@@ -167,19 +145,18 @@ struct PainLevelSliderView: View {
         .background(ColorTheme.surface)
         .cornerRadius(12)
     }
-    
     private func painColor(for level: Int) -> Color {
         switch level {
         case 0:
-            return Color(red: 0.3, green: 0.7, blue: 0.3) // Green
+            return Color(red: 0.3, green: 0.7, blue: 0.3)
         case 1:
-            return Color(red: 0.6, green: 0.8, blue: 0.2) // Light green
+            return Color(red: 0.6, green: 0.8, blue: 0.2)
         case 2:
-            return Color(red: 0.9, green: 0.7, blue: 0.1) // Yellow
+            return Color(red: 0.9, green: 0.7, blue: 0.1)
         case 3:
-            return Color(red: 0.9, green: 0.5, blue: 0.2) // Orange
+            return Color(red: 0.9, green: 0.5, blue: 0.2)
         case 4:
-            return Color(red: 0.8, green: 0.2, blue: 0.2) // Red
+            return Color(red: 0.8, green: 0.2, blue: 0.2)
         default:
             return ColorTheme.secondaryText
         }
@@ -198,11 +175,7 @@ struct UrgencyLevelSelectionView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Urgency Level")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundColor(ColorTheme.primaryText)
-
+            // ...existing code...
             HStack(spacing: 8) {
                 ForEach(urgencyLevels, id: \.0) { (level, label) in
                     Button(action: {
@@ -304,29 +277,39 @@ struct LogSymptomView: View {
     @EnvironmentObject var authService: AuthService
     @State private var coordinator = LogSymptomViewModel()
     @State private var showProfileSheet = false
+    @State private var infoTypeToShow: SymptomInfoType? = nil
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    // Date & Time
-                    dateTimeSection
-                    
+                    // Symptom Time
+                    symptomTimeSection
+
                     // Bristol Stool Scale
+                    SectionHeader(title: "Bristol Stool Scale") {
+                        infoTypeToShow = .bristol
+                    }
                     BristolScaleSelectionView(selectedStoolType: $coordinator.selectedStoolType)
-                    
+
                     // Pain Level
+                    SectionHeader(title: "Pain Level") {
+                        infoTypeToShow = .pain
+                    }
                     PainLevelSliderView(selectedPainLevel: $coordinator.selectedPainLevel)
-                    
+
                     // Urgency Level
+                    SectionHeader(title: "Urgency Level") {
+                        infoTypeToShow = .urgency
+                    }
                     UrgencyLevelSelectionView(selectedUrgencyLevel: $coordinator.selectedUrgencyLevel)
-                    
+
                     // Tag selection
                     TagSelectionView(selectedTags: $coordinator.selectedTags)
-                    
+
                     // Notes
                     notesSection
-                    
+
                     // Action buttons
                     actionButtonsSection
                 }
@@ -348,6 +331,9 @@ struct LogSymptomView: View {
                         .environmentObject(authService)
                 }
             }
+            .sheet(item: $infoTypeToShow) { infoType in
+                SymptomInfoViews(infoType: infoType)
+            }
             .alert("Symptom Saved", isPresented: $coordinator.showingSuccessAlert) {
                 Button("OK") { }
             } message: {
@@ -360,18 +346,39 @@ struct LogSymptomView: View {
             }
         }
     }
-    
-    // MARK: - View Components
-    
-    private var dateTimeSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Date & Time")
+// Section header with info button
+struct SectionHeader: View {
+    let title: String
+    let onInfo: () -> Void
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(title)
                 .font(.title3)
                 .fontWeight(.semibold)
                 .foregroundColor(ColorTheme.primaryText)
-            
+            Button(action: onInfo) {
+                Image(systemName: "info.circle")
+                    .font(.title3)
+                    .foregroundColor(ColorTheme.primary)
+            }
+            .accessibilityLabel("Info about " + title)
+            Spacer()
+        }
+        .padding(.bottom, 2)
+    }
+}
+// ...existing code...
+    
+    // MARK: - View Components
+    
+    private var symptomTimeSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Symptom Time")
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundColor(ColorTheme.primaryText)
             DatePicker(
-                "Symptom Date",
+                "",
                 selection: $coordinator.symptomDate,
                 displayedComponents: [.date, .hourAndMinute]
             )
