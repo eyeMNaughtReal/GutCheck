@@ -1,5 +1,6 @@
 # GutCheck secrets
-GutCheck/GutCheck/Secrets.swift
+GutCheck/Secrets.swift
+
 # Xcode
 build/
 DerivedData/
