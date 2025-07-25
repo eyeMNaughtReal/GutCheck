@@ -318,19 +318,6 @@ struct LogSymptomView: View {
             .background(ColorTheme.background)
             .navigationTitle("Log Symptoms")
             .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    ProfileAvatarButton {
-                        showProfileSheet = true
-                    }
-                }
-            }
-            .sheet(isPresented: $showProfileSheet) {
-                if let currentUser = authService.currentUser {
-                    UserProfileView(user: currentUser)
-                        .environmentObject(authService)
-                }
-            }
             .sheet(item: $infoTypeToShow) { infoType in
                 SymptomInfoViews(infoType: infoType)
             }

@@ -3,26 +3,32 @@ import SwiftUI
 struct LogMealView: View {
     @StateObject private var viewModel = LogMealViewModel()
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Meal Name
-                    TextField("Meal name", text: $viewModel.mealName)
-                        .padding()
-                        .background(ColorTheme.surface)
-                        .cornerRadius(10)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(ColorTheme.border, lineWidth: 1)
-                        )
+                    // Header
+                    VStack(spacing: 8) {
+                        Text("Log Meal")
+                            .font(.title2.bold())
+                            .foregroundColor(ColorTheme.primaryText)
+                        TextField("Meal name", text: $viewModel.mealName)
+                            .font(.headline)
+                            .padding()
+                            .background(ColorTheme.surface)
+                            .cornerRadius(12)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding(.horizontal)
 
-                    // Meal Type Picker
-                    VStack(alignment: .leading, spacing: 8) {
+                    // Meal Type
+                    VStack(alignment: .leading, spacing: 12) {
                         Text("Meal Type")
-                            .font(.subheadline)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .foregroundColor(ColorTheme.primaryText)
 
                         Picker("Meal Type", selection: $viewModel.mealType) {
                             ForEach(MealType.allCases, id: \.self) { type in
@@ -31,82 +37,134 @@ struct LogMealView: View {
                         }
                         .pickerStyle(.segmented)
                     }
+                    .padding()
+                    .background(ColorTheme.surface)
+                    .cornerRadius(12)
+                    .padding(.horizontal)
 
                     // Food Items List
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Food Items")
-                            .font(.subheadline)
-                            .foregroundColor(ColorTheme.secondaryText)
-
-                        ForEach(viewModel.foodItems.indices, id: \.self) { index in
-                            HStack {
-                                TextField("Food Item", text: $viewModel.foodItems[index].name)
-                                    .textFieldStyle(.roundedBorder)
-
-                                Button(action: {
-                                    viewModel.foodItems.remove(at: index)
-                                }) {
-                                    Image(systemName: "trash")
-                                        .foregroundColor(ColorTheme.error)
-                                }
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack {
+                            Text("Food Items")
+                                .font(.title3)
+                                .fontWeight(.semibold)
+                                .foregroundColor(ColorTheme.primaryText)
+                            Spacer()
+                            Button(action: {
+                                viewModel.showFoodSearch = true
+                            }) {
+                                Label("Add", systemImage: "plus")
+                                    .font(.subheadline)
+                                    .foregroundColor(ColorTheme.primary)
                             }
                         }
-
-                        Button {
-                            viewModel.foodItems.append(FoodItem(name: "", quantity: ""))
-
-                        } label: {
-                            Label("Add Food Item", systemImage: "plus.circle")
-                                .foregroundColor(ColorTheme.primary)
+                        
+                        if viewModel.foodItems.isEmpty {
+                            VStack(spacing: 12) {
+                                Image(systemName: "fork.knife")
+                                    .font(.system(size: 36))
+                                    .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
+                                Text("No food items")
+                                    .font(.headline)
+                                    .foregroundColor(ColorTheme.secondaryText)
+                                Text("Tap + to add food items to this meal")
+                                    .font(.caption)
+                                    .foregroundColor(ColorTheme.secondaryText.opacity(0.8))
+                                    .multilineTextAlignment(.center)
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(ColorTheme.surface)
+                            .cornerRadius(12)
+                        } else {
+                            ForEach(viewModel.foodItems) { item in
+                                FoodItemDetailRow(foodItem: item)
+                            }
                         }
-                        .padding(.top, 4)
                     }
+                    .padding(.horizontal)
 
                     // Notes
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 12) {
                         Text("Notes")
-                            .font(.subheadline)
-                            .foregroundColor(ColorTheme.secondaryText)
-
+                            .font(.title3)
+                            .fontWeight(.semibold)
+                            .foregroundColor(ColorTheme.primaryText)
+                        
                         TextEditor(text: $viewModel.notes)
-                            .frame(height: 100)
-                            .padding(6)
-                            .background(ColorTheme.surface)
-                            .cornerRadius(10)
+                            .frame(minHeight: 100)
+                            .padding(12)
+                            .background(ColorTheme.cardBackground)
+                            .cornerRadius(12)
                             .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .stroke(ColorTheme.border, lineWidth: 1)
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(ColorTheme.border.opacity(0.3), lineWidth: 1)
                             )
                     }
+                    .padding()
+                    .background(ColorTheme.surface)
+                    .cornerRadius(12)
+                    .padding(.horizontal)
 
-                    // Buttons
-                    VStack(spacing: 12) {
-                        CustomButton(
-                            title: "Save Meal",
-                            action: {
-                                viewModel.saveMeal()
-                                dismiss()
-                            },
-                            style: .primary,
-                            isLoading: viewModel.isSaving
-                        )
-                        CustomButton(
-                            title: "Cancel",
-                            action: {
-                                dismiss()
-                            },
-                            style: .outline
-                        )
+                    // Action Buttons
+                    HStack(spacing: 16) {
+                        Button(action: { dismiss() }) {
+                            Text("Cancel")
+                                .font(.headline)
+                                .foregroundColor(ColorTheme.primaryText)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(ColorTheme.surface)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(ColorTheme.border, lineWidth: 1)
+                                )
+                        }
+                        
+                        Button(action: { 
+                            viewModel.saveMeal()
+                            dismiss()
+                        }) {
+                            HStack {
+                                if viewModel.isSaving {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .scaleEffect(0.8)
+                                }
+                                Text(viewModel.isSaving ? "Saving..." : "Save")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(ColorTheme.accent)
+                            .cornerRadius(12)
+                        }
+                        .disabled(viewModel.isSaving)
                     }
+                    .padding(.horizontal)
                 }
-                .padding()
+                .padding(.vertical)
             }
+            .background(ColorTheme.background)
             .navigationTitle("Log Meal")
-            .background(ColorTheme.background.ignoresSafeArea())
+            .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $viewModel.showFoodSearch) { 
+                FoodSearchView { selectedFood in
+                    viewModel.foodItems.append(selectedFood)
+                    viewModel.showFoodSearch = false
+                }
+            }
         }
     }
 }
 
+// Using shared FoodItemDetailRow component from Components/
+
 #Preview {
-    LogMealView()
+    NavigationStack {
+        LogMealView()
+            .environmentObject(NavigationCoordinator())
+    }
 }

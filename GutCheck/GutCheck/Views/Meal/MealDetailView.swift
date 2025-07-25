@@ -1,16 +1,8 @@
-//
+ //
 //  MealDetailView.swift
 //  GutCheck
 //
 //  Created by Mark Conley on 7/14/25.
-//
-
-
-//
-//  MealDetailView.swift
-//  GutCheck
-//
-//  Created on 7/14/25.
 //
 
 import SwiftUI
@@ -361,83 +353,7 @@ struct MealDetailView: View {
     }
 }
 
-struct FoodItemDetailRow: View {
-    let foodItem: FoodItem
-    let isEditing: Bool
-    let onEdit: () -> Void
-    let onDelete: () -> Void
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text(foodItem.name)
-                    .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
-                
-                Spacer()
-                
-                if isEditing {
-                    Button(action: onEdit) {
-                        Image(systemName: "pencil")
-                            .foregroundColor(ColorTheme.primary)
-                    }
-                    .padding(.horizontal, 4)
-                    
-                    Button(action: onDelete) {
-                        Image(systemName: "trash")
-                            .foregroundColor(ColorTheme.error)
-                    }
-                    .padding(.horizontal, 4)
-                }
-            }
-            
-            // Quantity
-            Text("\(foodItem.quantity)")
-                .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
-            
-            // Nutrition details
-            if let calories = foodItem.nutrition.calories {
-                Text("\(calories) kcal")
-                    .font(.subheadline)
-                    .foregroundColor(ColorTheme.primaryText)
-            }
-            
-            HStack(spacing: 12) {
-                if let protein = foodItem.nutrition.protein {
-                    UnifiedNutritionBadge(protein: protein)
-                }
-                if let carbs = foodItem.nutrition.carbs {
-                    UnifiedNutritionBadge(carbs: carbs)
-                }
-                if let fat = foodItem.nutrition.fat {
-                    UnifiedNutritionBadge(fat: fat)
-                }
-            }
-        }
-        .padding()
-        .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
-        .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
-    }
-    
-    private func nutrientBadge(label: String, value: Double, unit: String, color: Color) -> some View {
-        HStack(spacing: 4) {
-            Text(label)
-                .font(.caption)
-                .foregroundColor(ColorTheme.secondaryText)
-            
-            Text(String(format: "%.1f", value) + unit)
-                .font(.caption)
-                .fontWeight(.semibold)
-                .foregroundColor(color)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(color.opacity(0.1))
-        .cornerRadius(8)
-    }
-}
+// Using shared FoodItemDetailRow component from Components/
 
 struct EditFoodItemView: View {
     @Environment(\.dismiss) private var dismiss

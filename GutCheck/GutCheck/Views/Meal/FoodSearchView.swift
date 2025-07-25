@@ -12,6 +12,11 @@ struct FoodSearchView: View {
     @StateObject private var viewModel = FoodSearchViewModel()
     @State private var selectedFoodItem: FoodItem? = nil
     @State private var showDetailSheet = false
+    var onSelect: ((FoodItem) -> Void)?
+    
+    init(onSelect: ((FoodItem) -> Void)? = nil) {
+        self.onSelect = onSelect
+    }
 
     var body: some View {
         NavigationStack {
@@ -114,8 +119,13 @@ struct FoodSearchView: View {
             VStack(spacing: 0) {
                 ForEach(viewModel.searchResults) { item in
                     FoodItemResultRow(item: item) {
-                        selectedFoodItem = item
-                        showDetailSheet = true
+                        if let onSelect = onSelect {
+                            onSelect(item)
+                            dismiss()
+                        } else {
+                            selectedFoodItem = item
+                            showDetailSheet = true
+                        }
                     }
                 }
             }
@@ -194,8 +204,13 @@ struct FoodSearchView: View {
                             .foregroundColor(ColorTheme.primaryText)
                         ForEach(viewModel.recentItems) { item in
                             FoodItemResultRow(item: item) {
-                                selectedFoodItem = item
-                                showDetailSheet = true
+                                if let onSelect = onSelect {
+                                    onSelect(item)
+                                    dismiss()
+                                } else {
+                                    selectedFoodItem = item
+                                    showDetailSheet = true
+                                }
                             }
                         }
                     }

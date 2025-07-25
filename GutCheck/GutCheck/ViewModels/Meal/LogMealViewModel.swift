@@ -6,6 +6,7 @@ final class LogMealViewModel: ObservableObject {
     // MARK: - Input Properties (bound to UI)
     @Published var mealName: String = ""
     @Published var mealType: MealType = .lunch
+    @Published var showFoodSearch: Bool = false
     @Published var foodItems: [FoodItem] = [
         FoodItem(
             name: "",
