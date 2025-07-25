@@ -1,8 +1,8 @@
 //
-//  FoodItemDetailComponents.swift
+//  EnhancedFoodItemDetailView.swift
 //  GutCheck
 //
-//  Shared components for food item detail views
+//  A detailed food item view with editing capabilities
 
 import SwiftUI
 
@@ -51,7 +51,7 @@ struct EnhancedFoodItemDetailView: View {
                 }
             }
             .sheet(isPresented: $showingNutritionDetails) {
-                FoodNutritionDetailsView(foodItem: foodItem)
+                FoodDetailView(foodItem: foodItem)
             }
             .sheet(isPresented: $showingIngredients) {
                 IngredientsView(ingredients: foodItem.ingredients)
