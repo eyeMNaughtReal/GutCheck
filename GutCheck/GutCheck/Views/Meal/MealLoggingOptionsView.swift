@@ -19,7 +19,7 @@ struct MealLoggingOptionsView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
+            VStack(spacing: 32) {
                 // Header
                 Text("How would you like to log your meal?")
                     .font(.headline)
@@ -27,7 +27,14 @@ struct MealLoggingOptionsView: View {
                     .multilineTextAlignment(.center)
                 
                 // Grid of options
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(minimum: 0, maximum: .infinity), spacing: 16),
+                        GridItem(.flexible(minimum: 0, maximum: .infinity), spacing: 16)
+                    ],
+                    alignment: .center,
+                    spacing: 16
+                ) {
                     // Manual search
                     LoggingOptionCard(
                         icon: "magnifyingglass",
@@ -138,14 +145,20 @@ struct LoggingOptionCard: View {
     let color: Color
     let action: () -> Void
     
+    // Fixed dimensions for consistent sizing
+    private let cardWidth: CGFloat = UIScreen.main.bounds.width / 2 - 24 // Account for padding
+    private let cardHeight: CGFloat = 180
+    private let iconSize: CGFloat = 32
+    private let iconContainerSize: CGFloat = 60
+    
     var body: some View {
         Button(action: action) {
             VStack(spacing: 12) {
                 // Icon
                 Image(systemName: icon)
-                    .font(.system(size: 32))
+                    .font(.system(size: iconSize))
                     .foregroundColor(.white)
-                    .frame(width: 60, height: 60)
+                    .frame(width: iconContainerSize, height: iconContainerSize)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
                             .fill(color)
@@ -155,16 +168,20 @@ struct LoggingOptionCard: View {
                 Text(title)
                     .font(.headline)
                     .foregroundColor(ColorTheme.primaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                 
                 // Description
                 Text(description)
                     .font(.caption)
                     .foregroundColor(ColorTheme.secondaryText)
                     .multilineTextAlignment(.center)
+                    .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(height: 32)
             }
             .padding()
+            .frame(width: cardWidth, height: cardHeight)
             .background(ColorTheme.cardBackground)
             .cornerRadius(16)
             .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)

@@ -57,8 +57,13 @@ class SymptomHistoryViewModel: ObservableObject {
         }
     }
     
-    func exportSymptoms() {
+    func exportSymptoms() async {
         // TODO: Implement CSV export functionality
+        // This will be an async operation that:
+        // 1. Fetches all symptoms
+        // 2. Formats them as CSV
+        // 3. Creates a temporary file
+        // 4. Shows share sheet
     }
 }
 

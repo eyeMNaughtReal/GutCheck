@@ -9,10 +9,29 @@ import Foundation
 import AVFoundation
 import UIKit
 
+@MainActor
 class BarcodeScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutputObjectsDelegate {
-    // Camera session - not isolated to MainActor
-    let cameraSession = AVCaptureSession()
+    // Camera session - nonisolated because AVCaptureSession must be accessed from background threads
+    nonisolated let cameraSession = AVCaptureSession()
     private var captureDevice: AVCaptureDevice?
+    
+    // Error handling
+    enum CameraError: LocalizedError {
+        case deviceNotAvailable
+        case setupFailed
+        case permissionDenied
+        
+        var errorDescription: String? {
+            switch self {
+            case .deviceNotAvailable:
+                return "Camera is not available on this device"
+            case .setupFailed:
+                return "Failed to setup camera"
+            case .permissionDenied:
+                return "Camera access is denied"
+            }
+        }
+    }
     
     // Scanner properties
     @Published var isScanning = false
@@ -109,13 +128,14 @@ class BarcodeScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutp
         guard isAuthorized else { return }
         
         if !cameraSession.isRunning {
-            // Use a separate dispatch queue for camera operations
-            DispatchQueue.global(qos: .background).async { [weak self] in
-                guard let self = self else { return }
-                self.cameraSession.startRunning()
+            // Capture the session locally to avoid capturing self
+            let session = cameraSession
+            
+            Task.detached {
+                session.startRunning()
                 
-                DispatchQueue.main.async {
-                    self.isScanning = true
+                await MainActor.run { [weak self] in
+                    self?.isScanning = true
                 }
             }
         }
@@ -150,20 +170,21 @@ class BarcodeScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutp
     
     // MARK: - Barcode Detection
     
-    // Non-isolated metadataOutput function to satisfy protocol requirement
-    func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
+    // Nonisolated delegate method to satisfy protocol requirement
+    nonisolated func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
         // Process only the first detected barcode
-        if let metadataObject = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
-           let barcodeValue = metadataObject.stringValue {
-            
+        guard let metadataObject = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
+              let barcodeValue = metadataObject.stringValue else { return }
+        
+        Task { @MainActor in
             // Only process if we don't already have a barcode or if it's a different one
             if scannedBarcode != barcodeValue {
                 // Pause scanning temporarily
                 stopScanning()
-                if self.isAuthorized {
-                    self.scannedBarcode = barcodeValue
+                if isAuthorized {
+                    scannedBarcode = barcodeValue
                     // Simulate product lookup
-                    self.lookupProduct(barcode: barcodeValue)
+                    lookupProduct(barcode: barcodeValue)
                 }
             }
         }

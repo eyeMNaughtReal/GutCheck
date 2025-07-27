@@ -9,7 +9,43 @@ import SwiftUI
 
 @MainActor
 class NavigationCoordinator: ObservableObject {
-    @Published var selectedTab: CustomTabBar.Tab = .home
+    static let shared = NavigationCoordinator()
+    
+    // Published properties for navigation state
+    @Published var selectedTab: Tab = .dashboard // Using shared Tab enum
+    @Published private(set) var isResettingNavigation = false
+    
+    func resetToRoot() {
+        // Reset any navigation state, active sheets, etc.
+        DispatchQueue.main.async {
+            self.isResettingNavigation = true
+            // Reset to dashboard tab
+            self.selectedTab = .dashboard
+            // Dismiss any presented sheets
+            self.dismissAllSheets()
+            // Clear navigation stacks
+            self.clearNavigationStacks()
+            // Reset the flag after a brief delay to allow animations to complete
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.isResettingNavigation = false
+            }
+        }
+    }
+    
+    private func dismissAllSheets() {
+        isShowingProfile = false
+        isShowingSettings = false
+        isShowingMealLoggingOptions = false
+        isShowingSymptomLoggingSheet = false
+    }
+    
+    private func clearNavigationStacks() {
+        navigationPath.removeLast(navigationPath.count)
+        homeNavigationPath.removeLast(homeNavigationPath.count)
+        mealNavigationPath.removeLast(mealNavigationPath.count)
+        symptomsNavigationPath.removeLast(symptomsNavigationPath.count)
+        insightsNavigationPath.removeLast(insightsNavigationPath.count)
+    }
     @Published var navigationPath = NavigationPath()
     @Published var isShowingProfile = false
     @Published var isShowingSettings = false
@@ -27,15 +63,20 @@ class NavigationCoordinator: ObservableObject {
     // Current navigation path based on selected tab
     var currentNavigationPath: Binding<NavigationPath> {
         switch selectedTab {
-        case .home:
+        case .dashboard:
             return Binding(
                 get: { self.homeNavigationPath },
                 set: { self.homeNavigationPath = $0 }
             )
-        case .meal:
+        case .meals:
             return Binding(
                 get: { self.mealNavigationPath },
                 set: { self.mealNavigationPath = $0 }
+            )
+        case .add:
+            return Binding(
+                get: { self.navigationPath },
+                set: { self.navigationPath = $0 }
             )
         case .symptoms:
             return Binding(
@@ -46,11 +87,6 @@ class NavigationCoordinator: ObservableObject {
             return Binding(
                 get: { self.insightsNavigationPath },
                 set: { self.insightsNavigationPath = $0 }
-            )
-        case .plus:
-            return Binding(
-                get: { self.homeNavigationPath },
-                set: { self.homeNavigationPath = $0 }
             )
         }
     }
@@ -89,7 +125,7 @@ class NavigationCoordinator: ObservableObject {
         currentNavigationPath.wrappedValue = NavigationPath()
     }
     
-    func switchTab(to tab: CustomTabBar.Tab) {
+    func switchTab(to tab: Tab) {
         selectedTab = tab
     }
     

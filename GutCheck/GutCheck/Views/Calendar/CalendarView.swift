@@ -7,15 +7,17 @@
 
 import SwiftUI
 
+// Using shared Tab enum from Core models
+import Foundation // Required for Tab enum
 struct CalendarView: View {
     @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     @EnvironmentObject var authService: AuthService
     @StateObject private var viewModel = CalendarViewModel()
 
-    let selectedTab: CustomTabBar.Tab?
+    let selectedTab: Tab?
     let selectedDate: Date?
 
-    init(selectedTab: CustomTabBar.Tab? = nil, selectedDate: Date? = nil) {
+    init(selectedTab: Tab? = nil, selectedDate: Date? = nil) {
         self.selectedTab = selectedTab
         self.selectedDate = selectedDate
     }
@@ -58,12 +60,12 @@ struct CalendarView: View {
 
 // Extracted subview to help compiler
 struct CalendarContentView: View {
-    let selectedTab: CustomTabBar.Tab?
+    let selectedTab: Tab?
     @ObservedObject var viewModel: CalendarViewModel
     @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
-            if selectedTab == .meal || selectedTab == nil {
+            if selectedTab == .meals || selectedTab == nil {
                 Section(header: Text("Meals on \(viewModel.formattedDate)")
                     .font(.headline)
                     .padding(.horizontal)) {
@@ -113,7 +115,7 @@ struct CalendarContentView: View {
 
     private var title: String {
         switch selectedTab {
-        case .meal: return "Meals"
+        case .meals: return "Meals"
         case .symptoms: return "Symptoms"
         default: return "Calendar"
         }
@@ -181,7 +183,7 @@ class CalendarViewModel: ObservableObject {
             // Mock some entry types for demonstration
             let hasEntries = Int.random(in: 1...10) > 7 // 30% chance of having entries
             let entryTypes: Set<CalendarDay.EntryType> = hasEntries ? 
-                (Int.random(in: 1...3) == 1 ? [.meal] : 
+                (Int.random(in: 1...3) == 1 ? [.meals] : 
                  Int.random(in: 1...3) == 2 ? [.symptom] : [.both]) : []
             
             let calendarDay = CalendarDay(
@@ -422,7 +424,7 @@ struct SymptomCalendarRow: View {
 
 // MARK: - Preview
 #Preview {
-    CalendarView(selectedTab: CustomTabBar.Tab.meal)
+    CalendarView(selectedTab: Tab.meals)
         .environmentObject(NavigationCoordinator())
         .environmentObject(AuthService())
 }

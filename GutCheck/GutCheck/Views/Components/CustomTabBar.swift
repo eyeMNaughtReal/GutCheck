@@ -14,29 +14,7 @@ struct CustomTabBar: View {
     @State private var showActions = false
     @Namespace private var animation
 
-    enum Tab: Int, CaseIterable {
-        case home, meal, plus, symptoms, insights
-        
-        var title: String {
-            switch self {
-            case .home: return "Home"
-            case .meal: return "Meals"
-            case .plus: return ""
-            case .symptoms: return "Symptoms"
-            case .insights: return "Insights"
-            }
-        }
-        
-        var icon: String {
-            switch self {
-            case .home: return "house"
-            case .meal: return "list.bullet"
-            case .plus: return "plus"
-            case .symptoms: return "waveform.path.ecg"
-            case .insights: return "chart.bar.xaxis"
-            }
-        }
-    }
+    // Using shared Tab enum from Models/Core/Tab.swift
 
     var body: some View {
         GeometryReader { geo in

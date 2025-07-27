@@ -9,9 +9,18 @@ import SwiftUI
 import AVFoundation
 
 struct BarcodeScannerView: View {
-    @StateObject var viewModel = BarcodeScannerViewModel()
+    @StateObject private var viewModel = BarcodeScannerViewModel()
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
     @State private var showingMealBuilder = false
+    
+    // MARK: - Accessibility IDs
+    private enum A11y {
+        static let scannerView = "BarcodeScanner"
+        static let closeButton = "CloseBarcodeScanner"
+        static let flashButton = "ToggleFlash"
+        static let settingsButton = "OpenSettings"
+    }
     
     var body: some View {
         ZStack {
@@ -19,6 +28,12 @@ struct BarcodeScannerView: View {
             if viewModel.isAuthorized {
                 CameraPreviewView(cameraSession: viewModel.cameraSession)
                     .ignoresSafeArea()
+                    .onAppear {
+                        viewModel.startScanning()
+                    }
+                    .onDisappear {
+                        viewModel.stopScanning()
+                    }
                 
                 // Scanning overlay
                 scanningOverlay
@@ -298,21 +313,31 @@ struct CameraPreviewView: UIViewRepresentable {
     let cameraSession: AVCaptureSession
     
     func makeUIView(context: Context) -> UIView {
-        let view = UIView(frame: UIScreen.main.bounds)
+        let view = UIView(frame: .zero)
         view.backgroundColor = .black
+        view.accessibilityLabel = "Camera Preview"
+        view.accessibilityTraits = .image
         
         let previewLayer = AVCaptureVideoPreviewLayer(session: cameraSession)
         previewLayer.frame = view.bounds
         previewLayer.videoGravity = .resizeAspectFill
         
+        // Use CATransaction to ensure smooth layer updates
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
         view.layer.addSublayer(previewLayer)
+        CATransaction.commit()
+        
         return view
     }
     
     func updateUIView(_ uiView: UIView, context: Context) {
-        if let previewLayer = uiView.layer.sublayers?.first as? AVCaptureVideoPreviewLayer {
-            previewLayer.frame = uiView.bounds
-        }
+        guard let previewLayer = uiView.layer.sublayers?.first as? AVCaptureVideoPreviewLayer else { return }
+        
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        previewLayer.frame = uiView.bounds
+        CATransaction.commit()
     }
 }
 

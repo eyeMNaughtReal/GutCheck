@@ -12,6 +12,7 @@ import FirebaseCore
 struct GutCheckApp: App {
     @StateObject private var authService = AuthService()
     @StateObject private var settingsVM = SettingsViewModel()
+    @Environment(\.scenePhase) private var scenePhase
     
     init() {
         FirebaseApp.configure()
@@ -24,12 +25,28 @@ struct GutCheckApp: App {
                     ContentView()
                         .environmentObject(authService)
                         .environmentObject(settingsVM)
+                        .environmentObject(TimeoutManager.shared)
                 } else {
                     AuthenticationView(authService: authService)
                 }
             }
-            .onAppear {
-                // Any app startup logic
+            .onChange(of: TimeoutManager.shared.shouldResetToHome) { _, shouldReset in
+                if shouldReset {
+                    // Reset navigation state
+                    NavigationCoordinator.shared.resetToRoot()
+                    // Reset the timeout state
+                    TimeoutManager.shared.resetTimeoutState()
+                }
+            }
+            .onChange(of: scenePhase) { oldPhase, newPhase in
+                switch newPhase {
+                case .background:
+                    TimeoutManager.shared.applicationDidEnterBackground()
+                case .active:
+                    TimeoutManager.shared.applicationWillEnterForeground()
+                default:
+                    break
+                }
             }
             .preferredColorScheme(.light)
         }

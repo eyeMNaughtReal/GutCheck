@@ -17,14 +17,14 @@ struct CalendarDay: Identifiable, Codable {
     var symptoms: [Symptom] = []
     
     enum EntryType: String, Codable, CaseIterable {
-        case meal
+        case meals
         case symptom
         case both
     }
     
     // Computed properties for view compatibility
     var hasMeals: Bool {
-        return !meals.isEmpty || entryTypes.contains(.meal) || entryTypes.contains(.both)
+        return !meals.isEmpty || entryTypes.contains(.meals) || entryTypes.contains(.both)
     }
     
     var hasSymptoms: Bool {

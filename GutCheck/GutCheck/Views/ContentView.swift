@@ -26,13 +26,13 @@ struct ContentView: View {
             NavigationStack(path: navigationCoordinator.currentNavigationPath) {
                 Group {
                     switch navigationCoordinator.selectedTab {
-                    case .home:
+                    case .dashboard:
                         DashboardView()
-                    case .meal, .symptoms:
+                    case .meals, .symptoms:
                         CalendarView(selectedTab: navigationCoordinator.selectedTab)
                     case .insights:
                         InsightsView()
-                    case .plus:
+                    case .add:
                         DashboardView() // Plus button shows actions, doesn't navigate
                     }
                 }
