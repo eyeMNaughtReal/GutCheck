@@ -122,11 +122,16 @@ struct CalendarContentView: View {
 
 // MARK: - ViewModel
 class CalendarViewModel: ObservableObject {
+    @Published var selectedDate = Date()
+    @Published var meals: [Meal] = []
+    @Published var symptoms: [Symptom] = []
+    @Published var isLoadingMeals = false
+    @Published var isLoadingSymptoms = false
+    @Published var calendarDays: [CalendarDay] = []
+    
     // Computed property for formatted date string
     var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter.string(from: selectedDate)
+        selectedDate.formattedDate
     }
 
     // Public method to load meals (mock implementation)
@@ -146,15 +151,50 @@ class CalendarViewModel: ObservableObject {
             self.isLoadingSymptoms = false
         }
     }
+    
+    // Method expected by UnifiedCalendarView
+    func loadCalendarData(for date: Date) async {
+        await MainActor.run {
+            self.selectedDate = date
+            self.generateCalendarDays(for: date)
+            self.loadMeals()
+            self.loadSymptoms()
+        }
+    }
+    
     // Set the selected date
     func setDate(_ date: Date) {
         selectedDate = date
     }
-    @Published var selectedDate = Date()
-    @Published var meals: [Meal] = []
-    @Published var symptoms: [Symptom] = []
-    @Published var isLoadingMeals = false
-    @Published var isLoadingSymptoms = false
+    
+    // Generate calendar days for the month view
+    private func generateCalendarDays(for date: Date) {
+        let calendar = Calendar.current
+        guard let monthRange = calendar.range(of: .day, in: .month, for: date) else { return }
+        
+        var days: [CalendarDay] = []
+        for day in 1...monthRange.count {
+            var components = calendar.dateComponents([.year, .month], from: date)
+            components.day = day
+            guard let dayDate = calendar.date(from: components) else { continue }
+            
+            // Mock some entry types for demonstration
+            let hasEntries = Int.random(in: 1...10) > 7 // 30% chance of having entries
+            let entryTypes: Set<CalendarDay.EntryType> = hasEntries ? 
+                (Int.random(in: 1...3) == 1 ? [.meal] : 
+                 Int.random(in: 1...3) == 2 ? [.symptom] : [.both]) : []
+            
+            let calendarDay = CalendarDay(
+                date: dayDate,
+                isCurrentMonth: true,
+                hasEntries: hasEntries,
+                entryTypes: entryTypes
+            )
+            days.append(calendarDay)
+        }
+        
+        calendarDays = days
+    }
 
     private func generateMockMeals(for date: Date) -> [Meal] {
         let count = Int.random(in: 0...3)
@@ -316,9 +356,7 @@ struct MealCalendarRow: View {
     }
 // ...existing code...
     private var formattedTime: String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return formatter.string(from: meal.date)
+        meal.date.formattedTime
     }
     private var foodItemsPreview: String {
         let names = meal.foodItems.prefix(3).map { $0.name }
@@ -378,9 +416,7 @@ struct SymptomCalendarRow: View {
         .buttonStyle(PlainButtonStyle())
     }
     private var formattedTime: String {
-        let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        return formatter.string(from: symptom.date)
+        symptom.date.formattedTime
     }
 }
 

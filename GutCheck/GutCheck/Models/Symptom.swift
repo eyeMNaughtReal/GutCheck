@@ -7,6 +7,17 @@
 
 import Foundation
 
+// MARK: - Symptom Types
+enum SymptomType: String, Codable, CaseIterable {
+    case bowelMovement = "Bowel Movement"
+    case pain = "Pain"
+    case bloating = "Bloating"
+    case nausea = "Nausea"
+    case urgency = "Urgency"
+    case other = "Other"
+}
+
+// MARK: - Related Enums
 enum StoolType: Int, Codable, CaseIterable {
     case type1 = 1, type2, type3, type4, type5, type6, type7
 }

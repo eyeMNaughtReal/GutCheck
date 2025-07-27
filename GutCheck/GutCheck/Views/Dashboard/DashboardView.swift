@@ -1,8 +1,13 @@
 import SwiftUI
+import FirebaseAuth
+
+#if DEBUG
+@_spi(Preview) import FirebaseAuth // For preview support
+#endif
 
 struct DashboardView: View {
     @EnvironmentObject var authService: AuthService
-    @StateObject private var dashboardStore = DashboardDataStore()
+    @StateObject private var dashboardStore = DashboardDataStore(preview: false)
     @State private var showProfileSheet = false
     @State private var showCalendar = false
     @State private var selectedCalendarDate: Date? = nil
@@ -31,7 +36,7 @@ struct DashboardView: View {
                         }
                         
                         if !dashboardStore.triggerAlerts.isEmpty {
-                            TriggerAlertView(alerts: dashboardStore.triggerAlerts)
+                            TriggerAlertBanner(alerts: dashboardStore.triggerAlerts)
                         }
                         
                         // Use the enhanced RecentActivityListView
@@ -74,5 +79,6 @@ struct DashboardView: View {
 
 #Preview {
     DashboardView()
-        .environmentObject(AuthService())
+        .environmentObject(PreviewAuthService())
+        .environmentObject(DashboardDataStore(preview: true))
 }

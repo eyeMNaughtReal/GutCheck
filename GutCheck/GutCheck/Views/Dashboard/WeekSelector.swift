@@ -76,15 +76,11 @@ struct WeekSelector: View {
     }
 
     private func shortWeekdayString(for date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "E"
-        return formatter.string(from: date)
+        DateFormattingService.string(from: date, format: .shortWeekday)
     }
 
     private func dayString(for date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "d"
-        return formatter.string(from: date)
+        DateFormattingService.string(from: date, format: .dayOnly)
     }
 }
 

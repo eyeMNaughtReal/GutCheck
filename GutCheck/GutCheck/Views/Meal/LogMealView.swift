@@ -123,8 +123,15 @@ struct LogMealView: View {
                         }
                         
                         Button(action: { 
-                            viewModel.saveMeal()
-                            dismiss()
+                            Task {
+                                do {
+                                    try await viewModel.saveMeal()
+                                    dismiss()
+                                } catch {
+                                    // Handle error appropriately
+                                    print("Error saving meal: \(error)")
+                                }
+                            }
                         }) {
                             HStack {
                                 if viewModel.isSaving {

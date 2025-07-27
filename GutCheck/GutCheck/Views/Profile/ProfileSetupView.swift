@@ -41,7 +41,7 @@ struct ProfileSetupView: View {
     }
     
     private func saveProfile() {
-        guard let firebaseUser = authService.user else { return }
+        guard let firebaseUser = authService.authUser else { return }
         isSaving = true
         errorMessage = nil
         Task {
@@ -53,8 +53,9 @@ struct ProfileSetupView: View {
                     lastName: lastName,
                     signInMethod: .email // or .phone if needed
                 )
+                // Update the current user in AuthService
+                try await authService.updateUserProfile(newUser)
                 await MainActor.run {
-                    authService.currentUser = newUser
                     isSaving = false
                 }
             } catch {

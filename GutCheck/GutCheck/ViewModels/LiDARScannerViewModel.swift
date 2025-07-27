@@ -2,303 +2,154 @@
 //  LiDARScannerViewModel.swift
 //  GutCheck
 //
-//  Created on 7/14/25.
+//  ViewModel for LiDAR scanning functionality
 //
 
 import Foundation
 import ARKit
 import RealityKit
-import SwiftUI
-import Combine
+import UIKit
 
-// Define scanning stages
-enum ScanStage: Equatable {
-    case initial
-    case scanning
-    case processing
-    case results
+@MainActor
+class LiDARScannerViewModel: NSObject, ObservableObject {
+    @Published var isDeviceSupported: Bool = false
+    @Published var scanStage: ScanStage = .initializing
+    @Published var detectedObjects: [DetectedObject] = []
+    @Published var isProcessing: Bool = false
+    @Published var errorMessage: String? = nil
+    @Published var lidarErrorMessage: String? = nil
+    @Published var currentDistance: Float = 0.0
+    @Published var distanceGuidance: String = "Position device 30-50cm from object"
+    @Published var capturedImage: UIImage? = nil
+    @Published var foodPredictions: [String] = []
+    @Published var detectedFoodName: String? = nil
     
-    var title: String {
-        switch self {
-        case .initial:
-            return "LiDAR Scanner"
-        case .scanning:
-            return "Scanning Food"
-        case .processing:
-            return "Processing"
-        case .results:
-            return "Results"
+    // Computed properties for estimated values from current detection
+    var estimatedVolume: Double {
+        return detectedObjects.first?.estimatedVolume ?? 0.0
+    }
+    
+    var estimatedWeight: Double {
+        return detectedObjects.first?.foodInfo?.estimatedWeight ?? 0.0
+    }
+    
+    var arSession = ARSession()
+    
+    enum ScanStage {
+        case initializing
+        case initial
+        case scanning
+        case processing
+        case completed
+        case results
+        
+        var title: String {
+            switch self {
+            case .initializing: return "Initializing..."
+            case .initial: return "Ready to Scan"
+            case .scanning: return "Scanning..."
+            case .processing: return "Processing..."
+            case .completed: return "Scan Complete"
+            case .results: return "Results"
+            }
         }
     }
-}
-
-class LiDARScannerViewModel: NSObject, ObservableObject, ARSessionDelegate {
-    // AR session
-    let arSession = ARSession()
     
-    // LiDAR capabilities
-    @Published var isDeviceSupported = false
+    override init() {
+        super.init()
+        checkDeviceCapabilities()
+    }
     
-    // Scanning state
-    @Published var scanStage: ScanStage = .initial
-    @Published var currentDistance: Float?
-    @Published var distanceGuidance = "Move closer to food"
-    
-    // Results
-    @Published var capturedImage: UIImage?
-    @Published var detectedFoodName = "Unknown food"
-    @Published var estimatedVolume: Float = 0
-    @Published var estimatedWeight: Float = 0
-    @Published var detectedFoodItem: FoodItem?
-    
-    // Private properties
-    private var depthData: CVPixelBuffer?
-    private var colorImage: CVPixelBuffer?
-    
-    // Check if device supports LiDAR
     func checkDeviceCapabilities() {
-        if ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh) {
-            isDeviceSupported = true
-        } else {
-            isDeviceSupported = false
+        isDeviceSupported = ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh)
+        if !isDeviceSupported {
+            lidarErrorMessage = "LiDAR is not supported on this device"
         }
     }
     
-    // Start AR session
     func startARSession() {
-        guard isDeviceSupported else { return }
+        guard isDeviceSupported else {
+            lidarErrorMessage = "LiDAR is not supported on this device"
+            return
+        }
         
         let configuration = ARWorldTrackingConfiguration()
-        
-        // Configure depth
-        if type(of: configuration).supportsFrameSemantics(.sceneDepth) {
-            configuration.frameSemantics = .sceneDepth
-        }
-        
-        // Add scene reconstruction if available
-        if type(of: configuration).supportsSceneReconstruction(.mesh) {
+        if ARWorldTrackingConfiguration.supportsSceneReconstruction(.mesh) {
             configuration.sceneReconstruction = .mesh
         }
         
-        // Set delegate
-        arSession.delegate = self
-        
-        // Run configuration
         arSession.run(configuration)
+        scanStage = .scanning
     }
     
-    // Stop AR session
     func stopARSession() {
         arSession.pause()
     }
     
-    // Start scanning
     func startScanning() {
         scanStage = .scanning
     }
     
-    // Reset scan
-    func resetScan() {
-        scanStage = .scanning
-        capturedImage = nil
-        depthData = nil
-        colorImage = nil
-        detectedFoodName = "Unknown food"
-        estimatedVolume = 0
-        estimatedWeight = 0
-    }
-    
-    // Capture frame
     func captureFrame() {
-        guard scanStage == .scanning else { return }
-        
-        scanStage = .processing
-        
-        // Process the depth and color data
-        processFrame()
+        captureScene()
     }
     
-    // Process frame
-    private func processFrame() {
-        // In a real app, this would use depth and color data for volume estimation
-        // For now, we'll simulate with mock data and a delay
+    func captureScene() {
+        scanStage = .processing
+        isProcessing = true
         
-        Task {
-            // Simulate processing delay
-            try? await Task.sleep(nanoseconds: 2_000_000_000)  // 2 seconds
-            
-            // Generate mock results
-            await MainActor.run {
-                generateMockResults()
-                scanStage = .results
-            }
+        // Simulate processing delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            self.completeProcessing()
         }
     }
     
-    // Generate mock results
-    private func generateMockResults() {
-        // Mock food detection
-        let foodOptions = [
-            "Apple", "Banana", "Orange", "Rice", "Pasta", "Chicken breast",
-            "Steak", "Mixed vegetables", "Salad", "Soup", "Sandwich"
+    private func completeProcessing() {
+        scanStage = .results
+        isProcessing = false
+        
+        // Create mock detected objects
+        detectedObjects = [
+            DetectedObject(
+                id: UUID(),
+                name: "Apple",
+                confidence: 0.85,
+                estimatedVolume: 150.0,
+                boundingBox: CGRect(x: 100, y: 100, width: 80, height: 80),
+                foodInfo: FoodInfo(
+                    name: "Apple",
+                    estimatedWeight: 150.0,
+                    calories: 78,
+                    nutritionInfo: NutritionInfo(calories: 78, protein: 0.4, carbs: 20.6, fat: 0.3)
+                )
+            )
         ]
         
-        detectedFoodName = foodOptions.randomElement() ?? "Unknown food"
+        // Mock food predictions
+        foodPredictions = ["Apple", "Orange", "Banana"]
+        detectedFoodName = "Apple"
         
-        // Mock volume estimation (in ml)
-        estimatedVolume = Float.random(in: 100...500)
-        
-        // Mock weight estimation (in g) - approximately based on water density (1g/ml)
-        estimatedWeight = estimatedVolume * Float.random(in: 0.7...1.3)
-        
-        // Create mock image if none exists
-        if capturedImage == nil {
-            capturedImage = createMockFoodImage()
-        }
+        // Mock captured image
+        capturedImage = createMockFoodImage()
     }
     
-    // Create food item from scan
+    func resetScan() {
+        scanStage = .initial
+        detectedObjects = []
+        isProcessing = false
+        lidarErrorMessage = nil
+        currentDistance = 0.0
+        distanceGuidance = "Position device 30-50cm from object"
+        capturedImage = nil
+        foodPredictions = []
+        detectedFoodName = nil
+    }
+    
     func createFoodItemFromScan() {
-        // Create a FoodItem from the scan results
-        let foodItem = FoodItem(
-            name: detectedFoodName,
-            quantity: "\(Int(estimatedWeight))g",
-            estimatedWeightInGrams: Double(estimatedWeight),
-            nutrition: estimateNutrition(foodName: detectedFoodName, weight: Double(estimatedWeight)),
-            source: .lidar
-        )
-        
-        // Show the food item detail view
-        detectedFoodItem = foodItem
-    }
-    
-    // Estimate nutrition based on food name and weight
-    private func estimateNutrition(foodName: String, weight: Double) -> NutritionInfo {
-        // In a real app, this would use a food database
-        // For now, we'll use simple estimates based on food type
-        
-        var caloriesPer100g: Double = 100  // Default
-        var proteinPer100g: Double = 5
-        var carbsPer100g: Double = 15
-        var fatPer100g: Double = 2
-        
-        // Very simple food categorization
-        let name = foodName.lowercased()
-        
-        if name.contains("apple") || name.contains("banana") || name.contains("orange") {
-            // Fruits
-            caloriesPer100g = 60
-            proteinPer100g = 0.5
-            carbsPer100g = 15
-            fatPer100g = 0.2
-        } else if name.contains("rice") || name.contains("pasta") {
-            // Starches
-            caloriesPer100g = 130
-            proteinPer100g = 3
-            carbsPer100g = 28
-            fatPer100g = 0.3
-        } else if name.contains("chicken") || name.contains("steak") {
-            // Meats
-            caloriesPer100g = 180
-            proteinPer100g = 25
-            carbsPer100g = 0
-            fatPer100g = 10
-        } else if name.contains("vegetable") || name.contains("salad") {
-            // Vegetables
-            caloriesPer100g = 30
-            proteinPer100g = 2
-            carbsPer100g = 5
-            fatPer100g = 0.3
-        }
-        
-        // Calculate nutrition based on weight
-        let ratio = weight / 100
-        
-        return NutritionInfo(
-            calories: Int(caloriesPer100g * ratio),
-            protein: proteinPer100g * ratio,
-            carbs: carbsPer100g * ratio,
-            fat: fatPer100g * ratio
-        )
-    }
-    
-    // Add to meal
-    func addToMeal(_ foodItem: FoodItem) {
-        // Add to meal builder
-        MealBuilder.shared.addFoodItem(foodItem)
-    }
-    
-    // MARK: - ARSessionDelegate
-    
-    func session(_ session: ARSession, didUpdate frame: ARFrame) {
-        // Only process frames when scanning
-        guard scanStage == .scanning else { return }
-        
-        // Get distance to camera focus point
-        _ = frame.camera // Remove unused variable warning
-        
-        // Use center of frame as reference point
-        let screenCenter = CGPoint(x: 0.5, y: 0.5)
-        
-        // Get depth at center point if available
-        if let depthData = frame.sceneDepth?.depthMap {
-            let depthWidth = CVPixelBufferGetWidth(depthData)
-            let depthHeight = CVPixelBufferGetHeight(depthData)
-            
-            let pixelX = Int(screenCenter.x * CGFloat(depthWidth))
-            let pixelY = Int(screenCenter.y * CGFloat(depthHeight))
-            
-            CVPixelBufferLockBaseAddress(depthData, .readOnly)
-            defer { CVPixelBufferUnlockBaseAddress(depthData, .readOnly) }
-            
-            if let baseAddress = CVPixelBufferGetBaseAddress(depthData) {
-                let bytesPerRow = CVPixelBufferGetBytesPerRow(depthData)
-                let bytesPerPixel = 4 // 32-bit float for depth data
-                
-                let pixelAddress = baseAddress.advanced(by: pixelY * bytesPerRow + pixelX * bytesPerPixel)
-                let depthValue = pixelAddress.assumingMemoryBound(to: Float32.self).pointee
-                
-                // Update distance if valid on main thread
-                if depthValue > 0 && depthValue.isFinite {
-                    DispatchQueue.main.async {
-                        self.currentDistance = depthValue
-                        
-                        // Update guidance based on distance
-                        if depthValue < 0.2 {
-                            self.distanceGuidance = "Move further away"
-                        } else if depthValue > 0.4 {
-                            self.distanceGuidance = "Move closer to food"
-                        } else {
-                            self.distanceGuidance = "Distance good for scanning"
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    // Capture frame data for a specific frame
-    func captureFrameData(_ frame: ARFrame) {
-        if scanStage == .scanning {
-            // Store depth data and color image for processing
-            depthData = frame.sceneDepth?.depthMap
-            colorImage = frame.capturedImage
-            
-            // Create UIImage from captured frame
-            capturedImage = convertCapturedImageToUIImage(frame.capturedImage)
-        }
-    }
-    
-    // MARK: - Helper Methods
-    
-    // Convert CVPixelBuffer to UIImage
-    private func convertCapturedImageToUIImage(_ pixelBuffer: CVPixelBuffer) -> UIImage? {
-        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-        let context = CIContext()
-        guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
-            return nil
-        }
-        return UIImage(cgImage: cgImage)
+        // Create a FoodItem from the current scan results
+        // This should integrate with the meal logging system
+        print("Creating food item from scan results")
+        // TODO: Implement food item creation and navigation to meal builder
     }
     
     // Create a mock food image for previews
@@ -310,6 +161,35 @@ class LiDARScannerViewModel: NSObject, ObservableObject, ARSessionDelegate {
             let color = colors.randomElement() ?? .systemGreen
             color.setFill()
             ctx.fill(CGRect(x: 0, y: 0, width: 300, height: 300))
+        }
+    }
+}
+
+struct DetectedObject: Identifiable {
+    let id: UUID
+    var name: String
+    var confidence: Double
+    var estimatedVolume: Double
+    var boundingBox: CGRect
+    var foodInfo: FoodInfo?
+    
+    mutating func updateFoodInfo(_ info: FoodInfo) {
+        self.foodInfo = info
+    }
+}
+
+struct FoodInfo {
+    let name: String
+    let estimatedWeight: Double
+    let calories: Int
+    let nutritionInfo: NutritionInfo
+}
+
+// MARK: - ARSessionDelegate
+extension LiDARScannerViewModel: ARSessionDelegate {
+    nonisolated func session(_ session: ARSession, didFailWithError error: Error) {
+        Task { @MainActor in
+            lidarErrorMessage = "AR Session failed: \(error.localizedDescription)"
         }
     }
 }

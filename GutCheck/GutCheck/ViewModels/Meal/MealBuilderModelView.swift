@@ -35,10 +35,7 @@ class MealBuilderViewModel: ObservableObject {
     
     // Computed properties
     var formattedDateTime: String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
-        return formatter.string(from: mealDate)
+        mealDate.formattedDateTime
     }
     
     var totalNutrition: NutritionInfo {

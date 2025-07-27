@@ -5,6 +5,7 @@ import FirebaseAuth
 struct RecentActivityListView: View {
     @StateObject private var viewModel = RecentActivityViewModel()
     @EnvironmentObject var navigationCoordinator: NavigationCoordinator
+    @EnvironmentObject var authService: AuthService
     let selectedDate: Date
     
     var body: some View {
@@ -27,7 +28,7 @@ struct RecentActivityListView: View {
             if viewModel.isLoading {
                 LoadingStateView()
             } else if viewModel.recentEntries.isEmpty {
-                EmptyStateView()
+                RecentActivityEmptyStateView()
             } else {
                 // Recent entries list
                 VStack(spacing: 8) {
@@ -44,10 +45,10 @@ struct RecentActivityListView: View {
         .cornerRadius(12)
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
         .onAppear {
-            viewModel.loadRecentActivity(for: selectedDate)
+            viewModel.loadRecentActivity(for: selectedDate, authService: authService)
         }
         .onChange(of: selectedDate) { _, newDate in
-            viewModel.loadRecentActivity(for: newDate)
+            viewModel.loadRecentActivity(for: newDate, authService: authService)
         }
     }
     
@@ -183,7 +184,7 @@ struct LoadingStateView: View {
 }
 
 // MARK: - Empty State
-struct EmptyStateView: View {
+struct RecentActivityEmptyStateView: View {
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: "tray")
@@ -258,74 +259,7 @@ enum ActivityType: Hashable {
     case symptom(Symptom)
 }
 
-// MARK: - Recent Activity ViewModel
 
-@MainActor
-class RecentActivityViewModel: ObservableObject {
-    @Published var recentEntries: [ActivityEntry] = []
-    @Published var isLoading = false
-    @Published var errorMessage: String?
-    
-    // Repository dependencies
-    private let mealRepository: MealRepository
-    private let symptomRepository: SymptomRepository
-    private let maxEntries = 5
-    
-    init(mealRepository: MealRepository = MealRepository.shared,
-         symptomRepository: SymptomRepository = SymptomRepository.shared) {
-        self.mealRepository = mealRepository
-        self.symptomRepository = symptomRepository
-    }
-    
-    func loadRecentActivity(for date: Date) {
-        isLoading = true
-        errorMessage = nil
-        
-        Task {
-            do {
-                let entries = try await fetchActivityEntries(for: date)
-                await MainActor.run {
-                    self.recentEntries = entries
-                    self.isLoading = false
-                }
-            } catch {
-                await MainActor.run {
-                    self.errorMessage = error.localizedDescription
-                    self.isLoading = false
-                    print("Error loading recent activity: \(error)")
-                }
-            }
-        }
-    }
-    
-    // MARK: - Refactored using Repositories
-    
-    private func fetchActivityEntries(for date: Date) async throws -> [ActivityEntry] {
-        guard let userId = Auth.auth().currentUser?.uid else {
-            throw RepositoryError.noAuthenticatedUser
-        }
-        
-        var entries: [ActivityEntry] = []
-        
-        // Fetch meals using repository
-        let meals = try await mealRepository.fetchMealsForDate(date, userId: userId)
-        for meal in meals {
-            entries.append(ActivityEntry(type: .meal(meal), timestamp: meal.date))
-        }
-        
-        // Fetch symptoms using repository
-        let symptoms = try await symptomRepository.fetchSymptomsForDate(date, userId: userId)
-        for symptom in symptoms {
-            entries.append(ActivityEntry(type: .symptom(symptom), timestamp: symptom.date))
-        }
-        
-        // Sort by timestamp (most recent first) and limit
-        return entries
-            .sorted { $0.timestamp > $1.timestamp }
-            .prefix(maxEntries)
-            .map { $0 }
-    }
-}
 
 // MARK: - Extensions for better display
 extension PainLevel {

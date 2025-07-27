@@ -9,7 +9,7 @@ import SwiftUI
 import AVFoundation
 
 struct BarcodeScannerView: View {
-    @StateObject private var viewModel = BarcodeScannerViewModel()
+    @StateObject var viewModel = BarcodeScannerViewModel()
     @Environment(\.dismiss) private var dismiss
     @State private var showingMealBuilder = false
     

@@ -97,7 +97,7 @@ class AuthenticationViewModel: ObservableObject {
         guard isForgotPasswordValid else { return }
         
         do {
-            try await authService.resetPassword(email: email)
+            try await authService.sendPasswordReset(email: email)
             successMessage = "Password reset email sent to \(email)"
             showingSuccessAlert = true
             isShowingForgotPassword = false

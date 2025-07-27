@@ -24,19 +24,7 @@ class MealDetailViewModel: ObservableObject {
     // Repository dependency
     private let mealRepository: MealRepository
     
-    private let dateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter
-    }()
-    
-    private let dateOnlyFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .none
-        return formatter
-    }()
+    // Using DateFormattingService instead of local formatters
     
     init(meal: Meal, mealRepository: MealRepository = MealRepository.shared) {
         self.meal = meal
@@ -44,13 +32,13 @@ class MealDetailViewModel: ObservableObject {
         self.mealRepository = mealRepository
     }
     
-    // Computed properties remain the same
+    // Computed properties using DateFormattingService
     var formattedDateTime: String {
-        return dateFormatter.string(from: meal.date)
+        meal.date.formattedDateTime
     }
     
     var formattedDate: String {
-        return dateOnlyFormatter.string(from: meal.date)
+        meal.date.formattedDate
     }
     
     var sourceDescription: String {

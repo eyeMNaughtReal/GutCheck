@@ -31,10 +31,21 @@ struct ColorTheme {
     static let border = Color.gray.opacity(0.3)
     static let activeBorder = primary
     
+    // Button colors
+    static let buttonPrimary = primary
+    static let buttonSecondary = secondary
+    
     // Text variations
     static let primaryText = text
     static let secondaryText = Color.gray
     static let lightText = Color.white
+    
+    // Input and form colors
+    static let inputBackground = Color(hex: "F5F5F5") // Light gray for input backgrounds
+    
+    // Calendar and logging colors
+    static let mealLogging = accent          // For meal tracking dots
+    static let bowelTracking = secondary     // For bowel movement tracking dots
 }
 
 // Extension to create Color from hex string

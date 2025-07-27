@@ -41,6 +41,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
+				"Resources/GoogleService-Info.plist",
 			);
 			target = 6DEADBEC2E1F312300CAF395 /* GutCheck */;
 		};

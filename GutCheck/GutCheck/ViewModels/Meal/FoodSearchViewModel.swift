@@ -85,7 +85,7 @@ class FoodSearchViewModel: ObservableObject {
         // Extract serving information
         let servingQty = nfood.servingQty ?? 1.0
         let servingUnit = nfood.servingUnit ?? "serving"
-        let servingWeightGrams = nfood.serving_weight_grams
+        let servingWeightGrams = nfood.servingWeight
         
         // Create quantity string
         let quantityString = "\(String(format: "%g", servingQty)) \(servingUnit)"
@@ -438,7 +438,7 @@ class FoodSearchViewModel: ObservableObject {
 //        }
 //    }
 //    
-//    private func createFoodItem(from nfood: NutritionixFood) -> FoodItem {
+    // Deprecated - using createEnhancedFoodItem instead
 //        // Extract serving information
 //        let servingQty = nfood.servingQty ?? 1.0
 //        let servingUnit = nfood.servingUnit ?? "serving"

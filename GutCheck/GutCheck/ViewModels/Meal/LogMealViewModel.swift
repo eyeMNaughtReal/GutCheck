@@ -21,28 +21,35 @@ final class LogMealViewModel: ObservableObject {
     @Published var notes: String = ""
     @Published var isSaving: Bool = false
 
-    private let userID: String = "mock-user-id" // Replace with actual UID later
+    @Published private(set) var userID: String?
 
     // MARK: - Save Function
-    func saveMeal() {
+    @MainActor
+    func saveMeal() async throws {
         isSaving = true
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            let newMeal = Meal(
-                name: self.mealName,
-                date: Date(),
-                type: self.mealType,
-                source: .manual,
-                foodItems: self.foodItems,
-                notes: self.notes.isEmpty ? nil : self.notes,
-                tags: [],
-                createdBy: self.userID
-            )
+        
+        guard let userId = FirebaseManager.shared.currentUser?.uid else {
+            throw FirebaseError.notAuthenticated
+        }
+        
+        if userID != userId {
+            userID = userId
+        }
+        
+        let newMeal = Meal(
+            name: self.mealName,
+            date: Date(),
+            type: self.mealType,
+            source: .manual,
+            foodItems: self.foodItems,
+            notes: self.notes.isEmpty ? nil : self.notes,
+            tags: [],
+            createdBy: userId
+        )
 
             // TODO: Save to Firebase/Core Data
             print("Saved meal: \(newMeal)")
             self.reset()
-        }
     }
 
     // MARK: - Reset form after save

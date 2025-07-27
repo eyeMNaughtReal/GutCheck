@@ -2,7 +2,7 @@
 //  AuthService.swift
 //  GutCheck
 //
-//  Complete AuthService with all methods properly implemented
+//  Created by Mark Conley on 7/9/25.
 //
 
 import Foundation
@@ -11,14 +11,14 @@ import FirebaseFirestore
 import CryptoKit
 
 @MainActor
-class AuthService: ObservableObject {
-    @Published var user: FirebaseAuth.User?
-    @Published var currentUser: User?
-    @Published var isAuthenticated = false
-    @Published var isLoading = false
+class AuthService: AuthenticationProtocol {
+    @Published private(set) var authUser: FirebaseAuth.User?
+    @Published private(set) var currentUser: User?
+    @Published private(set) var isAuthenticated = false
+    @Published private(set) var isLoading = false
     @Published var errorMessage: String?
-    @Published var verificationId: String?
-    @Published var isPhoneVerificationInProgress = false
+    private var verificationId: String?
+    @Published private(set) var isPhoneVerificationInProgress = false
     
     private let auth = Auth.auth()
     private let firestore = Firestore.firestore()
@@ -30,11 +30,11 @@ class AuthService: ObservableObject {
         // Listen for auth state changes
         authStateListenerHandle = auth.addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
-                self?.user = user
+                self?.authUser = user
                 self?.isAuthenticated = user != nil
                 
-                if let user = user {
-                    await self?.loadCurrentUser(userId: user.uid)
+                if let authUser = user {
+                    await self?.loadCurrentUser(userId: authUser.uid)
                 } else {
                     self?.currentUser = nil
                 }
@@ -59,7 +59,7 @@ class AuthService: ObservableObject {
         
         do {
             let result = try await auth.signIn(withEmail: email, password: password)
-            user = result.user
+            authUser = result.user
             isAuthenticated = true
             await loadCurrentUser(userId: result.user.uid)
         } catch {
@@ -76,7 +76,7 @@ class AuthService: ObservableObject {
         
         do {
             let result = try await auth.createUser(withEmail: email, password: password)
-            user = result.user
+            authUser = result.user
             isAuthenticated = true
             
             // Create user profile in Firestore
@@ -98,17 +98,17 @@ class AuthService: ObservableObject {
     func signOut() throws {
         do {
             try auth.signOut()
-            user = nil
-            currentUser = nil
-            isAuthenticated = false
-            errorMessage = nil
+            self.authUser = nil
+            self.currentUser = nil
+            self.isAuthenticated = false
+            self.errorMessage = nil
         } catch {
-            errorMessage = "Failed to sign out: \(error.localizedDescription)"
+            self.errorMessage = "Failed to sign out: \(error.localizedDescription)"
             throw error
         }
     }
     
-    func resetPassword(email: String) async throws {
+    func sendPasswordReset(email: String) async throws {
         isLoading = true
         errorMessage = nil
         
@@ -122,8 +122,88 @@ class AuthService: ObservableObject {
         }
     }
     
+    func verifyPhoneNumber(_ phoneNumber: String) async throws {
+        isLoading = true
+        errorMessage = nil
+        isPhoneVerificationInProgress = true
+        
+        defer { isLoading = false }
+        
+        do {
+            let verificationID = try await PhoneAuthProvider.provider()
+                .verifyPhoneNumber(phoneNumber, uiDelegate: nil)
+            verificationId = verificationID
+        } catch {
+            isPhoneVerificationInProgress = false
+            errorMessage = handleAuthError(error)
+            throw error
+        }
+    }
+    
+    func signInWithPhone(verificationCode: String) async throws {
+        guard let verificationId = verificationId else {
+            throw AuthError.noVerificationID
+        }
+        
+        isLoading = true
+        errorMessage = nil
+        
+        defer { 
+            isLoading = false
+            isPhoneVerificationInProgress = false
+        }
+        
+        do {
+            let credential = PhoneAuthProvider.provider().credential(
+                withVerificationID: verificationId,
+                verificationCode: verificationCode
+            )
+            
+            let result = try await auth.signIn(with: credential)
+            authUser = result.user
+            await loadCurrentUser(userId: result.user.uid)
+            isAuthenticated = true
+        } catch {
+            errorMessage = handleAuthError(error)
+            throw error
+        }
+    }
+    
+    func register(email: String, password: String, firstName: String, lastName: String) async throws {
+        isLoading = true
+        errorMessage = nil
+        
+        defer { isLoading = false }
+        
+        do {
+            let result = try await auth.createUser(withEmail: email, password: password)
+            
+            let newUser = User(
+                id: result.user.uid,
+                email: email,
+                firstName: firstName,
+                lastName: lastName,
+                createdAt: Date()
+            )
+            
+            try await firestore.collection("users").document(result.user.uid).setData([
+                "email": email,
+                "firstName": firstName,
+                "lastName": lastName,
+                "createdAt": Timestamp(date: Date())
+            ])
+            
+            authUser = result.user
+            currentUser = newUser
+            isAuthenticated = true
+        } catch {
+            errorMessage = error.localizedDescription
+            throw error
+        }
+    }
+    
     func deleteAccount() async throws {
-        guard let currentUser = user else {
+        guard let currentFirebaseUser = authUser else {
             throw AuthError.noUser
         }
         
@@ -134,16 +214,16 @@ class AuthService: ObservableObject {
         
         do {
             // Delete user data from Firestore first
-            try await deleteUserData(userId: currentUser.uid)
+            try await deleteUserData(userId: currentFirebaseUser.uid)
             
             // Delete the auth account
-            try await currentUser.delete()
+            try await currentFirebaseUser.delete()
             
-            user = nil
-            self.currentUser = nil
+            authUser = nil
+            currentUser = nil
             isAuthenticated = false
         } catch {
-            errorMessage = handleAuthError(error)
+            errorMessage = error.localizedDescription
             throw error
         }
     }
@@ -159,7 +239,7 @@ class AuthService: ObservableObject {
         
         do {
             let verificationID = try await PhoneAuthProvider.provider().verifyPhoneNumber(phoneNumber, uiDelegate: nil)
-            self.verificationId = verificationID
+            verificationId = verificationID
         } catch {
             isPhoneVerificationInProgress = false
             errorMessage = handleAuthError(error)
@@ -187,7 +267,7 @@ class AuthService: ObservableObject {
             )
             
             let authResult = try await auth.signIn(with: credential)
-            self.user = authResult.user
+            authUser = authResult.user
             isAuthenticated = true
             
             let newUser = try await createUserProfile(
@@ -243,7 +323,7 @@ class AuthService: ObservableObject {
     }
     
     func updateUserProfile(_ updatedUser: User) async throws {
-        guard let currentFirebaseUser = user else {
+        guard let currentFirebaseUser = authUser else {
             throw AuthError.noUser
         }
         
