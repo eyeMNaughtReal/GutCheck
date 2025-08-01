@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MealBuilderView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var viewModel = MealBuilderViewModel()
+    @StateObject private var mealService = MealBuilderService.shared
     @State private var showingDatePicker = false
     @State private var showingConfirmation = false
     @State private var showingDiscard = false
@@ -19,7 +19,7 @@ struct MealBuilderView: View {
             // Meal details section
             VStack(spacing: 16) {
                 // Meal name field
-                TextField("Meal name", text: $viewModel.mealName)
+                TextField("Meal name", text: $mealService.mealName)
                     .font(.headline)
                     .padding()
                     .background(ColorTheme.surface)
@@ -35,7 +35,7 @@ struct MealBuilderView: View {
                         Image(systemName: "fork.knife")
                             .foregroundColor(ColorTheme.primary)
                         
-                        Picker("Type", selection: $viewModel.mealType) {
+                        Picker("Type", selection: $mealService.mealType) {
                             ForEach(MealType.allCases, id: \.self) { type in
                                 Text(type.rawValue.capitalized).tag(type)
                             }
@@ -58,7 +58,7 @@ struct MealBuilderView: View {
                         HStack {
                             Image(systemName: "calendar")
                                 .foregroundColor(ColorTheme.primary)
-                            Text(viewModel.formattedDateTime)
+                            Text(mealService.formattedDateTime)
                                 .foregroundColor(ColorTheme.primaryText)
                         }
                         .frame(maxWidth: .infinity)
@@ -84,23 +84,23 @@ struct MealBuilderView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     // Nutrition summary
-                    NutritionSummaryCard(nutrition: viewModel.totalNutrition)
+                    NutritionSummaryCard(nutrition: mealService.totalNutrition)
                         .padding(.horizontal)
                         .padding(.top)
                     
                     // Food items
-                    if viewModel.foodItems.isEmpty {
+                    if mealService.currentMeal.isEmpty {
                         emptyStateView
                             .padding()
                     } else {
-                        ForEach(viewModel.foodItems) { item in
+                        ForEach(mealService.currentMeal) { item in
                             FoodItemRow(
                                 foodItem: item,
                                 onEdit: {
-                                    viewModel.editFoodItem(item)
+                                    // TODO: Implement food item editing
                                 },
                                 onDelete: {
-                                    viewModel.removeFoodItem(item)
+                                    mealService.removeFoodItem(item)
                                 }
                             )
                             .padding(.horizontal)
@@ -113,7 +113,7 @@ struct MealBuilderView: View {
                             .font(.subheadline)
                             .foregroundColor(ColorTheme.secondaryText)
                         
-                        TextEditor(text: $viewModel.notes)
+                        TextEditor(text: $mealService.notes)
                             .frame(minHeight: 100)
                             .padding(8)
                             .background(ColorTheme.surface)
@@ -134,7 +134,7 @@ struct MealBuilderView: View {
             VStack(spacing: 12) {
                 // Add food button
                 Button(action: {
-                    viewModel.addFoodItem()
+                    // TODO: Show food search/scanner modal
                 }) {
                     HStack {
                         Image(systemName: "plus.circle.fill")
@@ -150,7 +150,7 @@ struct MealBuilderView: View {
                 HStack(spacing: 12) {
                     // Cancel button
                     Button(action: {
-                        if !viewModel.foodItems.isEmpty {
+                        if !mealService.currentMeal.isEmpty {
                             showingDiscard = true
                         } else {
                             dismiss()
@@ -170,8 +170,15 @@ struct MealBuilderView: View {
                     
                     // Save button
                     Button(action: {
-                        viewModel.saveMeal()
-                        showingConfirmation = true
+                        Task {
+                            do {
+                                _ = try await mealService.saveMeal()
+                                showingConfirmation = true
+                            } catch {
+                                // TODO: Show error alert
+                                Swift.print("❌ Failed to save meal: \(error)")
+                            }
+                        }
                     }) {
                         Text("Save Meal")
                             .frame(maxWidth: .infinity)
@@ -180,8 +187,8 @@ struct MealBuilderView: View {
                             .foregroundColor(ColorTheme.text)
                             .cornerRadius(12)
                     }
-                    .disabled(viewModel.foodItems.isEmpty)
-                    .opacity(viewModel.foodItems.isEmpty ? 0.6 : 1)
+                    .disabled(mealService.currentMeal.isEmpty)
+                    .opacity(mealService.currentMeal.isEmpty ? 0.6 : 1)
                 }
             }
             .padding()
@@ -194,7 +201,7 @@ struct MealBuilderView: View {
         .navigationTitle("Build Your Meal")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingDatePicker) {
-            DateTimePickerView(date: $viewModel.mealDate)
+            DateTimePickerView(date: $mealService.mealDate)
         }
         .alert("Discard Meal?", isPresented: $showingDiscard) {
             Button("Cancel", role: .cancel) { }

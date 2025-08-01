@@ -240,8 +240,8 @@ class FoodSearchViewModel: ObservableObject {
             saveRecentItems()
         }
         
-        // Add to meal builder
-        MealBuilder.shared.addFoodItem(foodItem)
+        // Add to unified meal builder service
+        MealBuilderService.shared.addFoodItem(foodItem)
     }
 
     // MARK: - Recent Items Management
@@ -664,34 +664,6 @@ class FoodSearchViewModel: ObservableObject {
 //        print("Saved \(recentItems.count) recent items")
 //    }
 //}
-//
-//// MARK: - MealBuilder Singleton (keeping existing implementation)
-//
-class MealBuilder {
-    static let shared = MealBuilder()
-    
-    private init() {}
-    
-    // Current meal being built
-    private(set) var foodItems: [FoodItem] = []
-    
-    // Add a food item to the current meal
-    func addFoodItem(_ item: FoodItem) {
-        foodItems.append(item)
-    }
-    
-    // Remove a food item from the current meal
-    func removeFoodItem(_ item: FoodItem) {
-        foodItems.removeAll { $0.id == item.id }
-    }
-    
-    // Clear the current meal
-    func clearMeal() {
-        foodItems = []
-    }
-    
-    // Get the current meal
-    func getCurrentMeal() -> [FoodItem] {
-        return foodItems
-    }
-}
+
+// MARK: - MealBuilder Singleton (DEPRECATED - replaced by MealBuilderService)
+// This class is now deprecated and replaced by MealBuilderService for consistency

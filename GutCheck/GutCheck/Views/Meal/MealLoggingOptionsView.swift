@@ -422,8 +422,8 @@ class RecentItemsViewModel: ObservableObject {
     }
     
     func addToMeal(_ foodItem: FoodItem) {
-        // Add to meal builder singleton
-        MealBuilder.shared.addFoodItem(foodItem)
+        // Add to unified meal builder service
+        MealBuilderService.shared.addFoodItem(foodItem)
     }
 }
 

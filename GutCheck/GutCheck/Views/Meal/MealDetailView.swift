@@ -78,26 +78,13 @@ struct MealDetailView: View {
                     } else {
                         ForEach(viewModel.meal.foodItems) { item in
                             if viewModel.isEditing {
-                                FoodItemDetailRow(
-                                    foodItem: item,
-                                    isEditing: true,
-                                    onEdit: {
-                                        viewModel.editFoodItem(item)
-                                    },
-                                    onDelete: {
-                                        viewModel.removeFoodItem(item)
-                                    }
-                                )
+                                UnifiedFoodDetailView(foodItem: item, style: .compact)
+                                // TODO: Add edit/delete functionality to compact view
                             } else {
                                 Button(action: {
                                     navigationCoordinator.navigateTo(.foodDetail(item))
                                 }) {
-                                    FoodItemDetailRow(
-                                        foodItem: item,
-                                        isEditing: false,
-                                        onEdit: {},
-                                        onDelete: {}
-                                    )
+                                    UnifiedFoodDetailView(foodItem: item, style: .compact)
                                 }
                                 .buttonStyle(PlainButtonStyle())
                             }

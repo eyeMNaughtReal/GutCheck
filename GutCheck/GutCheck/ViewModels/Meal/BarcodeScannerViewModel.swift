@@ -50,7 +50,11 @@ class BarcodeScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutp
     
     // Product information
     @Published var isLoading = false
-    @Published var foundProduct = false
+    @Published var foundProduct = false {
+        didSet {
+            Swift.print("📦 BarcodeScannerViewModel: foundProduct changed from \(oldValue) to \(foundProduct)")
+        }
+    }
     @Published var productName = ""
     @Published var productDescription = ""
     @Published var productCalories = 0
@@ -213,20 +217,32 @@ class BarcodeScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutp
     
     // Nonisolated delegate method to satisfy protocol requirement
     nonisolated func metadataOutput(_ output: AVCaptureMetadataOutput, didOutput metadataObjects: [AVMetadataObject], from connection: AVCaptureConnection) {
+        Swift.print("📷 BarcodeScannerViewModel: metadata output received, objects count: \(metadataObjects.count)")
+        
         // Process only the first detected barcode
         guard let metadataObject = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
-              let barcodeValue = metadataObject.stringValue else { return }
+              let barcodeValue = metadataObject.stringValue else { 
+            Swift.print("📷 BarcodeScannerViewModel: no valid barcode detected")
+            return 
+        }
+        
+        Swift.print("📷 BarcodeScannerViewModel: detected barcode: \(barcodeValue)")
         
         Task { @MainActor in
             // Only process if we don't already have a barcode or if it's a different one
             if scannedBarcode != barcodeValue {
+                Swift.print("📷 BarcodeScannerViewModel: processing new barcode: \(barcodeValue)")
                 // Pause scanning temporarily
                 stopScanning()
                 if isAuthorized {
                     scannedBarcode = barcodeValue
                     // Simulate product lookup
                     lookupProduct(barcode: barcodeValue)
+                } else {
+                    Swift.print("📷 BarcodeScannerViewModel: not authorized for scanning")
                 }
+            } else {
+                Swift.print("📷 BarcodeScannerViewModel: ignoring duplicate barcode: \(barcodeValue)")
             }
         }
     }
@@ -648,7 +664,7 @@ class BarcodeScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutp
     }
     
     func addToMeal(_ foodItem: FoodItem) {
-        // Add to meal builder
-        MealBuilder.shared.addFoodItem(foodItem)
+        // Add to unified meal builder service
+        MealBuilderService.shared.addFoodItem(foodItem)
     }
 }

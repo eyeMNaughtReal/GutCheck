@@ -65,11 +65,7 @@ struct FoodSearchView: View {
             }
             .sheet(isPresented: $showDetailSheet) {
                 if let item = selectedFoodItem {
-                    EnhancedFoodItemDetailView(foodItem: item) { addedItem in
-                        viewModel.addToMeal(addedItem)
-                        showDetailSheet = false
-                        dismiss()
-                    }
+                    UnifiedFoodDetailView(foodItem: item, style: .full)
                 }
             }
         }

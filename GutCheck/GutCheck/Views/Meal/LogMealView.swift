@@ -78,7 +78,7 @@ struct LogMealView: View {
                             .cornerRadius(12)
                         } else {
                             ForEach(viewModel.foodItems) { item in
-                                FoodItemDetailRow(foodItem: item)
+                                UnifiedFoodDetailView(foodItem: item, style: .compact)
                             }
                         }
                     }

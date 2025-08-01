@@ -98,7 +98,10 @@ class LiDARScannerViewModel: NSObject, ObservableObject {
         
         arSession.delegate = self
         arSession.run(configuration)
-        scanStage = .scanning
+        
+        // Set to initial state so user can manually start scanning
+        scanStage = .initial
+        print("🔍 LiDAR: AR session started, set to .initial state")
     }
     
     func stopARSession() {

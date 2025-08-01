@@ -11,7 +11,11 @@ struct SmartFoodScannerView: View {
     @StateObject private var barcodeViewModel = BarcodeScannerViewModel()
     @StateObject private var lidarViewModel = LiDARScannerViewModel()
     @Environment(\.dismiss) private var dismiss
-    @State private var currentStep: ScanStep = .barcode
+    @State private var currentStep: ScanStep = .barcode {
+        didSet {
+            Swift.print("🔄 SmartFoodScannerView: currentStep changed from \(oldValue) to \(currentStep)")
+        }
+    }
     @State private var showingMealBuilder = false
     @State private var showingSearchFallback = false
     @State private var finalFoodItem: FoodItem?
@@ -71,13 +75,16 @@ struct SmartFoodScannerView: View {
                                 .tag(ScanStep.results)
                         }
                         .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                        .disabled(true) // Prevent manual swiping
+                        .gesture(DragGesture().onChanged { _ in }) // Prevent manual swiping without disabling buttons
                     }
                 }
             }
             .navigationBarHidden(true)
         }
         .onAppear {
+            Swift.print("🔍 SmartScanner: View appeared - currentStep: \(currentStep)")
+            Swift.print("🔍 SmartScanner: Barcode authorized: \(barcodeViewModel.isAuthorized)")
+            Swift.print("🔍 SmartScanner: LiDAR supported: \(lidarViewModel.isDeviceSupported)")
             barcodeViewModel.checkCameraPermission()
         }
         .sheet(isPresented: $showingMealBuilder) {
@@ -116,7 +123,10 @@ struct SmartFoodScannerView: View {
                 Spacer()
                 
                 // Help button
-                Button(action: {}) {
+                Button(action: {
+                    Swift.print("🔍 SmartScanner: Help button pressed for step: \(currentStep)")
+                    // TODO: Show help for current step
+                }) {
                     Image(systemName: "questionmark.circle")
                         .font(.title2)
                         .foregroundColor(ColorTheme.secondaryText)
@@ -129,6 +139,10 @@ struct SmartFoodScannerView: View {
             HStack(spacing: 12) {
                 ForEach([ScanStep.barcode, .lidarEnhancement, .searchFallback, .results], id: \.self) { step in
                     progressStepIndicator(step: step)
+                        .onTapGesture {
+                            Swift.print("🔍 SmartScanner: Progress step \(step) tapped")
+                            navigateToStep(step)
+                        }
                 }
             }
             .padding(.horizontal)
@@ -260,9 +274,18 @@ struct SmartFoodScannerView: View {
                 Text("Product Found!")
                     .font(.headline.weight(.semibold))
                     .foregroundColor(Color.green)
+                    .onAppear {
+                        Swift.print("🔍 SmartScanner: Barcode results view appeared!")
+                        Swift.print("🔍 SmartScanner: Product name: \(barcodeViewModel.productName)")
+                        Swift.print("🔍 SmartScanner: Product calories: \(barcodeViewModel.productCalories)")
+                        Swift.print("🔍 SmartScanner: Detailed nutrition count: \(barcodeViewModel.detailedNutrition.count)")
+                    }
                 Spacer()
                 Button("Rescan") {
+                    Swift.print("🔍 SmartScanner: Rescan button pressed")
                     barcodeViewModel.clearScannedProduct()
+                    barcodeViewModel.startScanning()
+                    Swift.print("🔍 SmartScanner: Scanning restarted")
                 }
                 .font(.subheadline)
                 .foregroundColor(ColorTheme.accent)
@@ -300,6 +323,10 @@ struct SmartFoodScannerView: View {
             
             VStack(spacing: 12) {
                 Button("Enhance with LiDAR Portion Size") {
+                    Swift.print("🔍 SmartScanner: 'Enhance with LiDAR' button pressed")
+                    Swift.print("🔍 SmartScanner: Current step before: \(currentStep)")
+                    Swift.print("🔍 SmartScanner: Barcode found product: \(barcodeViewModel.foundProduct)")
+                    Swift.print("🔍 SmartScanner: Product name: \(barcodeViewModel.productName)")
                     proceedToLiDAREnhancement()
                 }
                 .font(.headline)
@@ -384,6 +411,11 @@ struct SmartFoodScannerView: View {
                 .font(.headline)
                 .foregroundColor(ColorTheme.primaryText)
                 .multilineTextAlignment(.center)
+                .onAppear {
+                    Swift.print("🔍 SmartScanner: LiDAR Enhancement Step appeared!")
+                    Swift.print("🔍 SmartScanner: Device supported: \(lidarViewModel.isDeviceSupported)")
+                    Swift.print("🔍 SmartScanner: Scan stage: \(lidarViewModel.scanStage)")
+                }
             
             Text("We found the nutrition data from the barcode. Now use LiDAR to estimate how much you're actually eating.")
                 .font(.subheadline)
@@ -489,10 +521,69 @@ struct SmartFoodScannerView: View {
     }
     
     // MARK: - Helper Functions
+    private func navigateToStep(_ step: ScanStep) {
+        Swift.print("🔍 SmartScanner: Navigating to step: \(step)")
+        
+        // Validate navigation logic
+        switch step {
+        case .barcode:
+            Swift.print("🔍 SmartScanner: Navigating to barcode step")
+            withAnimation(.easeInOut(duration: 0.3)) {
+                currentStep = .barcode
+            }
+            
+        case .lidarEnhancement:
+            // Only allow if barcode found or we want to allow manual navigation
+            Swift.print("🔍 SmartScanner: Navigating to LiDAR step")
+            withAnimation(.easeInOut(duration: 0.3)) {
+                currentStep = .lidarEnhancement
+            }
+            
+        case .searchFallback:
+            Swift.print("🔍 SmartScanner: Navigating to search fallback step")
+            withAnimation(.easeInOut(duration: 0.3)) {
+                currentStep = .searchFallback
+            }
+            
+        case .results:
+            // Only allow if we have a final food item
+            if finalFoodItem != nil {
+                Swift.print("🔍 SmartScanner: Navigating to results step")
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    currentStep = .results
+                }
+            } else {
+                Swift.print("🔍 SmartScanner: Cannot navigate to results - no final food item")
+            }
+        }
+    }
+    
     private func proceedToLiDAREnhancement() {
-        currentStep = .lidarEnhancement
+        Swift.print("🔍 SmartScanner: === PROCEEDING TO LIDAR ENHANCEMENT ===")
+        Swift.print("🔍 SmartScanner: Current step before: \(currentStep)")
+        
+        // Use withAnimation to ensure the TabView transitions smoothly
+        withAnimation(.easeInOut(duration: 0.3)) {
+            currentStep = .lidarEnhancement
+        }
+        
+        Swift.print("🔍 SmartScanner: Current step after: \(currentStep)")
+        Swift.print("🔍 SmartScanner: Device supported check...")
+        
         lidarViewModel.checkDeviceCapabilities()
-        lidarViewModel.startARSession()
+        
+        Swift.print("🔍 SmartScanner: Device LiDAR supported: \(lidarViewModel.isDeviceSupported)")
+        Swift.print("🔍 SmartScanner: LiDAR error message: \(lidarViewModel.lidarErrorMessage ?? "None")")
+        
+        if lidarViewModel.isDeviceSupported {
+            Swift.print("🔍 SmartScanner: Starting AR session...")
+            lidarViewModel.startARSession()
+            Swift.print("🔍 SmartScanner: AR session started, scan stage: \(lidarViewModel.scanStage)")
+        } else {
+            Swift.print("🔍 SmartScanner: LiDAR not supported - showing fallback UI")
+        }
+        
+        Swift.print("🔍 SmartScanner: === LIDAR ENHANCEMENT SETUP COMPLETE ===")
     }
     
     private func proceedToSearchFallback() {
@@ -554,7 +645,7 @@ struct SmartFoodScannerView: View {
     }
     
     private func addToMeal(_ foodItem: FoodItem) {
-        MealBuilder.shared.addFoodItem(foodItem)
+        MealBuilderService.shared.addFoodItem(foodItem)
         showingMealBuilder = true
     }
 }
@@ -567,6 +658,19 @@ struct LiDARPortionEstimatorView: View {
     
     var body: some View {
         VStack(spacing: 16) {
+            // Debug info
+            Text("Device Supported: \(viewModel.isDeviceSupported ? "Yes" : "No")")
+                .font(.caption)
+                .foregroundColor(.gray)
+            Text("Scan Stage: \(String(describing: viewModel.scanStage))")
+                .font(.caption)
+                .foregroundColor(.gray)
+            if let error = viewModel.lidarErrorMessage {
+                Text("Error: \(error)")
+                    .font(.caption)
+                    .foregroundColor(.red)
+            }
+            
             // Mini AR view
             ARViewContainer(session: viewModel.arSession, delegate: viewModel)
                 .frame(height: 300)
@@ -619,7 +723,9 @@ struct LiDARPortionEstimatorView: View {
                 .cornerRadius(12)
             } else if viewModel.scanStage == .initial {
                 Button("Start LiDAR Scan") {
+                    print("🔍 LiDAR: Start scan button pressed")
                     viewModel.startScanning()
+                    print("🔍 LiDAR: startScanning() called, new stage: \(viewModel.scanStage)")
                 }
                 .font(.headline)
                 .foregroundColor(.white)

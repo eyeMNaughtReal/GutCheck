@@ -126,10 +126,7 @@ struct BarcodeScannerView: View {
             viewModel.stopScanning()
         }
         .sheet(item: $viewModel.scannedFoodItem) { foodItem in
-            EnhancedFoodItemDetailView(foodItem: foodItem) { updatedItem in
-                viewModel.addToMeal(updatedItem)
-                showingMealBuilder = true
-            }
+            UnifiedFoodDetailView(foodItem: foodItem, style: .full)
         }
         .sheet(isPresented: $showingMealBuilder) {
             MealBuilderView()

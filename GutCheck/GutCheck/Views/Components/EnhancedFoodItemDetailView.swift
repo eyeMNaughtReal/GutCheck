@@ -15,15 +15,12 @@ struct EnhancedFoodItemDetailView: View {
     @State private var showingIngredients = false
     @State private var showingAllergens = false
     
-    let onAdd: (FoodItem) -> Void
-    
     // Store original nutrition values for calculations
     private let baseNutrition: NutritionInfo
     private let baseQuantity: String
     
-    init(foodItem: FoodItem, onAdd: @escaping (FoodItem) -> Void) {
+    init(foodItem: FoodItem) {
         self._foodItem = State(initialValue: foodItem)
-        self.onAdd = onAdd
         self.baseNutrition = foodItem.nutrition
         self.baseQuantity = foodItem.quantity
         self._customQuantity = State(initialValue: foodItem.quantity)
@@ -51,7 +48,7 @@ struct EnhancedFoodItemDetailView: View {
                 }
             }
             .sheet(isPresented: $showingNutritionDetails) {
-                FoodDetailView(foodItem: foodItem)
+                NutritionDetailsView(foodItem: foodItem)
             }
             .sheet(isPresented: $showingIngredients) {
                 IngredientsView(ingredients: foodItem.ingredients)
@@ -203,7 +200,9 @@ struct EnhancedFoodItemDetailView: View {
     
     private var addToMealButton: some View {
         Button(action: {
-            onAdd(foodItem)
+            // Use unified meal builder service directly
+            MealBuilderService.shared.addFoodItem(foodItem)
+            dismiss() // Dismiss the view after adding to meal
         }) {
             Text("Add to Meal")
                 .font(.headline)
@@ -264,173 +263,7 @@ struct MacroRow: View {
     }
 }
 
-struct DetailSectionRow: View {
-    let icon: String
-    let title: String
-    let subtitle: String
-    var iconColor: Color = ColorTheme.accent
-    
-    var body: some View {
-        HStack(spacing: 16) {
-            Image(systemName: icon)
-                .font(.title2)
-                .foregroundColor(iconColor)
-                .frame(width: 32, height: 32)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
-                
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
-            }
-            
-            Spacer()
-            
-            Image(systemName: "chevron.right")
-                .font(.caption)
-                .foregroundColor(ColorTheme.secondaryText)
-        }
-        .padding()
-        .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
-        .shadow(color: ColorTheme.shadowColor, radius: 2, x: 0, y: 1)
-    }
-}
-
-struct IngredientsView: View {
-    @Environment(\.dismiss) private var dismiss
-    let ingredients: [String]
-    
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    if ingredients.isEmpty {
-                        VStack(spacing: 16) {
-                            Image(systemName: "list.bullet")
-                                .font(.system(size: 48))
-                                .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
-                            
-                            Text("No Ingredients Listed")
-                                .font(.headline)
-                                .foregroundColor(ColorTheme.primaryText)
-                            
-                            Text("Ingredient information is not available for this food item.")
-                                .font(.subheadline)
-                                .foregroundColor(ColorTheme.secondaryText)
-                                .multilineTextAlignment(.center)
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 200)
-                        .padding()
-                    } else {
-                        Text("Ingredients are listed in order of predominance by weight.")
-                            .font(.caption)
-                            .foregroundColor(ColorTheme.secondaryText)
-                            .padding(.horizontal)
-                        
-                        ForEach(Array(ingredients.enumerated()), id: \.offset) { index, ingredient in
-                            HStack {
-                                Text("\(index + 1).")
-                                    .font(.caption)
-                                    .foregroundColor(ColorTheme.secondaryText)
-                                    .frame(width: 24, alignment: .leading)
-                                
-                                Text(ingredient.capitalized)
-                                    .font(.body)
-                                    .foregroundColor(ColorTheme.primaryText)
-                                
-                                Spacer()
-                            }
-                            .padding(.vertical, 4)
-                            .padding(.horizontal)
-                        }
-                    }
-                }
-                .padding(.vertical)
-            }
-            .navigationTitle("Ingredients")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-}
-
-struct AllergensView: View {
-    @Environment(\.dismiss) private var dismiss
-    let allergens: [String]
-    
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    if allergens.isEmpty {
-                        VStack(spacing: 16) {
-                            Image(systemName: "checkmark.shield.fill")
-                                .font(.system(size: 48))
-                                .foregroundColor(ColorTheme.success)
-                            
-                            Text("No Known Allergens")
-                                .font(.headline)
-                                .foregroundColor(ColorTheme.primaryText)
-                            
-                            Text("No common allergens were detected in this food item. However, always check the original packaging for complete allergen information.")
-                                .font(.subheadline)
-                                .foregroundColor(ColorTheme.secondaryText)
-                                .multilineTextAlignment(.center)
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 200)
-                        .padding()
-                    } else {
-                        Text("This food contains or may contain the following allergens:")
-                            .font(.subheadline)
-                            .foregroundColor(ColorTheme.secondaryText)
-                            .padding(.horizontal)
-                        
-                        ForEach(allergens, id: \.self) { allergen in
-                            HStack {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundColor(ColorTheme.error)
-                                
-                                Text(allergen.capitalized)
-                                    .font(.body)
-                                    .foregroundColor(ColorTheme.primaryText)
-                                
-                                Spacer()
-                            }
-                            .padding()
-                            .background(ColorTheme.error.opacity(0.1))
-                            .cornerRadius(8)
-                            .padding(.horizontal)
-                        }
-                    }
-                }
-                .padding(.vertical)
-            }
-            .navigationTitle("Allergens")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-    }
-}
-
-// Remove the old implementations and import the new ones
-// All old MacroRow and NutritionBadge usage automatically works
-// Plus you get new convenience initializers:
+// MARK: - Enhanced Food Item Result Row
 
 struct EnhancedFoodItemResultRow: View {
     let item: FoodItem
