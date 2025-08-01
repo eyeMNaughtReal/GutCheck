@@ -289,8 +289,8 @@ class BarcodeScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutp
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        request.setValue("0f4298bb", forHTTPHeaderField: "x-app-id")
-        request.setValue("239f65a9165bbaa7be71fd1d7f040973", forHTTPHeaderField: "x-app-key")
+        request.setValue(NutritionixSecrets.appId, forHTTPHeaderField: "x-app-id")
+        request.setValue(NutritionixSecrets.apiKey, forHTTPHeaderField: "x-app-key")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         // Add UPC parameter

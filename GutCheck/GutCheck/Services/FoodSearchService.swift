@@ -12,8 +12,8 @@ class FoodSearchService: ObservableObject {
     @Published var errorMessage: String? = nil
     
     private let baseURL = "https://trackapi.nutritionix.com/v2"
-    private let appId = "0f4298bb"
-    private let apiKey = "239f65a9165bbaa7be71fd1d7f040973"
+    private let appId = NutritionixSecrets.appId
+    private let apiKey = NutritionixSecrets.apiKey
 
     func searchFoods(query: String) async {
         results = []
