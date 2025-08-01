@@ -336,7 +336,9 @@ struct LiDARScannerView: View {
             // Action buttons
             VStack(spacing: 12) {
                 Button(action: {
-                    viewModel.createFoodItemFromScan()
+                    Task {
+                        await viewModel.createFoodItemFromScan()
+                    }
                 }) {
                     Text("Add to Meal")
                         .font(.headline)

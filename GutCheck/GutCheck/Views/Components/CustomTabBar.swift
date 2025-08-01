@@ -89,8 +89,8 @@ struct CustomTabBar: View {
     
     private var tabBarView: some View {
         HStack {
-            ForEach(Tab.allCases, id: \.self) { tab in
-                if tab == .plus {
+            ForEach(Array(Tab.allCases), id: \.self) { tab in
+                if tab == .add {
                     plusButton
                 } else {
                     TabBarItem(

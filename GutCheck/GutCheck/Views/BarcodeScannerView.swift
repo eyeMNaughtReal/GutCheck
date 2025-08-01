@@ -313,6 +313,7 @@ struct CameraPreviewView: UIViewRepresentable {
     let cameraSession: AVCaptureSession
     
     func makeUIView(context: Context) -> UIView {
+        print("🎥 Creating camera preview view")
         let view = UIView(frame: .zero)
         view.backgroundColor = .black
         view.accessibilityLabel = "Camera Preview"
@@ -322,11 +323,23 @@ struct CameraPreviewView: UIViewRepresentable {
         previewLayer.frame = view.bounds
         previewLayer.videoGravity = .resizeAspectFill
         
+        print("🎥 Camera preview layer created with session running: \(cameraSession.isRunning)")
+        print("🎥 Preview layer frame: \(previewLayer.frame)")
+        print("🎥 View bounds: \(view.bounds)")
+        
         // Use CATransaction to ensure smooth layer updates
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         view.layer.addSublayer(previewLayer)
         CATransaction.commit()
+        
+        print("🎥 Camera preview layer added to view")
+        
+        // Ensure the layer gets properly sized after the view layout
+        DispatchQueue.main.async {
+            previewLayer.frame = view.bounds
+            print("🎥 Preview layer frame set to view bounds: \(view.bounds)")
+        }
         
         return view
     }
@@ -334,10 +347,14 @@ struct CameraPreviewView: UIViewRepresentable {
     func updateUIView(_ uiView: UIView, context: Context) {
         guard let previewLayer = uiView.layer.sublayers?.first as? AVCaptureVideoPreviewLayer else { return }
         
+        print("🎥 Updating preview layer frame from \(previewLayer.frame) to \(uiView.bounds)")
+        
         CATransaction.begin()
         CATransaction.setDisableActions(true)
         previewLayer.frame = uiView.bounds
         CATransaction.commit()
+        
+        print("🎥 Preview layer frame updated to: \(previewLayer.frame)")
     }
 }
 
