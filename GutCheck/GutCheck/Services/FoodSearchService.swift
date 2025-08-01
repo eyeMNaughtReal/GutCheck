@@ -21,6 +21,7 @@ class FoodSearchService: ObservableObject {
         errorMessage = nil
         
         print("🍎 FoodSearchService: Starting search for '\(query)'")
+        print("🍎 Search executing in async context")
         
         let url = URL(string: "\(baseURL)/search/instant")!
         var request = URLRequest(url: url)
@@ -33,9 +34,7 @@ class FoodSearchService: ObservableObject {
         print("🍎 API Headers: x-app-id=\(appId), x-app-key=\(String(apiKey.prefix(8)))...")
         
         let requestBody: [String: Any] = [
-            "query": query,
-            "detailed": true,
-            "line_delimited": true
+            "query": query
         ]
         
         do {
@@ -60,38 +59,29 @@ class FoodSearchService: ObservableObject {
             let searchResponse = try decoder.decode(NutritionixResponse.self, from: data)
             print("🍎 Decoded \(searchResponse.branded?.count ?? 0) branded + \(searchResponse.common?.count ?? 0) common foods")
             
-            // Process results
+            // Process results with detailed nutrition data
             var allFoods: [NutritionixFood] = []
             
             // Add common foods first (they're usually more accurate)
             if let commonFoods = searchResponse.common {
-                allFoods.append(contentsOf: commonFoods.map { commonFood in
-                    NutritionixFood(
-                        id: UUID().uuidString,
-                        name: commonFood.name,
-                        brand: "Common",
-                        calories: 0, // Will be filled when getting detailed info
-                        protein: 0,
-                        carbs: 0,
-                        fat: 0,
-                        servingUnit: commonFood.servingUnit,
-                        servingQty: commonFood.servingQty,
-                        servingWeight: 100
-                    )
-                })
+                for commonFood in commonFoods.prefix(5) { // Limit to first 5 to avoid too many API calls
+                    if let detailedFood = await getDetailedNutrition(for: commonFood) {
+                        allFoods.append(detailedFood)
+                    }
+                }
             }
             
-            // Add branded foods
+            // Add branded foods with basic info (some nutrition data already included)
             if let brandedFoods = searchResponse.branded {
-                allFoods.append(contentsOf: brandedFoods.map { brandedFood in
+                allFoods.append(contentsOf: brandedFoods.prefix(10).map { brandedFood in
                     NutritionixFood(
                         id: brandedFood.id,
                         name: brandedFood.name,
                         brand: brandedFood.brand,
                         calories: brandedFood.calories ?? 0,
-                        protein: 0,
-                        carbs: 0,
-                        fat: 0,
+                        protein: nil, // Branded foods might not have all details
+                        carbs: nil,
+                        fat: nil,
                         servingUnit: brandedFood.servingUnit,
                         servingQty: brandedFood.servingQty,
                         servingWeight: 100
@@ -116,6 +106,8 @@ class FoodSearchService: ObservableObject {
         let urlString = "https://trackapi.nutritionix.com/v2/natural/nutrients"
         guard let url = URL(string: urlString) else { return nil }
         
+        print("🍎 Getting detailed nutrition for: \(foodItem.name)")
+        
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue(appId, forHTTPHeaderField: "x-app-id")
@@ -129,22 +121,31 @@ class FoodSearchService: ObservableObject {
         
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
-            let (data, _) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("🍎 Detailed nutrition HTTP Status: \(httpResponse.statusCode)")
+            }
             
             if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
                let foods = json["foods"] as? [[String: Any]],
                let firstFood = foods.first {
                 
+                print("🍎 Got detailed nutrition data for: \(foodItem.name)")
                 return createDetailedNutritionixFood(from: firstFood, originalItem: foodItem)
+            } else {
+                print("🍎 No detailed nutrition data found for: \(foodItem.name)")
             }
         } catch {
-            print("Error getting detailed nutrition: \(error)")
+            print("🍎 Error getting detailed nutrition for \(foodItem.name): \(error)")
         }
         
+        // Return basic food info if detailed lookup fails
         return NutritionixFood(
             id: UUID().uuidString,
             name: foodItem.name,
             brand: "Common",
+            calories: nil,
             servingUnit: foodItem.servingUnit,
             servingQty: foodItem.servingQty,
             servingWeight: 100
@@ -154,7 +155,7 @@ class FoodSearchService: ObservableObject {
     private func createDetailedNutritionixFood(from detailedData: [String: Any], originalItem: NutritionixCommonFood) -> NutritionixFood {
         // Extract nutrition data
         let name = detailedData["food_name"] as? String ?? originalItem.name
-        let brand = detailedData["brand_name"] as? String
+        let brand = detailedData["brand_name"] as? String ?? "Common"
         
         // Basic macros
         let calories = detailedData["nf_calories"] as? Double
@@ -175,9 +176,11 @@ class FoodSearchService: ObservableObject {
         let iron = detailedData["nf_iron_dv"] as? Double
         
         // Serving info
-        let servingQty = detailedData["serving_qty"] as? Double
-        let servingUnit = detailedData["serving_unit"] as? String
+        let servingQty = detailedData["serving_qty"] as? Double ?? originalItem.servingQty
+        let servingUnit = detailedData["serving_unit"] as? String ?? originalItem.servingUnit
         let servingWeight = detailedData["serving_weight_grams"] as? Double
+        
+        print("🍎 Created detailed nutrition: \(name) - Cal: \(calories ?? 0), Protein: \(protein ?? 0)g, Carbs: \(carbs ?? 0)g, Fat: \(fat ?? 0)g")
 
         return NutritionixFood(
             id: UUID().uuidString,

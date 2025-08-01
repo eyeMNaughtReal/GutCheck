@@ -44,7 +44,11 @@ class FoodSearchViewModel: ObservableObject {
             .filter { !$0.isEmpty }
             .sink { [weak self] query in
                 print("🕵️ Debounced search triggered for: '\(query)'")
-                self?.search()
+                print("🕵️ Executing on main actor context")
+                Task { @MainActor in
+                    print("🕵️ About to call search() method")
+                    self?.search()
+                }
             }
             .store(in: &cancellables)
     }
@@ -71,17 +75,15 @@ class FoodSearchViewModel: ObservableObject {
                 return createEnhancedFoodItem(from: nfood)
             }
             
-            await MainActor.run {
-                print("🔍 Setting \(foods.count) search results")
-                self.searchResults = foods
-                self.isSearching = false
-                
-                // Add to recent searches
-                if !self.recentSearches.contains(self.searchQuery) {
-                    self.recentSearches.insert(self.searchQuery, at: 0)
-                    if self.recentSearches.count > 5 {
-                        self.recentSearches.removeLast()
-                    }
+            print("🔍 Setting \(foods.count) search results")
+            self.searchResults = foods
+            self.isSearching = false
+            
+            // Add to recent searches
+            if !self.recentSearches.contains(self.searchQuery) {
+                self.recentSearches.insert(self.searchQuery, at: 0)
+                if self.recentSearches.count > 5 {
+                    self.recentSearches.removeLast()
                 }
             }
         }

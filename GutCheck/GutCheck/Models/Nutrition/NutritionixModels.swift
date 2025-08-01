@@ -2,9 +2,9 @@ import Foundation
 
 // MARK: - Nutritionix API Models
 struct NutritionixResponse: Codable {
-    let foods: [NutritionixFood]
-    let common: [NutritionixCommonFood]?
-    let branded: [NutritionixBrandedFood]?
+    let foods: [NutritionixFood]?  // For detailed nutrition queries
+    let common: [NutritionixCommonFood]?  // For instant search
+    let branded: [NutritionixBrandedFood]?  // For instant search
 }
 
 struct NutritionixFood: Identifiable, Codable {

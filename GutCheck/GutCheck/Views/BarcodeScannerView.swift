@@ -278,14 +278,16 @@ struct BarcodeScannerView: View {
                     // Detailed nutrition information
                     if !viewModel.detailedNutrition.isEmpty {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Nutritional Information (per 100g)")
+                            Text("Nutritional Information (per serving)")
                                 .font(.subheadline.weight(.semibold))
                                 .foregroundColor(ColorTheme.primaryText)
                             
                             LazyVGrid(columns: [
                                 GridItem(.flexible()),
+                                GridItem(.flexible()),
                                 GridItem(.flexible())
                             ], spacing: 8) {
+                                // Primary macronutrients
                                 if let protein = viewModel.detailedNutrition["protein"] {
                                     nutritionItem("Protein", value: protein, unit: "g")
                                 }
@@ -295,6 +297,8 @@ struct BarcodeScannerView: View {
                                 if let fat = viewModel.detailedNutrition["fat"] {
                                     nutritionItem("Fat", value: fat, unit: "g")
                                 }
+                                
+                                // Secondary nutrients
                                 if let fiber = viewModel.detailedNutrition["fiber"] {
                                     nutritionItem("Fiber", value: fiber, unit: "g")
                                 }
@@ -302,9 +306,41 @@ struct BarcodeScannerView: View {
                                     nutritionItem("Sugar", value: sugar, unit: "g")
                                 }
                                 if let sodium = viewModel.detailedNutrition["sodium"] {
-                                    nutritionItem("Sodium", value: sodium, unit: "g")
+                                    nutritionItem("Sodium", value: sodium * 1000, unit: "mg")
+                                }
+                                
+                                // Additional Nutritionix data (if available)
+                                if let saturatedFat = viewModel.detailedNutrition["saturatedFat"], saturatedFat > 0 {
+                                    nutritionItem("Sat Fat", value: saturatedFat, unit: "g")
+                                }
+                                if let cholesterol = viewModel.detailedNutrition["cholesterol"], cholesterol > 0 {
+                                    nutritionItem("Cholesterol", value: cholesterol, unit: "mg")
+                                }
+                                if let potassium = viewModel.detailedNutrition["potassium"], potassium > 0 {
+                                    nutritionItem("Potassium", value: potassium, unit: "mg")
+                                }
+                                if let calcium = viewModel.detailedNutrition["calcium"], calcium > 0 {
+                                    nutritionItem("Calcium", value: calcium, unit: "mg")
+                                }
+                                if let iron = viewModel.detailedNutrition["iron"], iron > 0 {
+                                    nutritionItem("Iron", value: iron, unit: "mg")
+                                }
+                                if let vitaminC = viewModel.detailedNutrition["vitaminC"], vitaminC > 0 {
+                                    nutritionItem("Vitamin C", value: vitaminC, unit: "mg")
                                 }
                             }
+                            
+                            // Data source indicator
+                            HStack {
+                                Image(systemName: "info.circle")
+                                    .foregroundColor(ColorTheme.secondaryText)
+                                    .font(.caption)
+                                Text("Data from Nutritionix & Open Food Facts")
+                                    .font(.caption2)
+                                    .foregroundColor(ColorTheme.secondaryText)
+                                Spacer()
+                            }
+                            .padding(.top, 4)
                         }
                         .padding()
                         .background(ColorTheme.surface)

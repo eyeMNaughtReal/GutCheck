@@ -34,7 +34,7 @@ class NutritionixService {
     }
     
     private func createNutritionInfo(from response: NutritionixResponse) -> NutritionInfo {
-        guard let food = response.foods.first else {
+        guard let food = response.foods?.first else {
             return NutritionInfo()
         }
         
