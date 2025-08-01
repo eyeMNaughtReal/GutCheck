@@ -103,15 +103,171 @@ class LiDARScannerViewModel: NSObject, ObservableObject {
         scanStage = .processing
         isProcessing = true
         
+        // Calculate actual volume and weight from LiDAR data
+        calculateVolumeAndWeight()
+        
         // Simulate processing delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
             self.completeProcessing()
         }
     }
     
+    private func calculateVolumeAndWeight() {
+        guard let currentFrame = arSession.currentFrame else {
+            print("⚠️ No current frame available for volume calculation")
+            return
+        }
+        
+        // Get the mesh anchors from the current frame
+        let meshAnchors = currentFrame.anchors.compactMap { $0 as? ARMeshAnchor }
+        
+        if !meshAnchors.isEmpty {
+            // Focus on objects in the center of the screen and within reasonable distance
+            let cameraTransform = currentFrame.camera.transform
+            
+            var relevantVolume: Float = 0.0
+            var objectCount = 0
+            
+            for meshAnchor in meshAnchors {
+                let geometry = meshAnchor.geometry
+                let vertices = geometry.vertices
+                
+                // Calculate the anchor's position relative to camera
+                let anchorPosition = meshAnchor.transform.columns.3
+                let cameraPosition = cameraTransform.columns.3
+                let distance = simd_distance(simd_make_float3(anchorPosition.x, anchorPosition.y, anchorPosition.z), 
+                                           simd_make_float3(cameraPosition.x, cameraPosition.y, cameraPosition.z))
+                
+                // Only consider objects within 1 meter and limit the number of objects
+                if distance < 1.0 && objectCount < 3 {
+                    let anchorVolume = calculateMeshVolume(vertices: vertices)
+                    
+                    // Filter out very large volumes (likely background objects)
+                    if anchorVolume < 0.05 { // Less than 50 liters (0.05 m³)
+                        relevantVolume += anchorVolume
+                        objectCount += 1
+                        print("📐 Including anchor at distance \(distance)m with volume \(anchorVolume) m³")
+                    } else {
+                        print("🚫 Excluding large anchor (likely background): \(anchorVolume) m³")
+                    }
+                }
+            }
+            
+            // Apply realistic bounds for food items
+            let estimatedVolumeInCm3 = Double(max(relevantVolume * 1000000, 50.0)) // Convert m³ to cm³, minimum 50 cm³
+            let cappedVolumeInCm3 = min(estimatedVolumeInCm3, 2000.0) // Maximum 2000 cm³ (2 liters)
+            
+            // Use food-appropriate density (pasta with sauce ~1.1 g/cm³)
+            let estimatedWeightInGrams = cappedVolumeInCm3 * 1.1
+            let cappedWeightInGrams = min(max(estimatedWeightInGrams, 50.0), 1000.0) // Between 50g and 1kg
+            
+            // Create new FoodInfo with calculated weight
+            let updatedFoodInfo = FoodInfo(
+                name: "Food Item",
+                estimatedWeight: cappedWeightInGrams,
+                calories: Int(cappedWeightInGrams * 1.5), // Reasonable calorie estimate for pasta
+                nutritionInfo: NutritionInfo(calories: Int(cappedWeightInGrams * 1.5), protein: 5.0, carbs: 25.0, fat: 3.0)
+            )
+            
+            // Update detected objects with realistic volume and weight data
+            if !detectedObjects.isEmpty {
+                for i in 0..<detectedObjects.count {
+                    detectedObjects[i].estimatedVolume = cappedVolumeInCm3
+                    detectedObjects[i].foodInfo = updatedFoodInfo
+                }
+            } else {
+                // Create a new detected object with calculated values
+                let detectedObject = DetectedObject(
+                    id: UUID(),
+                    name: "Food Item",
+                    confidence: 0.8,
+                    estimatedVolume: cappedVolumeInCm3,
+                    boundingBox: CGRect(x: 100, y: 100, width: 100, height: 100),
+                    foodInfo: updatedFoodInfo
+                )
+                detectedObjects = [detectedObject]
+            }
+            
+            print("📏 Calculated volume: \(cappedVolumeInCm3) cm³ (from \(objectCount) relevant objects)")
+            print("⚖️ Estimated weight: \(cappedWeightInGrams) g")
+            print("🎯 Applied realistic bounds for food items")
+        } else {
+            print("⚠️ No mesh anchors found, using default estimates")
+            // Fallback to realistic default estimates for food
+            let defaultVolume = 200.0 // 200 cm³
+            let defaultWeight = 180.0 // 180g - reasonable for a serving of pasta
+            
+            let defaultFoodInfo = FoodInfo(
+                name: "Food Item",
+                estimatedWeight: defaultWeight,
+                calories: Int(defaultWeight * 1.5),
+                nutritionInfo: NutritionInfo(calories: Int(defaultWeight * 1.5), protein: 5.0, carbs: 25.0, fat: 3.0)
+            )
+            
+            let detectedObject = DetectedObject(
+                id: UUID(),
+                name: "Food Item",
+                confidence: 0.6,
+                estimatedVolume: defaultVolume,
+                boundingBox: CGRect(x: 100, y: 100, width: 100, height: 100),
+                foodInfo: defaultFoodInfo
+            )
+            detectedObjects = [detectedObject]
+            
+            print("📏 Using default volume: \(defaultVolume) cm³")
+            print("⚖️ Using default weight: \(defaultWeight) g")
+        }
+    }
+    
+    private func calculateMeshVolume(vertices: ARGeometrySource) -> Float {
+        // This is a simplified volume calculation using bounding box
+        // Applied with conservative scaling for food estimation
+        
+        let vertexCount = vertices.count
+        let vertexStride = vertices.stride
+        let vertexData = vertices.buffer.contents()
+        
+        // Calculate bounding box volume as approximation
+        var minPoint = SIMD3<Float>(Float.greatestFiniteMagnitude, Float.greatestFiniteMagnitude, Float.greatestFiniteMagnitude)
+        var maxPoint = SIMD3<Float>(-Float.greatestFiniteMagnitude, -Float.greatestFiniteMagnitude, -Float.greatestFiniteMagnitude)
+        
+        for i in 0..<vertexCount {
+            let vertexPointer = vertexData.advanced(by: i * vertexStride)
+            let vertex = vertexPointer.assumingMemoryBound(to: SIMD3<Float>.self).pointee
+            
+            minPoint = SIMD3<Float>(
+                min(minPoint.x, vertex.x),
+                min(minPoint.y, vertex.y),
+                min(minPoint.z, vertex.z)
+            )
+            maxPoint = SIMD3<Float>(
+                max(maxPoint.x, vertex.x),
+                max(maxPoint.y, vertex.y),
+                max(maxPoint.z, vertex.z)
+            )
+        }
+        
+        let dimensions = maxPoint - minPoint
+        let boundingBoxVolume = dimensions.x * dimensions.y * dimensions.z
+        
+        // Apply conservative scaling factor for food items
+        // Bounding box overestimates actual volume, especially for irregular food shapes
+        let scalingFactor: Float = 0.3 // Assume food fills ~30% of bounding box
+        let estimatedVolume = boundingBoxVolume * scalingFactor
+        
+        // Ensure minimum realistic volume and cap maximum
+        let minVolume: Float = 0.00005 // 50 cm³ in m³
+        let maxVolume: Float = 0.002   // 2000 cm³ in m³ (2 liters)
+        
+        return min(max(estimatedVolume, minVolume), maxVolume)
+    }
+    
     private func completeProcessing() {
         Task {
             do {
+                // Get the estimated weight from LiDAR calculation, fallback to 150g
+                let calculatedWeight = detectedObjects.first?.foodInfo?.estimatedWeight ?? 150.0
+                
                 // Capture the current camera frame as an image
                 if let capturedImage = await captureCurrentFrame() {
                     self.capturedImage = capturedImage
@@ -123,37 +279,39 @@ class LiDARScannerViewModel: NSObject, ObservableObject {
                         self.foodPredictions = recognizedFoods
                         self.detectedFoodName = recognizedFoods.first
                         
-                        // Create food item with the detected food
+                        // Create food item with the detected food and calculated weight
                         if let foodName = recognizedFoods.first {
-                            self.createdFoodItem = await createFoodItemFromScan(foodName: foodName, estimatedWeight: 150.0)
+                            self.createdFoodItem = await createFoodItemFromScan(foodName: foodName, estimatedWeight: calculatedWeight)
                         }
                         
                         print("🔍 Google Vision detected foods: \(recognizedFoods)")
+                        print("⚖️ Using calculated weight: \(calculatedWeight)g")
                     } else {
                         // Fallback to basic food detection
                         self.foodPredictions = ["Unknown Food Item"]
                         self.detectedFoodName = "Unknown Food Item"
-                        self.createdFoodItem = await createFoodItemFromScan(foodName: "Unknown Food Item", estimatedWeight: 150.0)
-                        print("⚠️ No food items detected by Google Vision, using fallback")
+                        self.createdFoodItem = await createFoodItemFromScan(foodName: "Unknown Food Item", estimatedWeight: calculatedWeight)
+                        print("⚠️ No food items detected by Google Vision, using fallback with weight: \(calculatedWeight)g")
                     }
                 } else {
                     // Create mock image if capture fails
                     self.capturedImage = createMockFoodImage()
                     self.foodPredictions = ["Apple"]
                     self.detectedFoodName = "Apple"
-                    self.createdFoodItem = await createFoodItemFromScan(foodName: "Apple", estimatedWeight: 150.0)
-                    print("⚠️ Failed to capture camera frame, using mock data")
+                    self.createdFoodItem = await createFoodItemFromScan(foodName: "Apple", estimatedWeight: calculatedWeight)
+                    print("⚠️ Failed to capture camera frame, using mock data with weight: \(calculatedWeight)g")
                 }
                 
                 self.scanStage = .results
                 self.isProcessing = false
             } catch {
                 print("❌ Error in food recognition: \(error)")
+                let calculatedWeight = detectedObjects.first?.foodInfo?.estimatedWeight ?? 150.0
                 // Fallback to mock data on error
                 self.capturedImage = createMockFoodImage()
                 self.foodPredictions = ["Unknown Food Item"]
                 self.detectedFoodName = "Unknown Food Item"
-                self.createdFoodItem = await createFoodItemFromScan(foodName: "Unknown Food Item", estimatedWeight: 150.0)
+                self.createdFoodItem = await createFoodItemFromScan(foodName: "Unknown Food Item", estimatedWeight: calculatedWeight)
                 self.scanStage = .results
                 self.isProcessing = false
             }
@@ -363,6 +521,8 @@ class LiDARScannerViewModel: NSObject, ObservableObject {
             return (89, 1.1, 23.0, 0.3)
         case let name where name.contains("orange"):
             return (47, 0.9, 12.0, 0.1)
+        case let name where name.contains("pasta") || name.contains("spaghetti") || name.contains("noodle"):
+            return (131, 5.0, 25.0, 1.1) // Cooked pasta with sauce
         case let name where name.contains("bread"):
             return (265, 9.0, 49.0, 3.2)
         case let name where name.contains("rice"):
@@ -377,6 +537,8 @@ class LiDARScannerViewModel: NSObject, ObservableObject {
             return (42, 3.4, 5.0, 1.0)
         case let name where name.contains("cheese"):
             return (113, 25.0, 1.3, 9.0)
+        case let name where name.contains("food"):
+            return (120, 3.0, 20.0, 2.5) // Generic cooked food estimate
         default:
             return (100, 2.0, 15.0, 2.0) // Generic estimate
         }

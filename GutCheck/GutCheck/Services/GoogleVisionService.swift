@@ -46,31 +46,54 @@ class GoogleVisionService {
     private func filterFoodItems(from response: GoogleVisionResponse) -> [String] {
         var foodItems = Set<String>()
         
-        // Process label annotations
+        // Process label annotations with lower confidence threshold for better detection
         if let annotations = response.responses.first?.labelAnnotations {
             for annotation in annotations {
-                if annotation.score > 0.7 && isFoodRelated(annotation.description) {
+                if annotation.score > 0.5 && isFoodRelated(annotation.description) {
                     foodItems.insert(annotation.description)
+                    print("🔍 Vision detected label: \(annotation.description) (confidence: \(annotation.score))")
                 }
             }
         }
         
-        // Process object annotations
+        // Process object annotations with lower confidence threshold
         if let objects = response.responses.first?.localizedObjectAnnotations {
             for object in objects {
-                if object.score > 0.7 && isFoodRelated(object.name) {
+                if object.score > 0.5 && isFoodRelated(object.name) {
                     foodItems.insert(object.name)
+                    print("🔍 Vision detected object: \(object.name) (confidence: \(object.score))")
                 }
             }
         }
         
-        return Array(foodItems).sorted()
+        let result = Array(foodItems).sorted()
+        print("🔍 Final filtered food items: \(result)")
+        return result
     }
     
     private func isFoodRelated(_ text: String) -> Bool {
         let foodKeywords = ["food", "dish", "meal", "fruit", "vegetable", "meat", "beverage", "drink", "snack"]
+        let specificFoods = [
+            "apple", "banana", "orange", "grape", "berry", "lemon", "lime", "pear", "peach", "plum",
+            "tomato", "potato", "carrot", "onion", "pepper", "broccoli", "lettuce", "spinach",
+            "bread", "pizza", "burger", "sandwich", "pasta", "rice", "chicken", "beef", "pork",
+            "fish", "salmon", "tuna", "egg", "cheese", "milk", "yogurt", "cake", "cookie",
+            "salad", "soup", "cereal", "corn", "beans", "nuts", "avocado", "cucumber"
+        ]
+        
         let text = text.lowercased()
-        return foodKeywords.contains { text.contains($0) }
+        
+        // Check for general food keywords
+        if foodKeywords.contains(where: { text.contains($0) }) {
+            return true
+        }
+        
+        // Check for specific food items
+        if specificFoods.contains(where: { text.contains($0) }) {
+            return true
+        }
+        
+        return false
     }
 }
 
