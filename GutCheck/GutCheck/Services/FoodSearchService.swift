@@ -6,58 +6,109 @@
 import Foundation
 
 @MainActor
-class FoodSearchService {
+class FoodSearchService: ObservableObject {
     @Published var results: [NutritionixFood] = []
     @Published var isLoading = false
-    @Published var error: String? = nil
+    @Published var errorMessage: String? = nil
+    
+    private let baseURL = "https://trackapi.nutritionix.com/v2"
+    private let appId = "0f4298bb"
+    private let apiKey = "239f65a9165bbaa7be71fd1d7f040973"
 
     func searchFoods(query: String) async {
-        guard !query.isEmpty else { results = []; return }
+        results = []
         isLoading = true
-        error = nil
-        defer { isLoading = false }
+        errorMessage = nil
         
-        let urlString = "https://trackapi.nutritionix.com/v2/search/instant?query=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
-        guard let url = URL(string: urlString) else { error = "Invalid URL"; return }
+        print("🍎 FoodSearchService: Starting search for '\(query)'")
         
+        let url = URL(string: "\(baseURL)/search/instant")!
         var request = URLRequest(url: url)
-        request.setValue(NutritionixSecrets.appId, forHTTPHeaderField: "x-app-id")
-        request.setValue(NutritionixSecrets.apiKey, forHTTPHeaderField: "x-app-key")
+        request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(appId, forHTTPHeaderField: "x-app-id")
+        request.setValue(apiKey, forHTTPHeaderField: "x-app-key")
+        
+        print("🍎 API URL: \(url)")
+        print("🍎 API Headers: x-app-id=\(appId), x-app-key=\(String(apiKey.prefix(8)))...")
+        
+        let requestBody: [String: Any] = [
+            "query": query,
+            "detailed": true,
+            "line_delimited": true
+        ]
         
         do {
-            let (data, _) = try await URLSession.shared.data(for: request)
-            let decoded = try JSONDecoder().decode(NutritionixResponse.self, from: data)
+            let jsonData = try JSONSerialization.data(withJSONObject: requestBody)
+            request.httpBody = jsonData
             
-            // Get detailed nutrition for each food item
-            var detailedFoods: [NutritionixFood] = []
+            let (data, response) = try await URLSession.shared.data(for: request)
             
-            // Process common foods (these usually have less detailed nutrition)
-            if let commonFoods = decoded.common {
-                for commonFood in commonFoods.prefix(3) { // Limit to avoid too many API calls
-                    if let detailedFood = await getDetailedNutrition(for: commonFood) {
-                        detailedFoods.append(detailedFood)
-                    } else {
-                        detailedFoods.append(commonFood.toNutritionixFood())
-                    }
+            if let httpResponse = response as? HTTPURLResponse {
+                print("🍎 HTTP Status: \(httpResponse.statusCode)")
+                if httpResponse.statusCode != 200 {
+                    print("🍎 Error response: \(String(data: data, encoding: .utf8) ?? "No data")")
                 }
             }
             
-                        // Process branded foods (these usually have more complete nutrition)
-            if let brandedFoods = decoded.branded {
-                for brandedFood in brandedFoods.prefix(2) { // Limit to avoid too many API calls
-                    detailedFoods.append(brandedFood.toNutritionixFood())
-                }
+            print("🍎 Raw response data length: \(data.count) bytes")
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("🍎 Raw response: \(responseString.prefix(200))...")
             }
             
-            DispatchQueue.main.async {
-                self.results = detailedFoods
+            let decoder = JSONDecoder()
+            let searchResponse = try decoder.decode(NutritionixResponse.self, from: data)
+            print("🍎 Decoded \(searchResponse.branded?.count ?? 0) branded + \(searchResponse.common?.count ?? 0) common foods")
+            
+            // Process results
+            var allFoods: [NutritionixFood] = []
+            
+            // Add common foods first (they're usually more accurate)
+            if let commonFoods = searchResponse.common {
+                allFoods.append(contentsOf: commonFoods.map { commonFood in
+                    NutritionixFood(
+                        id: UUID().uuidString,
+                        name: commonFood.name,
+                        brand: "Common",
+                        calories: 0, // Will be filled when getting detailed info
+                        protein: 0,
+                        carbs: 0,
+                        fat: 0,
+                        servingUnit: commonFood.servingUnit,
+                        servingQty: commonFood.servingQty,
+                        servingWeight: 100
+                    )
+                })
             }
+            
+            // Add branded foods
+            if let brandedFoods = searchResponse.branded {
+                allFoods.append(contentsOf: brandedFoods.map { brandedFood in
+                    NutritionixFood(
+                        id: brandedFood.id,
+                        name: brandedFood.name,
+                        brand: brandedFood.brand,
+                        calories: brandedFood.calories ?? 0,
+                        protein: 0,
+                        carbs: 0,
+                        fat: 0,
+                        servingUnit: brandedFood.servingUnit,
+                        servingQty: brandedFood.servingQty,
+                        servingWeight: 100
+                    )
+                })
+            }
+            
+            print("🍎 Processed \(allFoods.count) total foods")
+            results = allFoods
+            
         } catch {
-            DispatchQueue.main.async {
-                self.error = error.localizedDescription
-            }
+            print("🍎 Search error: \(error)")
+            errorMessage = error.localizedDescription
         }
+        
+        isLoading = false
+        print("🍎 Search complete. Final results count: \(results.count)")
     }
     
     // Get detailed nutrition data for a specific food item
@@ -67,8 +118,8 @@ class FoodSearchService {
         
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.setValue(NutritionixSecrets.appId, forHTTPHeaderField: "x-app-id")
-        request.setValue(NutritionixSecrets.apiKey, forHTTPHeaderField: "x-app-key")
+        request.setValue(appId, forHTTPHeaderField: "x-app-id")
+        request.setValue(apiKey, forHTTPHeaderField: "x-app-key")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
         let requestBody = [
@@ -84,13 +135,20 @@ class FoodSearchService {
                let foods = json["foods"] as? [[String: Any]],
                let firstFood = foods.first {
                 
-                        return createDetailedNutritionixFood(from: firstFood, originalItem: foodItem)
+                return createDetailedNutritionixFood(from: firstFood, originalItem: foodItem)
             }
         } catch {
             print("Error getting detailed nutrition: \(error)")
         }
         
-        return foodItem.toNutritionixFood()
+        return NutritionixFood(
+            id: UUID().uuidString,
+            name: foodItem.name,
+            brand: "Common",
+            servingUnit: foodItem.servingUnit,
+            servingQty: foodItem.servingQty,
+            servingWeight: 100
+        )
     }
     
     private func createDetailedNutritionixFood(from detailedData: [String: Any], originalItem: NutritionixCommonFood) -> NutritionixFood {
@@ -122,7 +180,7 @@ class FoodSearchService {
         let servingWeight = detailedData["serving_weight_grams"] as? Double
 
         return NutritionixFood(
-            id: originalItem.id,
+            id: UUID().uuidString,
             name: name,
             brand: brand,
             calories: calories,
@@ -145,7 +203,3 @@ class FoodSearchService {
         )
     }
 }
-
-// MARK: - Enhanced Response Models
-
-// Using models from NutritionixModels.swift

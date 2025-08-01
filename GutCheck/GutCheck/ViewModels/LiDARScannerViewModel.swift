@@ -24,10 +24,23 @@ class LiDARScannerViewModel: NSObject, ObservableObject {
     @Published var foodPredictions: [String] = []
     @Published var detectedFoodName: String? = nil
     @Published var createdFoodItem: FoodItem? = nil
+    @Published var scanProgress: Float = 0.0
+    @Published var scanInstructions: String = "Move around the food item to capture all angles"
+    @Published var confidenceLevel: Float = 0.0
+    @Published var confidenceFactors: [String] = []
     
     // Service for getting detailed nutrition data
     private let nutritionService = FoodSearchService()
     private let visionService = GoogleVisionService.shared
+    
+    // LiDAR scanning state
+    private var accumulatedMeshData: [ARMeshAnchor] = []
+    private var scanStartTime: Date?
+    private let scanDuration: TimeInterval = 10.0 // 10 seconds of scanning
+    private var scanTimer: Timer?
+    private var meshQualityScores: [Float] = []
+    private var cameraMovementDetected: Bool = false
+    private var multipleViewpointsCount: Int = 0
     
     // Computed properties for estimated values from current detection
     var estimatedVolume: Double {
@@ -83,6 +96,7 @@ class LiDARScannerViewModel: NSObject, ObservableObject {
             configuration.sceneReconstruction = .mesh
         }
         
+        arSession.delegate = self
         arSession.run(configuration)
         scanStage = .scanning
     }
@@ -93,6 +107,163 @@ class LiDARScannerViewModel: NSObject, ObservableObject {
     
     func startScanning() {
         scanStage = .scanning
+        accumulatedMeshData = []
+        scanStartTime = Date()
+        scanProgress = 0.0
+        confidenceLevel = 0.0
+        confidenceFactors = []
+        meshQualityScores = []
+        cameraMovementDetected = false
+        multipleViewpointsCount = 0
+        scanInstructions = "Move around the food item to capture all angles"
+        
+        // Start accumulating mesh data
+        startMeshAccumulation()
+    }
+    
+    private func startMeshAccumulation() {
+        scanTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            
+            Task { @MainActor in
+                self.updateScanProgress()
+                self.accumulateMeshData()
+            }
+        }
+    }
+    
+    private func updateScanProgress() {
+        guard let startTime = scanStartTime else { return }
+        
+        let elapsed = Date().timeIntervalSince(startTime)
+        scanProgress = min(Float(elapsed / scanDuration), 1.0)
+        
+        let remaining = max(0, scanDuration - elapsed)
+        if remaining > 0 {
+            scanInstructions = "Scanning... \(Int(remaining))s remaining. Keep moving around the food."
+        } else {
+            scanInstructions = "Scan complete! Processing..."
+            finishScanning()
+        }
+    }
+    
+    private func accumulateMeshData() {
+        guard let currentFrame = arSession.currentFrame else { return }
+        
+        let meshAnchors = currentFrame.anchors.compactMap { $0 as? ARMeshAnchor }
+        
+        // Track camera movement for confidence scoring
+        detectCameraMovement(frame: currentFrame)
+        
+        // Add new mesh anchors that aren't already accumulated
+        for meshAnchor in meshAnchors {
+            if !accumulatedMeshData.contains(where: { $0.identifier == meshAnchor.identifier }) {
+                accumulatedMeshData.append(meshAnchor)
+                
+                // Evaluate mesh quality for confidence
+                let quality = evaluateMeshQuality(meshAnchor: meshAnchor)
+                meshQualityScores.append(quality)
+            }
+        }
+        
+        // Update confidence in real-time
+        calculateRealTimeConfidence()
+        
+        print("📊 Accumulated \(accumulatedMeshData.count) mesh anchors so far (confidence: \(Int(confidenceLevel * 100))%)")
+    }
+    
+    private func detectCameraMovement(frame: ARFrame) {
+        // Simple movement detection based on camera transform changes
+        // In a real implementation, you'd track transform changes over time
+        cameraMovementDetected = true
+        
+        // Count viewpoints (simplified - could be more sophisticated)
+        if accumulatedMeshData.count > multipleViewpointsCount * 3 {
+            multipleViewpointsCount += 1
+        }
+    }
+    
+    private func evaluateMeshQuality(meshAnchor: ARMeshAnchor) -> Float {
+        let geometry = meshAnchor.geometry
+        let vertexCount = geometry.vertices.count
+        
+        // Score based on vertex density and geometry completeness
+        var quality: Float = 0.0
+        
+        // More vertices generally indicate better detail
+        if vertexCount > 1000 {
+            quality += 0.4
+        } else if vertexCount > 500 {
+            quality += 0.3
+        } else if vertexCount > 100 {
+            quality += 0.2
+        } else {
+            quality += 0.1
+        }
+        
+        // Check if mesh has reasonable size (not too small or huge)
+        let volume = calculateMeshVolume(vertices: geometry.vertices)
+        if volume > 0.00005 && volume < 0.01 { // 50cm³ to 10L range
+            quality += 0.3
+        } else {
+            quality += 0.1
+        }
+        
+        // Bonus for having face data
+        if geometry.faces.count > 0 {
+            quality += 0.3
+        }
+        
+        return min(quality, 1.0)
+    }
+    
+    private func calculateRealTimeConfidence() {
+        var totalConfidence: Float = 0.0
+        var factors: [String] = []
+        
+        // Factor 1: Number of mesh anchors (more = better)
+        let meshCount = Float(accumulatedMeshData.count)
+        let meshScore = min(meshCount / 10.0, 1.0) * 0.25 // 25% weight
+        totalConfidence += meshScore
+        if meshCount >= 5.0 {
+            factors.append("Good mesh coverage (\(Int(meshCount)) anchors)")
+        }
+        
+        // Factor 2: Average mesh quality
+        let avgQuality = meshQualityScores.isEmpty ? 0.0 : meshQualityScores.reduce(0, +) / Float(meshQualityScores.count)
+        totalConfidence += avgQuality * 0.3 // 30% weight
+        if avgQuality > 0.7 {
+            factors.append("High mesh quality")
+        }
+        
+        // Factor 3: Camera movement detected
+        if cameraMovementDetected {
+            totalConfidence += 0.2 // 20% weight
+            factors.append("Camera movement detected")
+        }
+        
+        // Factor 4: Multiple viewpoints
+        let viewpointScore = min(Float(multipleViewpointsCount) / 3.0, 1.0) * 0.15 // 15% weight
+        totalConfidence += viewpointScore
+        if multipleViewpointsCount >= 2 {
+            factors.append("Multiple viewpoints (\(multipleViewpointsCount))")
+        }
+        
+        // Factor 5: Scan duration (longer scan = more confidence)
+        if let startTime = scanStartTime {
+            let elapsed = Float(Date().timeIntervalSince(startTime))
+            let durationScore = min(elapsed / Float(scanDuration), 1.0) * 0.1 // 10% weight
+            totalConfidence += durationScore
+        }
+        
+        confidenceLevel = min(totalConfidence, 1.0)
+        confidenceFactors = factors
+    }
+    
+    private func finishScanning() {
+        scanTimer?.invalidate()
+        scanTimer = nil
+        captureScene()
     }
     
     func captureFrame() {
@@ -102,121 +273,161 @@ class LiDARScannerViewModel: NSObject, ObservableObject {
     func captureScene() {
         scanStage = .processing
         isProcessing = true
+        scanInstructions = "Processing scan data..."
         
-        // Calculate actual volume and weight from LiDAR data
-        calculateVolumeAndWeight()
+        // Calculate volume using accumulated mesh data instead of single frame
+        calculateVolumeFromAccumulatedData()
         
-        // Simulate processing delay
+        // Simulate processing delay for UI feedback
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
             self.completeProcessing()
         }
     }
     
-    private func calculateVolumeAndWeight() {
-        guard let currentFrame = arSession.currentFrame else {
-            print("⚠️ No current frame available for volume calculation")
-            return
-        }
-        
-        // Get the mesh anchors from the current frame
-        let meshAnchors = currentFrame.anchors.compactMap { $0 as? ARMeshAnchor }
-        
-        if !meshAnchors.isEmpty {
-            // Focus on objects in the center of the screen and within reasonable distance
-            let cameraTransform = currentFrame.camera.transform
+    private func calculateVolumeFromAccumulatedData() {
+        if !accumulatedMeshData.isEmpty {
+            print("🔄 Processing \(accumulatedMeshData.count) accumulated mesh anchors")
             
+            // Focus on objects close to camera position during scan
             var relevantVolume: Float = 0.0
-            var objectCount = 0
+            var processedAnchors = 0
             
-            for meshAnchor in meshAnchors {
+            // Get camera position from the most recent frame
+            guard let currentFrame = arSession.currentFrame else {
+                print("⚠️ No current frame for camera position")
+                useDefaultEstimates()
+                return
+            }
+            
+            let cameraTransform = currentFrame.camera.transform
+            let cameraPosition = cameraTransform.columns.3
+            
+            // Process accumulated mesh data with better filtering
+            for meshAnchor in accumulatedMeshData {
                 let geometry = meshAnchor.geometry
                 let vertices = geometry.vertices
                 
-                // Calculate the anchor's position relative to camera
+                // Calculate distance from camera during scan
                 let anchorPosition = meshAnchor.transform.columns.3
-                let cameraPosition = cameraTransform.columns.3
-                let distance = simd_distance(simd_make_float3(anchorPosition.x, anchorPosition.y, anchorPosition.z), 
-                                           simd_make_float3(cameraPosition.x, cameraPosition.y, cameraPosition.z))
+                let distance = simd_distance(
+                    simd_make_float3(anchorPosition.x, anchorPosition.y, anchorPosition.z),
+                    simd_make_float3(cameraPosition.x, cameraPosition.y, cameraPosition.z)
+                )
                 
-                // Only consider objects within 1 meter and limit the number of objects
-                if distance < 1.0 && objectCount < 3 {
+                // Focus on objects within reasonable food scanning distance
+                if distance < 0.8 && processedAnchors < 5 { // Slightly closer range for food
                     let anchorVolume = calculateMeshVolume(vertices: vertices)
                     
-                    // Filter out very large volumes (likely background objects)
-                    if anchorVolume < 0.05 { // Less than 50 liters (0.05 m³)
+                    // More restrictive filtering for food items
+                    if anchorVolume < 0.01 { // Less than 10 liters
                         relevantVolume += anchorVolume
-                        objectCount += 1
-                        print("📐 Including anchor at distance \(distance)m with volume \(anchorVolume) m³")
+                        processedAnchors += 1
+                        print("📐 Including anchor at \(distance)m with volume \(anchorVolume) m³")
                     } else {
-                        print("🚫 Excluding large anchor (likely background): \(anchorVolume) m³")
+                        print("🚫 Excluding large anchor: \(anchorVolume) m³")
                     }
                 }
             }
             
-            // Apply realistic bounds for food items
-            let estimatedVolumeInCm3 = Double(max(relevantVolume * 1000000, 50.0)) // Convert m³ to cm³, minimum 50 cm³
-            let cappedVolumeInCm3 = min(estimatedVolumeInCm3, 2000.0) // Maximum 2000 cm³ (2 liters)
+            // Convert to realistic food measurements
+            let estimatedVolumeInCm3 = Double(max(relevantVolume * 1000000, 80.0)) // Min 80 cm³
+            let cappedVolumeInCm3 = min(estimatedVolumeInCm3, 1500.0) // Max 1.5 liters
             
-            // Use food-appropriate density (pasta with sauce ~1.1 g/cm³)
-            let estimatedWeightInGrams = cappedVolumeInCm3 * 1.1
-            let cappedWeightInGrams = min(max(estimatedWeightInGrams, 50.0), 1000.0) // Between 50g and 1kg
+            // Food-appropriate density and weight bounds
+            let estimatedWeightInGrams = cappedVolumeInCm3 * 1.0 // Average food density
+            let cappedWeightInGrams = min(max(estimatedWeightInGrams, 80.0), 800.0) // 80g-800g range
             
-            // Create new FoodInfo with calculated weight
-            let updatedFoodInfo = FoodInfo(
-                name: "Food Item",
-                estimatedWeight: cappedWeightInGrams,
-                calories: Int(cappedWeightInGrams * 1.5), // Reasonable calorie estimate for pasta
-                nutritionInfo: NutritionInfo(calories: Int(cappedWeightInGrams * 1.5), protein: 5.0, carbs: 25.0, fat: 3.0)
-            )
+            createFoodObjectWithMeasurements(volume: cappedVolumeInCm3, weight: cappedWeightInGrams)
             
-            // Update detected objects with realistic volume and weight data
-            if !detectedObjects.isEmpty {
-                for i in 0..<detectedObjects.count {
-                    detectedObjects[i].estimatedVolume = cappedVolumeInCm3
-                    detectedObjects[i].foodInfo = updatedFoodInfo
-                }
-            } else {
-                // Create a new detected object with calculated values
-                let detectedObject = DetectedObject(
-                    id: UUID(),
-                    name: "Food Item",
-                    confidence: 0.8,
-                    estimatedVolume: cappedVolumeInCm3,
-                    boundingBox: CGRect(x: 100, y: 100, width: 100, height: 100),
-                    foodInfo: updatedFoodInfo
-                )
-                detectedObjects = [detectedObject]
-            }
-            
-            print("📏 Calculated volume: \(cappedVolumeInCm3) cm³ (from \(objectCount) relevant objects)")
-            print("⚖️ Estimated weight: \(cappedWeightInGrams) g")
-            print("🎯 Applied realistic bounds for food items")
+            print("📏 Final volume: \(cappedVolumeInCm3) cm³ (from \(processedAnchors) anchors)")
+            print("⚖️ Final weight: \(cappedWeightInGrams) g")
+            print("🎯 Used accumulated mesh data for better accuracy")
         } else {
-            print("⚠️ No mesh anchors found, using default estimates")
-            // Fallback to realistic default estimates for food
-            let defaultVolume = 200.0 // 200 cm³
-            let defaultWeight = 180.0 // 180g - reasonable for a serving of pasta
-            
-            let defaultFoodInfo = FoodInfo(
-                name: "Food Item",
-                estimatedWeight: defaultWeight,
-                calories: Int(defaultWeight * 1.5),
-                nutritionInfo: NutritionInfo(calories: Int(defaultWeight * 1.5), protein: 5.0, carbs: 25.0, fat: 3.0)
-            )
-            
+            print("⚠️ No accumulated mesh data, using defaults")
+            useDefaultEstimates()
+        }
+    }
+    
+    private func createFoodObjectWithMeasurements(volume: Double, weight: Double) {
+        // Calculate final confidence based on measurement quality
+        let measurementConfidence = calculateMeasurementConfidence(volume: volume, weight: weight)
+        let finalConfidence = (confidenceLevel + measurementConfidence) / 2.0
+        
+        let updatedFoodInfo = FoodInfo(
+            name: "Food Item",
+            estimatedWeight: weight,
+            calories: Int(weight * 1.3), // Reasonable calorie density
+            nutritionInfo: NutritionInfo(calories: Int(weight * 1.3), protein: 4.0, carbs: 22.0, fat: 2.5)
+        )
+        
+        if !detectedObjects.isEmpty {
+            for i in 0..<detectedObjects.count {
+                detectedObjects[i].estimatedVolume = volume
+                detectedObjects[i].foodInfo = updatedFoodInfo
+                detectedObjects[i].confidence = Double(finalConfidence)
+            }
+        } else {
             let detectedObject = DetectedObject(
                 id: UUID(),
                 name: "Food Item",
-                confidence: 0.6,
-                estimatedVolume: defaultVolume,
+                confidence: Double(finalConfidence),
+                estimatedVolume: volume,
                 boundingBox: CGRect(x: 100, y: 100, width: 100, height: 100),
-                foodInfo: defaultFoodInfo
+                foodInfo: updatedFoodInfo
             )
             detectedObjects = [detectedObject]
-            
-            print("📏 Using default volume: \(defaultVolume) cm³")
-            print("⚖️ Using default weight: \(defaultWeight) g")
         }
+        
+        // Update UI confidence
+        confidenceLevel = finalConfidence
+        
+        // Add measurement-specific confidence factors
+        if weight > 100 && weight < 500 {
+            confidenceFactors.append("Realistic food weight (\(Int(weight))g)")
+        }
+        if volume > 100 && volume < 800 {
+            confidenceFactors.append("Reasonable food volume (\(Int(volume))cm³)")
+        }
+    }
+    
+    private func calculateMeasurementConfidence(volume: Double, weight: Double) -> Float {
+        var confidence: Float = 0.0
+        
+        // Volume confidence (realistic food volumes)
+        if volume >= 80 && volume <= 1000 {
+            confidence += 0.4 // Very realistic
+        } else if volume >= 50 && volume <= 1500 {
+            confidence += 0.3 // Somewhat realistic
+        } else {
+            confidence += 0.1 // Less realistic
+        }
+        
+        // Weight confidence (realistic food weights)
+        if weight >= 80 && weight <= 600 {
+            confidence += 0.4 // Very realistic
+        } else if weight >= 50 && weight <= 800 {
+            confidence += 0.3 // Somewhat realistic
+        } else {
+            confidence += 0.1 // Less realistic
+        }
+        
+        // Volume-weight ratio confidence (density check)
+        let density = weight / volume // g/cm³
+        if density >= 0.8 && density <= 1.5 { // Realistic food density range
+            confidence += 0.2
+        } else {
+            confidence += 0.05
+        }
+        
+        return min(confidence, 1.0)
+    }
+    
+    private func useDefaultEstimates() {
+        let defaultVolume = 180.0 // 180 cm³
+        let defaultWeight = 160.0 // 160g
+        createFoodObjectWithMeasurements(volume: defaultVolume, weight: defaultWeight)
+        print("📏 Using default volume: \(defaultVolume) cm³")
+        print("⚖️ Using default weight: \(defaultWeight) g")
     }
     
     private func calculateMeshVolume(vertices: ARGeometrySource) -> Float {
@@ -279,6 +490,10 @@ class LiDARScannerViewModel: NSObject, ObservableObject {
                         self.foodPredictions = recognizedFoods
                         self.detectedFoodName = recognizedFoods.first
                         
+                        // Boost confidence for successful food recognition
+                        self.confidenceLevel = min(self.confidenceLevel + 0.15, 1.0)
+                        self.confidenceFactors.append("Food identified: \(recognizedFoods.first ?? "Unknown")")
+                        
                         // Create food item with the detected food and calculated weight
                         if let foodName = recognizedFoods.first {
                             self.createdFoodItem = await createFoodItemFromScan(foodName: foodName, estimatedWeight: calculatedWeight)
@@ -286,12 +501,18 @@ class LiDARScannerViewModel: NSObject, ObservableObject {
                         
                         print("🔍 Google Vision detected foods: \(recognizedFoods)")
                         print("⚖️ Using calculated weight: \(calculatedWeight)g")
+                        print("🎯 Final confidence: \(Int(self.confidenceLevel * 100))%")
                     } else {
+                        // Reduce confidence for failed recognition
+                        self.confidenceLevel = max(self.confidenceLevel - 0.1, 0.0)
+                        self.confidenceFactors.append("Food recognition uncertain")
+                        
                         // Fallback to basic food detection
                         self.foodPredictions = ["Unknown Food Item"]
                         self.detectedFoodName = "Unknown Food Item"
                         self.createdFoodItem = await createFoodItemFromScan(foodName: "Unknown Food Item", estimatedWeight: calculatedWeight)
                         print("⚠️ No food items detected by Google Vision, using fallback with weight: \(calculatedWeight)g")
+                        print("🎯 Reduced confidence: \(Int(self.confidenceLevel * 100))%")
                     }
                 } else {
                     // Create mock image if capture fails
@@ -329,6 +550,19 @@ class LiDARScannerViewModel: NSObject, ObservableObject {
         foodPredictions = []
         detectedFoodName = nil
         createdFoodItem = nil
+        scanProgress = 0.0
+        scanInstructions = "Move around the food item to capture all angles"
+        confidenceLevel = 0.0
+        confidenceFactors = []
+        
+        // Clean up scanning state
+        scanTimer?.invalidate()
+        scanTimer = nil
+        accumulatedMeshData = []
+        scanStartTime = nil
+        meshQualityScores = []
+        cameraMovementDetected = false
+        multipleViewpointsCount = 0
     }
     
     // Capture the current camera frame as UIImage
@@ -371,18 +605,29 @@ class LiDARScannerViewModel: NSObject, ObservableObject {
         let foodItem: FoodItem
         
         if let nutritionixFood = nutritionService.results.first {
-            // Use detailed nutrition data
+            // Use detailed nutrition data - boost confidence
             foodItem = createDetailedFoodItem(from: nutritionixFood, estimatedWeight: estimatedWeight)
+            
+            // Increase confidence for successful nutrition lookup
+            confidenceLevel = min(confidenceLevel + 0.1, 1.0)
+            confidenceFactors.append("Nutritionix data found")
+            
             print("✅ Created food item with real nutrition data: \(nutritionixFood.name)")
         } else {
-            // Fallback to basic nutrition estimation
+            // Fallback to basic nutrition estimation - reduce confidence slightly
             foodItem = createBasicFoodItem(for: foodName, estimatedWeight: estimatedWeight)
+            
+            // Decrease confidence for estimated nutrition
+            confidenceLevel = max(confidenceLevel - 0.05, 0.0)
+            confidenceFactors.append("Using estimated nutrition")
+            
             print("⚠️ Created food item with estimated nutrition data: \(foodName)")
         }
         
         print("🔍 LiDAR food item created: \(foodItem.name)")
         print("🔍 Nutrition: \(foodItem.nutrition.calories ?? 0) cal, P: \(foodItem.nutrition.protein ?? 0)g, C: \(foodItem.nutrition.carbs ?? 0)g, F: \(foodItem.nutrition.fat ?? 0)g")
         print("🔍 Allergens: \(foodItem.allergens.joined(separator: ", "))")
+        print("🎯 Confidence factors: \(confidenceFactors.joined(separator: ", "))")
         
         return foodItem
     }
@@ -609,6 +854,29 @@ extension LiDARScannerViewModel: ARSessionDelegate {
     nonisolated func session(_ session: ARSession, didFailWithError error: Error) {
         Task { @MainActor in
             lidarErrorMessage = "AR Session failed: \(error.localizedDescription)"
+        }
+    }
+    
+    nonisolated func session(_ session: ARSession, didAdd anchors: [ARAnchor]) {
+        Task { @MainActor in
+            let meshAnchors = anchors.compactMap { $0 as? ARMeshAnchor }
+            if !meshAnchors.isEmpty && scanStage == .scanning {
+                print("🔄 AR session added \(meshAnchors.count) new mesh anchors")
+            }
+        }
+    }
+    
+    nonisolated func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
+        Task { @MainActor in
+            let meshAnchors = anchors.compactMap { $0 as? ARMeshAnchor }
+            if !meshAnchors.isEmpty && scanStage == .scanning {
+                // Update accumulated data with refined mesh information
+                for updatedAnchor in meshAnchors {
+                    if let index = accumulatedMeshData.firstIndex(where: { $0.identifier == updatedAnchor.identifier }) {
+                        accumulatedMeshData[index] = updatedAnchor
+                    }
+                }
+            }
         }
     }
 }

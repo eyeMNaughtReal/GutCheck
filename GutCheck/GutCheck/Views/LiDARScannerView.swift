@@ -228,9 +228,36 @@ struct LiDARScannerView: View {
     @MainActor
     private func scanningControlsPanel(viewModel: LiDARScannerViewModel) -> some View {
         VStack(spacing: 16) {
-            Text("Position camera 30-40cm from food")
-                .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+            // Scan progress and instructions
+            VStack(spacing: 8) {
+                Text(viewModel.scanInstructions)
+                    .font(.subheadline)
+                    .foregroundColor(ColorTheme.secondaryText)
+                    .multilineTextAlignment(.center)
+                
+                // Progress bar
+                if viewModel.scanProgress > 0 {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text("Scan Progress")
+                                .font(.caption)
+                                .foregroundColor(ColorTheme.secondaryText)
+                            Spacer()
+                            Text("\(Int(viewModel.scanProgress * 100))%")
+                                .font(.caption.weight(.medium))
+                                .foregroundColor(ColorTheme.primaryText)
+                        }
+                        ProgressView(value: viewModel.scanProgress)
+                            .progressViewStyle(LinearProgressViewStyle(tint: ColorTheme.accent))
+                    }
+                }
+            }
+            
+            // Confidence level display
+            if viewModel.confidenceLevel > 0 {
+                confidenceDisplay(viewModel: viewModel)
+            }
+            
             Button(action: {
                 viewModel.captureFrame()
             }) {
@@ -333,6 +360,10 @@ struct LiDARScannerView: View {
                         .foregroundColor(ColorTheme.secondaryText)
                 }
             }
+            
+            // Confidence level display
+            confidenceDisplay(viewModel: viewModel)
+            
             // Action buttons
             VStack(spacing: 12) {
                 Button(action: {
@@ -361,6 +392,70 @@ struct LiDARScannerView: View {
         .background(Color.white)
         .cornerRadius(20, corners: [.topLeft, .topRight])
         .shadow(color: ColorTheme.shadowColor, radius: 10, y: -5)
+    }
+    
+    // Confidence level display component
+    @MainActor
+    private func confidenceDisplay(viewModel: LiDARScannerViewModel) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: "checkmark.shield")
+                    .foregroundColor(confidenceColor(for: viewModel.confidenceLevel))
+                Text("Measurement Confidence")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundColor(ColorTheme.primaryText)
+                Spacer()
+                Text("\(Int(viewModel.confidenceLevel * 100))%")
+                    .font(.subheadline.weight(.bold))
+                    .foregroundColor(confidenceColor(for: viewModel.confidenceLevel))
+            }
+            
+            // Confidence bar
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(ColorTheme.surface)
+                        .frame(height: 8)
+                    
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(confidenceColor(for: viewModel.confidenceLevel))
+                        .frame(width: geometry.size.width * CGFloat(viewModel.confidenceLevel), height: 8)
+                }
+            }
+            .frame(height: 8)
+            
+            // Confidence factors
+            if !viewModel.confidenceFactors.isEmpty {
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(viewModel.confidenceFactors, id: \.self) { factor in
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.caption)
+                                .foregroundColor(ColorTheme.accent)
+                            Text(factor)
+                                .font(.caption)
+                                .foregroundColor(ColorTheme.secondaryText)
+                        }
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(ColorTheme.surface.opacity(0.5))
+        )
+    }
+    
+    // Helper function to determine confidence color
+    private func confidenceColor(for confidence: Float) -> Color {
+        if confidence >= 0.7 {
+            return Color.green
+        } else if confidence >= 0.4 {
+            return Color.orange
+        } else {
+            return Color.red
+        }
     }
 
 // MARK: - ARViewContainer

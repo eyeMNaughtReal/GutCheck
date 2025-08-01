@@ -10,6 +10,7 @@ import SwiftUI
 struct MealLoggingOptionsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var navigationCoordinator: NavigationCoordinator
+    @State private var showingSmartScannerView = false
     @State private var showingSearchView = false
     @State private var showingBarcodeScannerView = false
     @State private var showingLiDARScannerView = false
@@ -35,32 +36,43 @@ struct MealLoggingOptionsView: View {
                     alignment: .center,
                     spacing: 16
                 ) {
-                    // Manual search
+                    // Smart Scanner (Primary recommendation)
+                    LoggingOptionCard(
+                        icon: "viewfinder.circle.fill",
+                        title: "Smart Scan",
+                        description: "Barcode + LiDAR for best accuracy",
+                        color: ColorTheme.accent,
+                        isRecommended: true
+                    ) {
+                        showingSmartScannerView = true
+                    }
+                    
+                    // Manual search (Fallback)
                     LoggingOptionCard(
                         icon: "magnifyingglass",
                         title: "Search",
-                        description: "Search for food items",
+                        description: "Search food database",
                         color: ColorTheme.primary
                     ) {
                         showingSearchView = true
                     }
                     
-                    // Barcode scan
+                    // Barcode only (For users who prefer traditional method)
                     LoggingOptionCard(
                         icon: "barcode.viewfinder",
-                        title: "Barcode",
+                        title: "Barcode Only",
                         description: "Scan product barcode",
                         color: ColorTheme.secondary
                     ) {
                         showingBarcodeScannerView = true
                     }
                     
-                    // LiDAR scan
+                    // LiDAR only (For foods without barcodes)
                     LoggingOptionCard(
                         icon: "camera.metering.matrix",
-                        title: "LiDAR Scan",
+                        title: "LiDAR Only",
                         description: "Estimate portions with camera",
-                        color: ColorTheme.accent
+                        color: ColorTheme.accent.opacity(0.8)
                     ) {
                         showingLiDARScannerView = true
                     }
@@ -117,6 +129,10 @@ struct MealLoggingOptionsView: View {
             FoodSearchView()
                 .environmentObject(navigationCoordinator)
         }
+        .sheet(isPresented: $showingSmartScannerView) {
+            SmartFoodScannerView()
+                .environmentObject(navigationCoordinator)
+        }
         .sheet(isPresented: $showingBarcodeScannerView) {
             BarcodeScannerView()
                 .environmentObject(navigationCoordinator)
@@ -143,7 +159,17 @@ struct LoggingOptionCard: View {
     let title: String
     let description: String
     let color: Color
+    let isRecommended: Bool
     let action: () -> Void
+    
+    init(icon: String, title: String, description: String, color: Color, isRecommended: Bool = false, action: @escaping () -> Void) {
+        self.icon = icon
+        self.title = title
+        self.description = description
+        self.color = color
+        self.isRecommended = isRecommended
+        self.action = action
+    }
     
     // Fixed dimensions for consistent sizing
     private let cardWidth: CGFloat = UIScreen.main.bounds.width / 2 - 24 // Account for padding
@@ -153,38 +179,58 @@ struct LoggingOptionCard: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 12) {
-                // Icon
-                Image(systemName: icon)
-                    .font(.system(size: iconSize))
-                    .foregroundColor(.white)
-                    .frame(width: iconContainerSize, height: iconContainerSize)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(color)
-                    )
+            ZStack {
+                VStack(spacing: 12) {
+                    // Icon
+                    Image(systemName: icon)
+                        .font(.system(size: iconSize))
+                        .foregroundColor(.white)
+                        .frame(width: iconContainerSize, height: iconContainerSize)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(color)
+                        )
+                    
+                    // Title
+                    Text(title)
+                        .font(.headline)
+                        .foregroundColor(ColorTheme.primaryText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    
+                    // Description
+                    Text(description)
+                        .font(.caption)
+                        .foregroundColor(ColorTheme.secondaryText)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(height: 32)
+                }
+                .padding()
+                .frame(width: cardWidth, height: cardHeight)
+                .background(ColorTheme.cardBackground)
+                .cornerRadius(16)
+                .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
                 
-                // Title
-                Text(title)
-                    .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                
-                // Description
-                Text(description)
-                    .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .frame(height: 32)
+                // Recommended badge
+                if isRecommended {
+                    VStack {
+                        HStack {
+                            Spacer()
+                            Text("RECOMMENDED")
+                                .font(.caption2.weight(.bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.green)
+                                .cornerRadius(8)
+                        }
+                        Spacer()
+                    }
+                    .padding(8)
+                }
             }
-            .padding()
-            .frame(width: cardWidth, height: cardHeight)
-            .background(ColorTheme.cardBackground)
-            .cornerRadius(16)
-            .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
         }
         .buttonStyle(PlainButtonStyle())
     }

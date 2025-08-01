@@ -136,6 +136,27 @@ struct BarcodeScannerView: View {
         }
     }
     
+    // Helper function for nutrition items
+    private func nutritionItem(_ label: String, value: Double, unit: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(.caption2.weight(.medium))
+                .foregroundColor(ColorTheme.secondaryText)
+            HStack {
+                Text(String(format: "%.1f", value))
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(ColorTheme.primaryText)
+                Text(unit)
+                    .font(.caption2)
+                    .foregroundColor(ColorTheme.secondaryText)
+            }
+        }
+        .padding(.vertical, 4)
+        .padding(.horizontal, 8)
+        .background(ColorTheme.background)
+        .cornerRadius(6)
+    }
+    
     // Scanning overlay with targeting square
     private var scanningOverlay: some View {
         ZStack {
@@ -248,10 +269,46 @@ struct BarcodeScannerView: View {
                                 .foregroundColor(ColorTheme.secondaryText)
                                 .lineLimit(2)
                             
-                            Text("Calories: \(viewModel.productCalories) kcal")
+                            Text("Per 100g: \(viewModel.productCalories) kcal")
                                 .font(.caption)
                                 .foregroundColor(ColorTheme.secondaryText)
                         }
+                    }
+                    
+                    // Detailed nutrition information
+                    if !viewModel.detailedNutrition.isEmpty {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Nutritional Information (per 100g)")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundColor(ColorTheme.primaryText)
+                            
+                            LazyVGrid(columns: [
+                                GridItem(.flexible()),
+                                GridItem(.flexible())
+                            ], spacing: 8) {
+                                if let protein = viewModel.detailedNutrition["protein"] {
+                                    nutritionItem("Protein", value: protein, unit: "g")
+                                }
+                                if let carbs = viewModel.detailedNutrition["carbs"] {
+                                    nutritionItem("Carbs", value: carbs, unit: "g")
+                                }
+                                if let fat = viewModel.detailedNutrition["fat"] {
+                                    nutritionItem("Fat", value: fat, unit: "g")
+                                }
+                                if let fiber = viewModel.detailedNutrition["fiber"] {
+                                    nutritionItem("Fiber", value: fiber, unit: "g")
+                                }
+                                if let sugar = viewModel.detailedNutrition["sugar"] {
+                                    nutritionItem("Sugar", value: sugar, unit: "g")
+                                }
+                                if let sodium = viewModel.detailedNutrition["sodium"] {
+                                    nutritionItem("Sodium", value: sodium, unit: "g")
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(ColorTheme.surface)
+                        .cornerRadius(12)
                     }
                     
                     // Add to meal button

@@ -449,7 +449,7 @@ class BarcodeScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutp
         let foodItem = FoodItem(
             id: UUID().uuidString,
             name: productName,
-            quantity: "1 serving",
+            quantity: "100g (per package serving)",
             estimatedWeightInGrams: 100,
             ingredients: [],
             allergens: [],
@@ -457,15 +457,23 @@ class BarcodeScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutp
                 calories: productCalories,
                 protein: protein,
                 carbs: carbs,
-                fat: fat
+                fat: fat,
+                fiber: fiber,
+                sugar: sugar,
+                sodium: sodium * 1000 // Convert from g to mg for display
             ),
             source: .barcode,
             barcodeValue: scannedBarcode,
             isUserEdited: false,
             nutritionDetails: [
-                "fiber": String(fiber),
-                "sugar": String(sugar),
-                "sodium": String(sodium)
+                "protein": String(format: "%.1f", protein),
+                "carbs": String(format: "%.1f", carbs),
+                "fat": String(format: "%.1f", fat),
+                "fiber": String(format: "%.1f", fiber),
+                "sugar": String(format: "%.1f", sugar),
+                "sodium": String(format: "%.1f", sodium * 1000), // Convert to mg
+                "source": "barcode_api",
+                "per_100g": "true"
             ]
         )
         

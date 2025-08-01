@@ -43,6 +43,7 @@ class FoodSearchViewModel: ObservableObject {
             .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
             .filter { !$0.isEmpty }
             .sink { [weak self] query in
+                print("🕵️ Debounced search triggered for: '\(query)'")
                 self?.search()
             }
             .store(in: &cancellables)
@@ -56,17 +57,22 @@ class FoodSearchViewModel: ObservableObject {
             return
         }
         
+        print("🔍 Starting search for: '\(searchQuery)'")
         isSearching = true
         hasSearched = true
         
         Task {
+            print("🔍 Calling foodSearchService.searchFoods...")
             await foodSearchService.searchFoods(query: searchQuery)
             
+            print("🔍 Got \(foodSearchService.results.count) results from service")
             let foods = foodSearchService.results.map { nfood in
-                createEnhancedFoodItem(from: nfood)
+                print("🔍 Processing food: \(nfood.name)")
+                return createEnhancedFoodItem(from: nfood)
             }
             
             await MainActor.run {
+                print("🔍 Setting \(foods.count) search results")
                 self.searchResults = foods
                 self.isSearching = false
                 
