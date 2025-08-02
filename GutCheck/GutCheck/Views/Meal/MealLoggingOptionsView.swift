@@ -20,29 +20,23 @@ struct MealLoggingOptionsView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 32) {
+            VStack(spacing: 20) {
                 // Header
-                Text("How would you like to log your meal?")
-                    .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
-                    .multilineTextAlignment(.center)
-                
-                // Grid of options
+
+                // Primary options grid (large cards)
                 LazyVGrid(
                     columns: [
-                        GridItem(.flexible(minimum: 0, maximum: .infinity), spacing: 16),
-                        GridItem(.flexible(minimum: 0, maximum: .infinity), spacing: 16)
+                        GridItem(.flexible(minimum: 0, maximum: .infinity), spacing: 8),
+                        GridItem(.flexible(minimum: 0, maximum: .infinity), spacing: 8)
                     ],
                     alignment: .center,
-                    spacing: 16
+                    spacing: 8
                 ) {
                     // Smart Scanner (Primary recommendation)
                     LoggingOptionCard(
                         icon: "viewfinder.circle.fill",
                         title: "Smart Scan",
-                        description: "Barcode + LiDAR for best accuracy",
-                        color: ColorTheme.accent,
-                        isRecommended: true
+                        color: ColorTheme.accent
                     ) {
                         showingSmartScannerView = true
                     }
@@ -51,57 +45,63 @@ struct MealLoggingOptionsView: View {
                     LoggingOptionCard(
                         icon: "magnifyingglass",
                         title: "Search",
-                        description: "Search food database",
                         color: ColorTheme.primary
                     ) {
                         showingSearchView = true
                     }
                     
-                    // Barcode only (For users who prefer traditional method)
-                    LoggingOptionCard(
-                        icon: "barcode.viewfinder",
-                        title: "Barcode Only",
-                        description: "Scan product barcode",
-                        color: ColorTheme.secondary
-                    ) {
-                        showingBarcodeScannerView = true
-                    }
-                    
                     // LiDAR only (For foods without barcodes)
                     LoggingOptionCard(
                         icon: "camera.metering.matrix",
-                        title: "LiDAR Only",
-                        description: "Estimate portions with camera",
+                        title: "LiDAR",
                         color: ColorTheme.accent.opacity(0.8)
                     ) {
                         showingLiDARScannerView = true
                     }
                     
-                    // Recent items
+                    // Barcode only (For users who prefer traditional method)
                     LoggingOptionCard(
+                        icon: "barcode.viewfinder",
+                        title: "Barcode",
+                        color: ColorTheme.secondary
+                    ) {
+                        showingBarcodeScannerView = true
+                    }
+                }
+                
+                // Secondary options (dropdown-style list)
+                VStack(spacing: 4) {
+                    // Water quick-log
+                    DropdownOptionRow(
+                        icon: "drop.fill",
+                        title: "Water",
+                        color: Color.blue
+                    ) {
+                        logWater()
+                    }
+                    
+                    // Recent items
+                    DropdownOptionRow(
                         icon: "clock",
                         title: "Recent",
-                        description: "Previously logged foods",
                         color: ColorTheme.primary.opacity(0.8)
                     ) {
                         showingRecentItemsView = true
                     }
                     
                     // Favorites
-                    LoggingOptionCard(
+                    DropdownOptionRow(
                         icon: "star.fill",
                         title: "Favorites",
-                        description: "Your favorite meals",
                         color: ColorTheme.secondary.opacity(0.8)
                     ) {
                         showingFavoritesView = true
                     }
                     
                     // Templates
-                    LoggingOptionCard(
+                    DropdownOptionRow(
                         icon: "square.on.square",
                         title: "Templates",
-                        description: "Saved meal templates",
                         color: ColorTheme.accent.opacity(0.8)
                     ) {
                         showingTemplatesView = true
@@ -110,127 +110,157 @@ struct MealLoggingOptionsView: View {
                 
                 Spacer()
                 
-                // Cancel button
-                CustomButton(
-                    title: "Cancel",
-                    action: {
-                        dismiss()
-                    },
-                    style: .outline
-                )
-                .padding(.horizontal)
             }
-            .padding()
-            .navigationTitle("Log Meal")
+            .padding(.horizontal, 16)
+            .padding(.vertical, 20)
+            .background(ColorTheme.background)
             .navigationBarTitleDisplayMode(.inline)
         }
         // Present each view as a sheet instead of using navigation
         .sheet(isPresented: $showingSearchView) {
             FoodSearchView()
                 .environmentObject(navigationCoordinator)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingSmartScannerView) {
             SmartFoodScannerView()
                 .environmentObject(navigationCoordinator)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingBarcodeScannerView) {
             BarcodeScannerView()
                 .environmentObject(navigationCoordinator)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingLiDARScannerView) {
             LiDARScannerView()
                 .environmentObject(navigationCoordinator)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingRecentItemsView) {
             RecentItemsView()
                 .environmentObject(navigationCoordinator)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingFavoritesView) {
             FavoriteMealsView()
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingTemplatesView) {
             MealTemplatesView()
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
+    }
+    
+    // MARK: - Helper Functions
+    
+    private func logWater() {
+        // Quick log 8 oz of water
+        let waterItem = FoodItem(
+            name: "Water",
+            quantity: "8 fl oz",
+            estimatedWeightInGrams: 240,
+            nutrition: NutritionInfo(calories: 0, protein: 0, carbs: 0, fat: 0)
+        )
+        
+        // Add to meal builder service
+        MealBuilderService.shared.addFoodItem(waterItem)
+        
+        // Show success feedback
+        // TODO: Add haptic feedback or toast notification
+        
+        dismiss()
+    }
+}
+
+struct DropdownOptionRow: View {
+    let icon: String
+    let title: String
+    let color: Color
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                // Icon
+                Image(systemName: icon)
+                    .font(.system(size: 16))
+                    .foregroundColor(color)
+                    .frame(width: 20, height: 20)
+                
+                // Title
+                Text(title)
+                    .font(.subheadline)
+                    .foregroundColor(ColorTheme.primaryText)
+                
+                Spacer()
+                
+                // Chevron (optional, for dropdown appearance)
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(ColorTheme.secondaryText)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(Color.white)
+            .cornerRadius(8)
+            .shadow(color: ColorTheme.shadowColor.opacity(0.2), radius: 1, x: 0, y: 1)
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
 
 struct LoggingOptionCard: View {
     let icon: String
     let title: String
-    let description: String
     let color: Color
-    let isRecommended: Bool
     let action: () -> Void
     
-    init(icon: String, title: String, description: String, color: Color, isRecommended: Bool = false, action: @escaping () -> Void) {
+    init(icon: String, title: String, color: Color, action: @escaping () -> Void) {
         self.icon = icon
         self.title = title
-        self.description = description
         self.color = color
-        self.isRecommended = isRecommended
         self.action = action
     }
     
-    // Fixed dimensions for consistent sizing
-    private let cardWidth: CGFloat = UIScreen.main.bounds.width / 2 - 24 // Account for padding
-    private let cardHeight: CGFloat = 180
-    private let iconSize: CGFloat = 32
-    private let iconContainerSize: CGFloat = 60
+    // Card dimensions - increased back to 100px height
+    private let cardHeight: CGFloat = 100 // Back to previous size
+    private let iconSize: CGFloat = 20 // Increased back up
+    private let iconContainerSize: CGFloat = 40 // Increased proportionally
     
     var body: some View {
         Button(action: action) {
-            ZStack {
-                VStack(spacing: 12) {
-                    // Icon
-                    Image(systemName: icon)
-                        .font(.system(size: iconSize))
-                        .foregroundColor(.white)
-                        .frame(width: iconContainerSize, height: iconContainerSize)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(color)
-                        )
-                    
-                    // Title
-                    Text(title)
-                        .font(.headline)
-                        .foregroundColor(ColorTheme.primaryText)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                    
-                    // Description
-                    Text(description)
-                        .font(.caption)
-                        .foregroundColor(ColorTheme.secondaryText)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .frame(height: 32)
-                }
-                .padding()
-                .frame(width: cardWidth, height: cardHeight)
-                .background(ColorTheme.cardBackground)
-                .cornerRadius(16)
-                .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
+            VStack(spacing: 6) { // Increased spacing back up
+                // Icon
+                Image(systemName: icon)
+                    .font(.system(size: iconSize))
+                    .foregroundColor(.white)
+                    .frame(width: iconContainerSize, height: iconContainerSize)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10) // Increased back to 10
+                            .fill(color)
+                    )
                 
-                // Recommended badge
-                if isRecommended {
-                    VStack {
-                        HStack {
-                            Spacer()
-                            Text("RECOMMENDED")
-                                .font(.caption2.weight(.bold))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color.green)
-                                .cornerRadius(8)
-                        }
-                        Spacer()
-                    }
-                    .padding(8)
-                }
+                // Title
+                Text(title)
+                    .font(.subheadline) // Changed back from .caption
+                    .foregroundColor(ColorTheme.primaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
             }
+            .padding(10) // Increased back to 10
+            .frame(height: cardHeight)
+            .frame(maxWidth: .infinity) // Use flexible width instead of fixed
+            .background(Color.white) // Changed to white for better contrast
+            .cornerRadius(10) // Increased back to 10
+            .shadow(color: ColorTheme.shadowColor.opacity(0.3), radius: 2, x: 0, y: 1) // Slightly increased shadow
         }
         .buttonStyle(PlainButtonStyle())
     }

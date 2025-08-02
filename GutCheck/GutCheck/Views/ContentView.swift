@@ -58,6 +58,8 @@ struct ContentView: View {
         .sheet(isPresented: $navigationCoordinator.isShowingMealLoggingOptions) {
             MealLoggingOptionsView()
                 .environmentObject(navigationCoordinator)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $navigationCoordinator.isShowingSymptomLoggingSheet) {
             LogSymptomView()

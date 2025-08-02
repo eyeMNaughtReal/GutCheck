@@ -98,12 +98,18 @@ struct UnifiedFoodDetailView: View {
             }
             .sheet(isPresented: $detailService.showingNutritionDetails) {
                 NutritionDetailsView(foodItem: foodItem)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $detailService.showingIngredients) {
                 IngredientsView(ingredients: foodItem.ingredients)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $detailService.showingAllergens) {
                 AllergensView(allergens: foodItem.allergens)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
             }
             .onChange(of: servingMultiplier) { _, newValue in
                 updateNutritionForServing(multiplier: newValue)
@@ -452,15 +458,57 @@ struct NutritionDetailsView: View {
     }
     
     private var remainingNutritionDetails: [(String, String)] {
-        let usedKeys = ["protein", "carbs", "fat", "calories", "brand", "source", "barcode", 
-                       "saturated_fat", "cholesterol", "potassium", "calcium", "iron", "vitamin_a", "vitamin_c"]
+        // Keys that are already displayed in the main sections or are not nutrients
+        let usedKeys = [
+            "protein", "carbs", "fat", "calories", "brand", "source", "barcode",
+            "saturated_fat", "cholesterol", "potassium", "calcium", "iron", "vitamin_a", "vitamin_c",
+            // Also exclude duplicates and non-nutrient data
+            "fiber", "dietary_fiber", "sugar", "sugars", "sodium", "total_fat", "total_carbohydrate",
+            "trans_fat", "polyunsaturated_fat", "monounsaturated_fat"
+        ]
         
+        // Only show micronutrients, minerals, and vitamins
         return foodItem.nutritionDetails
             .filter { key, value in
-                !usedKeys.contains(key) &&
-                value != "N/A" && value != "0" && value != "0.0" && !value.isEmpty
+                let lowerKey = key.lowercased()
+                
+                // Exclude already used keys
+                guard !usedKeys.contains(lowerKey) else { return false }
+                
+                // Exclude empty or zero values
+                guard value != "N/A" && value != "0" && value != "0.0" && !value.isEmpty else { return false }
+                
+                // Include micronutrients, minerals, vitamins, and important dietary components
+                let isMicronutrient = lowerKey.contains("vitamin") || 
+                                     lowerKey.contains("folate") || lowerKey.contains("niacin") ||
+                                     lowerKey.contains("riboflavin") || lowerKey.contains("thiamin") ||
+                                     lowerKey.contains("b6") || lowerKey.contains("b12") ||
+                                     lowerKey.contains("biotin") || lowerKey.contains("pantothenic")
+                
+                let isMineral = lowerKey.contains("zinc") || lowerKey.contains("copper") ||
+                               lowerKey.contains("manganese") || lowerKey.contains("selenium") ||
+                               lowerKey.contains("phosphorus") || lowerKey.contains("magnesium") ||
+                               lowerKey.contains("iodine") || lowerKey.contains("chromium")
+                
+                // Important dietary components not already shown in main grid
+                let isDietaryComponent = lowerKey.contains("cholesterol") && 
+                                        !usedKeys.contains("cholesterol") // Only if not already displayed
+                
+                return isMicronutrient || isMineral || isDietaryComponent
             }
-            .sorted { $0.key < $1.key }
+            .sorted { first, second in
+                // Sort vitamins first, then minerals
+                let firstIsVitamin = first.0.lowercased().contains("vitamin")
+                let secondIsVitamin = second.0.lowercased().contains("vitamin")
+                
+                if firstIsVitamin && !secondIsVitamin {
+                    return true
+                } else if !firstIsVitamin && secondIsVitamin {
+                    return false
+                } else {
+                    return first.0 < second.0
+                }
+            }
     }
     
     private func nutritionGridItem(_ label: String, value: Double, unit: String) -> some View {
@@ -491,19 +539,83 @@ struct NutritionDetailItem: View {
     let value: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label.replacingOccurrences(of: "_", with: " ").capitalized)
+        VStack(spacing: 4) {
+            Text(formattedLabel)
                 .font(.caption)
                 .foregroundColor(ColorTheme.secondaryText)
+                .multilineTextAlignment(.center)
             
-            Text(value)
+            Text(formattedValue)
                 .font(.subheadline)
-                .fontWeight(.medium)
+                .fontWeight(.semibold)
                 .foregroundColor(ColorTheme.primaryText)
+            
+            if !unit.isEmpty {
+                Text(unit)
+                    .font(.caption2)
+                    .foregroundColor(ColorTheme.secondaryText)
+            }
         }
-        .padding(8)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
         .background(ColorTheme.surface)
         .cornerRadius(8)
+    }
+    
+    private var formattedLabel: String {
+        label.replacingOccurrences(of: "_", with: " ").capitalized
+    }
+    
+    private var formattedValue: String {
+        if let doubleValue = Double(value) {
+            return String(format: "%.1f", doubleValue)
+        }
+        return value
+    }
+    
+    private var unit: String {
+        let lowerLabel = label.lowercased()
+        
+        // Vitamins (most in micrograms except C, niacin, etc.)
+        if lowerLabel.contains("vitamin_a") || lowerLabel.contains("folate") || 
+           lowerLabel.contains("b12") || lowerLabel.contains("biotin") {
+            return "mcg"
+        } else if lowerLabel.contains("vitamin_c") || lowerLabel.contains("niacin") ||
+                  lowerLabel.contains("vitamin_b6") || lowerLabel.contains("thiamin") ||
+                  lowerLabel.contains("riboflavin") || lowerLabel.contains("pantothenic") {
+            return "mg"
+        }
+        
+        // Minerals (most in milligrams)
+        else if lowerLabel.contains("calcium") || lowerLabel.contains("iron") || 
+                lowerLabel.contains("magnesium") || lowerLabel.contains("phosphorus") ||
+                lowerLabel.contains("potassium") || lowerLabel.contains("sodium") ||
+                lowerLabel.contains("zinc") || lowerLabel.contains("copper") ||
+                lowerLabel.contains("manganese") {
+            return "mg"
+        } else if lowerLabel.contains("selenium") || lowerLabel.contains("iodine") ||
+                  lowerLabel.contains("chromium") {
+            return "mcg"
+        }
+        
+        // Dietary components
+        else if lowerLabel.contains("cholesterol") {
+            return "mg"
+        }
+        
+        // Macronutrients (grams)
+        else if lowerLabel.contains("fiber") || lowerLabel.contains("sugar") || 
+                lowerLabel.contains("fat") || lowerLabel.contains("carb") ||
+                lowerLabel.contains("protein") {
+            return "g"
+        }
+        
+        // Energy
+        else if lowerLabel.contains("energy") || lowerLabel.contains("calorie") {
+            return "kcal"
+        }
+        
+        return "" // No unit for percentages, ratios, or unknown items
     }
 }
 
