@@ -21,19 +21,43 @@ struct FoodSearchView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Search bar
-                HStack {
-                    TextField("Search foods", text: $viewModel.searchQuery)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .onSubmit {
+                // Search bar with prominent Search button
+                VStack(spacing: 12) {
+                    HStack {
+                        TextField("Search foods", text: $viewModel.searchQuery)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .onSubmit {
+                                viewModel.search()
+                            }
+                        
+                        Button(action: {
                             viewModel.search()
+                        }) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "magnifyingglass")
+                                Text("Search")
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(ColorTheme.accent)
+                            .cornerRadius(8)
                         }
+                        .disabled(viewModel.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    }
                     
-                    Button(action: {
-                        viewModel.search()
-                    }) {
-                        Image(systemName: "magnifyingglass")
+                    // Clear button if there's text
+                    if !viewModel.searchQuery.isEmpty {
+                        HStack {
+                            Spacer()
+                            Button("Clear") {
+                                viewModel.searchQuery = ""
+                                viewModel.searchResults = []
+                                viewModel.hasSearched = false
+                            }
                             .foregroundColor(ColorTheme.accent)
+                            .font(.caption)
+                        }
                     }
                 }
                 .padding()
@@ -41,14 +65,29 @@ struct FoodSearchView: View {
                 // Results or suggestions
                 if viewModel.isSearching {
                     loadingView
-                } else if viewModel.searchResults.isEmpty {
-                    if viewModel.searchQuery.isEmpty {
-                        suggestionsList
-                    } else {
-                        noResultsView
-                    }
-                } else {
+                } else if !viewModel.hasSearched && viewModel.searchQuery.isEmpty {
+                    suggestionsList
+                } else if viewModel.searchResults.isEmpty && viewModel.hasSearched {
+                    noResultsView
+                } else if !viewModel.searchResults.isEmpty {
                     resultsList
+                } else {
+                    // Show suggestions when user has typed but not searched yet
+                    VStack(spacing: 16) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 36))
+                            .foregroundColor(ColorTheme.accent.opacity(0.6))
+                        
+                        Text("Ready to Search")
+                            .font(.headline)
+                            .foregroundColor(ColorTheme.primaryText)
+                        
+                        Text("Tap the Search button to find foods")
+                            .font(.subheadline)
+                            .foregroundColor(ColorTheme.secondaryText)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
             .navigationTitle("Search Food")

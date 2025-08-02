@@ -38,19 +38,7 @@ class FoodSearchViewModel: ObservableObject {
         }
         loadRecentItems()
         
-        // Debounced search
-        $searchQuery
-            .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
-            .filter { !$0.isEmpty }
-            .sink { [weak self] query in
-                print("🕵️ Debounced search triggered for: '\(query)'")
-                print("🕵️ Executing on main actor context")
-                Task { @MainActor in
-                    print("🕵️ About to call search() method")
-                    self?.search()
-                }
-            }
-            .store(in: &cancellables)
+        // Removed automatic debounced search - now only searches on button press
     }
 
     func search() {
