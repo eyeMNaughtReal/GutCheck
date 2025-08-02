@@ -17,6 +17,7 @@ struct MealLoggingOptionsView: View {
     @State private var showingRecentItemsView = false
     @State private var showingFavoritesView = false
     @State private var showingTemplatesView = false
+    @State private var showingAddWaterView = false
     
     var body: some View {
         NavigationStack {
@@ -71,13 +72,13 @@ struct MealLoggingOptionsView: View {
                 
                 // Secondary options (dropdown-style list)
                 VStack(spacing: 4) {
-                    // Water quick-log
+                    // Water
                     DropdownOptionRow(
                         icon: "drop.fill",
                         title: "Water",
                         color: Color.blue
                     ) {
-                        logWater()
+                        showingAddWaterView = true
                     }
                     
                     // Recent items
@@ -157,26 +158,11 @@ struct MealLoggingOptionsView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
-    }
-    
-    // MARK: - Helper Functions
-    
-    private func logWater() {
-        // Quick log 8 oz of water
-        let waterItem = FoodItem(
-            name: "Water",
-            quantity: "8 fl oz",
-            estimatedWeightInGrams: 240,
-            nutrition: NutritionInfo(calories: 0, protein: 0, carbs: 0, fat: 0)
-        )
-        
-        // Add to meal builder service
-        MealBuilderService.shared.addFoodItem(waterItem)
-        
-        // Show success feedback
-        // TODO: Add haptic feedback or toast notification
-        
-        dismiss()
+        .sheet(isPresented: $showingAddWaterView) {
+            AddWaterView()
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
     }
 }
 
@@ -379,26 +365,77 @@ struct FavoriteMealsView: View {
 
 struct MealTemplatesView: View {
     @Environment(\.dismiss) private var dismiss
+    @State private var showingMealBuilder = false
     
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
-                    Image(systemName: "square.on.square")
-                        .font(.system(size: 48))
-                        .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
+                VStack(spacing: 20) {
+                    // Build Custom Meal - Prominent option at the top
+                    Button(action: {
+                        showingMealBuilder = true
+                    }) {
+                        HStack {
+                            Image(systemName: "plus.rectangle.on.rectangle")
+                                .font(.title2)
+                                .foregroundColor(.white)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Build Custom Meal")
+                                    .font(.headline)
+                                    .foregroundColor(.white)
+                                
+                                Text("Create a meal from scratch")
+                                    .font(.subheadline)
+                                    .foregroundColor(.white.opacity(0.8))
+                            }
+                            
+                            Spacer()
+                            
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                        .padding()
+                        .background(ColorTheme.primary)
+                        .cornerRadius(12)
+                        .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
+                    }
+                    .padding(.horizontal)
                     
-                    Text("No Meal Templates")
-                        .font(.headline)
-                        .foregroundColor(ColorTheme.primaryText)
-                    
-                    Text("Create meal templates for recurring meals")
-                        .font(.subheadline)
-                        .foregroundColor(ColorTheme.secondaryText)
-                        .multilineTextAlignment(.center)
+                    // Templates section
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("Saved Templates")
+                                .font(.headline)
+                                .foregroundColor(ColorTheme.primaryText)
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal)
+                        
+                        // Placeholder for when no templates exist
+                        VStack(spacing: 16) {
+                            Image(systemName: "square.on.square")
+                                .font(.system(size: 48))
+                                .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
+                            
+                            Text("No Meal Templates")
+                                .font(.headline)
+                                .foregroundColor(ColorTheme.primaryText)
+                            
+                            Text("Save frequently used meals as templates for quick access")
+                                .font(.subheadline)
+                                .foregroundColor(ColorTheme.secondaryText)
+                                .multilineTextAlignment(.center)
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity)
+                        .background(ColorTheme.surface)
+                        .cornerRadius(12)
+                        .padding(.horizontal)
+                    }
                 }
-                .padding()
-                .frame(maxWidth: .infinity, minHeight: 200)
+                .padding(.vertical)
             }
             .navigationTitle("Meal Templates")
             .navigationBarTitleDisplayMode(.inline)
@@ -409,6 +446,11 @@ struct MealTemplatesView: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $showingMealBuilder) {
+            MealBuilderView()
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
         }
     }
 }

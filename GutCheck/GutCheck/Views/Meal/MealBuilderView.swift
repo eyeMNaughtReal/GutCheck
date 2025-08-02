@@ -13,6 +13,7 @@ struct MealBuilderView: View {
     @State private var showingDatePicker = false
     @State private var showingConfirmation = false
     @State private var showingDiscard = false
+    @State private var showingFoodOptions = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -134,7 +135,7 @@ struct MealBuilderView: View {
             VStack(spacing: 12) {
                 // Add food button
                 Button(action: {
-                    // TODO: Show food search/scanner modal
+                    showingFoodOptions = true
                 }) {
                     HStack {
                         Image(systemName: "plus.circle.fill")
@@ -202,6 +203,12 @@ struct MealBuilderView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingDatePicker) {
             DateTimePickerView(date: $mealService.mealDate)
+        }
+        .sheet(isPresented: $showingFoodOptions) {
+            MealLoggingOptionsView()
+                .environmentObject(NavigationCoordinator())
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .alert("Discard Meal?", isPresented: $showingDiscard) {
             Button("Cancel", role: .cancel) { }
