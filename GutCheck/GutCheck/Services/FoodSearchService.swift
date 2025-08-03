@@ -199,10 +199,10 @@ class FoodSearchService: ObservableObject {
             saturatedFat: saturatedFat,
             cholesterol: cholesterol,
             potassium: potassium,
-            vitaminA: vitaminA,
-            vitaminC: vitaminC,
             calcium: calcium,
-            iron: iron
+            iron: iron,
+            vitaminA: vitaminA,
+            vitaminC: vitaminC
         )
     }
 }

@@ -381,13 +381,13 @@ struct UnifiedFoodDetailView: View {
         let ingredients = foodItem.ingredients.map { $0.lowercased() }
         
         // Mammalian products
-        if containsMammalianProducts(name: name, ingredients: ingredients) {
+        if let mammalianSources = getMammalianSources(name: name, ingredients: ingredients) {
             indicators.append(HealthIndicator(
                 text: "Mammalian",
                 icon: "🐄",
                 color: .orange,
                 severity: .medium,
-                description: "Contains products from mammals"
+                description: "Contains mammalian products: \(mammalianSources.joined(separator: ", "))"
             ))
         }
         
@@ -501,6 +501,149 @@ struct UnifiedFoodDetailView: View {
             ))
         }
         
+        // Nightshade family
+        if let nightshadeSources = getNightshadeSources(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "Nightshade",
+                icon: "🍅",
+                color: .orange,
+                severity: .medium,
+                description: "Nightshade family: \(nightshadeSources.joined(separator: ", "))"
+            ))
+        }
+        
+        // High histamine
+        if let histamineSources = getHistamineSources(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "High Histamine",
+                icon: "🔺",
+                color: .red,
+                severity: .high,
+                description: "High histamine sources: \(histamineSources.joined(separator: ", "))"
+            ))
+        }
+        
+        // Heavy meals/toxins
+        if let heavyMetalSources = getHeavyMetalSources(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "Heavy Metals",
+                icon: "⚠️",
+                color: .red,
+                severity: .high,
+                description: "Potential heavy metal sources: \(heavyMetalSources.joined(separator: ", "))"
+            ))
+        }
+        
+        // Oxalates
+        if let oxalateSources = getOxalateSources(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "High Oxalates",
+                icon: "💎",
+                color: .orange,
+                severity: .medium,
+                description: "High oxalate sources: \(oxalateSources.joined(separator: ", "))"
+            ))
+        }
+        
+        // Lectins
+        if let lectinSources = getLectinSources(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "Lectins",
+                icon: "🫘",
+                color: .orange,
+                severity: .medium,
+                description: "Lectin sources: \(lectinSources.joined(separator: ", "))"
+            ))
+        }
+        
+        // Phytic acid
+        if let phyticAcidSources = getPhyticAcidSources(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "Phytic Acid",
+                icon: "🌾",
+                color: .yellow,
+                severity: .low,
+                description: "Phytic acid sources: \(phyticAcidSources.joined(separator: ", "))"
+            ))
+        }
+        
+        // Goitrogens
+        if let goitrogenSources = getGoitrogenSources(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "Goitrogens",
+                icon: "🦴",
+                color: .orange,
+                severity: .medium,
+                description: "Goitrogenic compounds in: \(goitrogenSources.joined(separator: ", "))"
+            ))
+        }
+        
+        // Pesticide residues (high-risk foods)
+        if let pesticideSources = getPesticideSources(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "Pesticide Risk",
+                icon: "🚫",
+                color: .red,
+                severity: .high,
+                description: "High pesticide residue risk: \(pesticideSources.joined(separator: ", "))"
+            ))
+        }
+        
+        // Inflammatory oils
+        if let inflammatoryOilSources = getInflammatoryOilSources(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "Inflammatory Oils",
+                icon: "🛢️",
+                color: .red,
+                severity: .high,
+                description: "Inflammatory oils: \(inflammatoryOilSources.joined(separator: ", "))"
+            ))
+        }
+        
+        // Salicylates
+        if let salicylateSources = getSalicylateSources(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "Salicylates",
+                icon: "🌿",
+                color: .orange,
+                severity: .medium,
+                description: "Salicylate sources: \(salicylateSources.joined(separator: ", "))"
+            ))
+        }
+        
+        // Tyramine
+        if let tyramineSources = getTyramineSources(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "Tyramine",
+                icon: "🧀",
+                color: .orange,
+                severity: .medium,
+                description: "Tyramine sources: \(tyramineSources.joined(separator: ", "))"
+            ))
+        }
+        
+        // Sulfites
+        if let sulfiteSources = getSulfiteSources(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "Sulfites",
+                icon: "🍷",
+                color: .red,
+                severity: .high,
+                description: "Sulfite sources: \(sulfiteSources.joined(separator: ", "))"
+            ))
+        }
+        
+        // Purines (gout risk)
+        if let purineSources = getPurineSources(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "High Purines",
+                icon: "🦐",
+                color: .orange,
+                severity: .medium,
+                description: "High purine sources: \(purineSources.joined(separator: ", "))"
+            ))
+        }
+        
         return indicators
     }
     
@@ -514,6 +657,19 @@ struct UnifiedFoodDetailView: View {
         
         let allText = ([name] + ingredients).joined(separator: " ")
         return mammalianKeywords.contains { allText.contains($0) }
+    }
+    
+    private func getMammalianSources(name: String, ingredients: [String]) -> [String]? {
+        let mammalianKeywords = [
+            "milk", "dairy", "cheese", "butter", "cream", "yogurt", "whey", "casein",
+            "beef", "pork", "lamb", "bacon", "ham", "sausage", "ground beef", "steak",
+            "lactose", "milk powder", "milk solids", "condensed milk", "evaporated milk"
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ").lowercased()
+        let foundSources = mammalianKeywords.filter { allText.contains($0) }
+        
+        return foundSources.isEmpty ? nil : foundSources
     }
     
     private func isProcessedFood(name: String, ingredients: [String]) -> Bool {
@@ -593,6 +749,658 @@ struct UnifiedFoodDetailView: View {
         let allText = ([name] + ingredients).joined(separator: " ")
         return caffeineKeywords.contains { allText.contains($0) }
     }
+
+    
+    private func isHighHistamine(name: String, ingredients: [String]) -> Bool {
+        let highHistamineKeywords = [
+            // Fermented foods
+            "cheese", "aged cheese", "blue cheese", "parmesan", "cheddar",
+            "fermented", "sauerkraut", "kimchi", "miso", "tempeh", "natto",
+            "yogurt", "kefir", "kombucha", "wine", "beer", "champagne",
+            "vinegar", "pickled", "olives", "salami", "pepperoni", "sausage",
+            
+            // Fish and seafood
+            "tuna", "mackerel", "sardines", "anchovies", "salmon", "herring",
+            "shellfish", "shrimp", "crab", "lobster", "mussels", "clams",
+            
+            // Vegetables and fruits
+            "tomato", "spinach", "eggplant", "avocado", "citrus", "strawberry",
+            "banana", "pineapple", "papaya", "kiwi", "plum", "cherry",
+            
+            // Nuts and chocolate
+            "chocolate", "cocoa", "nuts", "walnuts", "cashews", "peanuts",
+            
+            // Other
+            "mushroom", "yeast", "sourdough", "aged", "cured", "smoked"
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ").lowercased()
+        return highHistamineKeywords.contains { allText.contains($0) }
+    }
+    
+    // MARK: - Enhanced Detection Functions (with source identification)
+    
+    private func getNightshadeSources(name: String, ingredients: [String]) -> [String]? {
+        let nightshadeItems = [
+            ("tomato", "tomatoes"),
+            ("potato", "potatoes"),
+            ("bell pepper", "bell peppers"),
+            ("sweet pepper", "sweet peppers"),
+            ("hot pepper", "hot peppers"),
+            ("chili", "chili peppers"),
+            ("jalapeno", "jalapeños"),
+            ("serrano", "serrano peppers"),
+            ("habanero", "habanero peppers"),
+            ("cayenne", "cayenne pepper"),
+            ("paprika", "paprika"),
+            ("eggplant", "eggplant"),
+            ("aubergine", "aubergine"),
+            ("tobacco", "tobacco"),
+            ("goji berry", "goji berries"),
+            ("wolfberry", "wolfberries"),
+            ("tomatillo", "tomatillos"),
+            ("ground cherry", "ground cherries"),
+            ("cape gooseberry", "cape gooseberries"),
+            ("ashwagandha", "ashwagandha"),
+            ("belladonna", "belladonna"),
+            ("petunia", "petunia"),
+            ("huckleberry", "huckleberries"),
+            ("wonderberry", "wonderberries")
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ").lowercased()
+        let foundSources = nightshadeItems.compactMap { keyword, displayName in
+            allText.contains(keyword) ? displayName : nil
+        }
+        
+        return foundSources.isEmpty ? nil : Array(Set(foundSources))
+    }
+    
+    private func getHistamineSources(name: String, ingredients: [String]) -> [String]? {
+        let histamineItems = [
+            // Fermented foods
+            ("cheese", "cheese"),
+            ("aged cheese", "aged cheese"),
+            ("blue cheese", "blue cheese"),
+            ("parmesan", "parmesan"),
+            ("cheddar", "cheddar"),
+            ("fermented", "fermented foods"),
+            ("sauerkraut", "sauerkraut"),
+            ("kimchi", "kimchi"),
+            ("miso", "miso"),
+            ("tempeh", "tempeh"),
+            ("natto", "natto"),
+            ("yogurt", "yogurt"),
+            ("kefir", "kefir"),
+            ("kombucha", "kombucha"),
+            ("wine", "wine"),
+            ("beer", "beer"),
+            ("champagne", "champagne"),
+            ("vinegar", "vinegar"),
+            ("pickled", "pickled foods"),
+            ("olives", "olives"),
+            ("salami", "salami"),
+            ("pepperoni", "pepperoni"),
+            ("sausage", "sausage"),
+            
+            // Fish and seafood
+            ("tuna", "tuna"),
+            ("mackerel", "mackerel"),
+            ("sardines", "sardines"),
+            ("anchovies", "anchovies"),
+            ("salmon", "salmon"),
+            ("herring", "herring"),
+            ("shellfish", "shellfish"),
+            ("shrimp", "shrimp"),
+            ("crab", "crab"),
+            ("lobster", "lobster"),
+            ("mussels", "mussels"),
+            ("clams", "clams"),
+            
+            // Vegetables and fruits
+            ("tomato", "tomatoes"),
+            ("spinach", "spinach"),
+            ("eggplant", "eggplant"),
+            ("avocado", "avocado"),
+            ("citrus", "citrus fruits"),
+            ("strawberry", "strawberries"),
+            ("banana", "bananas"),
+            ("pineapple", "pineapple"),
+            ("papaya", "papaya"),
+            ("kiwi", "kiwi"),
+            ("plum", "plums"),
+            ("cherry", "cherries"),
+            
+            // Nuts and chocolate
+            ("chocolate", "chocolate"),
+            ("cocoa", "cocoa"),
+            ("nuts", "nuts"),
+            ("walnuts", "walnuts"),
+            ("cashews", "cashews"),
+            ("peanuts", "peanuts"),
+            
+            // Other
+            ("mushroom", "mushrooms"),
+            ("yeast", "yeast"),
+            ("sourdough", "sourdough"),
+            ("aged", "aged foods"),
+            ("cured", "cured foods"),
+            ("smoked", "smoked foods")
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ").lowercased()
+        let foundSources = histamineItems.compactMap { keyword, displayName in
+            allText.contains(keyword) ? displayName : nil
+        }
+        
+        return foundSources.isEmpty ? nil : Array(Set(foundSources))
+    }
+    
+    private func getHeavyMetalSources(name: String, ingredients: [String]) -> [String]? {
+        let heavyMetalRisks = [
+            ("tuna", "tuna (mercury)"),
+            ("swordfish", "swordfish (mercury)"),
+            ("shark", "shark (mercury)"),
+            ("king mackerel", "king mackerel (mercury)"),
+            ("tilefish", "tilefish (mercury)"),
+            ("marlin", "marlin (mercury)"),
+            ("orange roughy", "orange roughy (mercury)"),
+            ("big eye tuna", "big eye tuna (mercury)"),
+            ("rice", "rice (arsenic)"),
+            ("brown rice", "brown rice (arsenic)"),
+            ("rice flour", "rice flour (arsenic)"),
+            ("rice syrup", "rice syrup (arsenic)"),
+            ("rice crackers", "rice crackers (arsenic)"),
+            ("kelp", "kelp (arsenic/iodine)"),
+            ("seaweed", "seaweed (arsenic/iodine)"),
+            ("hijiki", "hijiki seaweed (arsenic)"),
+            ("leafy greens", "leafy greens (cadmium)"),
+            ("spinach", "spinach (cadmium)"),
+            ("lettuce", "lettuce (cadmium)"),
+            ("chocolate", "chocolate (cadmium/lead)"),
+            ("cocoa", "cocoa (cadmium)"),
+            ("sunflower seeds", "sunflower seeds (cadmium)"),
+            ("organ meat", "organ meat (various)"),
+            ("liver", "liver (various)"),
+            ("kidney", "kidney (various)")
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ").lowercased()
+        let foundSources = heavyMetalRisks.compactMap { keyword, displayName in
+            allText.contains(keyword) ? displayName : nil
+        }
+        
+        return foundSources.isEmpty ? nil : Array(Set(foundSources))
+    }
+    
+    private func getOxalateSources(name: String, ingredients: [String]) -> [String]? {
+        let oxalateItems = [
+            ("spinach", "spinach"),
+            ("rhubarb", "rhubarb"),
+            ("beets", "beets"),
+            ("swiss chard", "swiss chard"),
+            ("nuts", "nuts"),
+            ("almonds", "almonds"),
+            ("cashews", "cashews"),
+            ("peanuts", "peanuts"),
+            ("chocolate", "chocolate"),
+            ("cocoa", "cocoa"),
+            ("tea", "tea"),
+            ("black tea", "black tea"),
+            ("green tea", "green tea"),
+            ("sweet potato", "sweet potatoes"),
+            ("potato", "potatoes"),
+            ("okra", "okra"),
+            ("collard greens", "collard greens"),
+            ("kale", "kale"),
+            ("turnip greens", "turnip greens"),
+            ("mustard greens", "mustard greens"),
+            ("beans", "beans"),
+            ("soy", "soy products"),
+            ("tofu", "tofu"),
+            ("tempeh", "tempeh"),
+            ("raspberries", "raspberries"),
+            ("figs", "figs"),
+            ("kiwi", "kiwi"),
+            ("plums", "plums")
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ").lowercased()
+        let foundSources = oxalateItems.compactMap { keyword, displayName in
+            allText.contains(keyword) ? displayName : nil
+        }
+        
+        return foundSources.isEmpty ? nil : Array(Set(foundSources))
+    }
+    
+    private func getLectinSources(name: String, ingredients: [String]) -> [String]? {
+        let lectinItems = [
+            ("beans", "beans"),
+            ("lentils", "lentils"),
+            ("chickpeas", "chickpeas"),
+            ("kidney beans", "kidney beans"),
+            ("black beans", "black beans"),
+            ("pinto beans", "pinto beans"),
+            ("navy beans", "navy beans"),
+            ("lima beans", "lima beans"),
+            ("soy", "soy products"),
+            ("tofu", "tofu"),
+            ("tempeh", "tempeh"),
+            ("peanuts", "peanuts"),
+            ("cashews", "cashews"),
+            ("tomato", "tomatoes"),
+            ("potato", "potatoes"),
+            ("eggplant", "eggplant"),
+            ("bell pepper", "bell peppers"),
+            ("wheat", "wheat"),
+            ("barley", "barley"),
+            ("rye", "rye"),
+            ("oats", "oats"),
+            ("quinoa", "quinoa"),
+            ("brown rice", "brown rice"),
+            ("corn", "corn"),
+            ("chia seeds", "chia seeds"),
+            ("pumpkin seeds", "pumpkin seeds"),
+            ("sunflower seeds", "sunflower seeds")
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ").lowercased()
+        let foundSources = lectinItems.compactMap { keyword, displayName in
+            allText.contains(keyword) ? displayName : nil
+        }
+        
+        return foundSources.isEmpty ? nil : Array(Set(foundSources))
+    }
+    
+    private func getPhyticAcidSources(name: String, ingredients: [String]) -> [String]? {
+        let phyticAcidItems = [
+            ("grains", "grains"),
+            ("wheat", "wheat"),
+            ("rice", "rice"),
+            ("oats", "oats"),
+            ("barley", "barley"),
+            ("rye", "rye"),
+            ("quinoa", "quinoa"),
+            ("beans", "beans"),
+            ("lentils", "lentils"),
+            ("chickpeas", "chickpeas"),
+            ("nuts", "nuts"),
+            ("almonds", "almonds"),
+            ("walnuts", "walnuts"),
+            ("pecans", "pecans"),
+            ("brazil nuts", "brazil nuts"),
+            ("seeds", "seeds"),
+            ("sunflower seeds", "sunflower seeds"),
+            ("pumpkin seeds", "pumpkin seeds"),
+            ("sesame seeds", "sesame seeds"),
+            ("flax seeds", "flax seeds"),
+            ("chia seeds", "chia seeds"),
+            ("soy", "soy products"),
+            ("tofu", "tofu"),
+            ("tempeh", "tempeh")
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ").lowercased()
+        let foundSources = phyticAcidItems.compactMap { keyword, displayName in
+            allText.contains(keyword) ? displayName : nil
+        }
+        
+        return foundSources.isEmpty ? nil : Array(Set(foundSources))
+    }
+    
+    private func getGoitrogenSources(name: String, ingredients: [String]) -> [String]? {
+        let goitrogenItems = [
+            ("broccoli", "broccoli"),
+            ("cauliflower", "cauliflower"),
+            ("cabbage", "cabbage"),
+            ("brussels sprouts", "brussels sprouts"),
+            ("kale", "kale"),
+            ("collard greens", "collard greens"),
+            ("turnips", "turnips"),
+            ("rutabaga", "rutabaga"),
+            ("radishes", "radishes"),
+            ("horseradish", "horseradish"),
+            ("mustard greens", "mustard greens"),
+            ("watercress", "watercress"),
+            ("bok choy", "bok choy"),
+            ("arugula", "arugula"),
+            ("soy", "soy products"),
+            ("tofu", "tofu"),
+            ("tempeh", "tempeh"),
+            ("millet", "millet"),
+            ("cassava", "cassava"),
+            ("sweet potato", "sweet potatoes"),
+            ("corn", "corn"),
+            ("lima beans", "lima beans"),
+            ("flax seeds", "flax seeds"),
+            ("peanuts", "peanuts"),
+            ("pine nuts", "pine nuts"),
+            ("strawberries", "strawberries"),
+            ("peaches", "peaches"),
+            ("spinach", "spinach")
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ").lowercased()
+        let foundSources = goitrogenItems.compactMap { keyword, displayName in
+            allText.contains(keyword) ? displayName : nil
+        }
+        
+        return foundSources.isEmpty ? nil : Array(Set(foundSources))
+    }
+    
+    private func getPesticideSources(name: String, ingredients: [String]) -> [String]? {
+        // Based on EWG's Dirty Dozen and other high-pesticide foods
+        let pesticideRisks = [
+            ("strawberries", "strawberries"),
+            ("spinach", "spinach"),
+            ("kale", "kale"),
+            ("peaches", "peaches"),
+            ("pears", "pears"),
+            ("nectarines", "nectarines"),
+            ("apples", "apples"),
+            ("grapes", "grapes"),
+            ("bell peppers", "bell peppers"),
+            ("cherry tomatoes", "cherry tomatoes"),
+            ("tomatoes", "tomatoes"),
+            ("celery", "celery"),
+            ("potatoes", "potatoes"),
+            ("hot peppers", "hot peppers"),
+            ("cucumber", "cucumbers"),
+            ("lettuce", "lettuce"),
+            ("snap peas", "snap peas"),
+            ("blueberries", "blueberries"),
+            ("green beans", "green beans"),
+            ("plums", "plums"),
+            ("cherries", "cherries"),
+            ("tangerines", "tangerines"),
+            ("raspberries", "raspberries"),
+            ("carrots", "carrots"),
+            ("winter squash", "winter squash"),
+            ("summer squash", "summer squash"),
+            ("broccoli", "broccoli"),
+            ("snap peas", "snap peas"),
+            ("sweet corn", "sweet corn (unless organic)")
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ").lowercased()
+        let foundSources = pesticideRisks.compactMap { keyword, displayName in
+            allText.contains(keyword) && !allText.contains("organic") ? displayName : nil
+        }
+        
+        return foundSources.isEmpty ? nil : Array(Set(foundSources))
+    }
+    
+    private func getInflammatoryOilSources(name: String, ingredients: [String]) -> [String]? {
+        let inflammatoryOils = [
+            ("vegetable oil", "vegetable oil"),
+            ("soybean oil", "soybean oil"),
+            ("corn oil", "corn oil"),
+            ("canola oil", "canola oil"),
+            ("rapeseed oil", "rapeseed oil"),
+            ("sunflower oil", "sunflower oil"),
+            ("safflower oil", "safflower oil"),
+            ("cottonseed oil", "cottonseed oil"),
+            ("peanut oil", "peanut oil"),
+            ("sesame oil", "sesame oil"),
+            ("palm oil", "palm oil"),
+            ("margarine", "margarine"),
+            ("shortening", "shortening"),
+            ("hydrogenated", "hydrogenated oils"),
+            ("partially hydrogenated", "partially hydrogenated oils"),
+            ("trans fat", "trans fats"),
+            ("interesterified", "interesterified oils")
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ").lowercased()
+        let foundSources = inflammatoryOils.compactMap { keyword, displayName in
+            allText.contains(keyword) ? displayName : nil
+        }
+        
+        return foundSources.isEmpty ? nil : Array(Set(foundSources))
+    }
+    
+    private func getSalicylateSources(name: String, ingredients: [String]) -> [String]? {
+        let salicylateItems = [
+            ("berries", "berries"),
+            ("strawberries", "strawberries"),
+            ("blueberries", "blueberries"),
+            ("raspberries", "raspberries"),
+            ("blackberries", "blackberries"),
+            ("cherries", "cherries"),
+            ("grapes", "grapes"),
+            ("raisins", "raisins"),
+            ("dates", "dates"),
+            ("prunes", "prunes"),
+            ("oranges", "oranges"),
+            ("tangerines", "tangerines"),
+            ("apricots", "apricots"),
+            ("tomatoes", "tomatoes"),
+            ("cucumber", "cucumbers"),
+            ("radishes", "radishes"),
+            ("peppers", "peppers"),
+            ("herbs", "herbs"),
+            ("mint", "mint"),
+            ("oregano", "oregano"),
+            ("thyme", "thyme"),
+            ("rosemary", "rosemary"),
+            ("sage", "sage"),
+            ("dill", "dill"),
+            ("tarragon", "tarragon"),
+            ("bay leaves", "bay leaves"),
+            ("curry", "curry"),
+            ("paprika", "paprika"),
+            ("turmeric", "turmeric"),
+            ("cinnamon", "cinnamon"),
+            ("cloves", "cloves"),
+            ("ginger", "ginger"),
+            ("nutmeg", "nutmeg"),
+            ("almonds", "almonds"),
+            ("peanuts", "peanuts"),
+            ("honey", "honey"),
+            ("licorice", "licorice"),
+            ("peppermint", "peppermint"),
+            ("wintergreen", "wintergreen"),
+            ("tea", "tea"),
+            ("coffee", "coffee"),
+            ("wine", "wine"),
+            ("beer", "beer")
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ").lowercased()
+        let foundSources = salicylateItems.compactMap { keyword, displayName in
+            allText.contains(keyword) ? displayName : nil
+        }
+        
+        return foundSources.isEmpty ? nil : Array(Set(foundSources))
+    }
+    
+    private func getTyramineSources(name: String, ingredients: [String]) -> [String]? {
+        let tyramineItems = [
+            ("aged cheese", "aged cheese"),
+            ("blue cheese", "blue cheese"),
+            ("cheddar", "aged cheddar"),
+            ("gouda", "aged gouda"),
+            ("parmesan", "parmesan"),
+            ("swiss", "aged swiss"),
+            ("camembert", "camembert"),
+            ("brie", "brie"),
+            ("processed cheese", "processed cheese"),
+            ("cured meat", "cured meats"),
+            ("salami", "salami"),
+            ("pepperoni", "pepperoni"),
+            ("bologna", "bologna"),
+            ("hot dogs", "hot dogs"),
+            ("bacon", "bacon"),
+            ("ham", "ham"),
+            ("sausage", "sausage"),
+            ("liver", "liver"),
+            ("smoked fish", "smoked fish"),
+            ("pickled herring", "pickled herring"),
+            ("anchovies", "anchovies"),
+            ("caviar", "caviar"),
+            ("sauerkraut", "sauerkraut"),
+            ("kimchi", "kimchi"),
+            ("pickled vegetables", "pickled vegetables"),
+            ("soy sauce", "soy sauce"),
+            ("miso", "miso"),
+            ("teriyaki", "teriyaki sauce"),
+            ("fish sauce", "fish sauce"),
+            ("worcestershire", "worcestershire sauce"),
+            ("yeast extract", "yeast extract"),
+            ("nutritional yeast", "nutritional yeast"),
+            ("beer", "beer"),
+            ("wine", "wine"),
+            ("champagne", "champagne"),
+            ("vermouth", "vermouth"),
+            ("sherry", "sherry"),
+            ("chianti", "chianti"),
+            ("banana", "overripe bananas"),
+            ("avocado", "overripe avocado"),
+            ("figs", "figs"),
+            ("raisins", "raisins"),
+            ("chocolate", "chocolate"),
+            ("vanilla", "vanilla extract")
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ").lowercased()
+        let foundSources = tyramineItems.compactMap { keyword, displayName in
+            allText.contains(keyword) ? displayName : nil
+        }
+        
+        return foundSources.isEmpty ? nil : Array(Set(foundSources))
+    }
+    
+    private func getSulfiteSources(name: String, ingredients: [String]) -> [String]? {
+        let sulfiteItems = [
+            ("wine", "wine"),
+            ("beer", "beer"),
+            ("dried fruit", "dried fruit"),
+            ("raisins", "raisins"),
+            ("apricots", "dried apricots"),
+            ("dates", "dates"),
+            ("figs", "dried figs"),
+            ("coconut", "dried coconut"),
+            ("potato products", "potato products"),
+            ("french fries", "french fries"),
+            ("hash browns", "hash browns"),
+            ("dehydrated potatoes", "dehydrated potatoes"),
+            ("lemon juice", "bottled lemon juice"),
+            ("lime juice", "bottled lime juice"),
+            ("grape juice", "grape juice"),
+            ("wine vinegar", "wine vinegar"),
+            ("balsamic vinegar", "balsamic vinegar"),
+            ("pickled foods", "pickled foods"),
+            ("olives", "olives"),
+            ("pickles", "pickles"),
+            ("sauerkraut", "sauerkraut"),
+            ("maraschino cherries", "maraschino cherries"),
+            ("molasses", "molasses"),
+            ("corn syrup", "corn syrup"),
+            ("maple syrup", "maple syrup"),
+            ("jam", "jam"),
+            ("jelly", "jelly"),
+            ("preserves", "preserves"),
+            ("fruit leather", "fruit leather"),
+            ("trail mix", "trail mix"),
+            ("granola", "granola"),
+            ("muesli", "muesli"),
+            ("soup mix", "soup mix"),
+            ("salad dressing", "salad dressing"),
+            ("condiments", "condiments"),
+            ("horseradish", "horseradish"),
+            ("relish", "relish"),
+            ("guacamole", "guacamole"),
+            ("avocado dip", "avocado dip"),
+            ("shrimp", "shrimp"),
+            ("lobster", "lobster"),
+            ("crab", "crab"),
+            ("scallops", "scallops"),
+            ("clams", "clams"),
+            ("mussels", "mussels")
+        ]
+        
+        // Also check for sulfite preservatives in ingredients
+        let sulfitePreservatives = [
+            "sulfur dioxide", "sodium sulfite", "sodium bisulfite", "sodium metabisulfite",
+            "potassium sulfite", "potassium bisulfite", "potassium metabisulfite",
+            "calcium sulfite", "calcium bisulfite", "e220", "e221", "e222", "e223",
+            "e224", "e225", "e226", "e227", "e228"
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ").lowercased()
+        
+        var foundSources = sulfiteItems.compactMap { keyword, displayName in
+            allText.contains(keyword) ? displayName : nil
+        }
+        
+        let foundPreservatives = sulfitePreservatives.compactMap { preservative in
+            allText.contains(preservative) ? "sulfite preservatives" : nil
+        }
+        
+        foundSources.append(contentsOf: foundPreservatives)
+        
+        return foundSources.isEmpty ? nil : Array(Set(foundSources))
+    }
+    
+    private func getPurineSources(name: String, ingredients: [String]) -> [String]? {
+        let purineItems = [
+            ("organ meat", "organ meats"),
+            ("liver", "liver"),
+            ("kidney", "kidneys"),
+            ("heart", "heart"),
+            ("brain", "brain"),
+            ("sweetbreads", "sweetbreads"),
+            ("anchovies", "anchovies"),
+            ("sardines", "sardines"),
+            ("mackerel", "mackerel"),
+            ("herring", "herring"),
+            ("mussels", "mussels"),
+            ("scallops", "scallops"),
+            ("tuna", "tuna"),
+            ("salmon", "salmon"),
+            ("trout", "trout"),
+            ("cod", "cod"),
+            ("haddock", "haddock"),
+            ("pike", "pike"),
+            ("perch", "perch"),
+            ("game meat", "game meats"),
+            ("venison", "venison"),
+            ("rabbit", "rabbit"),
+            ("duck", "duck"),
+            ("goose", "goose"),
+            ("turkey", "turkey"),
+            ("beef", "beef"),
+            ("pork", "pork"),
+            ("lamb", "lamb"),
+            ("bacon", "bacon"),
+            ("ham", "ham"),
+            ("sausage", "sausage"),
+            ("beer", "beer"),
+            ("wine", "wine"),
+            ("spirits", "alcoholic beverages"),
+            ("yeast", "yeast"),
+            ("nutritional yeast", "nutritional yeast"),
+            ("baker's yeast", "baker's yeast"),
+            ("brewer's yeast", "brewer's yeast"),
+            ("spinach", "spinach"),
+            ("asparagus", "asparagus"),
+            ("cauliflower", "cauliflower"),
+            ("mushrooms", "mushrooms"),
+            ("peas", "peas"),
+            ("lentils", "lentils"),
+            ("beans", "beans"),
+            ("oatmeal", "oatmeal"),
+            ("wheat germ", "wheat germ"),
+            ("bran", "bran")
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ").lowercased()
+        let foundSources = purineItems.compactMap { keyword, displayName in
+            allText.contains(keyword) ? displayName : nil
+        }
+        
+        return foundSources.isEmpty ? nil : Array(Set(foundSources))
+    }
 }
 
 // MARK: - Supporting Views (reused from existing components)
@@ -646,7 +1454,7 @@ struct NutritionDetailsView: View {
                     
                     // Comprehensive nutrition grid (like barcode scanner)
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("Detailed Nutrition Information")
+                        Text("Micronutrients & Additional Details")
                             .font(.headline)
                             .foregroundColor(ColorTheme.primaryText)
                         
@@ -655,27 +1463,7 @@ struct NutritionDetailsView: View {
                             GridItem(.flexible()),
                             GridItem(.flexible())
                         ], spacing: 12) {
-                            // Primary macronutrients from nutrition
-                            if let protein = foodItem.nutrition.protein {
-                                nutritionGridItem("Protein", value: protein, unit: "g")
-                            }
-                            if let carbs = foodItem.nutrition.carbs {
-                                nutritionGridItem("Carbs", value: carbs, unit: "g")
-                            }
-                            if let fat = foodItem.nutrition.fat {
-                                nutritionGridItem("Fat", value: fat, unit: "g")
-                            }
-                            if let fiber = foodItem.nutrition.fiber {
-                                nutritionGridItem("Fiber", value: fiber, unit: "g")
-                            }
-                            if let sugar = foodItem.nutrition.sugar {
-                                nutritionGridItem("Sugar", value: sugar, unit: "g")
-                            }
-                            if let sodium = foodItem.nutrition.sodium {
-                                nutritionGridItem("Sodium", value: sodium, unit: "mg")
-                            }
-                            
-                            // Additional nutrition from nutritionDetails dictionary
+                            // Additional nutrition from nutritionDetails dictionary (micronutrients only)
                             if let saturatedFat = foodItem.nutritionDetails["saturated_fat"],
                                let saturatedFatValue = Double(saturatedFat), saturatedFatValue > 0 {
                                 nutritionGridItem("Sat Fat", value: saturatedFatValue, unit: "g")
@@ -749,49 +1537,80 @@ struct NutritionDetailsView: View {
         // Keys that are already displayed in the main sections or are not nutrients
         let usedKeys = [
             "protein", "carbs", "fat", "calories", "brand", "source", "barcode",
-            "saturated_fat", "cholesterol", "potassium", "calcium", "iron", "vitamin_a", "vitamin_c",
-            // Also exclude duplicates and non-nutrient data
-            "fiber", "dietary_fiber", "sugar", "sugars", "sodium", "total_fat", "total_carbohydrate",
-            "trans_fat", "polyunsaturated_fat", "monounsaturated_fat"
+            "saturated_fat", "cholesterol", "potassium", "calcium", "iron", "vitamin_a", "vitamin_c"
         ]
         
-        // Only show micronutrients, minerals, and vitamins
+        // Keys that should be excluded (non-nutritional data)
+        let excludedKeys = [
+            "brand", "source", "barcode", "upc", "ndb_no", "item_id", "item_name",
+            "food_group", "measure", "common_name", "scientific_name", "commercial_name",
+            "alternate_names", "nutrients_per", "refuse_pct", "n_factor", "pro_factor",
+            "fat_factor", "cho_factor"
+        ]
+        
+        // Show most nutrition information, but avoid duplicates from main sections
         return foodItem.nutritionDetails
             .filter { key, value in
                 let lowerKey = key.lowercased()
                 
-                // Exclude already used keys
-                guard !usedKeys.contains(lowerKey) else { return false }
+                // Exclude already used keys and non-nutritional metadata
+                guard !usedKeys.contains(lowerKey) && !excludedKeys.contains(lowerKey) else { return false }
                 
                 // Exclude empty or zero values
                 guard value != "N/A" && value != "0" && value != "0.0" && !value.isEmpty else { return false }
                 
-                // Include micronutrients, minerals, vitamins, and important dietary components
-                let isMicronutrient = lowerKey.contains("vitamin") || 
-                                     lowerKey.contains("folate") || lowerKey.contains("niacin") ||
-                                     lowerKey.contains("riboflavin") || lowerKey.contains("thiamin") ||
-                                     lowerKey.contains("b6") || lowerKey.contains("b12") ||
-                                     lowerKey.contains("biotin") || lowerKey.contains("pantothenic")
+                // Exclude percentage daily values (we'll show raw values)
+                guard !lowerKey.hasSuffix("_dv") && !lowerKey.hasSuffix("_pct") else { return false }
                 
-                let isMineral = lowerKey.contains("zinc") || lowerKey.contains("copper") ||
-                               lowerKey.contains("manganese") || lowerKey.contains("selenium") ||
-                               lowerKey.contains("phosphorus") || lowerKey.contains("magnesium") ||
-                               lowerKey.contains("iodine") || lowerKey.contains("chromium")
-                
-                // Important dietary components not already shown in main grid
-                let isDietaryComponent = lowerKey.contains("cholesterol") && 
-                                        !usedKeys.contains("cholesterol") // Only if not already displayed
-                
-                return isMicronutrient || isMineral || isDietaryComponent
+                return true
             }
             .sorted { first, second in
-                // Sort vitamins first, then minerals
-                let firstIsVitamin = first.0.lowercased().contains("vitamin")
-                let secondIsVitamin = second.0.lowercased().contains("vitamin")
+                let firstKey = first.0.lowercased()
+                let secondKey = second.0.lowercased()
                 
+                // Define categories for better organization
+                let firstIsVitamin = firstKey.contains("vitamin") || firstKey.contains("thiamin") || 
+                                   firstKey.contains("riboflavin") || firstKey.contains("niacin") ||
+                                   firstKey.contains("folate") || firstKey.contains("biotin") ||
+                                   firstKey.contains("pantothenic")
+                let secondIsVitamin = secondKey.contains("vitamin") || secondKey.contains("thiamin") || 
+                                     secondKey.contains("riboflavin") || secondKey.contains("niacin") ||
+                                     secondKey.contains("folate") || secondKey.contains("biotin") ||
+                                     secondKey.contains("pantothenic")
+                
+                let firstIsMineral = ["calcium", "iron", "magnesium", "phosphorus", "potassium", "sodium", 
+                                     "zinc", "copper", "manganese", "selenium"].contains { firstKey.contains($0) }
+                let secondIsMineral = ["calcium", "iron", "magnesium", "phosphorus", "potassium", "sodium", 
+                                      "zinc", "copper", "manganese", "selenium"].contains { secondKey.contains($0) }
+                
+                let firstIsAminoAcid = ["histidine", "isoleucine", "leucine", "lysine", "methionine", 
+                                       "phenylalanine", "threonine", "tryptophan", "valine", "alanine",
+                                       "arginine", "aspartic", "cysteine", "glutamic", "glycine", 
+                                       "proline", "serine", "tyrosine"].contains { firstKey.contains($0) }
+                let secondIsAminoAcid = ["histidine", "isoleucine", "leucine", "lysine", "methionine", 
+                                        "phenylalanine", "threonine", "tryptophan", "valine", "alanine",
+                                        "arginine", "aspartic", "cysteine", "glutamic", "glycine", 
+                                        "proline", "serine", "tyrosine"].contains { secondKey.contains($0) }
+                
+                let firstIsFat = firstKey.contains("fat") || firstKey.contains("fatty")
+                let secondIsFat = secondKey.contains("fat") || secondKey.contains("fatty")
+                
+                // Sort order: Vitamins -> Minerals -> Fats -> Amino Acids -> Others
                 if firstIsVitamin && !secondIsVitamin {
                     return true
                 } else if !firstIsVitamin && secondIsVitamin {
+                    return false
+                } else if firstIsMineral && !secondIsMineral && !secondIsVitamin {
+                    return true
+                } else if !firstIsMineral && secondIsMineral && !firstIsVitamin {
+                    return false
+                } else if firstIsFat && !secondIsFat && !secondIsVitamin && !secondIsMineral {
+                    return true
+                } else if !firstIsFat && secondIsFat && !firstIsVitamin && !firstIsMineral {
+                    return false
+                } else if firstIsAminoAcid && !secondIsAminoAcid && !secondIsVitamin && !secondIsMineral && !secondIsFat {
+                    return true
+                } else if !firstIsAminoAcid && secondIsAminoAcid && !firstIsVitamin && !firstIsMineral && !firstIsFat {
                     return false
                 } else {
                     return first.0 < second.0
@@ -865,13 +1684,19 @@ struct NutritionDetailItem: View {
         let lowerLabel = label.lowercased()
         
         // Vitamins (most in micrograms except C, niacin, etc.)
-        if lowerLabel.contains("vitamin_a") || lowerLabel.contains("folate") || 
-           lowerLabel.contains("b12") || lowerLabel.contains("biotin") {
+        if lowerLabel.contains("vitamin_a") || lowerLabel.contains("folate") || lowerLabel.contains("folic") ||
+           lowerLabel.contains("b12") || lowerLabel.contains("biotin") || lowerLabel.contains("cobalamin") ||
+           lowerLabel.contains("vitamin_k") || lowerLabel.contains("selenium") || lowerLabel.contains("iodine") ||
+           lowerLabel.contains("chromium") || lowerLabel.contains("molybdenum") {
             return "mcg"
-        } else if lowerLabel.contains("vitamin_c") || lowerLabel.contains("niacin") ||
-                  lowerLabel.contains("vitamin_b6") || lowerLabel.contains("thiamin") ||
-                  lowerLabel.contains("riboflavin") || lowerLabel.contains("pantothenic") {
+        } else if lowerLabel.contains("vitamin_c") || lowerLabel.contains("ascorbic") ||
+                  lowerLabel.contains("niacin") || lowerLabel.contains("vitamin_b6") || 
+                  lowerLabel.contains("thiamin") || lowerLabel.contains("riboflavin") || 
+                  lowerLabel.contains("pantothenic") || lowerLabel.contains("vitamin_e") ||
+                  lowerLabel.contains("tocopherol") {
             return "mg"
+        } else if lowerLabel.contains("vitamin_d") {
+            return "IU"
         }
         
         // Minerals (most in milligrams)
@@ -881,19 +1706,42 @@ struct NutritionDetailItem: View {
                 lowerLabel.contains("zinc") || lowerLabel.contains("copper") ||
                 lowerLabel.contains("manganese") {
             return "mg"
-        } else if lowerLabel.contains("selenium") || lowerLabel.contains("iodine") ||
-                  lowerLabel.contains("chromium") {
-            return "mcg"
         }
         
         // Dietary components
-        else if lowerLabel.contains("cholesterol") {
+        else if lowerLabel.contains("cholesterol") || lowerLabel.contains("caffeine") ||
+                lowerLabel.contains("theobromine") {
             return "mg"
         }
         
-        // Macronutrients (grams)
+        // Amino acids (all in grams or milligrams depending on amount)
+        else if lowerLabel.contains("histidine") || lowerLabel.contains("isoleucine") ||
+                lowerLabel.contains("leucine") || lowerLabel.contains("lysine") ||
+                lowerLabel.contains("methionine") || lowerLabel.contains("phenylalanine") ||
+                lowerLabel.contains("threonine") || lowerLabel.contains("tryptophan") ||
+                lowerLabel.contains("valine") || lowerLabel.contains("alanine") ||
+                lowerLabel.contains("arginine") || lowerLabel.contains("aspartic") ||
+                lowerLabel.contains("cysteine") || lowerLabel.contains("glutamic") ||
+                lowerLabel.contains("glycine") || lowerLabel.contains("proline") ||
+                lowerLabel.contains("serine") || lowerLabel.contains("tyrosine") {
+            // Check value to determine appropriate unit
+            if let doubleValue = Double(value), doubleValue < 1.0 {
+                return "mg"
+            } else {
+                return "g"
+            }
+        }
+        
+        // Fats (grams)
+        else if lowerLabel.contains("fat") || lowerLabel.contains("fatty") ||
+                lowerLabel.contains("saturated") || lowerLabel.contains("trans") ||
+                lowerLabel.contains("polyunsaturated") || lowerLabel.contains("monounsaturated") {
+            return "g"
+        }
+        
+        // Carbohydrates and related (grams)
         else if lowerLabel.contains("fiber") || lowerLabel.contains("sugar") || 
-                lowerLabel.contains("fat") || lowerLabel.contains("carb") ||
+                lowerLabel.contains("carb") || lowerLabel.contains("starch") ||
                 lowerLabel.contains("protein") {
             return "g"
         }
@@ -901,6 +1749,12 @@ struct NutritionDetailItem: View {
         // Energy
         else if lowerLabel.contains("energy") || lowerLabel.contains("calorie") {
             return "kcal"
+        }
+        
+        // Water and ash
+        else if lowerLabel.contains("water") || lowerLabel.contains("moisture") ||
+                lowerLabel.contains("ash") {
+            return "g"
         }
         
         return "" // No unit for percentages, ratios, or unknown items
@@ -1059,6 +1913,7 @@ enum HealthSeverity {
 
 struct HealthIndicatorBadge: View {
     let indicator: HealthIndicator
+    @State private var showingDetail = false
     
     var body: some View {
         VStack(spacing: 4) {
@@ -1079,6 +1934,14 @@ struct HealthIndicatorBadge: View {
                 .stroke(indicator.severity.borderColor.opacity(0.3), lineWidth: 1)
         )
         .cornerRadius(8)
+        .onTapGesture {
+            showingDetail = true
+        }
+        .alert(indicator.text, isPresented: $showingDetail) {
+            Button("Got it") { }
+        } message: {
+            Text(indicator.description)
+        }
     }
 }
 
@@ -1088,26 +1951,29 @@ struct HealthIndicatorBadge: View {
     NavigationStack {
         UnifiedFoodDetailView(
             foodItem: FoodItem(
-                name: "Organic Greek Yogurt",
+                name: "Tomato Basil Pasta with Parmesan",
                 quantity: "1 cup",
                 estimatedWeightInGrams: 245,
-                ingredients: ["cultured pasteurized nonfat milk", "live active cultures"],
-                allergens: ["Dairy"],
+                ingredients: [
+                    "pasta", "tomatoes", "basil", "parmesan cheese", "olive oil", 
+                    "garlic", "spinach", "vegetable oil", "soybean oil", "wine"
+                ],
+                allergens: ["Dairy", "Gluten"],
                 nutrition: NutritionInfo(
-                    calories: 150,
-                    protein: 20.0,
-                    carbs: 9.0,
-                    fat: 4.0,
-                    fiber: 0.0,
-                    sugar: 9.0,
-                    sodium: 65.0
+                    calories: 350,
+                    protein: 12.0,
+                    carbs: 45.0,
+                    fat: 14.0,
+                    fiber: 3.0,
+                    sugar: 8.0,
+                    sodium: 580.0
                 ),
                 source: .barcode,
                 nutritionDetails: [
                     "brand": "Organic Valley",
                     "calcium_dv": "25",
                     "vitamin_b12_mcg": "1.4",
-                    "saturated_fat": "2.5"
+                    "saturated_fat": "6.5"
                 ]
             ),
             style: .full
