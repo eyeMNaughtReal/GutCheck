@@ -446,30 +446,30 @@ struct UnifiedFoodDetailView: View {
     
     private func getIconForCategory(_ category: CompoundCategory) -> String {
         switch category {
+        case .majorAllergen:
+            return "allergens"
+        case .foodIntolerance:
+            return "allergens"
+        case .toxicCompound:
+            return "exclamationmark.triangle.fill"
+        case .inflammatoryCompound:
+            return "flame.fill"
+        case .metabolicDisruptor:
+            return "minus.circle.fill"
+        case .neurologicalTrigger:
+            return "brain.head.profile"
         case .alkaloid:
             return "exclamationmark.triangle.fill"
         case .biogenicAmine:
             return "allergens"
         case .phenolic:
             return "leaf.fill"
-        case .protein:
-            return "allergens"
-        case .enzyme:
-            return "scissors"
-        case .glycoside:
-            return "drop.fill"
         case .heavyMetal:
             return "exclamationmark.triangle.fill"
-        case .pesticide:
-            return "🚫"
-        case .antinutrient:
-            return "minus.circle.fill"
         case .preservative:
             return "wind"
         case .naturalToxin:
             return "exclamationmark.triangle.fill"
-        case .fermentationProduct:
-            return "drop.triangle.fill"
         }
     }
     
