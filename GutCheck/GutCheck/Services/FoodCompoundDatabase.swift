@@ -350,6 +350,56 @@ class FoodCompoundDatabase {
             description: "Compounds that release cyanide when broken down. Found in cassava, lima beans, and stone fruit pits.",
             icon: "exclamationmark.triangle.fill",
             color: "red"
+        ),
+        
+        // Additional compounds for Apple Pie and baked goods
+        "coumarin": FoodCompound(
+            name: "Coumarin",
+            category: .phenolic,
+            severity: .medium,
+            description: "Aromatic compound in cinnamon that can cause liver damage in high doses and blood thinning effects.",
+            icon: "drop.fill",
+            color: "orange"
+        ),
+        "myristicin": FoodCompound(
+            name: "Myristicin",
+            category: .phenolic,
+            severity: .low,
+            description: "Aromatic compound in nutmeg that can cause nausea and hallucinations in large amounts.",
+            icon: "brain.head.profile",
+            color: "yellow"
+        ),
+        "acrylamide": FoodCompound(
+            name: "Acrylamide",
+            category: .naturalToxin,
+            severity: .high,
+            description: "Carcinogenic compound formed during high-temperature baking of starchy foods like pie crust.",
+            icon: "exclamationmark.triangle.fill",
+            color: "red"
+        ),
+        "advanced_glycation_end_products": FoodCompound(
+            name: "Advanced Glycation End Products (AGEs)",
+            category: .naturalToxin,
+            severity: .medium,
+            description: "Inflammatory compounds formed during baking that can contribute to aging and chronic disease.",
+            icon: "flame.fill",
+            color: "orange"
+        ),
+        "trans_fats": FoodCompound(
+            name: "Trans Fats",
+            category: .preservative,
+            severity: .high,
+            description: "Artificial fats that can form during processing and increase cardiovascular disease risk.",
+            icon: "heart.slash.fill",
+            color: "red"
+        ),
+        "saturated_fats": FoodCompound(
+            name: "Saturated Fats",
+            category: .preservative,
+            severity: .low,
+            description: "High levels can contribute to inflammation and cardiovascular issues in sensitive individuals.",
+            icon: "drop.circle.fill",
+            color: "yellow"
         )
     ]
     
@@ -452,6 +502,34 @@ class FoodCompoundDatabase {
                 FoodCompound(name: "Sulfites", category: .preservative, severity: .high, description: "Preservative compounds that can trigger asthma attacks and allergic reactions in sensitive individuals.", icon: "wind", color: "red"),
                 FoodCompound(name: "Salicylates", category: .phenolic, severity: .medium, description: "Natural aspirin-like compounds that can trigger asthma, skin reactions, and digestive issues in sensitive individuals.", icon: "leaf.fill", color: "orange"),
                 FoodCompound(name: "Tannins", category: .phenolic, severity: .low, description: "Polyphenolic compounds that can interfere with iron absorption and cause digestive irritation.", icon: "drop.fill", color: "yellow")
+            ]
+        ),
+        
+        // Apple Pie - Complex dessert with multiple compound sources
+        FoodCompoundMapping(
+            foodKeywords: ["apple pie", "apple tart", "apple crisp", "apple cobbler", "baked apple"],
+            compounds: [
+                // From Apples
+                FoodCompound(name: "Patulin", category: .naturalToxin, severity: .medium, description: "Mycotoxin found in damaged apples and apple products. Can cause digestive and immune issues in sensitive individuals.", icon: "exclamationmark.triangle", color: "orange"),
+                FoodCompound(name: "Salicylates", category: .phenolic, severity: .medium, description: "Natural aspirin-like compounds found in apples that can trigger asthma, skin reactions, and digestive issues.", icon: "leaf.fill", color: "orange"),
+                FoodCompound(name: "Quercetin", category: .phenolic, severity: .low, description: "Flavonoid in apple peels that can cause headaches and interact with certain medications in high doses.", icon: "sparkles", color: "yellow"),
+                
+                // From Wheat Crust
+                FoodCompound(name: "Gluten", category: .protein, severity: .high, description: "Storage protein complex in wheat flour that triggers celiac disease and non-celiac gluten sensitivity.", icon: "allergens", color: "red"),
+                FoodCompound(name: "Lectins", category: .protein, severity: .medium, description: "Carbohydrate-binding proteins in wheat that can cause digestive issues and inflammatory responses.", icon: "link", color: "orange"),
+                FoodCompound(name: "Phytic Acid", category: .antinutrient, severity: .low, description: "Phosphorus storage compound in wheat that can bind minerals and reduce their absorption.", icon: "minus.circle.fill", color: "yellow"),
+                
+                // From Spices (Cinnamon, Nutmeg)
+                FoodCompound(name: "Coumarin", category: .phenolic, severity: .medium, description: "Aromatic compound in cinnamon that can cause liver damage in high doses and blood thinning effects.", icon: "drop.fill", color: "orange"),
+                FoodCompound(name: "Myristicin", category: .phenolic, severity: .low, description: "Aromatic compound in nutmeg that can cause nausea and hallucinations in large amounts.", icon: "brain.head.profile", color: "yellow"),
+                
+                // Processing & Baking Compounds
+                FoodCompound(name: "Acrylamide", category: .naturalToxin, severity: .high, description: "Carcinogenic compound formed during high-temperature baking of starchy foods like pie crust.", icon: "exclamationmark.triangle.fill", color: "red"),
+                FoodCompound(name: "Advanced Glycation End Products (AGEs)", category: .naturalToxin, severity: .medium, description: "Inflammatory compounds formed during baking that can contribute to aging and chronic disease.", icon: "flame.fill", color: "orange"),
+                
+                // From Sugar & Butter
+                FoodCompound(name: "Trans Fats", category: .preservative, severity: .high, description: "Artificial fats that can form during processing and increase cardiovascular disease risk.", icon: "heart.slash.fill", color: "red"),
+                FoodCompound(name: "Saturated Fats", category: .preservative, severity: .low, description: "High levels can contribute to inflammation and cardiovascular issues in sensitive individuals.", icon: "drop.circle.fill", color: "yellow")
             ]
         )
     ]
