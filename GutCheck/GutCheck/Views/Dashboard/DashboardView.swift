@@ -26,10 +26,8 @@ struct DashboardView: View {
                             showCalendar = true
                         }
                         
-                        TodaySummaryView(
-                            mealsCount: dashboardStore.todaysMeals.count,
-                            symptomsCount: dashboardStore.todaysSymptoms.count
-                        )
+                        // Combined Today's Summary and Activity
+                        TodaysActivitySummaryView(selectedDate: dashboardStore.selectedDate)
 
                         if let insight = dashboardStore.insightMessage {
                             InsightsCardView(message: insight)
@@ -38,9 +36,6 @@ struct DashboardView: View {
                         if !dashboardStore.triggerAlerts.isEmpty {
                             TriggerAlertBanner(alerts: dashboardStore.triggerAlerts)
                         }
-                        
-                        // Use the enhanced RecentActivityListView
-                        RecentActivityListView(selectedDate: dashboardStore.selectedDate)
                         
                         // Spacer for tab bar
                         Spacer(minLength: 80)

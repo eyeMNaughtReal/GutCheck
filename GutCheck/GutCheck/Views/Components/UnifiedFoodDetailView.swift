@@ -16,13 +16,25 @@ struct UnifiedFoodDetailView: View {
     private let config: FoodDetailConfig
     private let baseNutrition: NutritionInfo
     private let baseQuantity: String
+    private let onUpdate: ((FoodItem) -> Void)?
     
-    init(foodItem: FoodItem, style: FoodDetailStyle = .standard) {
+    init(foodItem: FoodItem, style: FoodDetailStyle = .standard, onUpdate: ((FoodItem) -> Void)? = nil) {
         self._foodItem = State(initialValue: foodItem)
         self.config = FoodDetailConfig.config(for: style)
         self.baseNutrition = foodItem.nutrition
         self.baseQuantity = foodItem.quantity
         self._customQuantity = State(initialValue: foodItem.quantity)
+        self.onUpdate = onUpdate
+        
+        // Try to detect if this is already an adjusted serving size
+        // Look for the "× " pattern in the quantity string
+        if foodItem.quantity.contains("×") {
+            let components = foodItem.quantity.components(separatedBy: "×")
+            if let multiplierString = components.first?.trimmingCharacters(in: .whitespaces),
+               let detectedMultiplier = Double(multiplierString) {
+                self._servingMultiplier = State(initialValue: detectedMultiplier)
+            }
+        }
     }
     
     var body: some View {
@@ -76,6 +88,11 @@ struct UnifiedFoodDetailView: View {
                     }
                     
                     nutritionSection
+                    
+                    // Health indicators section
+                    if config.showDetailedSections {
+                        healthIndicatorsSection
+                    }
                     
                     if config.showDetailedSections {
                         detailSectionsLinks
@@ -226,6 +243,49 @@ struct UnifiedFoodDetailView: View {
         }
     }
     
+    // MARK: - Health Indicators Section
+    
+    private var healthIndicatorsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Health Indicators")
+                .font(.headline)
+                .foregroundColor(ColorTheme.primaryText)
+            
+            let indicators = healthIndicators
+            
+            if indicators.isEmpty {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                    Text("No health concerns detected")
+                        .font(.subheadline)
+                        .foregroundColor(ColorTheme.secondaryText)
+                }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.green.opacity(0.1))
+                .cornerRadius(12)
+            } else {
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: 12) {
+                    ForEach(indicators, id: \.text) { indicator in
+                        HealthIndicatorBadge(indicator: indicator)
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(ColorTheme.cardBackground)
+        .cornerRadius(12)
+        .shadow(color: ColorTheme.shadowColor, radius: 2, x: 0, y: 1)
+    }
+    
+    private var healthIndicators: [HealthIndicator] {
+        return getHealthIndicators()
+    }
+    
     private var detailSectionsLinks: some View {
         VStack(spacing: 12) {
             // Full nutrition details
@@ -270,11 +330,17 @@ struct UnifiedFoodDetailView: View {
     
     private var addToMealButton: some View {
         Button(action: {
-            // Use unified meal builder service
-            MealBuilderService.shared.addFoodItem(foodItem)
-            dismiss()
+            if let onUpdate = onUpdate {
+                // Editing mode: update existing item
+                onUpdate(foodItem)
+                dismiss()
+            } else {
+                // Adding mode: add new item to meal
+                MealBuilderService.shared.addFoodItem(foodItem)
+                dismiss()
+            }
         }) {
-            Text("Add to Meal")
+            Text(onUpdate != nil ? "Update Item" : "Add to Meal")
                 .font(.headline)
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
@@ -304,6 +370,228 @@ struct UnifiedFoodDetailView: View {
             customQuantity = "\(String(format: "%.1f", multiplier)) × \(baseQuantity)"
         }
         foodItem.quantity = customQuantity
+    }
+    
+    // MARK: - Health Analysis Functions
+    
+    private func getHealthIndicators() -> [HealthIndicator] {
+        var indicators: [HealthIndicator] = []
+        
+        let name = foodItem.name.lowercased()
+        let ingredients = foodItem.ingredients.map { $0.lowercased() }
+        
+        // Mammalian products
+        if containsMammalianProducts(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "Mammalian",
+                icon: "🐄",
+                color: .orange,
+                severity: .medium,
+                description: "Contains products from mammals"
+            ))
+        }
+        
+        // Processed food
+        if isProcessedFood(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "Processed",
+                icon: "🏭",
+                color: .yellow,
+                severity: .low,
+                description: "Highly processed food"
+            ))
+        }
+        
+        // Fried food
+        if isFriedFood(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "Fried",
+                icon: "🍟",
+                color: .red,
+                severity: .high,
+                description: "Contains fried ingredients"
+            ))
+        }
+        
+        // High fructose corn syrup
+        if containsHFCS(ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "HFCS",
+                icon: "🌽",
+                color: .red,
+                severity: .high,
+                description: "Contains high fructose corn syrup"
+            ))
+        }
+        
+        // FODMAP foods
+        if isFODMAP(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "FODMAP",
+                icon: "⚠️",
+                color: .orange,
+                severity: .medium,
+                description: "May contain FODMAPs"
+            ))
+        }
+        
+        // High sodium
+        if let sodium = foodItem.nutrition.sodium, sodium > 600 {
+            indicators.append(HealthIndicator(
+                text: "High Sodium",
+                icon: "🧂",
+                color: .red,
+                severity: .high,
+                description: "High in sodium"
+            ))
+        }
+        
+        // High sugar
+        if let sugar = foodItem.nutrition.sugar, sugar > 15 {
+            indicators.append(HealthIndicator(
+                text: "High Sugar",
+                icon: "🍯",
+                color: .orange,
+                severity: .medium,
+                description: "High in sugar"
+            ))
+        }
+        
+        // Artificial additives
+        if containsArtificialAdditives(ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "Additives",
+                icon: "🧪",
+                color: .yellow,
+                severity: .low,
+                description: "Contains artificial additives"
+            ))
+        }
+        
+        // High fiber (positive indicator)
+        if let fiber = foodItem.nutrition.fiber, fiber >= 5 {
+            indicators.append(HealthIndicator(
+                text: "High Fiber",
+                icon: "🥬",
+                color: .green,
+                severity: .low,
+                description: "Good source of fiber (≥5g)"
+            ))
+        }
+        
+        // Spicy food
+        if isSpicyFood(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "Spicy",
+                icon: "🌶️",
+                color: .orange,
+                severity: .medium,
+                description: "May cause digestive irritation"
+            ))
+        }
+        
+        // Caffeine
+        if containsCaffeine(name: name, ingredients: ingredients) {
+            indicators.append(HealthIndicator(
+                text: "Caffeine",
+                icon: "☕",
+                color: .orange,
+                severity: .medium,
+                description: "Contains caffeine"
+            ))
+        }
+        
+        return indicators
+    }
+    
+    // Helper functions for food analysis
+    private func containsMammalianProducts(name: String, ingredients: [String]) -> Bool {
+        let mammalianKeywords = [
+            "milk", "dairy", "cheese", "butter", "cream", "yogurt", "whey", "casein",
+            "beef", "pork", "lamb", "bacon", "ham", "sausage", "ground beef", "steak",
+            "lactose", "milk powder", "milk solids", "condensed milk", "evaporated milk"
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ")
+        return mammalianKeywords.contains { allText.contains($0) }
+    }
+    
+    private func isProcessedFood(name: String, ingredients: [String]) -> Bool {
+        let processedKeywords = [
+            "modified", "extract", "concentrate", "isolate", "hydrolyzed",
+            "artificial", "preserved", "enriched", "fortified", "reconstituted"
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ")
+        return processedKeywords.contains { allText.contains($0) } || ingredients.count > 10
+    }
+    
+    private func isFriedFood(name: String, ingredients: [String]) -> Bool {
+        let friedKeywords = [
+            "fried", "deep fried", "tempura", "battered", "breaded",
+            "crispy", "crunchy", "oil", "palm oil", "vegetable oil"
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ")
+        return friedKeywords.contains { allText.contains($0) }
+    }
+    
+    private func containsHFCS(ingredients: [String]) -> Bool {
+        let hfcsKeywords = [
+            "high fructose corn syrup", "hfcs", "corn syrup", "fructose syrup"
+        ]
+        
+        let allText = ingredients.joined(separator: " ")
+        return hfcsKeywords.contains { allText.contains($0) }
+    }
+    
+    private func isFODMAP(name: String, ingredients: [String]) -> Bool {
+        let fodmapKeywords = [
+            "onion", "garlic", "wheat", "rye", "barley", "beans", "lentils",
+            "apple", "pear", "mango", "watermelon", "lactose", "fructose",
+            "honey", "agave", "inulin", "chicory", "artichoke"
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ")
+        return fodmapKeywords.contains { allText.contains($0) }
+    }
+    
+    private func containsArtificialAdditives(ingredients: [String]) -> Bool {
+        let additiveKeywords = [
+            "artificial", "flavor", "color", "preservative", "additive",
+            "bht", "bha", "msg", "sodium benzoate", "potassium sorbate",
+            "red dye", "yellow dye", "blue dye", "fd&c"
+        ]
+        
+        let allText = ingredients.joined(separator: " ")
+        return additiveKeywords.contains { allText.contains($0) }
+    }
+    
+    private func isSpicyFood(name: String, ingredients: [String]) -> Bool {
+        let spicyKeywords = [
+            "spicy", "hot", "chili", "pepper", "jalapeno", "habanero", "serrano",
+            "cayenne", "paprika", "chipotle", "poblano", "ghost pepper", "scotch bonnet",
+            "curry", "wasabi", "horseradish", "ginger", "sriracha", "tabasco",
+            "hot sauce", "red pepper flakes", "black pepper", "white pepper",
+            "szechuan", "thai chili", "bird's eye", "carolina reaper"
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ")
+        return spicyKeywords.contains { allText.contains($0) }
+    }
+    
+    private func containsCaffeine(name: String, ingredients: [String]) -> Bool {
+        let caffeineKeywords = [
+            "coffee", "espresso", "cappuccino", "latte", "mocha", "caffeine",
+            "tea", "green tea", "black tea", "white tea", "oolong", "matcha",
+            "chocolate", "cocoa", "cacao", "dark chocolate", "milk chocolate",
+            "energy drink", "red bull", "monster", "rockstar", "bang",
+            "cola", "coke", "pepsi", "dr pepper", "mountain dew",
+            "guarana", "yerba mate", "kola nut", "theophylline", "theobromine"
+        ]
+        
+        let allText = ([name] + ingredients).joined(separator: " ")
+        return caffeineKeywords.contains { allText.contains($0) }
     }
 }
 
@@ -744,6 +1032,53 @@ struct AllergensView: View {
                 }
             }
         }
+    }
+}
+
+// MARK: - Health Indicator Models
+
+struct HealthIndicator {
+    let text: String
+    let icon: String
+    let color: Color
+    let severity: HealthSeverity
+    let description: String
+}
+
+enum HealthSeverity {
+    case low, medium, high
+    
+    var borderColor: Color {
+        switch self {
+        case .low: return .yellow
+        case .medium: return .orange
+        case .high: return .red
+        }
+    }
+}
+
+struct HealthIndicatorBadge: View {
+    let indicator: HealthIndicator
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            HStack(spacing: 4) {
+                Text(indicator.icon)
+                    .font(.caption)
+                Text(indicator.text)
+                    .font(.caption2)
+                    .fontWeight(.medium)
+            }
+            .foregroundColor(indicator.color)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(indicator.color.opacity(0.1))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(indicator.severity.borderColor.opacity(0.3), lineWidth: 1)
+        )
+        .cornerRadius(8)
     }
 }
 

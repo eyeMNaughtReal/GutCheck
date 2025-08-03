@@ -119,10 +119,14 @@ struct MealLoggingOptionsView: View {
         }
         // Present each view as a sheet instead of using navigation
         .sheet(isPresented: $showingSearchView) {
-            FoodSearchView()
-                .environmentObject(navigationCoordinator)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
+            FoodSearchView { foodItem in
+                // Add food item to meal and close both sheets
+                MealBuilderService.shared.addFoodItem(foodItem)
+                dismiss() // Close the MealLoggingOptionsView
+            }
+            .environmentObject(navigationCoordinator)
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingSmartScannerView) {
             SmartFoodScannerView()
@@ -258,6 +262,7 @@ struct RecentItemsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     @StateObject private var viewModel = RecentItemsViewModel()
+    @State private var selectedFoodItem: FoodItem?
     
     var body: some View {
         NavigationStack {
@@ -269,11 +274,21 @@ struct RecentItemsView: View {
                         emptyStateView
                     } else {
                         ForEach(viewModel.recentItems) { item in
-                            FoodItemResultRow(item: item) {
-                                // Add item to meal and navigate to meal builder
-                                viewModel.addToMeal(item)
-                                dismiss()
-                            }
+                            UnifiedFoodItemRow(
+                                item: item,
+                                style: .recentItem,
+                                actions: FoodItemActions(
+                                    onTap: {
+                                        // Show details view for the item
+                                        selectedFoodItem = item
+                                    },
+                                    onAdd: {
+                                        // Add item to meal and navigate to meal builder
+                                        viewModel.addToMeal(item)
+                                        dismiss()
+                                    }
+                                )
+                            )
                         }
                     }
                 }
@@ -290,6 +305,20 @@ struct RecentItemsView: View {
             }
             .onAppear {
                 viewModel.loadRecentItems()
+            }
+            .sheet(item: $selectedFoodItem) { foodItem in
+                UnifiedFoodDetailView(
+                    foodItem: foodItem,
+                    style: .full,
+                    onUpdate: { updatedItem in
+                        // For recent items, we can just add the updated item to the meal
+                        viewModel.addToMeal(updatedItem)
+                        selectedFoodItem = nil
+                        dismiss()
+                    }
+                )
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
             }
         }
     }
@@ -504,3 +533,6 @@ class RecentItemsViewModel: ObservableObject {
     MealLoggingOptionsView()
         .environmentObject(NavigationCoordinator())
 }
+
+// MARK: - Recent Food Item Row Component
+

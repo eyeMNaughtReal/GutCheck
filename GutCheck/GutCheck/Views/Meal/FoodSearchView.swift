@@ -153,15 +153,24 @@ struct FoodSearchView: View {
         ScrollView {
             VStack(spacing: 0) {
                 ForEach(viewModel.searchResults) { item in
-                    FoodItemResultRow(item: item) {
-                        if let onSelect = onSelect {
-                            onSelect(item)
-                            dismiss()
-                        } else {
+                    FoodItemResultRow(
+                        item: item,
+                        onSelect: {
+                            // Tap on item details -> show detail view for editing
                             selectedFoodItem = item
                             showDetailSheet = true
+                        },
+                        onAdd: {
+                            // Tap on + button -> directly add to meal
+                            if let onSelect = onSelect {
+                                onSelect(item)
+                                dismiss()
+                            } else {
+                                selectedFoodItem = item
+                                showDetailSheet = true
+                            }
                         }
-                    }
+                    )
                 }
             }
             .padding(.top)
@@ -238,15 +247,24 @@ struct FoodSearchView: View {
                             .font(.headline)
                             .foregroundColor(ColorTheme.primaryText)
                         ForEach(viewModel.recentItems) { item in
-                            FoodItemResultRow(item: item) {
-                                if let onSelect = onSelect {
-                                    onSelect(item)
-                                    dismiss()
-                                } else {
+                            SimpleRecentFoodRow(
+                                item: item,
+                                onSelect: {
+                                    // Tap on item details -> show detail view for editing
                                     selectedFoodItem = item
                                     showDetailSheet = true
+                                },
+                                onAdd: {
+                                    // Tap on + button -> directly add to meal
+                                    if let onSelect = onSelect {
+                                        onSelect(item)
+                                        dismiss()
+                                    } else {
+                                        selectedFoodItem = item
+                                        showDetailSheet = true
+                                    }
                                 }
-                            }
+                            )
                         }
                     }
                     .padding(.horizontal)
@@ -262,20 +280,21 @@ struct FoodSearchView: View {
 struct FoodItemResultRow: View {
     let item: FoodItem
     let onSelect: () -> Void
+    let onAdd: () -> Void
 
     var body: some View {
-        Button(action: onSelect) {
-            HStack(spacing: 16) {
-                // Food image placeholder
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(ColorTheme.accent.opacity(0.2))
-                    .frame(width: 60, height: 60)
-                    .overlay(
-                        Image(systemName: "fork.knife")
-                            .foregroundColor(ColorTheme.accent)
-                    )
-                
-                // Details
+        HStack(spacing: 16) {
+            // Food image placeholder
+            RoundedRectangle(cornerRadius: 8)
+                .fill(ColorTheme.accent.opacity(0.2))
+                .frame(width: 60, height: 60)
+                .overlay(
+                    Image(systemName: "fork.knife")
+                        .foregroundColor(ColorTheme.accent)
+                )
+            
+            // Details - tappable area for showing detail view
+            Button(action: onSelect) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.name)
                         .font(.headline)
@@ -316,19 +335,133 @@ struct FoodItemResultRow: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                
-                // Add button
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            // Add button - separate action for direct add
+            Button(action: onAdd) {
                 Image(systemName: "plus.circle.fill")
                     .font(.title2)
                     .foregroundColor(ColorTheme.primary)
             }
-            .padding()
-            .background(ColorTheme.cardBackground)
-            .cornerRadius(12)
-            .shadow(color: ColorTheme.shadowColor, radius: 2, x: 0, y: 1)
+            .buttonStyle(PlainButtonStyle())
         }
-        .buttonStyle(PlainButtonStyle())
+        .padding()
+        .background(ColorTheme.cardBackground)
+        .cornerRadius(12)
+        .shadow(color: ColorTheme.shadowColor, radius: 2, x: 0, y: 1)
         .padding(.horizontal)
+    }
+}
+
+struct SimpleRecentFoodRow: View {
+    let item: FoodItem
+    let onSelect: () -> Void
+    let onAdd: () -> Void
+
+    var body: some View {
+        HStack(spacing: 16) {
+            // Food image placeholder
+            RoundedRectangle(cornerRadius: 8)
+                .fill(ColorTheme.accent.opacity(0.2))
+                .frame(width: 50, height: 50)
+                .overlay(
+                    Image(systemName: "fork.knife")
+                        .foregroundColor(ColorTheme.accent)
+                        .font(.system(size: 16))
+                )
+            
+            // Details - tappable area for showing detail view
+            Button(action: onSelect) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(item.name)
+                        .font(.headline)
+                        .foregroundColor(ColorTheme.primaryText)
+                        .multilineTextAlignment(.leading)
+                    
+                    Text(item.quantity)
+                        .font(.subheadline)
+                        .foregroundColor(ColorTheme.secondaryText)
+                    
+                    // Nutrition preview - matching screenshot style
+                    HStack(spacing: 8) {
+                        if let calories = item.nutrition.calories {
+                            Text("\(Int(calories)) kcal")
+                                .font(.caption)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(ColorTheme.accent.opacity(0.2))
+                                .foregroundColor(ColorTheme.accent)
+                                .cornerRadius(4)
+                        }
+                        
+                        if let protein = item.nutrition.protein {
+                            Text("\(String(format: "%.1f", protein)) P")
+                                .font(.caption)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.blue.opacity(0.2))
+                                .foregroundColor(.blue)
+                                .cornerRadius(4)
+                        }
+                        
+                        if let carbs = item.nutrition.carbs {
+                            Text("\(String(format: "%.1f", carbs)) C")
+                                .font(.caption)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.green.opacity(0.2))
+                                .foregroundColor(.green)
+                                .cornerRadius(4)
+                        }
+                        
+                        if let fat = item.nutrition.fat {
+                            Text("\(String(format: "%.1f", fat)) F")
+                                .font(.caption)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.red.opacity(0.2))
+                                .foregroundColor(.red)
+                                .cornerRadius(4)
+                        }
+                    }
+                    
+                    // Allergens display
+                    if !item.allergens.isEmpty {
+                        HStack {
+                            ForEach(item.allergens.prefix(2), id: \.self) { allergen in
+                                Text(allergen)
+                                    .font(.caption2)
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 2)
+                                    .background(ColorTheme.error.opacity(0.2))
+                                    .foregroundColor(ColorTheme.error)
+                                    .cornerRadius(4)
+                            }
+                            if item.allergens.count > 2 {
+                                Text("+\(item.allergens.count - 2)")
+                                    .font(.caption2)
+                                    .foregroundColor(ColorTheme.secondaryText)
+                            }
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            // Add button - separate action for direct add
+            Button(action: onAdd) {
+                Image(systemName: "plus.circle.fill")
+                    .font(.title3)
+                    .foregroundColor(ColorTheme.primary)
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .padding()
+        .background(ColorTheme.cardBackground)
+        .cornerRadius(12)
+        .shadow(color: ColorTheme.shadowColor, radius: 2, x: 0, y: 1)
     }
 }
 

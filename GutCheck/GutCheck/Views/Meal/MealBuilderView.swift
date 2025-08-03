@@ -14,6 +14,7 @@ struct MealBuilderView: View {
     @State private var showingConfirmation = false
     @State private var showingDiscard = false
     @State private var showingFoodOptions = false
+    @State private var editingFoodItem: FoodItem?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -95,14 +96,17 @@ struct MealBuilderView: View {
                             .padding()
                     } else {
                         ForEach(mealService.currentMeal) { item in
-                            FoodItemRow(
-                                foodItem: item,
-                                onEdit: {
-                                    // TODO: Implement food item editing
-                                },
-                                onDelete: {
-                                    mealService.removeFoodItem(item)
-                                }
+                            UnifiedFoodItemRow(
+                                item: item,
+                                style: .mealBuilder,
+                                actions: FoodItemActions(
+                                    onTap: {
+                                        editingFoodItem = item
+                                    },
+                                    onDelete: {
+                                        mealService.removeFoodItem(item)
+                                    }
+                                )
                             )
                             .padding(.horizontal)
                         }
@@ -210,6 +214,18 @@ struct MealBuilderView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
+        .sheet(item: $editingFoodItem) { foodItem in
+            UnifiedFoodDetailView(
+                foodItem: foodItem, 
+                style: .full,
+                onUpdate: { updatedItem in
+                    mealService.updateFoodItem(updatedItem)
+                    editingFoodItem = nil
+                }
+            )
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
+        }
         .alert("Discard Meal?", isPresented: $showingDiscard) {
             Button("Cancel", role: .cancel) { }
             Button("Discard", role: .destructive) {
@@ -262,7 +278,7 @@ struct NutritionSummaryCard: View {
                 
                 Spacer()
                 
-                Text("\(nutrition.calories ?? 0) kcal")
+                Text("\(Int(nutrition.calories ?? 0)) kcal")
                     .font(.headline)
                     .foregroundColor(ColorTheme.primary)
             }
@@ -295,94 +311,11 @@ struct NutrientLabel: View {
                 .font(.caption)
                 .foregroundColor(ColorTheme.secondaryText)
             
-            Text("\(value?.formatted() ?? "0") \(unit)")
+            Text("\(String(format: "%.1f", value ?? 0)) \(unit)")
                 .font(.headline)
                 .foregroundColor(color)
         }
         .frame(maxWidth: .infinity)
-    }
-}
-
-struct FoodItemRow: View {
-    let foodItem: FoodItem
-    let onEdit: () -> Void
-    let onDelete: () -> Void
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Name and actions
-            HStack {
-                Text(foodItem.name)
-                    .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
-                
-                Spacer()
-                
-                Button(action: onEdit) {
-                    Image(systemName: "pencil")
-                        .foregroundColor(ColorTheme.primary)
-                }
-                .padding(.horizontal, 4)
-                
-                Button(action: onDelete) {
-                    Image(systemName: "trash")
-                        .foregroundColor(ColorTheme.error)
-                }
-                .padding(.horizontal, 4)
-            }
-            
-            // Quantity
-            Text("\(foodItem.quantity)")
-                .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
-            
-            // Nutrition preview
-            HStack(spacing: 12) {
-                if let calories = foodItem.nutrition.calories {
-                    Text("\(calories) kcal")
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(ColorTheme.accent.opacity(0.2))
-                        .foregroundColor(ColorTheme.text)
-                        .cornerRadius(8)
-                }
-                
-                if let protein = foodItem.nutrition.protein {
-                    Text("P: \(protein)g")
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.blue.opacity(0.2))
-                        .foregroundColor(ColorTheme.text)
-                        .cornerRadius(8)
-                }
-                
-                if let carbs = foodItem.nutrition.carbs {
-                    Text("C: \(carbs)g")
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.green.opacity(0.2))
-                        .foregroundColor(ColorTheme.text)
-                        .cornerRadius(8)
-                }
-                
-                if let fat = foodItem.nutrition.fat {
-                    Text("F: \(fat)g")
-                        .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Color.red.opacity(0.2))
-                        .foregroundColor(ColorTheme.text)
-                        .cornerRadius(8)
-                }
-            }
-        }
-        .padding()
-        .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
-        .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
     }
 }
 
