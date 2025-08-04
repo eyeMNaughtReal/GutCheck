@@ -10,8 +10,7 @@ import Combine
 struct FoodSearchView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = FoodSearchViewModel()
-    @State private var selectedFoodItem: FoodItem? = nil
-    @State private var showDetailSheet = false
+    @State private var navigationPath = NavigationPath()
     var onSelect: ((FoodItem) -> Void)?
     
     init(onSelect: ((FoodItem) -> Void)? = nil) {
@@ -19,7 +18,7 @@ struct FoodSearchView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             VStack(spacing: 0) {
                 // Search bar with prominent Search button
                 VStack(spacing: 12) {
@@ -92,6 +91,9 @@ struct FoodSearchView: View {
             }
             .navigationTitle("Search Food")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(for: FoodItem.self) { foodItem in
+                UnifiedFoodDetailView(foodItem: foodItem)
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
@@ -101,11 +103,6 @@ struct FoodSearchView: View {
             }
             .onAppear {
                 viewModel.loadRecentItems()
-            }
-            .sheet(isPresented: $showDetailSheet) {
-                if let item = selectedFoodItem {
-                    UnifiedFoodDetailView(foodItem: item, style: .full)
-                }
             }
         }
     }
@@ -136,12 +133,12 @@ struct FoodSearchView: View {
                 .multilineTextAlignment(.center)
             
             Button("Add Custom Food") {
-                selectedFoodItem = FoodItem(
+                let customFoodItem = FoodItem(
                     name: viewModel.searchQuery,
                     quantity: "1 serving",
                     nutrition: NutritionInfo()
                 )
-                showDetailSheet = true
+                navigationPath.append(customFoodItem)
             }
             .buttonStyle(.borderedProminent)
         }
@@ -156,19 +153,12 @@ struct FoodSearchView: View {
                     FoodItemResultRow(
                         item: item,
                         onSelect: {
-                            // Tap on item details -> show detail view for editing
-                            selectedFoodItem = item
-                            showDetailSheet = true
+                            // Navigate to food detail view
+                            navigationPath.append(item)
                         },
                         onAdd: {
-                            // Tap on + button -> directly add to meal
-                            if let onSelect = onSelect {
-                                onSelect(item)
-                                dismiss()
-                            } else {
-                                selectedFoodItem = item
-                                showDetailSheet = true
-                            }
+                            // Tap on + button -> also navigate to comprehensive food detail view
+                            navigationPath.append(item)
                         }
                     )
                 }
@@ -250,19 +240,12 @@ struct FoodSearchView: View {
                             SimpleRecentFoodRow(
                                 item: item,
                                 onSelect: {
-                                    // Tap on item details -> show detail view for editing
-                                    selectedFoodItem = item
-                                    showDetailSheet = true
+                                    // Tap on item details -> navigate to comprehensive food detail view
+                                    navigationPath.append(item)
                                 },
                                 onAdd: {
-                                    // Tap on + button -> directly add to meal
-                                    if let onSelect = onSelect {
-                                        onSelect(item)
-                                        dismiss()
-                                    } else {
-                                        selectedFoodItem = item
-                                        showDetailSheet = true
-                                    }
+                                    // Tap on + button -> also navigate to comprehensive food detail view
+                                    navigationPath.append(item)
                                 }
                             )
                         }
@@ -276,6 +259,7 @@ struct FoodSearchView: View {
         }
     }
 }
+
 
 struct FoodItemResultRow: View {
     let item: FoodItem

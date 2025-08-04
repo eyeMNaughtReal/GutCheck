@@ -990,4 +990,12 @@ class FoodCompoundDatabase {
     func getAllCategories() -> [CompoundCategory] {
         return CompoundCategory.allCases
     }
+    
+    func getAllCompounds() -> [FoodCompound] {
+        return Array(compounds.values)
+    }
+    
+    func getCompoundByName(_ name: String) -> FoodCompound? {
+        return compounds.values.first { $0.name == name }
+    }
 }

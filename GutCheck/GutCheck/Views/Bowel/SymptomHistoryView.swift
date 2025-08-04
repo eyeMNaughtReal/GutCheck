@@ -217,14 +217,6 @@ private struct DateRangePickerView: View {
 
 // MARK: - Supporting Types
 
-enum SymptomFilter: String, CaseIterable {
-    case all = "All"
-    case pain = "Pain"
-    case urgency = "Urgency"
-    case bloating = "Bloating"
-    case nausea = "Nausea"
-}
-
 #Preview {
     NavigationView {
         SymptomHistoryView()

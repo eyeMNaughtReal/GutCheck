@@ -88,6 +88,7 @@ class NutritionixService {
         
         // Basic info
         if let brand = food.brand { details["brand"] = brand }
+        if let ingredients = food.ingredients { details["ingredients"] = ingredients }
         
         // Additional macronutrients
         if let saturatedFat = food.saturatedFat { details["saturated_fat"] = String(saturatedFat) }

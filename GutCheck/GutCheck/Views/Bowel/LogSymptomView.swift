@@ -275,7 +275,7 @@ struct TagSelectionView: View {
 
 struct LogSymptomView: View {
     @EnvironmentObject var authService: AuthService
-    @State private var coordinator = LogSymptomViewModel()
+    @StateObject private var coordinator = LogSymptomViewModel()
     @State private var showProfileSheet = false
     @State private var infoTypeToShow: SymptomInfoType? = nil
 

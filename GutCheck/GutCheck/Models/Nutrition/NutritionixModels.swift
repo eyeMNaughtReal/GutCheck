@@ -22,6 +22,9 @@ struct NutritionixFood: Identifiable, Codable {
     let servingQty: Double?
     let servingWeight: Double?
     
+    // Ingredients
+    let ingredients: String?  // Full ingredients text from Nutritionix
+    
     // Additional macronutrients
     let saturatedFat: Double?
     let transFat: Double?
@@ -97,6 +100,7 @@ struct NutritionixFood: Identifiable, Codable {
         case servingWeight = "serving_weight_grams"
         case servingUnit = "serving_unit"
         case servingQty = "serving_qty"
+        case ingredients = "nf_ingredient_statement"
         
         // Additional macronutrients
         case saturatedFat = "nf_saturated_fat"
@@ -164,7 +168,7 @@ struct NutritionixFood: Identifiable, Codable {
          protein: Double? = nil, carbs: Double? = nil, fat: Double? = nil,
          fiber: Double? = nil, sugar: Double? = nil, sodium: Double? = nil,
          servingUnit: String? = nil, servingQty: Double? = nil,
-         servingWeight: Double? = nil, saturatedFat: Double? = nil,
+         servingWeight: Double? = nil, ingredients: String? = nil, saturatedFat: Double? = nil,
          transFat: Double? = nil, polyunsaturatedFat: Double? = nil,
          monounsaturatedFat: Double? = nil, cholesterol: Double? = nil,
          potassium: Double? = nil, calcium: Double? = nil, iron: Double? = nil,
@@ -196,6 +200,7 @@ struct NutritionixFood: Identifiable, Codable {
         self.servingUnit = servingUnit
         self.servingQty = servingQty
         self.servingWeight = servingWeight
+        self.ingredients = ingredients
         self.saturatedFat = saturatedFat
         self.transFat = transFat
         self.polyunsaturatedFat = polyunsaturatedFat

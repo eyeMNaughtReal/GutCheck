@@ -107,6 +107,9 @@ class NavigationCoordinator: ObservableObject {
     
     // Navigation actions
     func navigateTo(_ destination: Destination) {
+        print("🧭 NavigationCoordinator: Navigating to \(destination)")
+        print("🧭 Current tab: \(selectedTab)")
+        
         switch destination {
         case .profile:
             isShowingProfile = true
@@ -117,7 +120,9 @@ class NavigationCoordinator: ObservableObject {
         case .logSymptom:
             currentNavigationPath.wrappedValue.append(destination)
         case .calendar, .mealDetail, .symptomDetail, .foodDetail, .insights, .userReminders:
+            print("🧭 Appending to navigation path. Current path count: \(currentNavigationPath.wrappedValue.count)")
             currentNavigationPath.wrappedValue.append(destination)
+            print("🧭 New path count: \(currentNavigationPath.wrappedValue.count)")
         }
     }
     

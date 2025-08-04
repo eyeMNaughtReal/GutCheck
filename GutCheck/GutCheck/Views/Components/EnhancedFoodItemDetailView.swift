@@ -54,7 +54,7 @@ struct EnhancedFoodItemDetailView: View {
                 IngredientsView(ingredients: foodItem.ingredients)
             }
             .sheet(isPresented: $showingAllergens) {
-                AllergensView(allergens: foodItem.allergens)
+                CombinedAllergensHealthView(foodItem: foodItem)
             }
             .onChange(of: servingMultiplier) { _, newValue in
                 updateNutritionForServing(multiplier: newValue)

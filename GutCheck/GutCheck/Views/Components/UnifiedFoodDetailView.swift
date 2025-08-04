@@ -5,6 +5,7 @@
 //  Unified food detail view supporting all presentation modes
 
 import SwiftUI
+import Foundation
 
 struct UnifiedFoodDetailView: View {
     @Environment(\.dismiss) private var dismiss
@@ -30,7 +31,7 @@ struct UnifiedFoodDetailView: View {
         // Look for the "× " pattern in the quantity string
         if foodItem.quantity.contains("×") {
             let components = foodItem.quantity.components(separatedBy: "×")
-            if let multiplierString = components.first?.trimmingCharacters(in: .whitespaces),
+            if let multiplierString = components.first?.trimmingCharacters(in: CharacterSet.whitespaces),
                let detectedMultiplier = Double(multiplierString) {
                 self._servingMultiplier = State(initialValue: detectedMultiplier)
             }
@@ -89,11 +90,6 @@ struct UnifiedFoodDetailView: View {
                     
                     nutritionSection
                     
-                    // Health indicators section
-                    if config.showDetailedSections {
-                        healthIndicatorsSection
-                    }
-                    
                     if config.showDetailedSections {
                         detailSectionsLinks
                     }
@@ -107,9 +103,11 @@ struct UnifiedFoodDetailView: View {
             .navigationTitle("Food Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
+                if config.showCancelButton {
+                    ToolbarItem(placement: .navigationBarLeading) {
+                        Button("Cancel") {
+                            dismiss()
+                        }
                     }
                 }
             }
@@ -118,13 +116,13 @@ struct UnifiedFoodDetailView: View {
                     .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
             }
-            .sheet(isPresented: $detailService.showingIngredients) {
-                IngredientsView(ingredients: foodItem.ingredients)
+            .sheet(isPresented: $detailService.showingAllergens) {
+                CombinedAllergensHealthView(foodItem: foodItem)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
-            .sheet(isPresented: $detailService.showingAllergens) {
-                AllergensView(allergens: foodItem.allergens)
+            .sheet(isPresented: $detailService.showingIngredients) {
+                IngredientsView(ingredients: foodItem.ingredients)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
@@ -224,8 +222,46 @@ struct UnifiedFoodDetailView: View {
                 .font(.headline)
                 .foregroundColor(ColorTheme.primaryText)
             
-            // Use the unified nutrition summary component
-            foodItem.nutrition.summaryCard(style: config.style == .nutrition ? .detailed : .standard)
+            // Basic nutrition facts - only show kcal, Protein, Carbs, Fat
+            VStack(spacing: 16) {
+                // Calories prominent display
+                if let calories = foodItem.nutrition.calories {
+                    HStack {
+                        Text("Calories")
+                            .font(.title3)
+                            .foregroundColor(ColorTheme.primaryText)
+                        Spacer()
+                        Text("\(calories)")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.orange)
+                        Text("kcal")
+                            .font(.subheadline)
+                            .foregroundColor(ColorTheme.secondaryText)
+                    }
+                    .padding()
+                    .background(ColorTheme.surface)
+                    .cornerRadius(12)
+                }
+                
+                // Basic macros in a row
+                HStack(spacing: 16) {
+                    if let protein = foodItem.nutrition.protein {
+                        BasicNutrientColumn(name: "Protein", value: protein, unit: "g", color: .blue)
+                    }
+                    
+                    if let carbs = foodItem.nutrition.carbs {
+                        BasicNutrientColumn(name: "Carbs", value: carbs, unit: "g", color: .green)
+                    }
+                    
+                    if let fat = foodItem.nutrition.fat {
+                        BasicNutrientColumn(name: "Fat", value: fat, unit: "g", color: .red)
+                    }
+                }
+                .padding()
+                .background(ColorTheme.surface)
+                .cornerRadius(12)
+            }
         }
     }
     
@@ -243,43 +279,40 @@ struct UnifiedFoodDetailView: View {
         }
     }
     
-    // MARK: - Health Indicators Section
+    // MARK: - Helper Functions
     
-    private var healthIndicatorsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Health Indicators")
-                .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
-            
-            let indicators = healthIndicators
-            
-            if indicators.isEmpty {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                    Text("No health concerns detected")
-                        .font(.subheadline)
-                        .foregroundColor(ColorTheme.secondaryText)
-                }
-                .padding()
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.green.opacity(0.1))
-                .cornerRadius(12)
-            } else {
-                LazyVGrid(columns: [
-                    GridItem(.flexible()),
-                    GridItem(.flexible())
-                ], spacing: 12) {
-                    ForEach(indicators, id: \.text) { indicator in
-                        HealthIndicatorBadge(indicator: indicator)
-                    }
-                }
-            }
+    private func getAllergensAndIndicatorsSubtitle() -> String {
+        let allergenCount = foodItem.allergens.count
+        let healthIndicators = getHealthIndicators()
+        let indicatorCount = healthIndicators.count
+        
+        var parts: [String] = []
+        
+        if allergenCount > 0 {
+            parts.append("\(allergenCount) allergen\(allergenCount == 1 ? "" : "s")")
         }
-        .padding()
-        .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
-        .shadow(color: ColorTheme.shadowColor, radius: 2, x: 0, y: 1)
+        
+        if indicatorCount > 0 {
+            parts.append("\(indicatorCount) health indicator\(indicatorCount == 1 ? "" : "s")")
+        }
+        
+        if parts.isEmpty {
+            return "No concerns detected"
+        }
+        
+        return parts.joined(separator: ", ")
+    }
+    
+    private func getIngredientsSubtitle() -> String {
+        let ingredientCount = foodItem.ingredients.count
+        
+        if ingredientCount == 0 {
+            return "No ingredients listed"
+        } else if ingredientCount == 1 {
+            return "1 ingredient"
+        } else {
+            return "\(ingredientCount) ingredients"
+        }
     }
     
     private var healthIndicators: [HealthIndicator] {
@@ -299,31 +332,27 @@ struct UnifiedFoodDetailView: View {
                 )
             }
             
-            // Ingredients
-            if !foodItem.ingredients.isEmpty {
-                Button(action: {
-                    detailService.showingIngredients = true
-                }) {
-                    DetailSectionRow(
-                        icon: "list.bullet",
-                        title: "Ingredients",
-                        subtitle: "\(foodItem.ingredients.count) ingredients"
-                    )
-                }
+            // Combined Allergens & Health Indicators
+            Button(action: {
+                detailService.showingAllergens = true
+            }) {
+                DetailSectionRow(
+                    icon: "exclamationmark.triangle.fill",
+                    title: "Allergens & Health Indicators",
+                    subtitle: getAllergensAndIndicatorsSubtitle(),
+                    iconColor: ColorTheme.error
+                )
             }
             
-            // Allergens
-            if !foodItem.allergens.isEmpty {
-                Button(action: {
-                    detailService.showingAllergens = true
-                }) {
-                    DetailSectionRow(
-                        icon: "exclamationmark.triangle.fill",
-                        title: "Allergens & Warnings",
-                        subtitle: "\(foodItem.allergens.count) allergens detected",
-                        iconColor: ColorTheme.error
-                    )
-                }
+            // Ingredients
+            Button(action: {
+                detailService.showingIngredients = true
+            }) {
+                DetailSectionRow(
+                    icon: "list.bullet",
+                    title: "Ingredients",
+                    subtitle: getIngredientsSubtitle()
+                )
             }
         }
     }
@@ -333,11 +362,15 @@ struct UnifiedFoodDetailView: View {
             if let onUpdate = onUpdate {
                 // Editing mode: update existing item
                 onUpdate(foodItem)
-                dismiss()
+                if config.showCancelButton {
+                    dismiss()  // Only dismiss if we're in a modal context
+                }
             } else {
                 // Adding mode: add new item to meal
                 MealBuilderService.shared.addFoodItem(foodItem)
-                dismiss()
+                if config.showCancelButton {
+                    dismiss()  // Only dismiss if we're in a modal context
+                }
             }
         }) {
             Text(onUpdate != nil ? "Update Item" : "Add to Meal")
@@ -447,9 +480,9 @@ struct UnifiedFoodDetailView: View {
     private func getIconForCategory(_ category: CompoundCategory) -> String {
         switch category {
         case .majorAllergen:
-            return "allergens"
+            return "exclamationmark.shield.fill"
         case .foodIntolerance:
-            return "allergens"
+            return "person.crop.circle.badge.exclamationmark"
         case .toxicCompound:
             return "exclamationmark.triangle.fill"
         case .inflammatoryCompound:
@@ -459,15 +492,15 @@ struct UnifiedFoodDetailView: View {
         case .neurologicalTrigger:
             return "brain.head.profile"
         case .alkaloid:
-            return "exclamationmark.triangle.fill"
+            return "pills.fill"
         case .biogenicAmine:
-            return "allergens"
+            return "atom"
         case .phenolic:
             return "leaf.fill"
         case .heavyMetal:
-            return "exclamationmark.triangle.fill"
+            return "testtube.2"
         case .preservative:
-            return "wind"
+            return "timer"
         case .naturalToxin:
             return "exclamationmark.triangle.fill"
         }
@@ -577,6 +610,66 @@ struct HealthIndicator {
     let color: Color
     let severity: HealthSeverity
     let description: String
+}
+
+struct DetailedHealthIndicator {
+    let id: String
+    let foodItem: String      // e.g., "Tomato"
+    let category: String      // e.g., "Inflammatory Compounds"
+    let compound: String      // e.g., "Salicylates"
+    let severity: HealthSeverity
+    let color: Color
+    let icon: String
+}
+
+struct HealthIndicatorRow: View {
+    let indicator: DetailedHealthIndicator
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            // Severity indicator
+            Circle()
+                .fill(indicator.color)
+                .frame(width: 8, height: 8)
+                .padding(.top, 6)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                // Food item name (bold)
+                Text(indicator.foodItem)
+                    .font(.headline)
+                    .foregroundColor(ColorTheme.primaryText)
+                
+                // Category and compound
+                HStack {
+                    Text(indicator.category)
+                        .font(.subheadline)
+                        .foregroundColor(indicator.color)
+                    
+                    Text("-")
+                        .font(.subheadline)
+                        .foregroundColor(ColorTheme.secondaryText)
+                    
+                    Text(indicator.compound)
+                        .font(.subheadline)
+                        .foregroundColor(ColorTheme.secondaryText)
+                }
+            }
+            
+            Spacer()
+            
+            // Icon
+            Image(systemName: indicator.icon)
+                .font(.title3)
+                .foregroundColor(indicator.color)
+        }
+        .padding()
+        .background(indicator.color.opacity(0.1))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(indicator.color.opacity(0.3), lineWidth: 1)
+        )
+    }
 }
 
 // MARK: - Supporting Views (reused from existing components)
@@ -1001,58 +1094,23 @@ struct IngredientsView: View {
     }
 }
 
-struct AllergensView: View {
+struct CombinedAllergensHealthView: View {
     @Environment(\.dismiss) private var dismiss
-    let allergens: [String]
+    let foodItem: FoodItem
     
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    if allergens.isEmpty {
-                        VStack(spacing: 16) {
-                            Image(systemName: "checkmark.shield.fill")
-                                .font(.system(size: 48))
-                                .foregroundColor(ColorTheme.success)
-                            
-                            Text("No Known Allergens")
-                                .font(.headline)
-                                .foregroundColor(ColorTheme.primaryText)
-                            
-                            Text("No common allergens were detected in this food item. However, always check the original packaging for complete allergen information.")
-                                .font(.subheadline)
-                                .foregroundColor(ColorTheme.secondaryText)
-                                .multilineTextAlignment(.center)
-                        }
-                        .frame(maxWidth: .infinity, minHeight: 200)
-                        .padding()
-                    } else {
-                        Text("This food contains or may contain the following allergens:")
-                            .font(.subheadline)
-                            .foregroundColor(ColorTheme.secondaryText)
-                            .padding(.horizontal)
-                        
-                        ForEach(allergens, id: \.self) { allergen in
-                            HStack {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundColor(ColorTheme.error)
-                                
-                                Text(allergen)
-                                    .font(.body)
-                                    .foregroundColor(ColorTheme.primaryText)
-                                
-                                Spacer()
-                            }
-                            .padding()
-                            .background(ColorTheme.error.opacity(0.1))
-                            .cornerRadius(12)
-                            .padding(.horizontal)
-                        }
-                    }
+                VStack(alignment: .leading, spacing: 24) {
+                    // Allergens Section
+                    allergensSection
+                    
+                    // Health Indicators Section
+                    healthIndicatorsSection
                 }
-                .padding(.vertical)
+                .padding()
             }
-            .navigationTitle("Allergens")
+            .navigationTitle("Allergens & Health")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -1062,6 +1120,279 @@ struct AllergensView: View {
                 }
             }
         }
+    }
+    
+    private var allergensSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Allergens")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(ColorTheme.primaryText)
+            
+            if foodItem.allergens.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "checkmark.shield.fill")
+                        .font(.system(size: 32))
+                        .foregroundColor(.green)
+                    
+                    Text("No Known Allergens")
+                        .font(.headline)
+                        .foregroundColor(ColorTheme.primaryText)
+                    
+                    Text("No common allergens detected in this food item.")
+                        .font(.subheadline)
+                        .foregroundColor(ColorTheme.secondaryText)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.green.opacity(0.1))
+                .cornerRadius(12)
+            } else {
+                VStack(spacing: 8) {
+                    ForEach(foodItem.allergens, id: \.self) { allergen in
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(ColorTheme.error)
+                            
+                            Text(allergen)
+                                .font(.body)
+                                .foregroundColor(ColorTheme.primaryText)
+                            
+                            Spacer()
+                        }
+                        .padding()
+                        .background(ColorTheme.error.opacity(0.1))
+                        .cornerRadius(12)
+                    }
+                }
+            }
+        }
+    }
+    
+    private var healthIndicatorsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text("Health Indicators")
+                .font(.title2)
+                .fontWeight(.bold)
+                .foregroundColor(ColorTheme.primaryText)
+            
+            let detailedIndicators = getDetailedHealthIndicators()
+            
+            if detailedIndicators.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 32))
+                        .foregroundColor(.green)
+                    
+                    Text("No Health Concerns")
+                        .font(.headline)
+                        .foregroundColor(ColorTheme.primaryText)
+                    
+                    Text("No health concerns detected for this food item.")
+                        .font(.subheadline)
+                        .foregroundColor(ColorTheme.secondaryText)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.green.opacity(0.1))
+                .cornerRadius(12)
+            } else {
+                VStack(spacing: 12) {
+                    // Group indicators by category
+                    let groupedByCategory = Dictionary(grouping: detailedIndicators) { $0.category }
+                    let sortedCategories = groupedByCategory.keys.sorted { categoryA, categoryB in
+                        let maxSeverityA = groupedByCategory[categoryA]?.map(\.severity.rawValue).max() ?? 0
+                        let maxSeverityB = groupedByCategory[categoryB]?.map(\.severity.rawValue).max() ?? 0
+                        return maxSeverityA > maxSeverityB
+                    }
+                    
+                    ForEach(sortedCategories, id: \.self) { category in
+                        let categoryIndicators = groupedByCategory[category] ?? []
+                        let maxSeverity = categoryIndicators.map(\.severity.rawValue).max() ?? 0
+                        let categoryColor: Color = {
+                            switch maxSeverity {
+                            case 3: return .red
+                            case 2: return .orange
+                            case 1: return .yellow
+                            default: return .gray
+                            }
+                        }()
+                        
+                        GroupedCategoryView(
+                            category: category,
+                            indicators: categoryIndicators,
+                            categoryColor: categoryColor
+                        )
+                    }
+                }
+            }
+        }
+    }
+    
+    private func getDetailedHealthIndicators() -> [DetailedHealthIndicator] {
+        var detailedIndicators: [DetailedHealthIndicator] = []
+        
+        let name = foodItem.name.lowercased()
+        let providedIngredients = foodItem.ingredients.map { $0.lowercased() }
+        
+        // Get all possible ingredients (including inferred ones from composite foods)
+        let database = FoodCompoundDatabase.shared
+        let allIngredients = database.getIngredientsForFood(name: name, providedIngredients: providedIngredients)
+        
+        // Analyze each ingredient individually to properly attribute compounds
+        for ingredient in allIngredients {
+            let ingredientCompounds = database.analyzeIngredients([ingredient])
+            
+            for compound in ingredientCompounds {
+                let severity = compound.severity
+                let severityColor: Color = {
+                    switch severity {
+                    case .high: return .red
+                    case .medium: return .orange
+                    case .low: return .yellow
+                    }
+                }()
+                
+                detailedIndicators.append(DetailedHealthIndicator(
+                    id: UUID().uuidString,
+                    foodItem: ingredient.capitalized,
+                    category: compound.category.rawValue,
+                    compound: compound.name,
+                    severity: severity,
+                    color: severityColor,
+                    icon: getIconForCategory(compound.category)
+                ))
+            }
+        }
+        
+        // Check for additives from barcode scanning
+        if let additives = foodItem.nutritionDetails["additives"] {
+            let additivesList = additives.components(separatedBy: ", ")
+            for additive in additivesList {
+                let trimmedAdditive = additive.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+                if !trimmedAdditive.isEmpty {
+                    detailedIndicators.append(DetailedHealthIndicator(
+                        id: UUID().uuidString,
+                        foodItem: foodItem.name,
+                        category: "Preservatives & Additives",
+                        compound: trimmedAdditive,
+                        severity: .medium,
+                        color: .orange,
+                        icon: "timer"
+                    ))
+                }
+            }
+        }
+        
+        // Legacy nutritional indicators
+        if let sodium = foodItem.nutrition.sodium, sodium > 600 {
+            detailedIndicators.append(DetailedHealthIndicator(
+                id: UUID().uuidString,
+                foodItem: foodItem.name,
+                category: "High Sodium",
+                compound: "\(sodium)mg sodium",
+                severity: .high,
+                color: .red,
+                icon: "drop.fill"
+            ))
+        }
+        
+        if let sugar = foodItem.nutrition.sugar, sugar > 15 {
+            detailedIndicators.append(DetailedHealthIndicator(
+                id: UUID().uuidString,
+                foodItem: foodItem.name,
+                category: "High Sugar",
+                compound: "\(sugar)g sugar",
+                severity: .medium,
+                color: .orange,
+                icon: "cube.fill"
+            ))
+        }
+        
+        if let fiber = foodItem.nutrition.fiber, fiber >= 5 {
+            detailedIndicators.append(DetailedHealthIndicator(
+                id: UUID().uuidString,
+                foodItem: foodItem.name,
+                category: "High Fiber",
+                compound: "\(fiber)g fiber (beneficial)",
+                severity: .low,
+                color: .green,
+                icon: "leaf.fill"
+            ))
+        }
+        
+        return detailedIndicators
+    }
+    
+    
+    private func getHealthIndicators() -> [HealthIndicator] {
+        // Keep this for backward compatibility with the subtitle function
+        let detailedIndicators = getDetailedHealthIndicators()
+        return detailedIndicators.map { detailed in
+            HealthIndicator(
+                text: detailed.category,
+                icon: detailed.icon,
+                color: detailed.color,
+                severity: detailed.severity,
+                description: "\(detailed.foodItem): \(detailed.category) - \(detailed.compound)"
+            )
+        }
+    }
+    
+    private func getIconForCategory(_ category: CompoundCategory) -> String {
+        switch category {
+        case .majorAllergen:
+            return "exclamationmark.shield.fill"
+        case .foodIntolerance:
+            return "person.crop.circle.badge.exclamationmark"
+        case .toxicCompound:
+            return "exclamationmark.triangle.fill"
+        case .inflammatoryCompound:
+            return "flame.fill"
+        case .metabolicDisruptor:
+            return "minus.circle.fill"
+        case .neurologicalTrigger:
+            return "brain.head.profile"
+        case .alkaloid:
+            return "pills.fill"
+        case .biogenicAmine:
+            return "atom"
+        case .phenolic:
+            return "leaf.fill"
+        case .heavyMetal:
+            return "testtube.2"
+        case .preservative:
+            return "timer"
+        case .naturalToxin:
+            return "exclamationmark.triangle.fill"
+        }
+    }
+}
+
+struct BasicNutrientColumn: View {
+    let name: String
+    let value: Double
+    let unit: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            Text(name)
+                .font(.caption)
+                .foregroundColor(ColorTheme.secondaryText)
+            
+            Text(String(format: "%.1f", value))
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundColor(color)
+            
+            Text(unit)
+                .font(.caption2)
+                .foregroundColor(ColorTheme.secondaryText)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -1098,5 +1429,179 @@ struct AllergensView: View {
             ),
             style: .full
         )
+    }
+}
+
+// MARK: - Grouped Category View
+
+struct GroupedCategoryView: View {
+    let category: String
+    let indicators: [DetailedHealthIndicator]
+    let categoryColor: Color
+    @State private var isExpanded = true
+    
+    private var categoryIcon: String {
+        switch category {
+        case "Major Allergens": return "allergens"
+        case "Food Intolerances": return "exclamationmark.triangle"
+        case "Toxic Compounds": return "exclamationmark.triangle.fill"
+        case "Inflammatory Compounds": return "flame.fill"
+        case "Metabolic Disruptors": return "drop.fill"
+        case "Neurological Triggers": return "brain.head.profile"
+        case "Preservatives & Additives": return "timer"
+        case "High Sodium": return "drop.fill"
+        case "High Sugar": return "cube.fill"
+        case "High Fiber": return "leaf.fill"
+        default: return "questionmark.circle"
+        }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Category Header
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isExpanded.toggle()
+                }
+            }) {
+                HStack {
+                    Image(systemName: categoryIcon)
+                        .foregroundColor(categoryColor)
+                        .font(.title2)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(category)
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                        
+                        Text("\(indicators.count) compound\(indicators.count == 1 ? "" : "s") detected")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .foregroundColor(.secondary)
+                        .font(.caption)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+            }
+            .background(categoryColor.opacity(0.1))
+            .cornerRadius(8)
+            
+            // Compounds List
+            if isExpanded {
+                VStack(spacing: 6) {
+                    ForEach(indicators.sorted { $0.severity.rawValue > $1.severity.rawValue }, id: \.id) { indicator in
+                        SimplifiedHealthIndicatorRow(indicator: indicator)
+                    }
+                }
+                .padding(.leading, 8)
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(categoryColor.opacity(0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(categoryColor.opacity(0.3), lineWidth: 1)
+                )
+        )
+        .padding(.horizontal, 4)
+    }
+}
+
+struct SimplifiedHealthIndicatorRow: View {
+    let indicator: DetailedHealthIndicator
+    @State private var showingDetail = false
+    
+    var body: some View {
+        Button(action: {
+            showingDetail.toggle()
+        }) {
+            HStack(alignment: .top, spacing: 12) {
+                // Severity indicator
+                Circle()
+                    .fill(indicator.color)
+                    .frame(width: 8, height: 8)
+                    .padding(.top, 6)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(indicator.compound)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(.primary)
+                        
+                        Spacer()
+                        
+                        if indicator.foodItem != indicator.compound {
+                            Text("from \(indicator.foodItem)")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.gray.opacity(0.1))
+                                .cornerRadius(4)
+                        }
+                    }
+                    
+                    if showingDetail {
+                        Text(getSimplifiedDescription(indicator.compound))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .padding(.top, 2)
+                    }
+                }
+                
+                Spacer()
+                
+                Image(systemName: showingDetail ? "chevron.up" : "chevron.down")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.white.opacity(0.5))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(indicator.color.opacity(0.2), lineWidth: 1)
+                )
+        )
+    }
+    
+    private func getSimplifiedDescription(_ compoundName: String) -> String {
+        // Simplified descriptions for common compounds
+        switch compoundName.lowercased() {
+        case let name where name.contains("sodium"):
+            return "High sodium intake can contribute to hypertension and cardiovascular issues."
+        case let name where name.contains("sugar"):
+            return "High sugar content can lead to blood sugar spikes and energy crashes."
+        case let name where name.contains("fiber"):
+            return "High fiber content is beneficial for digestive health and blood sugar regulation."
+        case let name where name.contains("tartrazine"):
+            return "Yellow food dye that may cause hyperactivity and allergic reactions in sensitive individuals."
+        case let name where name.contains("sodium benzoate"):
+            return "Preservative that may form benzene when combined with vitamin C."
+        case let name where name.contains("citric acid"):
+            return "Generally safe preservative that can enhance absorption of minerals."
+        case let name where name.contains("ascorbic acid"):
+            return "Vitamin C used as preservative and antioxidant, generally beneficial."
+        case let name where name.contains("gluten"):
+            return "Protein complex that can trigger celiac disease and gluten sensitivity."
+        case let name where name.contains("lactose"):
+            return "Milk sugar that can cause digestive issues in lactose-intolerant individuals."
+        case let name where name.contains("histamine"):
+            return "Compound that can trigger allergic-like reactions and headaches."
+        case let name where name.contains("msg"):
+            return "Flavor enhancer that can cause headaches and flushing in sensitive individuals."
+        default:
+            return "This compound may affect health in sensitive individuals. Consult healthcare provider if concerns."
+        }
     }
 }

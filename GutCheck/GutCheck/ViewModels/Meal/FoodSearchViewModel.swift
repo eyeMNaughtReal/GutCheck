@@ -86,9 +86,8 @@ class FoodSearchViewModel: ObservableObject {
         // Create quantity string
         let quantityString = "\(String(format: "%g", servingQty)) \(servingUnit)"
         
-        // For now, use simplified ingredient extraction
-        // In a real implementation, you'd get this from the detailed API call
-        let ingredientList: [String] = []
+        // Parse ingredients from Nutritionix ingredients string  
+        let ingredientList: [String] = parseIngredients(from: nfood.ingredients)
         
         // Build comprehensive nutrition dictionary from enhanced data
         var nutritionDict: [String: String] = [:]
@@ -208,6 +207,39 @@ class FoodSearchViewModel: ObservableObject {
     func selectFoodItem(_ item: FoodItem) {
         selectedFoodItem = item
     }
+    
+    @MainActor
+    func enhanceFoodItemWithIngredients(_ foodItem: FoodItem) async -> FoodItem {
+        // If the food item already has ingredients, return as-is
+        if !foodItem.ingredients.isEmpty {
+            print("🔍 Food item already has \(foodItem.ingredients.count) ingredients")
+            return foodItem
+        }
+        
+        print("🔍 Enhancing food item '\(foodItem.name)' with detailed nutrition data...")
+        
+        do {
+            // Get detailed nutrition data including ingredients
+            let (_, detailedNutrition) = try await NutritionixService.shared.getDetailedNutritionInfo(for: foodItem.name)
+            
+            // Create enhanced copy with ingredients
+            var enhancedItem = foodItem
+            
+            if let ingredientsString = detailedNutrition["ingredients"] {
+                enhancedItem.ingredients = parseIngredients(from: ingredientsString)
+                print("🔍 Enhanced with \(enhancedItem.ingredients.count) ingredients: \(enhancedItem.ingredients)")
+            } else {
+                print("🔍 No ingredients found in detailed nutrition data")
+            }
+            
+            return enhancedItem
+            
+        } catch {
+            print("⚠️ Failed to get detailed nutrition for '\(foodItem.name)': \(error)")
+            return foodItem
+        }
+    }
+    
 
     func createCustomFoodItem() {
         let customItem = FoodItem(
@@ -232,6 +264,33 @@ class FoodSearchViewModel: ObservableObject {
         MealBuilderService.shared.addFoodItem(foodItem)
     }
 
+    // MARK: - Ingredient Parsing
+    
+    private func parseIngredients(from ingredientsString: String?) -> [String] {
+        guard let ingredientsString = ingredientsString, !ingredientsString.isEmpty else {
+            return []
+        }
+        
+        // Clean up the ingredients string and split by common separators
+        let cleanedString = ingredientsString
+            .replacingOccurrences(of: ".", with: "") // Remove periods
+            .replacingOccurrences(of: ";", with: ",") // Normalize separators
+            .replacingOccurrences(of: " and ", with: ", ") // Handle "and" separators
+            .replacingOccurrences(of: " & ", with: ", ") // Handle "&" separators
+        
+        // Split by commas and clean up each ingredient
+        let ingredients = cleanedString
+            .components(separatedBy: ",")
+            .map { ingredient in
+                ingredient
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .lowercased()
+            }
+            .filter { !$0.isEmpty }
+        
+        return ingredients
+    }
+    
     // MARK: - Recent Items Management
     
     func loadRecentItems() {

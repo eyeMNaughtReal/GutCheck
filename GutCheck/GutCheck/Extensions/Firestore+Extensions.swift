@@ -103,7 +103,7 @@ extension Symptom {
             "urgencyLevel": urgencyLevel.rawValue,
             "createdBy": createdBy,
             "tags": tags,
-            "updatedAt": FieldValue.serverTimestamp()
+            "createdAt": Timestamp(date: Date())
         ]
         
         if let notes = notes {

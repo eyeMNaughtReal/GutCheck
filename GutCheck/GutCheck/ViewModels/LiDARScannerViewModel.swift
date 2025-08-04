@@ -689,6 +689,9 @@ class LiDARScannerViewModel: NSObject, ObservableObject {
             nutritionDict["potassium"] = String(format: "%.1f", potassium * portionMultiplier)
         }
         
+        // Parse ingredients from Nutritionix
+        let ingredients = parseIngredients(from: nutritionixFood.ingredients)
+        
         // Detect allergens
         let allergens = detectAllergens(from: nutritionixFood.name, brand: nutritionixFood.brand)
         
@@ -708,7 +711,7 @@ class LiDARScannerViewModel: NSObject, ObservableObject {
             name: nutritionixFood.name,
             quantity: "\(Int(estimatedWeight))g (LiDAR estimated)",
             estimatedWeightInGrams: estimatedWeight,
-            ingredients: [],
+            ingredients: ingredients,
             allergens: allergens,
             nutrition: nutrition,
             source: .lidar,
@@ -817,6 +820,31 @@ class LiDARScannerViewModel: NSObject, ObservableObject {
         }
         
         return allergens
+    }
+    
+    private func parseIngredients(from ingredientsString: String?) -> [String] {
+        guard let ingredientsString = ingredientsString, !ingredientsString.isEmpty else {
+            return []
+        }
+        
+        // Clean up the ingredients string and split by common separators
+        let cleanedString = ingredientsString
+            .replacingOccurrences(of: ".", with: "") // Remove periods
+            .replacingOccurrences(of: ";", with: ",") // Normalize separators
+            .replacingOccurrences(of: " and ", with: ", ") // Handle "and" separators
+            .replacingOccurrences(of: " & ", with: ", ") // Handle "&" separators
+        
+        // Split by commas and clean up each ingredient
+        let ingredients = cleanedString
+            .components(separatedBy: ",")
+            .map { ingredient in
+                ingredient
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .lowercased()
+            }
+            .filter { !$0.isEmpty }
+        
+        return ingredients
     }
     
     // Create a mock food image for previews

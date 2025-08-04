@@ -53,6 +53,7 @@ struct FoodDetailConfig {
     let allowEditing: Bool
     let showServingControls: Bool
     let showDetailedSections: Bool
+    let showCancelButton: Bool  // Add this property
     
     static func config(for style: FoodDetailStyle) -> FoodDetailConfig {
         switch style {
@@ -62,7 +63,8 @@ struct FoodDetailConfig {
                 showAddToMeal: false,
                 allowEditing: false,
                 showServingControls: false,
-                showDetailedSections: false
+                showDetailedSections: false,
+                showCancelButton: false  // Compact views in navigation shouldn't show cancel
             )
         case .standard:
             return FoodDetailConfig(
@@ -70,7 +72,8 @@ struct FoodDetailConfig {
                 showAddToMeal: true,
                 allowEditing: false,
                 showServingControls: true,
-                showDetailedSections: true
+                showDetailedSections: true,
+                showCancelButton: false  // Standard views in navigation shouldn't show cancel
             )
         case .full:
             return FoodDetailConfig(
@@ -78,7 +81,8 @@ struct FoodDetailConfig {
                 showAddToMeal: true,
                 allowEditing: true,
                 showServingControls: true,
-                showDetailedSections: true
+                showDetailedSections: true,
+                showCancelButton: true  // Full views might be presented modally
             )
         case .nutrition:
             return FoodDetailConfig(
@@ -86,7 +90,8 @@ struct FoodDetailConfig {
                 showAddToMeal: false,
                 allowEditing: false,
                 showServingControls: false,
-                showDetailedSections: false
+                showDetailedSections: false,
+                showCancelButton: false  // Nutrition views typically in navigation
             )
         }
     }

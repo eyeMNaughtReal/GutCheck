@@ -69,6 +69,12 @@ class BaseFirebaseRepository<T: FirestoreModel>: FirebaseRepository {
         self.collectionName = collectionName
     }
     
+    private func testFirestoreConnectivity() async throws {
+        let testData: [String: Any] = ["test": "connectivity", "timestamp": Date().timeIntervalSince1970]
+        try await firestore.collection("test").document("connectivity").setData(testData)
+        print("✅ Basic Firestore connectivity test passed")
+    }
+    
     // MARK: - CRUD Operations
     
     func save(_ item: Model) async throws {
@@ -82,8 +88,19 @@ class BaseFirebaseRepository<T: FirestoreModel>: FirebaseRepository {
         let data = mutableItem.toFirestoreData()
         
         do {
-            try await firestore.collection(collectionName).document(item.id).setData(data, merge: true)
+            print("🔥 Saving to Firestore - Collection: \(collectionName), Document ID: \(item.id)")
+            print("🔥 Data to save: \(data)")
+            
+            // First try a simple test write to verify connectivity
+            try await testFirestoreConnectivity()
+            
+            // Try using addDocument instead of setData to bypass WriteStream issues
+            let docRef = try await firestore.collection(collectionName).addDocument(data: data)
+            print("✅ Document added with ID: \(docRef.documentID)")
+            print("✅ Successfully saved to Firestore")
         } catch {
+            print("❌ Firestore save error: \(error)")
+            print("❌ Error details: \(error.localizedDescription)")
             throw RepositoryError.firebaseError(error)
         }
     }

@@ -80,7 +80,7 @@ struct ContentView: View {
         case .symptomDetail(let symptom):
             SymptomDetailView(symptom: symptom)
         case .foodDetail(let foodItem):
-            UnifiedFoodDetailView(foodItem: foodItem, style: .standard)
+            UnifiedFoodDetailView(foodItem: foodItem)  // Full comprehensive view with all health details
         case .logMeal:
             // This now goes to options view as a sheet instead
             EmptyView()

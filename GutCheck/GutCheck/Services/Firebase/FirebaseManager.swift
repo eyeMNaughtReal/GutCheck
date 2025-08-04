@@ -130,6 +130,118 @@ class FirebaseManager {
         return try document.data(as: T.self)
     }
     
+    // MARK: - Pagination Support
+    
+    func getPaginatedDocuments<T: Decodable>(
+        from collection: String,
+        pageSize: Int,
+        lastDocument: DocumentSnapshot? = nil,
+        sortField: String = "date",
+        sortDescending: Bool = true,
+        additionalFilters: [String: Any] = [:]
+    ) async throws -> (items: [T], lastDocument: DocumentSnapshot?, hasMore: Bool) {
+        guard let user = auth.currentUser else {
+            throw FirebaseError.notAuthenticated
+        }
+        
+        var query = db.collection(collection)
+            .whereField("userId", isEqualTo: user.uid)
+        
+        // Apply additional filters
+        for (field, value) in additionalFilters {
+            query = query.whereField(field, isEqualTo: value)
+        }
+        
+        // Apply sorting
+        query = query.order(by: sortField, descending: sortDescending)
+        
+        // Apply pagination
+        if let lastDoc = lastDocument {
+            query = query.start(afterDocument: lastDoc)
+        }
+        
+        query = query.limit(to: pageSize)
+        
+        let snapshot = try await query.getDocuments()
+        let documents = snapshot.documents
+        
+        let items = try documents.compactMap { document in
+            try document.data(as: T.self)
+        }
+        
+        let hasMore = documents.count == pageSize
+        let lastDoc = documents.last
+        
+        return (items: items, lastDocument: lastDoc, hasMore: hasMore)
+    }
+    
+    func getPaginatedDocumentsWithDateRange<T: Decodable>(
+        from collection: String,
+        pageSize: Int,
+        lastDocument: DocumentSnapshot? = nil,
+        sortField: String = "date",
+        sortDescending: Bool = true,
+        startDate: Date,
+        endDate: Date,
+        additionalFilters: [String: Any] = [:]
+    ) async throws -> (items: [T], lastDocument: DocumentSnapshot?, hasMore: Bool) {
+        guard let user = auth.currentUser else {
+            throw FirebaseError.notAuthenticated
+        }
+        
+        var query = db.collection(collection)
+            .whereField("userId", isEqualTo: user.uid)
+            .whereField("date", isGreaterThanOrEqualTo: startDate)
+            .whereField("date", isLessThanOrEqualTo: endDate)
+        
+        // Apply additional filters
+        for (field, value) in additionalFilters {
+            query = query.whereField(field, isEqualTo: value)
+        }
+        
+        // Apply sorting
+        query = query.order(by: sortField, descending: sortDescending)
+        
+        // Apply pagination
+        if let lastDoc = lastDocument {
+            query = query.start(afterDocument: lastDoc)
+        }
+        
+        query = query.limit(to: pageSize)
+        
+        let snapshot = try await query.getDocuments()
+        let documents = snapshot.documents
+        
+        let items = try documents.compactMap { document in
+            try document.data(as: T.self)
+        }
+        
+        let hasMore = documents.count == pageSize
+        let lastDoc = documents.last
+        
+        return (items: items, lastDocument: lastDoc, hasMore: hasMore)
+    }
+    
+    func getDocumentCount(
+        from collection: String,
+        additionalFilters: [String: Any] = [:]
+    ) async throws -> Int {
+        guard let user = auth.currentUser else {
+            throw FirebaseError.notAuthenticated
+        }
+        
+        var query = db.collection(collection)
+            .whereField("userId", isEqualTo: user.uid)
+        
+        // Apply additional filters
+        for (field, value) in additionalFilters {
+            query = query.whereField(field, isEqualTo: value)
+        }
+        
+        let snapshot = try await query.count.getAggregation(source: .server)
+        return Int(snapshot.count)
+    }
+    
     // MARK: - Batch Operations
     
     func batchWrite(_ operations: [BatchOperation]) async throws {
