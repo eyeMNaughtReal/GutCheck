@@ -35,6 +35,9 @@ class MealConfirmationViewModel: ObservableObject {
             // Save to Firebase via MealRepository
             try await MealRepository.shared.save(meal)
             
+            // Trigger dashboard refresh after successful save
+            NavigationCoordinator.shared.refreshDashboard()
+            
             // Additional sync can be added here in the future
             
             return true

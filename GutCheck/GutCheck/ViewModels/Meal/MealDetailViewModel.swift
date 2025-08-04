@@ -125,7 +125,7 @@ class MealDetailViewModel: ObservableObject {
         
         Task {
             do {
-                try await mealRepository.saveWithFoodItems(meal)
+                try await mealRepository.save(meal)
                 
                 await MainActor.run {
                     self.isSaving = false

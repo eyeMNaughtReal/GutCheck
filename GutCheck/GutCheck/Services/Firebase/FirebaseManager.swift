@@ -239,7 +239,7 @@ class FirebaseManager {
         }
         
         let snapshot = try await query.count.getAggregation(source: .server)
-        return Int(snapshot.count)
+        return Int(truncating: snapshot.count)
     }
     
     // MARK: - Batch Operations

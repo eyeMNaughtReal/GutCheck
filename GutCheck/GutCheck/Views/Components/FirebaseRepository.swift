@@ -8,6 +8,7 @@
 import Foundation
 import FirebaseFirestore
 import FirebaseAuth
+import Network
 
 // MARK: - Repository Protocol
 
@@ -64,15 +65,29 @@ class BaseFirebaseRepository<T: FirestoreModel>: FirebaseRepository {
     
     let collectionName: String
     let firestore = Firestore.firestore()
+    private let networkMonitor = NWPathMonitor()
+    private let monitorQueue = DispatchQueue(label: "NetworkMonitor")
+    private var isNetworkAvailable = true
     
     init(collectionName: String) {
         self.collectionName = collectionName
+        setupNetworkMonitoring()
     }
     
-    private func testFirestoreConnectivity() async throws {
-        let testData: [String: Any] = ["test": "connectivity", "timestamp": Date().timeIntervalSince1970]
-        try await firestore.collection("test").document("connectivity").setData(testData)
-        print("✅ Basic Firestore connectivity test passed")
+    private func setupNetworkMonitoring() {
+        networkMonitor.pathUpdateHandler = { [weak self] path in
+            self?.isNetworkAvailable = path.status == .satisfied
+            if path.status != .satisfied {
+                print("🌐 Network disconnected - operations will use offline cache")
+            } else {
+                print("🌐 Network connected - normal operations resumed")
+            }
+        }
+        networkMonitor.start(queue: monitorQueue)
+    }
+    
+    deinit {
+        networkMonitor.cancel()
     }
     
     // MARK: - CRUD Operations
@@ -80,6 +95,11 @@ class BaseFirebaseRepository<T: FirestoreModel>: FirebaseRepository {
     func save(_ item: Model) async throws {
         guard let userId = Auth.auth().currentUser?.uid else {
             throw RepositoryError.noAuthenticatedUser
+        }
+        
+        // Check network connectivity before attempting save
+        if !isNetworkAvailable {
+            print("⚠️ Network unavailable - saving to local cache only")
         }
         
         var mutableItem = item
@@ -90,19 +110,69 @@ class BaseFirebaseRepository<T: FirestoreModel>: FirebaseRepository {
         do {
             print("🔥 Saving to Firestore - Collection: \(collectionName), Document ID: \(item.id)")
             print("🔥 Data to save: \(data)")
+            print("🔥 Network available: \(isNetworkAvailable)")
             
-            // First try a simple test write to verify connectivity
-            try await testFirestoreConnectivity()
-            
-            // Try using addDocument instead of setData to bypass WriteStream issues
-            let docRef = try await firestore.collection(collectionName).addDocument(data: data)
-            print("✅ Document added with ID: \(docRef.documentID)")
-            print("✅ Successfully saved to Firestore")
+            // Use setData with the specific document ID to preserve the item's ID
+            // Add retry logic for connection issues
+            try await retryWithBackoff {
+                try await self.firestore.collection(self.collectionName).document(item.id).setData(data, merge: true)
+            }
+            print("✅ Successfully saved to Firestore with ID: \(item.id)")
         } catch {
             print("❌ Firestore save error: \(error)")
             print("❌ Error details: \(error.localizedDescription)")
+            
+            // Check if it's a specific Firestore error we can handle
+            if let firestoreError = error as NSError?, firestoreError.domain == "FIRFirestoreErrorDomain" {
+                print("❌ Firestore Error Code: \(firestoreError.code)")
+                print("❌ Firestore Error UserInfo: \(firestoreError.userInfo)")
+                
+                // Handle specific Firestore errors
+                switch firestoreError.code {
+                case 7: // PERMISSION_DENIED
+                    throw RepositoryError.firebaseError(NSError(domain: "RepositoryError", code: 403, userInfo: [NSLocalizedDescriptionKey: "Permission denied. Please check Firestore security rules."]))
+                case 14: // UNAVAILABLE
+                    throw RepositoryError.firebaseError(NSError(domain: "RepositoryError", code: 503, userInfo: [NSLocalizedDescriptionKey: "Firestore service unavailable. Please try again later."]))
+                case 13: // INTERNAL ERROR
+                    throw RepositoryError.firebaseError(NSError(domain: "RepositoryError", code: 500, userInfo: [NSLocalizedDescriptionKey: "Internal Firestore error. Please check your Firebase project configuration."]))
+                default:
+                    throw RepositoryError.firebaseError(error)
+                }
+            }
+            
             throw RepositoryError.firebaseError(error)
         }
+    }
+    
+    // Retry logic for transient network issues
+    private func retryWithBackoff<ReturnType>(maxRetries: Int = 3, operation: @escaping () async throws -> ReturnType) async throws -> ReturnType {
+        var lastError: Error?
+        
+        for attempt in 0..<maxRetries {
+            do {
+                return try await operation()
+            } catch {
+                lastError = error
+                
+                // Don't retry on authentication or permission errors
+                if let nsError = error as NSError?, nsError.domain == "FIRFirestoreErrorDomain" {
+                    switch nsError.code {
+                    case 7, 16: // PERMISSION_DENIED, UNAUTHENTICATED
+                        throw error
+                    default:
+                        break
+                    }
+                }
+                
+                if attempt < maxRetries - 1 {
+                    let delay = pow(2.0, Double(attempt)) // Exponential backoff
+                    print("🔄 Retry attempt \(attempt + 1) after \(delay) seconds")
+                    try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                }
+            }
+        }
+        
+        throw lastError ?? RepositoryError.firebaseError(NSError(domain: "RepositoryError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Operation failed after \(maxRetries) retries"]))
     }
     
     func fetch(id: String) async throws -> Model? {
@@ -189,16 +259,6 @@ class MealRepository: BaseFirebaseRepository<Meal> {
         }
     }
     
-    func fetchMealsByType(_ type: MealType, userId: String, limit: Int = 10) async throws -> [Meal] {
-        return try await query { query in
-            query
-                .whereField("createdBy", isEqualTo: userId)
-                .whereField("type", isEqualTo: type.rawValue)
-                .order(by: "date", descending: true)
-                .limit(to: limit)
-        }
-    }
-    
     func fetchRecentMeals(userId: String, limit: Int = 20) async throws -> [Meal] {
         return try await query { query in
             query
@@ -222,13 +282,34 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) ?? date
         
-        return try await query { query in
+        print("📅 SymptomRepository: Querying symptoms from \(startOfDay) to \(endOfDay) for user \(userId)")
+        
+        let symptoms = try await query { query in
             query
                 .whereField("createdBy", isEqualTo: userId)
                 .whereField("date", isGreaterThanOrEqualTo: startOfDay)
                 .whereField("date", isLessThan: endOfDay)
                 .order(by: "date", descending: false)
         }
+        
+        print("🔍 SymptomRepository: Query returned \(symptoms.count) symptoms")
+        for symptom in symptoms {
+            print("   - Symptom \(symptom.id): date=\(symptom.date), stool=\(symptom.stoolType), user=\(symptom.createdBy)")
+        }
+        
+        return symptoms
+    }
+    
+    // Convenience method for CalendarView
+    func getSymptoms(for date: Date) async throws -> [Symptom] {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            print("❌ SymptomRepository: No authenticated user")
+            throw RepositoryError.noAuthenticatedUser
+        }
+        print("🔍 SymptomRepository: Fetching symptoms for user \(userId) on date \(date)")
+        let symptoms = try await fetchSymptomsForDate(date, userId: userId)
+        print("📊 SymptomRepository: Found \(symptoms.count) symptoms for date \(date)")
+        return symptoms
     }
     
     func fetchSymptomsByPainLevel(_ painLevel: PainLevel, userId: String) async throws -> [Symptom] {

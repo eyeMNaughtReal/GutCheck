@@ -127,6 +127,42 @@ class SymptomHistoryViewModel: ObservableObject {
         }
     }
     
+    func updateSymptom(_ updatedSymptom: Symptom) async {
+        do {
+            try await SymptomRepository.shared.save(updatedSymptom)
+            
+            // Trigger dashboard refresh after successful update
+            await MainActor.run {
+                NavigationCoordinator.shared.refreshDashboard()
+            }
+            
+            // Update in grouped symptoms
+            for (date, symptoms) in groupedSymptoms {
+                if let index = symptoms.firstIndex(where: { $0.id == updatedSymptom.id }) {
+                    groupedSymptoms[date]?[index] = updatedSymptom
+                    // If the date changed, we need to move the symptom to the correct group
+                    let newDate = Calendar.current.startOfDay(for: updatedSymptom.date)
+                    if date != newDate {
+                        // Remove from old date
+                        groupedSymptoms[date]?.remove(at: index)
+                        if groupedSymptoms[date]?.isEmpty == true {
+                            groupedSymptoms.removeValue(forKey: date)
+                        }
+                        // Add to new date
+                        if groupedSymptoms[newDate] != nil {
+                            groupedSymptoms[newDate]?.append(updatedSymptom)
+                        } else {
+                            groupedSymptoms[newDate] = [updatedSymptom]
+                        }
+                    }
+                    break
+                }
+            }
+        } catch {
+            self.error = error
+        }
+    }
+    
     func exportSymptoms() async {
         // TODO: Implement CSV export functionality
         // This will be an async operation that:

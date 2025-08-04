@@ -58,4 +58,87 @@ struct FoodItem: Identifiable, Codable, Hashable, Equatable {
         self.isUserEdited = isUserEdited
         self.nutritionDetails = nutritionDetails
     }
+    
+    // MARK: - Dictionary Conversion for Firestore
+    
+    func toDictionary() -> [String: Any] {
+        var dict: [String: Any] = [
+            "id": id,
+            "name": name,
+            "quantity": quantity,
+            "ingredients": ingredients,
+            "allergens": allergens,
+            "source": source.rawValue,
+            "isUserEdited": isUserEdited,
+            "nutritionDetails": nutritionDetails
+        ]
+        
+        if let estimatedWeightInGrams = estimatedWeightInGrams {
+            dict["estimatedWeightInGrams"] = estimatedWeightInGrams
+        }
+        
+        if let barcodeValue = barcodeValue {
+            dict["barcodeValue"] = barcodeValue
+        }
+        
+        // Convert nutrition to dictionary
+        var nutritionDict: [String: Any] = [:]
+        if let calories = nutrition.calories { nutritionDict["calories"] = calories }
+        if let protein = nutrition.protein { nutritionDict["protein"] = protein }
+        if let carbs = nutrition.carbs { nutritionDict["carbs"] = carbs }
+        if let fat = nutrition.fat { nutritionDict["fat"] = fat }
+        if let fiber = nutrition.fiber { nutritionDict["fiber"] = fiber }
+        if let sugar = nutrition.sugar { nutritionDict["sugar"] = sugar }
+        if let sodium = nutrition.sodium { nutritionDict["sodium"] = sodium }
+        
+        if !nutritionDict.isEmpty {
+            dict["nutrition"] = nutritionDict
+        }
+        
+        return dict
+    }
+    
+    static func fromDictionary(_ dict: [String: Any]) throws -> FoodItem {
+        guard let id = dict["id"] as? String,
+              let name = dict["name"] as? String,
+              let quantity = dict["quantity"] as? String else {
+            throw NSError(domain: "FoodItemError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing required fields"])
+        }
+        
+        let estimatedWeightInGrams = dict["estimatedWeightInGrams"] as? Double
+        let ingredients = dict["ingredients"] as? [String] ?? []
+        let allergens = dict["allergens"] as? [String] ?? []
+        let barcodeValue = dict["barcodeValue"] as? String
+        let isUserEdited = dict["isUserEdited"] as? Bool ?? false
+        let nutritionDetails = dict["nutritionDetails"] as? [String: String] ?? [:]
+        
+        let sourceString = dict["source"] as? String ?? "manual"
+        let source = FoodInputSource(rawValue: sourceString) ?? .manual
+        
+        // Convert nutrition dictionary back to NutritionInfo
+        var nutrition = NutritionInfo()
+        if let nutritionDict = dict["nutrition"] as? [String: Any] {
+            nutrition.calories = nutritionDict["calories"] as? Int
+            nutrition.protein = nutritionDict["protein"] as? Double
+            nutrition.carbs = nutritionDict["carbs"] as? Double
+            nutrition.fat = nutritionDict["fat"] as? Double
+            nutrition.fiber = nutritionDict["fiber"] as? Double
+            nutrition.sugar = nutritionDict["sugar"] as? Double
+            nutrition.sodium = nutritionDict["sodium"] as? Double
+        }
+        
+        return FoodItem(
+            id: id,
+            name: name,
+            quantity: quantity,
+            estimatedWeightInGrams: estimatedWeightInGrams,
+            ingredients: ingredients,
+            allergens: allergens,
+            nutrition: nutrition,
+            source: source,
+            barcodeValue: barcodeValue,
+            isUserEdited: isUserEdited,
+            nutritionDetails: nutritionDetails
+        )
+    }
 }

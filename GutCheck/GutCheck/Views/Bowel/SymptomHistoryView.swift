@@ -9,7 +9,19 @@ struct SymptomHistoryView: View {
         ForEach(viewModel.groupedSymptoms.keys.sorted(by: >), id: \.self) { date in
             Section(header: Text(formatDate(date))) {
                 ForEach(viewModel.groupedSymptoms[date] ?? []) { symptom in
-                    NavigationLink(destination: SymptomDetailView(symptom: symptom)) {
+                    NavigationLink(destination: SymptomDetailView(
+                        symptom: symptom,
+                        onEdit: { updatedSymptom in
+                            Task {
+                                await viewModel.updateSymptom(updatedSymptom)
+                            }
+                        },
+                        onDelete: { symptomToDelete in
+                            Task {
+                                await viewModel.deleteSymptom(symptomToDelete)
+                            }
+                        }
+                    )) {
                         SymptomRow(symptom: symptom)
                     }
                 }

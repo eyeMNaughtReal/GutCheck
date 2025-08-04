@@ -47,18 +47,32 @@ struct User: Codable, Identifiable, Hashable, Equatable {
         return height * 100 // Convert meters to cm
     }
     
-    var formattedHeight: String {
+    func formattedHeight(using unitSystem: UnitSystem = .metric) -> String {
         guard let height = height else { return "-" }
         let formatter = LengthFormatter()
-        formatter.unitStyle = .short
-        return formatter.string(fromValue: height, unit: .meter)
+        formatter.unitStyle = .medium
+        
+        switch unitSystem {
+        case .metric:
+            return formatter.string(fromValue: height, unit: .meter)
+        case .imperial:
+            let feet = height * 3.28084
+            return formatter.string(fromValue: feet, unit: .foot)
+        }
     }
     
-    var formattedWeight: String {
+    func formattedWeight(using unitSystem: UnitSystem = .metric) -> String {
         guard let weight = weight else { return "-" }
         let formatter = MassFormatter()
-        formatter.unitStyle = .short
-        return formatter.string(fromValue: weight, unit: .kilogram)
+        formatter.unitStyle = .medium
+        
+        switch unitSystem {
+        case .metric:
+            return formatter.string(fromValue: weight, unit: .kilogram)
+        case .imperial:
+            let pounds = weight * 2.20462
+            return formatter.string(fromValue: pounds, unit: .pound)
+        }
     }
     
     // Computed property for biological sex

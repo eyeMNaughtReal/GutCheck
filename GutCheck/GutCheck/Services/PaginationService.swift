@@ -73,7 +73,7 @@ class PaginationService<T: Codable & Identifiable>: ObservableObject {
     ) async {
         guard !paginationState.isLoading else { return }
         
-        await updatePaginationState { state in
+        updatePaginationState { state in
             PaginationState(
                 isLoading: true,
                 hasMoreData: state.hasMoreData,
@@ -114,7 +114,7 @@ class PaginationService<T: Codable & Identifiable>: ObservableObject {
     ) async {
         guard !paginationState.isLoading && paginationState.hasMoreData else { return }
         
-        await updatePaginationState { state in
+        updatePaginationState { state in
             PaginationState(
                 isLoading: true,
                 hasMoreData: state.hasMoreData,
@@ -226,7 +226,7 @@ class PaginationService<T: Codable & Identifiable>: ObservableObject {
     }
     
     private func handleError(_ error: Error) async {
-        await updatePaginationState { state in
+        updatePaginationState { state in
             PaginationState(
                 isLoading: false,
                 hasMoreData: state.hasMoreData,

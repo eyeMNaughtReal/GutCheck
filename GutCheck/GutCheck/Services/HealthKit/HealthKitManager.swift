@@ -45,6 +45,9 @@ final class HealthKitManager {
 
             if let biologicalSex = try? healthStore.biologicalSex().biologicalSex {
                 healthData.biologicalSex = biologicalSex
+                print("HealthKit: Retrieved biological sex: \(biologicalSex)")
+            } else {
+                print("HealthKit: No biological sex data available")
             }
 
             let group = DispatchGroup()

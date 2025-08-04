@@ -46,6 +46,7 @@ struct CalendarView: View {
             }
         }
         .onAppear {
+            print("📱 CalendarView: onAppear")
             if let date = selectedDate {
                 viewModel.setDate(date)
             }
@@ -53,6 +54,12 @@ struct CalendarView: View {
             viewModel.loadSymptoms()
         }
         .onChange(of: viewModel.selectedDate) { _, _ in
+            print("📅 CalendarView: Date changed to \(viewModel.selectedDate)")
+            viewModel.loadMeals()
+            viewModel.loadSymptoms()
+        }
+        .refreshable {
+            print("🔄 CalendarView: Manual refresh triggered")
             viewModel.loadMeals()
             viewModel.loadSymptoms()
         }
@@ -145,12 +152,26 @@ class CalendarViewModel: ObservableObject {
         }
     }
 
-    // Public method to load symptoms (mock implementation)
+    // Public method to load symptoms from Firebase
     func loadSymptoms() {
         isLoadingSymptoms = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            self.symptoms = self.generateMockSymptoms(for: self.selectedDate)
-            self.isLoadingSymptoms = false
+        print("📅 CalendarView: Loading symptoms for date: \(selectedDate)")
+        Task {
+            do {
+                let loadedSymptoms = try await SymptomRepository.shared.getSymptoms(for: selectedDate)
+                print("📊 CalendarView: Loaded \(loadedSymptoms.count) symptoms from Firebase")
+                await MainActor.run {
+                    self.symptoms = loadedSymptoms
+                    self.isLoadingSymptoms = false
+                    print("📊 CalendarView: Updated UI with \(self.symptoms.count) symptoms")
+                }
+            } catch {
+                print("❌ CalendarView: Error loading symptoms: \(error)")
+                await MainActor.run {
+                    self.symptoms = []
+                    self.isLoadingSymptoms = false
+                }
+            }
         }
     }
     
@@ -293,19 +314,6 @@ class CalendarViewModel: ObservableObject {
             items.append(foodItem)
         }
         return items
-    }
-    private func generateMockSymptoms(for date: Date) -> [Symptom] {
-        let count = Int.random(in: 0...2)
-        var symptoms: [Symptom] = []
-        let notesList = ["Bloating", "Abdominal Pain", "Nausea", "Headache", "Fatigue"]
-        for i in 0..<count {
-            // let name = names.randomElement()! // unused
-            // let severity = Int.random(in: 1...5) // unused
-            let time = Calendar.current.date(byAdding: .minute, value: i * 120, to: date) ?? date
-            let symptom = Symptom(id: UUID().uuidString, date: time, stoolType: .type3, painLevel: .mild, urgencyLevel: .none, notes: i < notesList.count ? notesList[i] : nil, tags: ["mock"], createdBy: "testUser")
-            symptoms.append(symptom)
-        }
-        return symptoms.sorted { $0.date < $1.date }
     }
 }
 

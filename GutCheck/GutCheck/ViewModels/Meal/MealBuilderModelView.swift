@@ -162,7 +162,7 @@ class MealBuilderViewModel: ObservableObject {
                 )
                 
                 // Save to repository (using the new repository pattern)
-                try await mealRepository.saveWithFoodItems(meal)
+                try await mealRepository.save(meal)
                 
                 // Update UI
                 await MainActor.run {

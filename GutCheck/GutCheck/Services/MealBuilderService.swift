@@ -123,7 +123,12 @@ class MealBuilderService: ObservableObject {
         
         Swift.print("💾 MealBuilderService: Saving meal '\(meal.name)' with \(meal.foodItems.count) items")
         
-        try await mealRepository.saveWithFoodItems(meal)
+        try await mealRepository.save(meal)
+        
+        // Trigger dashboard refresh after successful save
+        await MainActor.run {
+            NavigationCoordinator.shared.refreshDashboard()
+        }
         
         // Clear after successful save
         clearMeal()

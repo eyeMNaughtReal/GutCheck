@@ -13,6 +13,7 @@ struct OnboardingHealthKitStep: View {
 
             VStack(alignment: .leading) {
                 Label("📅 Date of Birth", systemImage: "calendar")
+                Label("👤 Biological Sex", systemImage: "person")
                 Label("📏 Height", systemImage: "ruler")
                 Label("⚖️ Weight", systemImage: "scalemass")
             }

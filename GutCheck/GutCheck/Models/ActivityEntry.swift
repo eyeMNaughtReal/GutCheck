@@ -28,7 +28,7 @@ struct ActivityEntry: Identifiable, Hashable {
             if symptom.urgencyLevel != .none {
                 components.append("Urgency: \(symptom.urgencyLevel.description)")
             }
-            return components.isEmpty ? nil : components.joined(separator: " • ")
+            return components.isEmpty ? nil : components.joined(separator: "\n")
         }
     }
     

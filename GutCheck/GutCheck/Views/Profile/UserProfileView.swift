@@ -1,25 +1,60 @@
 
 import SwiftUI
 import PhotosUI
-// MARK: - Supporting Types (file scope)
 
-enum UnitSystem: String, CaseIterable {
-    case metric, imperial
-    var displayName: String {
-        switch self {
-        case .metric: return "Metric"
-        case .imperial: return "Imperial"
+// MARK: - Supporting Components
+
+struct ProfileImageView: View {
+    let user: User
+    @Binding var profileImage: UIImage?
+    @Binding var showImagePicker: Bool
+    
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            Button(action: { showImagePicker = true }) {
+                profileImageContent
+            }
+            .buttonStyle(PlainButtonStyle())
+            .sheet(isPresented: $showImagePicker) {
+                ImagePicker(image: $profileImage)
+            }
+            
+            // Pro badge
+            Text("Pro")
+                .font(.caption2.bold())
+                .foregroundColor(.white)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 4)
+                .background(Capsule().fill(ColorTheme.accent))
+                .offset(y: 18)
         }
+        .padding(.top, 32)
+        .padding(.bottom, 12)
     }
-}
-
-enum AppLanguage: String, CaseIterable {
-    case english, spanish, french
-    var displayName: String {
-        switch self {
-        case .english: return "English"
-        case .spanish: return "Spanish"
-        case .french: return "French"
+    
+    @ViewBuilder
+    private var profileImageContent: some View {
+        if let image = profileImage {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 110, height: 110)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(ColorTheme.accent, lineWidth: 5))
+        } else {
+            Circle()
+                .strokeBorder(ColorTheme.accent, lineWidth: 5)
+                .frame(width: 110, height: 110)
+                .background(
+                    Circle()
+                        .fill(ColorTheme.cardBackground)
+                        .frame(width: 110, height: 110)
+                )
+                .overlay(
+                    Text(user.initials)
+                        .font(.system(size: 36, weight: .bold))
+                        .foregroundColor(ColorTheme.accent)
+                )
         }
     }
 }
@@ -51,6 +86,72 @@ struct ImagePicker: UIViewControllerRepresentable {
     }
 }
 
+struct ProfileInfoSection: View {
+    let user: User
+    @EnvironmentObject var settingsVM: SettingsViewModel
+    
+    var body: some View {
+        VStack(spacing: 24) {
+            HStack(spacing: 20) {
+                ProfileInfoCard(title: "Gender", value: user.genderString, icon: "person.fill")
+                ProfileInfoCard(title: "Age", value: ageString, icon: "calendar")
+            }
+            HStack(spacing: 20) {
+                ProfileInfoCard(title: "Weight", value: user.formattedWeight(using: settingsVM.unitOfMeasure), icon: "scalemass")
+                ProfileInfoCard(title: "Height", value: user.formattedHeight(using: settingsVM.unitOfMeasure), icon: "ruler")
+            }
+        }
+        .padding(.top, 8)
+    }
+    
+    private var ageString: String {
+        if let age = user.age {
+            return "\(age) Years"
+        } else {
+            return "Not Set"
+        }
+    }
+}
+
+struct ProfileActionSection: View {
+    @Binding var showSettings: Bool
+    @Binding var showHealthData: Bool
+    @Binding var showReminder: Bool
+    let authService: AuthService
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            Button(action: { showSettings = true }) {
+                ProfileActionRow(icon: "gearshape", title: "Settings")
+            }
+
+            Button(action: { showHealthData = true }) {
+                ProfileActionRow(icon: "heart", title: "Health Data Integration")
+            }
+            
+            Button(action: { showReminder = true }) {
+                ProfileActionRow(icon: "bell.badge", title: "Reminders")
+            }
+            
+            Button(action: signOut) {
+                ProfileActionRow(icon: "arrow.right.square", title: "Sign Out", textColor: ColorTheme.error)
+            }
+        }
+    }
+    
+    private func signOut() {
+        Task {
+            do {
+                try authService.signOut()
+                dismiss()
+            } catch {
+                print("Error signing out: \(error)")
+            }
+        }
+    }
+}
+
 import PhotosUI
 
 struct UserProfileView: View {
@@ -69,104 +170,17 @@ struct UserProfileView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 32) {
-                    // Profile section
-                    VStack(spacing: 16) {
-                        ZStack(alignment: .bottom) {
-                            Button(action: { showImagePicker = true }) {
-                                if let image = profileImage {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 110, height: 110)
-                                        .clipShape(Circle())
-                                        .overlay(Circle().stroke(ColorTheme.accent, lineWidth: 5))
-                                } else {
-                                    Circle()
-                                        .strokeBorder(ColorTheme.accent, lineWidth: 5)
-                                        .frame(width: 110, height: 110)
-                                        .background(
-                                            Circle()
-                                                .fill(ColorTheme.cardBackground)
-                                                .frame(width: 110, height: 110)
-                                        )
-                                        .overlay(
-                                            Text(user.initials)
-                                                .font(.system(size: 36, weight: .bold))
-                                                .foregroundColor(ColorTheme.accent)
-                                        )
-                                }
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            .sheet(isPresented: $showImagePicker) {
-                                ImagePicker(image: $profileImage)
-                            }
-                            Text("Pro")
-                                .font(.caption2.bold())
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 4)
-                                .background(Capsule().fill(ColorTheme.accent))
-                                .offset(y: 18)
-                        }
-                        .padding(.top, 32)
-                        .padding(.bottom, 12)
-                        
-                        Text(user.fullName)
-                            .font(.title2.bold())
-                            .foregroundColor(ColorTheme.primaryText)
-                            .padding(.top, 4)
-                        
-                        Text(user.email)
-                            .font(.subheadline)
-                            .foregroundColor(ColorTheme.secondaryText)
-                            .padding(.bottom, 8)
-                    }
-
-
-
-                    // Info cards
-                    VStack(spacing: 24) {
-                        HStack(spacing: 20) {
-                            ProfileInfoCard(title: "Gender", value: user.genderString, icon: "person.fill")
-                            ProfileInfoCard(title: "Age", value: user.age != nil ? "\(user.age!) Years" : "Not Set", icon: "calendar")
-                        }
-                        HStack(spacing: 20) {
-                            ProfileInfoCard(title: "Weight", value: user.formattedWeight, icon: "scalemass")
-                            ProfileInfoCard(title: "Height", value: user.formattedHeight, icon: "ruler")
-                        }
-                    }
-                    .padding(.top, 8)
-
-                    // Action rows
-                    VStack(spacing: 12) {
-                        Button(action: { showSettings = true }) {
-                            ProfileActionRow(icon: "gearshape", title: "Settings")
-                        }
-
-                        Button(action: { showHealthData = true }) {
-                            ProfileActionRow(icon: "heart", title: "Health Data Integration")
-                        }
-                        
-                        Button(action: {
-                            showReminder = true
-                        }) {
-                            ProfileActionRow(icon: "bell.badge", title: "Reminders")
-                        }
-                        
-                        Button(action: {
-                            // Sign out action
-                            Task {
-                                do {
-                                    try authService.signOut()
-                                    dismiss()
-                                } catch {
-                                    print("Error signing out: \(error)")
-                                }
-                            }
-                        }) {
-                            ProfileActionRow(icon: "arrow.right.square", title: "Sign Out", textColor: ColorTheme.error)
-                        }
-                    }
+                    profileHeaderSection
+                    
+                    ProfileInfoSection(user: user)
+                        .environmentObject(settingsVM)
+                    
+                    ProfileActionSection(
+                        showSettings: $showSettings,
+                        showHealthData: $showHealthData, 
+                        showReminder: $showReminder,
+                        authService: authService
+                    )
                     
                     Spacer()
                 }
@@ -188,10 +202,32 @@ struct UserProfileView: View {
             }
             .sheet(isPresented: $showHealthData) {
                 HealthDataIntegrationView()
+                    .environmentObject(settingsVM)
+                    .environmentObject(authService)
             }
             .sheet(isPresented: $showReminder) {
                 UserRemindersView()
             }
+        }
+    }
+    
+    private var profileHeaderSection: some View {
+        VStack(spacing: 16) {
+            ProfileImageView(
+                user: user,
+                profileImage: $profileImage,
+                showImagePicker: $showImagePicker
+            )
+            
+            Text(user.fullName)
+                .font(.title2.bold())
+                .foregroundColor(ColorTheme.primaryText)
+                .padding(.top, 4)
+            
+            Text(user.email)
+                .font(.subheadline)
+                .foregroundColor(ColorTheme.secondaryText)
+                .padding(.bottom, 8)
         }
     }
 }

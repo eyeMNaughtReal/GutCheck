@@ -7,7 +7,9 @@ import FirebaseAuth
 
 struct DashboardView: View {
     @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     @StateObject private var dashboardStore = DashboardDataStore(preview: false)
+    @StateObject private var recentActivityViewModel = RecentActivityViewModel()
     @State private var showProfileSheet = false
     @State private var showCalendar = false
     @State private var selectedCalendarDate: Date? = nil
@@ -27,7 +29,10 @@ struct DashboardView: View {
                         }
                         
                         // Combined Today's Summary and Activity
-                        TodaysActivitySummaryView(selectedDate: dashboardStore.selectedDate)
+                        TodaysActivitySummaryView(
+                            viewModel: recentActivityViewModel,
+                            selectedDate: dashboardStore.selectedDate
+                        )
 
                         if let insight = dashboardStore.insightMessage {
                             InsightsCardView(message: insight)
@@ -64,6 +69,41 @@ struct DashboardView: View {
                 .navigationDestination(isPresented: $showCalendar) {
                     if let date = selectedCalendarDate {
                         CalendarView(selectedDate: date)
+                    }
+                }
+                .onAppear {
+                    print("📱 DashboardView: onAppear - checking auth state and loading data")
+                    if authService.isAuthenticated && authService.currentUser != nil {
+                        print("📱 DashboardView: User is authenticated with currentUser, loading recent activity data")
+                        recentActivityViewModel.loadRecentActivity(for: dashboardStore.selectedDate, authService: authService)
+                    } else {
+                        print("📱 DashboardView: User not fully authenticated yet (isAuth: \(authService.isAuthenticated), currentUser: \(authService.currentUser != nil)), waiting for auth state change")
+                    }
+                }
+                .onChange(of: authService.isAuthenticated) { _, isAuthenticated in
+                    print("🔐 DashboardView: Authentication state changed to \(isAuthenticated)")
+                    if isAuthenticated && authService.currentUser != nil {
+                        print("🔐 DashboardView: User authenticated with currentUser, loading recent activity data")
+                        recentActivityViewModel.loadRecentActivity(for: dashboardStore.selectedDate, authService: authService)
+                    }
+                }
+                .onChange(of: authService.currentUser) { _, currentUser in
+                    print("👤 DashboardView: CurrentUser changed to \(currentUser?.id ?? "nil")")
+                    if authService.isAuthenticated && currentUser != nil {
+                        print("👤 DashboardView: CurrentUser is now available, loading recent activity data")
+                        recentActivityViewModel.loadRecentActivity(for: dashboardStore.selectedDate, authService: authService)
+                    }
+                }
+                .onChange(of: dashboardStore.selectedDate) { _, newDate in
+                    print("📅 DashboardView: Date changed to \(newDate) - reloading recent activity")
+                    if authService.isAuthenticated && authService.currentUser != nil {
+                        recentActivityViewModel.loadRecentActivity(for: newDate, authService: authService)
+                    }
+                }
+                .onChange(of: navigationCoordinator.shouldRefreshDashboard) { _, _ in
+                    print("🔄 DashboardView: Refresh triggered by NavigationCoordinator")
+                    if authService.isAuthenticated && authService.currentUser != nil {
+                        recentActivityViewModel.loadRecentActivity(for: dashboardStore.selectedDate, authService: authService)
                     }
                 }
             }

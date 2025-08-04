@@ -39,6 +39,28 @@ class CalendarDetailViewModel: ObservableObject {
         }
     }
     
+    func deleteSymptom(_ symptom: Symptom) async {
+        do {
+            try await SymptomRepository.shared.delete(id: symptom.id)
+            // Remove from local array
+            symptoms.removeAll { $0.id == symptom.id }
+        } catch {
+            print("Error deleting symptom: \(error)")
+        }
+    }
+    
+    func updateSymptom(_ updatedSymptom: Symptom) async {
+        do {
+            try await SymptomRepository.shared.save(updatedSymptom)
+            // Update in local array
+            if let index = symptoms.firstIndex(where: { $0.id == updatedSymptom.id }) {
+                symptoms[index] = updatedSymptom
+            }
+        } catch {
+            print("Error updating symptom: \(error)")
+        }
+    }
+    
     private func analyzeDayData() async {
         do {
             // For now, use the existing analyzeFoodItems method

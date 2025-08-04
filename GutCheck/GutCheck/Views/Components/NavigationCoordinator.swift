@@ -14,6 +14,7 @@ class NavigationCoordinator: ObservableObject {
     // Published properties for navigation state
     @Published var selectedTab: Tab = .dashboard // Using shared Tab enum
     @Published private(set) var isResettingNavigation = false
+    @Published var shouldRefreshDashboard = false // Add this for dashboard refresh
     
     func resetToRoot() {
         // Reset any navigation state, active sheets, etc.
@@ -140,6 +141,12 @@ class NavigationCoordinator: ObservableObject {
     
     func dismissSettings() {
         isShowingSettings = false
+    }
+    
+    // Method to trigger dashboard data refresh
+    func refreshDashboard() {
+        print("🔄 NavigationCoordinator: Triggering dashboard refresh")
+        shouldRefreshDashboard.toggle()
     }
 }
 

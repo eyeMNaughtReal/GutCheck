@@ -3,7 +3,7 @@ import FirebaseFirestore
 import FirebaseAuth
 
 struct TodaysActivitySummaryView: View {
-    @StateObject private var viewModel = RecentActivityViewModel()
+    @ObservedObject var viewModel: RecentActivityViewModel
     @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     @EnvironmentObject var authService: AuthService
     let selectedDate: Date
@@ -57,13 +57,23 @@ struct TodaysActivitySummaryView: View {
                 }
             }
             
-            // Summary counts (always visible)
+            // Summary counts (always visible) - Fixed alignment
             HStack(spacing: 16) {
-                Label("\(mealsCount) Meals", systemImage: "fork.knife")
-                    .foregroundColor(ColorTheme.accent)
+                HStack(spacing: 4) {
+                    Image(systemName: "fork.knife")
+                        .foregroundColor(ColorTheme.accent)
+                    Text("\(mealsCount) Meals")
+                        .foregroundColor(ColorTheme.accent)
+                }
+                
                 Spacer()
-                Label("\(symptomsCount) Symptoms", systemImage: "exclamationmark.triangle")
-                    .foregroundColor(ColorTheme.warning)
+                
+                HStack(spacing: 4) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .foregroundColor(ColorTheme.warning)
+                    Text("\(symptomsCount) Symptoms")
+                        .foregroundColor(ColorTheme.warning)
+                }
             }
             .font(.subheadline)
             
@@ -91,11 +101,9 @@ struct TodaysActivitySummaryView: View {
         .background(ColorTheme.cardBackground)
         .cornerRadius(12)
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
-        .onAppear {
+        .refreshable {
+            print("🔄 TodaysActivitySummaryView: Manual refresh triggered")
             viewModel.loadRecentActivity(for: selectedDate, authService: authService)
-        }
-        .onChange(of: selectedDate) { _, newDate in
-            viewModel.loadRecentActivity(for: newDate, authService: authService)
         }
     }
     
@@ -111,8 +119,11 @@ struct TodaysActivitySummaryView: View {
 
 // MARK: - Preview
 #Preview {
-    TodaysActivitySummaryView(selectedDate: Date())
-        .environmentObject(NavigationCoordinator())
-        .environmentObject(PreviewAuthService())
-        .padding()
+    TodaysActivitySummaryView(
+        viewModel: RecentActivityViewModel(),
+        selectedDate: Date()
+    )
+    .environmentObject(NavigationCoordinator())
+    .environmentObject(PreviewAuthService())
+    .padding()
 }

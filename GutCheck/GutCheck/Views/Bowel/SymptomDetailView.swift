@@ -6,13 +6,6 @@
 //
 
 
-//
-//  SymptomDetailView.swift
-//  GutCheck
-//
-//  Created on 7/14/25.
-//
-
 import SwiftUI
 
 struct SymptomDetailView: View {
@@ -22,6 +15,8 @@ struct SymptomDetailView: View {
 
     @State private var isEditing = false
     @State private var showDeleteAlert = false
+    @StateObject private var viewModel = SymptomDetailViewModel()
+    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         ScrollView {
@@ -134,16 +129,34 @@ struct SymptomDetailView: View {
         .alert("Delete Symptom?", isPresented: $showDeleteAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {
-                onDelete?(symptom)
+                if let onDelete = onDelete {
+                    onDelete(symptom)
+                } else {
+                    Task {
+                        await viewModel.deleteSymptom(symptom)
+                        dismiss()
+                    }
+                }
             }
         } message: {
             Text("Are you sure you want to delete this symptom? This action cannot be undone.")
         }
         .sheet(isPresented: $isEditing) {
-            SymptomEditView(symptom: symptom) { updatedSymptom in
-                onEdit?(updatedSymptom)
-                isEditing = false
-            }
+            SymptomEditView(
+                symptom: symptom,
+                onSave: { updatedSymptom in
+                    if let onEdit = onEdit {
+                        onEdit(updatedSymptom)
+                    } else {
+                        Task {
+                            await viewModel.updateSymptom(updatedSymptom)
+                        }
+                    }
+                },
+                onComplete: {
+                    isEditing = false
+                }
+            )
         }
     }
 

@@ -123,16 +123,26 @@ class LogSymptomViewModel: ObservableObject {
             createdBy: userId
         )
         
+        print("🕐 LogSymptom: Symptom date: \(symptomDate)")
+        print("📝 LogSymptom: Current date: \(Date())")
+        print("🗓️ LogSymptom: Same day check: \(Calendar.current.isDate(symptomDate, inSameDayAs: Date()))")
+        
         Task {
             do {
                 // Use repository instead of direct Firestore calls
+                print("💾 LogSymptom: Saving symptom with ID: \(symptom.id), date: \(symptom.date), user: \(symptom.createdBy)")
                 try await symptomRepository.save(symptom)
+                print("✅ LogSymptom: Successfully saved symptom to Firebase")
                 
                 await MainActor.run {
                     self.isSaving = false
                     self.showingSuccessAlert = true
+                    
+                    // Trigger dashboard refresh after successful save
+                    NavigationCoordinator.shared.refreshDashboard()
                 }
             } catch {
+                print("❌ LogSymptom: Error saving symptom: \(error)")
                 await MainActor.run {
                     self.isSaving = false
                     self.errorMessage = error.localizedDescription
