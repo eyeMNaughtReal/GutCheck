@@ -47,9 +47,22 @@ final class LogMealViewModel: ObservableObject {
             createdBy: userId
         )
 
-            // TODO: Save to Firebase/Core Data
-            print("Saved meal: \(newMeal)")
+        do {
+            // Save to Firebase via MealRepository
+            try await MealRepository.shared.save(newMeal)
+            print("✅ LogMealViewModel: Successfully saved meal to Firebase")
+            
+            // Trigger dashboard refresh after successful save
+            await MainActor.run {
+                NavigationCoordinator.shared.refreshDashboard()
+            }
+            
             self.reset()
+        } catch {
+            print("❌ LogMealViewModel: Error saving meal: \(error)")
+            self.isSaving = false
+            throw error
+        }
     }
 
     // MARK: - Reset form after save

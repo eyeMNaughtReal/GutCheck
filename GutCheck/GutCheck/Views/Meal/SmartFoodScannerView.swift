@@ -91,7 +91,9 @@ struct SmartFoodScannerView: View {
             MealBuilderView()
         }
         .sheet(isPresented: $showingSearchFallback) {
-            FoodSearchView()
+            NavigationStack {
+                FoodSearchView()
+            }
         }
     }
     

@@ -274,6 +274,7 @@ struct TagSelectionView: View {
 }
 
 struct LogSymptomView: View {
+    @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var authService: AuthService
     @StateObject private var coordinator = LogSymptomViewModel()
     @State private var showProfileSheet = false
@@ -322,7 +323,9 @@ struct LogSymptomView: View {
                 SymptomInfoViews(infoType: infoType)
             }
             .alert("Symptom Saved", isPresented: $coordinator.showingSuccessAlert) {
-                Button("OK") { }
+                Button("OK") { 
+                    dismiss()
+                }
             } message: {
                 Text("Your symptom has been successfully logged.")
             }

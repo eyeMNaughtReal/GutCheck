@@ -119,12 +119,14 @@ struct MealLoggingOptionsView: View {
         }
         // Present each view as a sheet instead of using navigation
         .sheet(isPresented: $showingSearchView) {
-            FoodSearchView { foodItem in
-                // Add food item to meal and close both sheets
-                MealBuilderService.shared.addFoodItem(foodItem)
-                dismiss() // Close the MealLoggingOptionsView
+            NavigationStack {
+                FoodSearchView { foodItem in
+                    // Add food item to meal and close both sheets
+                    MealBuilderService.shared.addFoodItem(foodItem)
+                    dismiss() // Close the MealLoggingOptionsView
+                }
+                .environmentObject(navigationCoordinator)
             }
-            .environmentObject(navigationCoordinator)
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
         }

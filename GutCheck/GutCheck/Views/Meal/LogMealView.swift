@@ -158,9 +158,11 @@ struct LogMealView: View {
             .navigationTitle("Log Meal")
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $viewModel.showFoodSearch) { 
-                FoodSearchView { selectedFood in
-                    viewModel.foodItems.append(selectedFood)
-                    viewModel.showFoodSearch = false
+                NavigationStack {
+                    FoodSearchView { selectedFood in
+                        viewModel.foodItems.append(selectedFood)
+                        viewModel.showFoodSearch = false
+                    }
                 }
             }
         }
