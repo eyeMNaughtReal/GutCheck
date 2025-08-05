@@ -92,4 +92,4 @@ GutCheck is a SwiftUI-based iOS app for gastrointestinal symptom tracking, meal 
 
 ---
 
-_Last Updated: July 2025_
+_Last Updated: August 2025_

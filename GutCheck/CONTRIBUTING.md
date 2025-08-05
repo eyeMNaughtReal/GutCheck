@@ -50,3 +50,41 @@ If you find a bug or have a feature request:
 ```bash
 git clone https://github.com/YOUR-USERNAME/GutCheck.git
 cd GutCheck
+```
+
+2. Open the project in Xcode:
+
+```bash
+open GutCheck/GutCheck.xcodeproj
+```
+
+3. Ensure you have the required dependencies installed via Swift Package Manager.
+
+4. Add your `GoogleService-Info.plist` file (see setup instructions).
+
+5. Build and run the project.
+
+---
+
+## Development Guidelines
+
+### Code Organization
+- Follow the MVVM architecture pattern
+- Use dependency injection for services
+- Keep views focused on UI, move business logic to ViewModels
+- Use Services for external integrations (Firebase, HealthKit, etc.)
+
+### Testing
+- Write unit tests for ViewModels and Services
+- Add UI tests for critical user flows
+- Test on both simulator and physical devices
+- Ensure LiDAR features work on compatible devices
+
+### Documentation
+- Document complex business logic
+- Update README when adding major features
+- Keep architecture documentation current
+
+---
+
+Thank you for contributing to GutCheck!

@@ -128,4 +128,4 @@ This project’s CI workflow is inspired by open-source examples:
 
 ---
 
-_Last Updated: July 2025_
+_Last Updated: August 2025_
