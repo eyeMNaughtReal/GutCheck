@@ -186,7 +186,7 @@ class AuthService: AuthenticationProtocol {
                 createdAt: Date()
             )
             
-            try await firestore.collection("users").document(result.user.uid).setData([
+            try await FirebaseCollectionManager.shared.userDocument(result.user.uid).setData([
                 "email": email,
                 "firstName": firstName,
                 "lastName": lastName,
@@ -290,7 +290,7 @@ class AuthService: AuthenticationProtocol {
     private func loadCurrentUser(userId: String) async {
         do {
             print("👤 AuthService: Loading user data for \(userId)")
-            let document = try await firestore.collection("users").document(userId).getDocument()
+            let document = try await FirebaseCollectionManager.shared.userDocument(userId).getDocument()
             if let data = document.data() {
                 let user = try parseUser(from: data, id: userId)
                 print("👤 AuthService: Loaded user - profileImageURL: \(user.profileImageURL ?? "nil")")
@@ -313,7 +313,7 @@ class AuthService: AuthenticationProtocol {
             "updatedAt": FieldValue.serverTimestamp()
         ]
         
-        try await firestore.collection("users").document(userId).setData(userData, merge: true)
+        try await FirebaseCollectionManager.shared.userDocument(userId).setData(userData, merge: true)
         
         // Return a User object
         return User(
@@ -330,7 +330,7 @@ class AuthService: AuthenticationProtocol {
             throw AuthError.noUser
         }
         
-        try await firestore.collection("users").document(currentFirebaseUser.uid).updateData(updatedUser.toFirestoreData())
+        try await FirebaseCollectionManager.shared.userDocument(currentFirebaseUser.uid).updateData(updatedUser.toFirestoreData())
         currentUser = updatedUser
     }
     
@@ -379,18 +379,18 @@ class AuthService: AuthenticationProtocol {
         let batch = firestore.batch()
         
         // Delete user document
-        let userRef = firestore.collection("users").document(userId)
+        let userRef = FirebaseCollectionManager.shared.userDocument(userId)
         batch.deleteDocument(userRef)
         
         // Delete user's meals
-        let mealsQuery = firestore.collection("meals").whereField("userId", isEqualTo: userId)
+        let mealsQuery = FirebaseCollectionManager.shared.queryMealsByUser(userId)
         let mealsSnapshot = try await mealsQuery.getDocuments()
         for document in mealsSnapshot.documents {
             batch.deleteDocument(document.reference)
         }
         
         // Delete user's symptoms
-        let symptomsQuery = firestore.collection("symptoms").whereField("userId", isEqualTo: userId)
+        let symptomsQuery = FirebaseCollectionManager.shared.querySymptomsByUser(userId)
         let symptomsSnapshot = try await symptomsQuery.getDocuments()
         for document in symptomsSnapshot.documents {
             batch.deleteDocument(document.reference)

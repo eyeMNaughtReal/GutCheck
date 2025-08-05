@@ -103,7 +103,7 @@ class MealBuilderService: ObservableObject {
             throw MealBuilderError.noFoodItems
         }
         
-        guard let userId = FirebaseManager.shared.currentUser?.uid else {
+        guard let userId = AuthenticationManager.shared.currentUserId else {
             throw MealBuilderError.notAuthenticated
         }
         

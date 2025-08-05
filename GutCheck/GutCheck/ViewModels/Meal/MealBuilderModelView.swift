@@ -141,7 +141,7 @@ class MealBuilderViewModel: ObservableObject {
         Task {
             do {
                 // Ensure user is authenticated
-                guard let userId = Auth.auth().currentUser?.uid else {
+                guard let userId = AuthenticationManager.shared.currentUserId else {
                     await MainActor.run {
                         self.errorMessage = "User not authenticated"
                         self.isSaving = false

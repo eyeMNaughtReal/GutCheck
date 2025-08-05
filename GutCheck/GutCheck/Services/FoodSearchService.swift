@@ -6,10 +6,10 @@
 import Foundation
 
 @MainActor
-class FoodSearchService: ObservableObject {
+class FoodSearchService: ObservableObject, HasLoadingState {
     @Published var results: [NutritionixFood] = []
-    @Published var isLoading = false
-    @Published var errorMessage: String? = nil
+    
+    let loadingState = LoadingStateManager()
     
     private let baseURL = "https://trackapi.nutritionix.com/v2"
     private let appId = NutritionixSecrets.appId
@@ -18,8 +18,20 @@ class FoodSearchService: ObservableObject {
 
     func searchFoods(query: String) async {
         results = []
-        isLoading = true
-        errorMessage = nil
+        loadingState.startLoading()
+        
+        do {
+            try await performSearch(query: query)
+            loadingState.clearError()
+        } catch {
+            print("❌ FoodSearchService: Search failed with error: \(error)")
+            loadingState.setError(error.localizedDescription)
+        }
+        
+        loadingState.stopLoading()
+    }
+    
+    private func performSearch(query: String) async throws {
         
         print("🔍 FoodSearchService: Starting enhanced search for '\(query)'")
         print("🔍 Will search both Nutritionix and OpenFoodFacts APIs")
@@ -42,10 +54,8 @@ class FoodSearchService: ObservableObject {
             
         } catch {
             print("🔍 Combined search error: \(error)")
-            errorMessage = error.localizedDescription
+            throw error
         }
-        
-        isLoading = false
         print("🔍 Enhanced search complete. Final results count: \(results.count)")
     }
     

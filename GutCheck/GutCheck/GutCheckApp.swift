@@ -40,8 +40,7 @@ struct GutCheckApp: App {
     
     static private func testFirebaseConnection() async {
         do {
-            let db = Firestore.firestore()
-            let testDoc = db.collection("test").document("connection")
+            let testDoc = FirebaseCollectionManager.shared.testDocument("connection")
             let _ = try await testDoc.getDocument()
             print("✅ Firebase connection test successful")
         } catch {

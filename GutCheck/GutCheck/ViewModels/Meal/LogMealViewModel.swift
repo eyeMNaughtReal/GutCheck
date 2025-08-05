@@ -28,7 +28,7 @@ final class LogMealViewModel: ObservableObject {
     func saveMeal() async throws {
         isSaving = true
         
-        guard let userId = FirebaseManager.shared.currentUser?.uid else {
+        guard let userId = AuthenticationManager.shared.currentUserId else {
             throw FirebaseError.notAuthenticated
         }
         

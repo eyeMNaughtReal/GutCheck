@@ -5,7 +5,7 @@ struct ProfileAvatarButton: View {
     let size: CGFloat
     let action: () -> Void
     
-    @StateObject private var profileImageService = LocalProfileImageService()
+    @StateObject private var profileImageService = UnifiedProfileImageService(strategy: LocalProfileImageStrategy())
     @State private var profileImage: UIImage?
     @State private var isLoadingImage = false
     
@@ -90,7 +90,8 @@ struct ProfileAvatarButton: View {
         }
         
         // Check if user has a local profile image
-        if profileImageService.hasLocalProfileImage(for: user.id) {
+        if let localStrategy = profileImageService.strategy as? LocalProfileImageStrategy,
+           localStrategy.hasLocalProfileImage(for: user.id) {
             let localImagePath = "local://profile_\(user.id).jpg"
             print("🖼️ ProfileAvatarButton: Loading local profile image: \(localImagePath)")
             isLoadingImage = true

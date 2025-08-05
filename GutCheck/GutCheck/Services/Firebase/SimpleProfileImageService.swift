@@ -109,7 +109,7 @@ class SimpleProfileImageService: ObservableObject {
     // MARK: - Firestore Updates
     
     private func updateUserProfileImageURL(userId: String, imageURL: String) async throws {
-        let userRef = firestore.collection("users").document(userId)
+        let userRef = FirebaseCollectionManager.shared.userDocument(userId)
         
         try await userRef.updateData([
             "profileImageURL": imageURL,
@@ -118,7 +118,7 @@ class SimpleProfileImageService: ObservableObject {
     }
     
     private func removeProfileImageURL(for userId: String) async throws {
-        let userRef = firestore.collection("users").document(userId)
+        let userRef = FirebaseCollectionManager.shared.userDocument(userId)
         
         try await userRef.updateData([
             "profileImageURL": FieldValue.delete(),

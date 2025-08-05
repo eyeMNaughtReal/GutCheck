@@ -93,7 +93,7 @@ class BaseFirebaseRepository<T: FirestoreModel>: FirebaseRepository {
     // MARK: - CRUD Operations
     
     func save(_ item: Model) async throws {
-        guard let userId = Auth.auth().currentUser?.uid else {
+        guard let userId = AuthenticationManager.shared.currentUserId else {
             throw RepositoryError.noAuthenticatedUser
         }
         
@@ -302,7 +302,7 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
     
     // Convenience method for CalendarView
     func getSymptoms(for date: Date) async throws -> [Symptom] {
-        guard let userId = Auth.auth().currentUser?.uid else {
+        guard let userId = AuthenticationManager.shared.currentUserId else {
             print("❌ SymptomRepository: No authenticated user")
             throw RepositoryError.noAuthenticatedUser
         }

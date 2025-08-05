@@ -113,7 +113,7 @@ class ProfileImageService: ObservableObject {
     
     /// Update user's profile image URL in Firestore
     private func updateUserProfileImageURL(userId: String, imageURL: String) async throws {
-        let userRef = firestore.collection("users").document(userId)
+        let userRef = FirebaseCollectionManager.shared.userDocument(userId)
         
         try await userRef.updateData([
             "profileImageURL": imageURL,
@@ -123,7 +123,7 @@ class ProfileImageService: ObservableObject {
     
     /// Remove profile image URL from user document
     func removeProfileImageURL(for userId: String) async throws {
-        let userRef = firestore.collection("users").document(userId)
+        let userRef = FirebaseCollectionManager.shared.userDocument(userId)
         
         try await userRef.updateData([
             "profileImageURL": FieldValue.delete(),
@@ -181,29 +181,3 @@ class ProfileImageService: ObservableObject {
     }
 }
 
-// MARK: - Error Types
-enum ProfileImageError: LocalizedError {
-    case imageCompressionFailed
-    case invalidURL
-    case imageDecodingFailed
-    case uploadFailed
-    case uploadFailedWithMessage(String)
-    case downloadFailed(String)
-    
-    var errorDescription: String? {
-        switch self {
-        case .imageCompressionFailed:
-            return "Failed to compress image for upload"
-        case .invalidURL:
-            return "Invalid image URL"
-        case .imageDecodingFailed:
-            return "Failed to decode image data"
-        case .uploadFailed:
-            return "Upload failed"
-        case .uploadFailedWithMessage(let message):
-            return "Upload failed: \(message)"
-        case .downloadFailed(let message):
-            return "Download failed: \(message)"
-        }
-    }
-}

@@ -155,7 +155,7 @@ class CalendarViewModel: ObservableObject {
         print("📅 CalendarView: Loading meals for date: \(selectedDate)")
         Task {
             do {
-                guard let userId = Auth.auth().currentUser?.uid else {
+                guard let userId = AuthenticationManager.shared.currentUserId else {
                     print("❌ CalendarView: No authenticated user for meals")
                     await MainActor.run {
                         self.meals = []

@@ -27,15 +27,15 @@ enum MealFilter: String, CaseIterable {
 }
 
 @MainActor
-class MealHistoryViewModel: ObservableObject {
+class MealHistoryViewModel: ObservableObject, HasLoadingState {
     @Published var groupedMeals: [Date: [Meal]] = [:]
-    @Published var isLoading = false
-    @Published var isLoadingMore = false
     @Published var hasMoreData = true
     @Published var error: Error?
     @Published var selectedFilter: MealFilter = .all
     @Published var startDate: Date?
     @Published var endDate: Date?
+    
+    let loadingState = LoadingStateManager()
     
     private let firebaseManager = FirebaseManager.shared
     private var lastDocument: DocumentSnapshot?
@@ -99,9 +99,9 @@ class MealHistoryViewModel: ObservableObject {
     }
     
     func loadMoreMeals() async {
-        guard !isLoadingMore && hasMoreData && !isLoading else { return }
+        guard !loadingState.isLoadingMore && hasMoreData && !isLoading else { return }
         
-        isLoadingMore = true
+        loadingState.startLoadingMore()
         
         do {
             var additionalFilters: [String: Any] = [:]
@@ -153,7 +153,7 @@ class MealHistoryViewModel: ObservableObject {
             self.error = error
         }
         
-        self.isLoadingMore = false
+        loadingState.stopLoadingMore()
     }
     
     func refreshMeals(filter: MealFilter = .all) async {

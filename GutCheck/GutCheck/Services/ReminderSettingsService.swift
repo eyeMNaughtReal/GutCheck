@@ -25,7 +25,7 @@ class ReminderSettingsService: ObservableObject {
     // MARK: - Public Methods
     
     func loadReminderSettings() async {
-        guard let userId = Auth.auth().currentUser?.uid else {
+        guard let userId = AuthenticationManager.shared.currentUserId else {
             errorMessage = "User not authenticated"
             return
         }
@@ -54,7 +54,7 @@ class ReminderSettingsService: ObservableObject {
     }
     
     func saveReminderSettings(_ settings: ReminderSettings) async {
-        guard let userId = Auth.auth().currentUser?.uid else {
+        guard let userId = AuthenticationManager.shared.currentUserId else {
             errorMessage = "User not authenticated"
             return
         }
@@ -99,7 +99,7 @@ class ReminderSettingsService: ObservableObject {
     // MARK: - Private Methods
     
     private func createDefaultSettings() async {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
+        guard let userId = AuthenticationManager.shared.currentUserId else { return }
         
         let defaultSettings = ReminderSettings(createdBy: userId)
         await saveReminderSettings(defaultSettings)

@@ -86,7 +86,7 @@ class LogSymptomViewModel: ObservableObject {
             return
         }
         
-        guard let userId = Auth.auth().currentUser?.uid else {
+        guard let userId = AuthenticationManager.shared.currentUserId else {
             errorMessage = "You must be signed in to save symptoms."
             showingErrorAlert = true
             return

@@ -8,7 +8,7 @@ struct ProfileImageView: View {
     let user: User
     @Binding var profileImage: UIImage?
     @Binding var showImagePicker: Bool
-    @StateObject private var profileImageService = LocalProfileImageService()
+    @StateObject private var profileImageService = UnifiedProfileImageService(strategy: LocalProfileImageStrategy())
     @State private var isLoadingImage = false
     @State private var showingUploadError = false
     
@@ -122,7 +122,8 @@ struct ProfileImageView: View {
     
     private func loadExistingProfileImage() {
         // Check if user has a local profile image
-        if profileImageService.hasLocalProfileImage(for: user.id) {
+        if let localStrategy = profileImageService.strategy as? LocalProfileImageStrategy,
+           localStrategy.hasLocalProfileImage(for: user.id) {
             let localImagePath = "local://profile_\(user.id).jpg"
             isLoadingImage = true
             
