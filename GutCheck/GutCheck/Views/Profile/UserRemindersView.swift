@@ -2,38 +2,34 @@ import SwiftUI
 import UserNotifications
 
 struct UserRemindersView: View {
-    @AppStorage("mealReminderEnabled") private var mealReminderEnabled = false
-    @AppStorage("mealReminderTime") private var mealReminderTime = Date()
-    @AppStorage("symptomReminderEnabled") private var symptomReminderEnabled = false
-    @AppStorage("symptomReminderTime") private var symptomReminderTime = Date()
-    @AppStorage("remindMeLaterInterval") private var remindMeLaterInterval = 15
-    @AppStorage("weeklyInsightEnabled") private var weeklyInsightEnabled = false
-    @AppStorage("weeklyInsightTime") private var weeklyInsightTime = Date()
+    @StateObject private var reminderService = ReminderSettingsService.shared
+    @State private var localSettings = ReminderSettings()
+    @State private var showingSaveConfirmation = false
     
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
                 ReminderSection(title: "Daily Reminders", color: ColorTheme.accent) {
-                    Toggle("Daily Meal Reminder", isOn: $mealReminderEnabled)
+                    Toggle("Daily Meal Reminder", isOn: $localSettings.mealReminderEnabled)
                         .toggleStyle(SwitchToggleStyle(tint: ColorTheme.accent))
                     
-                    if mealReminderEnabled {
-                        DatePicker("Time", selection: $mealReminderTime, displayedComponents: .hourAndMinute)
+                    if localSettings.mealReminderEnabled {
+                        DatePicker("Time", selection: $localSettings.mealReminderTime, displayedComponents: .hourAndMinute)
                             .accentColor(ColorTheme.accent)
                     }
                     
-                    Toggle("Daily Symptom Reminder", isOn: $symptomReminderEnabled)
+                    Toggle("Daily Symptom Reminder", isOn: $localSettings.symptomReminderEnabled)
                         .toggleStyle(SwitchToggleStyle(tint: ColorTheme.accent))
                     
-                    if symptomReminderEnabled {
-                        DatePicker("Time", selection: $symptomReminderTime, displayedComponents: .hourAndMinute)
+                    if localSettings.symptomReminderEnabled {
+                        DatePicker("Time", selection: $localSettings.symptomReminderTime, displayedComponents: .hourAndMinute)
                             .accentColor(ColorTheme.accent)
                     }
                     
                     HStack {
                         Text("Remind Me Later Interval")
                         Spacer()
-                        Picker("Interval", selection: $remindMeLaterInterval) {
+                        Picker("Interval", selection: $localSettings.remindMeLaterInterval) {
                             ForEach([5, 10, 15, 30, 60, 90, 120, 240, 300], id: \.self) { min in
                                 Text("\(min) min").tag(min)
                             }
@@ -44,78 +40,76 @@ struct UserRemindersView: View {
                 }
                 
                 ReminderSection(title: "AI Insights", color: ColorTheme.secondary) {
-                    Toggle("Weekly Insight Summary", isOn: $weeklyInsightEnabled)
+                    Toggle("Weekly Insight Summary", isOn: $localSettings.weeklyInsightEnabled)
                         .toggleStyle(SwitchToggleStyle(tint: ColorTheme.secondary))
                     
-                    if weeklyInsightEnabled {
-                        DatePicker("Time", selection: $weeklyInsightTime, displayedComponents: .hourAndMinute)
+                    if localSettings.weeklyInsightEnabled {
+                        DatePicker("Time", selection: $localSettings.weeklyInsightTime, displayedComponents: .hourAndMinute)
                             .accentColor(ColorTheme.secondary)
                     }
                 }
                 
                 Button(action: saveReminders) {
-                    Text("Save Reminders")
-                        .fontWeight(.semibold)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(ColorTheme.accent)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
+                    HStack(spacing: 8) {
+                        if reminderService.isLoading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.9)
+                        } else {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.title3)
+                        }
+                        
+                        Text(reminderService.isLoading ? "Saving..." : "Save Reminders")
+                            .fontWeight(.semibold)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(ColorTheme.accent)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
                 }
+                .disabled(reminderService.isLoading)
             }
             .padding()
         }
         .background(ColorTheme.background.ignoresSafeArea())
         .navigationTitle("Reminders")
-    }
-
-    private func saveReminders() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, _ in
-            if granted {
-                scheduleNotifications()
+        .onAppear {
+            loadReminderSettings()
+        }
+        .alert("Reminders Saved", isPresented: $showingSaveConfirmation) {
+            Button("OK") { }
+        } message: {
+            Text("Your reminder settings have been saved and notifications scheduled.")
+        }
+        .alert("Error", isPresented: .constant(reminderService.errorMessage != nil)) {
+            Button("OK") { 
+                reminderService.errorMessage = nil
+            }
+        } message: {
+            if let errorMessage = reminderService.errorMessage {
+                Text(errorMessage)
             }
         }
     }
-    
-    private func scheduleNotifications() {
-        let center = UNUserNotificationCenter.current()
-        center.removeAllPendingNotificationRequests()
-        
-        if mealReminderEnabled {
-            let content = UNMutableNotificationContent()
-            content.title = "Meal Reminder"
-            content.body = "Don't forget to log your meals!"
-            let trigger = calendarTrigger(for: mealReminderTime)
-            let request = UNNotificationRequest(identifier: "mealReminder", content: content, trigger: trigger)
-            center.add(request)
-        }
-        
-        if symptomReminderEnabled {
-            let content = UNMutableNotificationContent()
-            content.title = "Symptom Reminder"
-            content.body = "Don't forget to log your symptoms!"
-            let trigger = calendarTrigger(for: symptomReminderTime)
-            let request = UNNotificationRequest(identifier: "symptomReminder", content: content, trigger: trigger)
-            center.add(request)
-        }
-        
-        if weeklyInsightEnabled {
-            let content = UNMutableNotificationContent()
-            content.title = "Weekly Insight"
-            content.body = "Check your AI-powered weekly health insights!"
-            let trigger = calendarTrigger(for: weeklyInsightTime, weekday: 2) // Monday
-            let request = UNNotificationRequest(identifier: "weeklyInsight", content: content, trigger: trigger)
-            center.add(request)
+
+    private func loadReminderSettings() {
+        Task {
+            await reminderService.loadReminderSettings()
+            if let settings = reminderService.reminderSettings {
+                localSettings = settings
+            }
         }
     }
-    
-    private func calendarTrigger(for date: Date, weekday: Int? = nil) -> UNCalendarNotificationTrigger {
-        let calendar = Calendar.current
-        var dateComponents = calendar.dateComponents([.hour, .minute], from: date)
-        if let weekday = weekday {
-            dateComponents.weekday = weekday
+
+    private func saveReminders() {
+        Task {
+            await reminderService.saveReminderSettings(localSettings)
+            if reminderService.errorMessage == nil {
+                showingSaveConfirmation = true
+            }
         }
-        return UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
     }
 }
 

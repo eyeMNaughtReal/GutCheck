@@ -134,6 +134,9 @@ class LogSymptomViewModel: ObservableObject {
                 try await symptomRepository.save(symptom)
                 print("✅ LogSymptom: Successfully saved symptom to Firebase")
                 
+                // Write to HealthKit
+                await self.writeToHealthKit(symptom)
+                
                 await MainActor.run {
                     self.isSaving = false
                     self.showingSuccessAlert = true
@@ -148,6 +151,20 @@ class LogSymptomViewModel: ObservableObject {
                     self.errorMessage = error.localizedDescription
                     self.showingErrorAlert = true
                 }
+            }
+        }
+    }
+    
+    // MARK: - HealthKit Integration
+    private func writeToHealthKit(_ symptom: Symptom) async {
+        await withCheckedContinuation { continuation in
+            HealthKitManager.shared.writeSymptomToHealthKit(symptom) { success, error in
+                if success {
+                    print("✅ LogSymptomViewModel: Successfully wrote symptom to HealthKit")
+                } else if let error = error {
+                    print("⚠️ LogSymptomViewModel: HealthKit write failed: \(error.localizedDescription)")
+                }
+                continuation.resume()
             }
         }
     }

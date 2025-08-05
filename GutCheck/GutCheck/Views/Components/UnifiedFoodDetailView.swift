@@ -7,11 +7,43 @@
 import SwiftUI
 import Foundation
 
+enum ServingUnit: String, CaseIterable, Identifiable {
+    case serving = "serving"
+    case grams = "g"
+    case ounces = "oz"
+    case cups = "cup"
+    case tablespoons = "tbsp"
+    case teaspoons = "tsp"
+    case pounds = "lb"
+    case milliliters = "ml"
+    case liters = "L"
+    case pieces = "piece"
+    
+    var id: String { rawValue }
+    
+    var displayName: String {
+        switch self {
+        case .serving: return "Serving"
+        case .grams: return "Grams"
+        case .ounces: return "Ounces"
+        case .cups: return "Cups"
+        case .tablespoons: return "Tablespoons"
+        case .teaspoons: return "Teaspoons"
+        case .pounds: return "Pounds"
+        case .milliliters: return "Milliliters"
+        case .liters: return "Liters"
+        case .pieces: return "Pieces"
+        }
+    }
+}
+
 struct UnifiedFoodDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var foodItem: FoodItem
     @State private var servingMultiplier: Double = 1.0
     @State private var customQuantity: String = ""
+    @State private var quantityText: String = "1.0"
+    @State private var selectedUnit: ServingUnit = .serving
     @StateObject private var detailService = FoodDetailService.shared
     
     private let config: FoodDetailConfig
@@ -27,6 +59,10 @@ struct UnifiedFoodDetailView: View {
         self._customQuantity = State(initialValue: foodItem.quantity)
         self.onUpdate = onUpdate
         
+        // Parse initial quantity and unit from foodItem.quantity
+        var initialQuantity = "1.0"
+        var initialUnit = ServingUnit.serving
+        
         // Try to detect if this is already an adjusted serving size
         // Look for the "× " pattern in the quantity string
         if foodItem.quantity.contains("×") {
@@ -34,8 +70,27 @@ struct UnifiedFoodDetailView: View {
             if let multiplierString = components.first?.trimmingCharacters(in: CharacterSet.whitespaces),
                let detectedMultiplier = Double(multiplierString) {
                 self._servingMultiplier = State(initialValue: detectedMultiplier)
+                initialQuantity = String(format: "%.1f", detectedMultiplier)
+            }
+        } else {
+            // Parse quantity like "1 cup", "2.5 servings", etc.
+            let parts = foodItem.quantity.components(separatedBy: " ")
+            if let firstPart = parts.first, let quantity = Double(firstPart) {
+                initialQuantity = String(format: "%.1f", quantity)
+                if parts.count > 1 {
+                    let unitString = parts.dropFirst().joined(separator: " ").lowercased()
+                    // Try to match with our enum cases
+                    if let matchedUnit = ServingUnit.allCases.first(where: { unit in
+                        unitString.contains(unit.rawValue) || unitString.contains(unit.displayName.lowercased())
+                    }) {
+                        initialUnit = matchedUnit
+                    }
+                }
             }
         }
+        
+        self._quantityText = State(initialValue: initialQuantity)
+        self._selectedUnit = State(initialValue: initialUnit)
     }
     
     var body: some View {
@@ -126,9 +181,6 @@ struct UnifiedFoodDetailView: View {
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
-            .onChange(of: servingMultiplier) { _, newValue in
-                updateNutritionForServing(multiplier: newValue)
-            }
         }
     }
     
@@ -196,14 +248,41 @@ struct UnifiedFoodDetailView: View {
                 .font(.headline)
                 .foregroundColor(ColorTheme.primaryText)
             
-            HStack {
-                Text("Amount:")
-                    .font(.subheadline)
+            VStack(spacing: 16) {
+                // Quantity input row
+                HStack {
+                    Text("Amount:")
+                        .font(.subheadline)
+                        .foregroundColor(ColorTheme.primaryText)
+                    
+                    Spacer()
+                    
+                    TextField("1.0", text: $quantityText)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .keyboardType(.decimalPad)
+                        .frame(width: 80)
+                        .onChange(of: quantityText) { _, newValue in
+                            updateServingFromInput()
+                        }
+                }
                 
-                Stepper(value: $servingMultiplier, in: 0.1...10.0, step: 0.1) {
-                    Text(String(format: "%.1f", servingMultiplier))
-                        .font(.headline)
-                        .foregroundColor(ColorTheme.primary)
+                // Unit selection row
+                HStack {
+                    Text("Unit:")
+                        .font(.subheadline)
+                        .foregroundColor(ColorTheme.primaryText)
+                    
+                    Spacer()
+                    
+                    Picker("Unit", selection: $selectedUnit) {
+                        ForEach(ServingUnit.allCases) { unit in
+                            Text(unit.displayName).tag(unit)
+                        }
+                    }
+                    .pickerStyle(MenuPickerStyle())
+                    .onChange(of: selectedUnit) { _, _ in
+                        updateServingFromInput()
+                    }
                 }
             }
             .padding()
@@ -385,6 +464,24 @@ struct UnifiedFoodDetailView: View {
     }
     
     // MARK: - Helper Methods
+    
+    private func updateServingFromInput() {
+        guard let quantity = Double(quantityText), quantity > 0 else {
+            return
+        }
+        
+        // Update serving multiplier based on text input
+        servingMultiplier = quantity
+        updateNutritionForServing(multiplier: quantity)
+        
+        // Update the custom quantity string with unit
+        if quantity == 1.0 {
+            customQuantity = "1 \(selectedUnit.rawValue)"
+        } else {
+            customQuantity = "\(String(format: "%.1f", quantity)) \(selectedUnit.rawValue)"
+        }
+        foodItem.quantity = customQuantity
+    }
     
     private func updateNutritionForServing(multiplier: Double) {
         // Update all nutrition values based on serving multiplier

@@ -85,6 +85,16 @@ struct AddWaterView: View {
         // Add to meal builder service
         MealBuilderService.shared.addFoodItem(waterItem)
         
+        // Write water intake to HealthKit
+        let millilitersAmount = cups * 236.6
+        HealthKitManager.shared.writeWaterIntakeToHealthKit(amount: millilitersAmount) { success, error in
+            if success {
+                print("✅ AddWaterView: Successfully wrote water intake to HealthKit: \(millilitersAmount)ml")
+            } else if let error = error {
+                print("⚠️ AddWaterView: HealthKit water write failed: \(error.localizedDescription)")
+            }
+        }
+        
         // Provide haptic feedback
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()

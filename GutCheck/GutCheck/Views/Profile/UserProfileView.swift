@@ -8,6 +8,9 @@ struct ProfileImageView: View {
     let user: User
     @Binding var profileImage: UIImage?
     @Binding var showImagePicker: Bool
+    @StateObject private var profileImageService = LocalProfileImageService()
+    @State private var isLoadingImage = false
+    @State private var showingUploadError = false
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -15,8 +18,36 @@ struct ProfileImageView: View {
                 profileImageContent
             }
             .buttonStyle(PlainButtonStyle())
+            .disabled(profileImageService.isUploading)
             .sheet(isPresented: $showImagePicker) {
                 ImagePicker(image: $profileImage)
+            }
+            .onChange(of: profileImage) { _, newImage in
+                if let image = newImage {
+                    uploadProfileImage(image)
+                }
+            }
+            .onAppear {
+                loadExistingProfileImage()
+            }
+            
+            // Upload progress indicator
+            if profileImageService.isUploading {
+                VStack(spacing: 8) {
+                    ProgressView(value: profileImageService.uploadProgress)
+                        .progressViewStyle(CircularProgressViewStyle(tint: ColorTheme.accent))
+                        .scaleEffect(0.8)
+                    
+                    Text("Uploading...")
+                        .font(.caption2)
+                        .foregroundColor(ColorTheme.accent)
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(ColorTheme.surface.opacity(0.9))
+                )
+                .offset(y: -20)
             }
             
             // Pro badge
@@ -30,31 +61,104 @@ struct ProfileImageView: View {
         }
         .padding(.top, 32)
         .padding(.bottom, 12)
+        .alert("Upload Error", isPresented: $showingUploadError) {
+            Button("OK") { }
+        } message: {
+            Text(profileImageService.errorMessage ?? "Failed to upload profile image")
+        }
     }
     
     @ViewBuilder
     private var profileImageContent: some View {
-        if let image = profileImage {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
+        ZStack {
+            if let image = profileImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 110, height: 110)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(ColorTheme.accent, lineWidth: 5))
+            } else {
+                Circle()
+                    .strokeBorder(ColorTheme.accent, lineWidth: 5)
+                    .frame(width: 110, height: 110)
+                    .background(
+                        Circle()
+                            .fill(ColorTheme.cardBackground)
+                            .frame(width: 110, height: 110)
+                    )
+                    .overlay(
+                        Group {
+                            if isLoadingImage {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: ColorTheme.accent))
+                            } else {
+                                Text(user.initials)
+                                    .font(.system(size: 36, weight: .bold))
+                                    .foregroundColor(ColorTheme.accent)
+                            }
+                        }
+                    )
+            }
+            
+            // Camera icon overlay
+            if !profileImageService.isUploading {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(Circle().fill(ColorTheme.accent))
+                            .offset(x: -8, y: -8)
+                    }
+                }
                 .frame(width: 110, height: 110)
-                .clipShape(Circle())
-                .overlay(Circle().stroke(ColorTheme.accent, lineWidth: 5))
-        } else {
-            Circle()
-                .strokeBorder(ColorTheme.accent, lineWidth: 5)
-                .frame(width: 110, height: 110)
-                .background(
-                    Circle()
-                        .fill(ColorTheme.cardBackground)
-                        .frame(width: 110, height: 110)
-                )
-                .overlay(
-                    Text(user.initials)
-                        .font(.system(size: 36, weight: .bold))
-                        .foregroundColor(ColorTheme.accent)
-                )
+            }
+        }
+    }
+    
+    private func loadExistingProfileImage() {
+        // Check if user has a local profile image
+        if profileImageService.hasLocalProfileImage(for: user.id) {
+            let localImagePath = "local://profile_\(user.id).jpg"
+            isLoadingImage = true
+            
+            Task {
+                do {
+                    let image = try await profileImageService.downloadProfileImage(from: localImagePath)
+                    await MainActor.run {
+                        self.profileImage = image
+                        self.isLoadingImage = false
+                    }
+                } catch {
+                    await MainActor.run {
+                        self.isLoadingImage = false
+                        print("Failed to load profile image: \(error)")
+                    }
+                }
+            }
+        }
+    }
+    
+    private func uploadProfileImage(_ image: UIImage) {
+        Task {
+            do {
+                let imageURL = try await profileImageService.uploadProfileImage(image, for: user.id)
+                await MainActor.run {
+                    // Update the local profile image immediately
+                    self.profileImage = image
+                }
+                print("✅ Profile image uploaded successfully: \(imageURL)")
+                
+            } catch {
+                await MainActor.run {
+                    self.showingUploadError = true
+                    print("❌ Failed to upload profile image: \(error)")
+                }
+            }
         }
     }
 }

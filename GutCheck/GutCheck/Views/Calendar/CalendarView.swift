@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import FirebaseAuth
 
 // Using shared Tab enum from Core models
 import Foundation // Required for Tab enum
@@ -40,7 +41,7 @@ struct CalendarView: View {
         .navigationTitle(title)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                ProfileAvatarButton {
+                ProfileAvatarButton(user: authService.currentUser) {
                     navigationCoordinator.isShowingProfile = true
                 }
             }
@@ -55,6 +56,11 @@ struct CalendarView: View {
         }
         .onChange(of: viewModel.selectedDate) { _, _ in
             print("📅 CalendarView: Date changed to \(viewModel.selectedDate)")
+            viewModel.loadMeals()
+            viewModel.loadSymptoms()
+        }
+        .onChange(of: navigationCoordinator.shouldRefreshDashboard) { _, _ in
+            print("🔄 CalendarView: Refresh triggered by NavigationCoordinator")
             viewModel.loadMeals()
             viewModel.loadSymptoms()
         }
@@ -143,12 +149,34 @@ class CalendarViewModel: ObservableObject {
         selectedDate.formattedDate
     }
 
-    // Public method to load meals (mock implementation)
+    // Public method to load meals from Firebase
     func loadMeals() {
         isLoadingMeals = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-            self.meals = self.generateMockMeals(for: self.selectedDate)
-            self.isLoadingMeals = false
+        print("📅 CalendarView: Loading meals for date: \(selectedDate)")
+        Task {
+            do {
+                guard let userId = Auth.auth().currentUser?.uid else {
+                    print("❌ CalendarView: No authenticated user for meals")
+                    await MainActor.run {
+                        self.meals = []
+                        self.isLoadingMeals = false
+                    }
+                    return
+                }
+                let loadedMeals = try await MealRepository.shared.fetchMealsForDate(selectedDate, userId: userId)
+                print("🍽️ CalendarView: Loaded \(loadedMeals.count) meals from Firebase")
+                await MainActor.run {
+                    self.meals = loadedMeals
+                    self.isLoadingMeals = false
+                    print("🍽️ CalendarView: Updated UI with \(self.meals.count) meals")
+                }
+            } catch {
+                print("❌ CalendarView: Error loading meals: \(error)")
+                await MainActor.run {
+                    self.meals = []
+                    self.isLoadingMeals = false
+                }
+            }
         }
     }
 
@@ -179,9 +207,9 @@ class CalendarViewModel: ObservableObject {
     func loadCalendarData(for date: Date) async {
         await MainActor.run {
             self.selectedDate = date
-            self.generateCalendarDays(for: date)
             self.loadMeals()
             self.loadSymptoms()
+            self.generateCalendarDays(for: date)
         }
     }
     
@@ -201,119 +229,25 @@ class CalendarViewModel: ObservableObject {
             components.day = day
             guard let dayDate = calendar.date(from: components) else { continue }
             
-            // Mock some entry types for demonstration
-            let hasEntries = Int.random(in: 1...10) > 7 // 30% chance of having entries
-            let entryTypes: Set<CalendarDay.EntryType> = hasEntries ? 
-                (Int.random(in: 1...3) == 1 ? [.meals] : 
-                 Int.random(in: 1...3) == 2 ? [.symptom] : [.both]) : []
+            // Check if this is the selected date to determine if we have real data
+            let hasMealsData = calendar.isDate(dayDate, inSameDayAs: selectedDate) && !meals.isEmpty
+            let hasSymptomsData = calendar.isDate(dayDate, inSameDayAs: selectedDate) && !symptoms.isEmpty
+            
+            var entryTypes: Set<CalendarDay.EntryType> = []
+            if hasMealsData { entryTypes.insert(.meals) }
+            if hasSymptomsData { entryTypes.insert(.symptom) }
+            if hasMealsData && hasSymptomsData { entryTypes.insert(.both) }
             
             let calendarDay = CalendarDay(
                 date: dayDate,
                 isCurrentMonth: true,
-                hasEntries: hasEntries,
+                hasEntries: hasMealsData || hasSymptomsData,
                 entryTypes: entryTypes
             )
             days.append(calendarDay)
         }
         
         calendarDays = days
-    }
-
-    private func generateMockMeals(for date: Date) -> [Meal] {
-        let count = Int.random(in: 0...3)
-        var meals: [Meal] = []
-        let calendar = Calendar.current
-        let components = calendar.dateComponents([.year, .month, .day], from: date)
-        for i in 0..<count {
-            var mealType: MealType
-            var hour: Int
-            switch i {
-            case 0: mealType = .breakfast; hour = 8
-            case 1: mealType = .lunch; hour = 12
-            case 2: mealType = .dinner; hour = 18
-            default: mealType = .snack; hour = 15
-            }
-            var dateComponents = components
-            dateComponents.hour = hour
-            dateComponents.minute = Int.random(in: 0...59)
-            let mealDate = calendar.date(from: dateComponents) ?? date
-            let meal = Meal(
-                name: getMealName(for: mealType),
-                date: mealDate,
-                type: mealType,
-                source: .manual,
-                foodItems: generateMockFoodItems(for: mealType),
-                notes: i == 0 ? "This is a note for the meal" : nil,
-                tags: ["mock", mealType.rawValue],
-                createdBy: "testUser"
-            )
-            meals.append(meal)
-        }
-        return meals.sorted { $0.date < $1.date }
-    }
-    private func getMealName(for type: MealType) -> String {
-        switch type {
-        case .breakfast: return ["Morning Breakfast", "Quick Breakfast", "Healthy Start"].randomElement()!
-        case .lunch: return ["Lunch Break", "Midday Meal", "Quick Lunch"].randomElement()!
-        case .dinner: return ["Evening Dinner", "Family Dinner", "Light Dinner"].randomElement()!
-        case .snack: return ["Afternoon Snack", "Quick Bite", "Protein Snack"].randomElement()!
-        case .drink: return ["Coffee Break", "Afternoon Tea", "Protein Shake"].randomElement()!
-        }
-    }
-    private func generateMockFoodItems(for mealType: MealType) -> [FoodItem] {
-        var items: [FoodItem] = []
-        let count = Int.random(in: 1...3)
-        let breakfastOptions = [
-            ("Oatmeal", "1 cup", 240.0, 158, 6.0, 27.0, 3.0),
-            ("Banana", "1 medium", 118.0, 105, 1.3, 27.0, 0.4),
-            ("Toast", "2 slices", 60.0, 170, 4.0, 30.0, 2.0),
-            ("Eggs", "2 large", 100.0, 140, 12.0, 1.0, 10.0),
-            ("Coffee", "8 oz", 240.0, 5, 0.0, 0.0, 0.0)
-        ]
-        let mainMealOptions = [
-            ("Chicken Breast", "6 oz", 170.0, 280, 54.0, 0.0, 6.0),
-            ("Rice", "1 cup", 200.0, 205, 4.0, 45.0, 0.5),
-            ("Salad", "2 cups", 100.0, 30, 2.0, 6.0, 0.0),
-            ("Pasta", "1 cup", 200.0, 220, 8.0, 43.0, 1.0),
-            ("Sandwich", "1 whole", 250.0, 350, 15.0, 40.0, 12.0)
-        ]
-        let snackOptions = [
-            ("Apple", "1 medium", 182.0, 95, 0.5, 25.0, 0.3),
-            ("Yogurt", "6 oz", 170.0, 120, 15.0, 15.0, 0.0),
-            ("Almonds", "1 oz", 28.0, 160, 6.0, 6.0, 14.0),
-            ("Protein Bar", "1 bar", 60.0, 200, 20.0, 15.0, 8.0),
-            ("Chips", "1 oz", 28.0, 150, 2.0, 15.0, 10.0)
-        ]
-        let drinkOptions = [
-            ("Coffee", "12 oz", 355.0, 5, 0.0, 0.0, 0.0),
-            ("Smoothie", "16 oz", 475.0, 250, 10.0, 45.0, 3.0),
-            ("Tea", "8 oz", 240.0, 0, 0.0, 0.0, 0.0),
-            ("Soda", "12 oz", 355.0, 150, 0.0, 39.0, 0.0),
-            ("Water", "16 oz", 475.0, 0, 0.0, 0.0, 0.0)
-        ]
-        let options: [(String, String, Double, Int, Double, Double, Double)]
-        switch mealType {
-        case .breakfast: options = breakfastOptions
-        case .lunch, .dinner: options = mainMealOptions
-        case .snack: options = snackOptions
-        case .drink: options = drinkOptions
-        }
-        for _ in 0..<count {
-            let option = options.randomElement()!
-            let foodItem = FoodItem(
-                name: option.0,
-                quantity: option.1,
-                estimatedWeightInGrams: option.2,
-                nutrition: NutritionInfo(
-                    calories: option.3,
-                    protein: option.4,
-                    carbs: option.5,
-                    fat: option.6
-                )
-            )
-            items.append(foodItem)
-        }
-        return items
     }
 }
 
@@ -326,7 +260,7 @@ struct MealCalendarRow: View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text(meal.name)
+                    Text(meal.type.rawValue.capitalized)
                         .font(.headline)
                         .foregroundColor(ColorTheme.primaryText)
                     Spacer()
@@ -334,13 +268,6 @@ struct MealCalendarRow: View {
                         .font(.subheadline)
                         .foregroundColor(ColorTheme.secondaryText)
                 }
-                Text(meal.type.rawValue.capitalized)
-                    .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(typeColor.opacity(0.2))
-                    .foregroundColor(typeColor)
-                    .cornerRadius(8)
                 if !meal.foodItems.isEmpty {
                     HStack(spacing: 4) {
                         ForEach(meal.foodItems.indices, id: \.self) { idx in

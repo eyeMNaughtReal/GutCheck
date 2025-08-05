@@ -10,7 +10,7 @@ struct ActivityEntry: Identifiable, Hashable {
     var title: String {
         switch type {
         case .meal(let meal):
-            return meal.name
+            return meal.type.rawValue.capitalized
         case .symptom:
             return "Symptom Logged"
         }

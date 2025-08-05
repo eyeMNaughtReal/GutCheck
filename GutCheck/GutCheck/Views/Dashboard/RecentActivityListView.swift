@@ -19,7 +19,8 @@ struct RecentActivityListView: View {
                 Spacer()
                 
                 Button("See All") {
-                    navigationCoordinator.navigateTo(.calendar(selectedDate))
+                    // Switch to meals tab which shows the calendar view
+                    navigationCoordinator.selectedTab = .meals
                 }
                 .font(.caption)
                 .foregroundColor(ColorTheme.primary)

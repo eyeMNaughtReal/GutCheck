@@ -18,6 +18,9 @@ struct User: Codable, Identifiable, Hashable, Equatable {
     let createdAt: Date
     let updatedAt: Date
     
+    // Profile image
+    var profileImageURL: String?
+    
     // Health data (optional) - using raw values for Codable compliance
     var dateOfBirth: Date?
     var biologicalSexRawValue: Int? // Store HKBiologicalSex as raw value

@@ -52,6 +52,9 @@ final class LogMealViewModel: ObservableObject {
             try await MealRepository.shared.save(newMeal)
             print("✅ LogMealViewModel: Successfully saved meal to Firebase")
             
+            // Write to HealthKit if nutrition data is available
+            await writeToHealthKit(newMeal)
+            
             // Trigger dashboard refresh after successful save
             await MainActor.run {
                 NavigationCoordinator.shared.refreshDashboard()
@@ -62,6 +65,20 @@ final class LogMealViewModel: ObservableObject {
             print("❌ LogMealViewModel: Error saving meal: \(error)")
             self.isSaving = false
             throw error
+        }
+    }
+    
+    // MARK: - HealthKit Integration
+    private func writeToHealthKit(_ meal: Meal) async {
+        await withCheckedContinuation { continuation in
+            HealthKitManager.shared.writeMealToHealthKit(meal) { success, error in
+                if success {
+                    print("✅ LogMealViewModel: Successfully wrote meal to HealthKit")
+                } else if let error = error {
+                    print("⚠️ LogMealViewModel: HealthKit write failed: \(error.localizedDescription)")
+                }
+                continuation.resume()
+            }
         }
     }
 

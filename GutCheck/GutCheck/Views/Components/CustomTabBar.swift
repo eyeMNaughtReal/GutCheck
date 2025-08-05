@@ -10,6 +10,7 @@ import SwiftUI
 struct CustomTabBar: View {
     @Binding var selectedTab: Tab
     let actionHandler: (TabBarAction) -> Void
+    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     
     @State private var showActions = false
     @Namespace private var animation
@@ -98,7 +99,7 @@ struct CustomTabBar: View {
                         label: tab.title,
                         isSelected: selectedTab == tab
                     ) {
-                        selectedTab = tab
+                        handleTabSelection(tab)
                     }
                 }
             }
@@ -131,6 +132,24 @@ struct CustomTabBar: View {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
                 showActions.toggle()
             }
+        }
+    }
+    
+    private func handleTabSelection(_ tab: Tab) {
+        print("🔧 CustomTabBar: Handling tab selection for \(tab)")
+        print("🔧 Current tab: \(selectedTab), switching to: \(tab)")
+        print("🔧 Current navigation path count: \(navigationCoordinator.currentNavigationPath.wrappedValue.count)")
+        
+        // If switching to a different tab, clear the current tab's navigation stack BEFORE switching
+        if selectedTab != tab {
+            // Clear the current tab's navigation stack (get the correct path for the OLD tab)
+            let currentPath = navigationCoordinator.currentNavigationPath
+            currentPath.wrappedValue = NavigationPath()
+            print("🔧 Cleared navigation stack for old tab: \(selectedTab)")
+            
+            // Switch to the new tab
+            selectedTab = tab
+            print("🔧 Switched to new tab: \(tab)")
         }
     }
 }

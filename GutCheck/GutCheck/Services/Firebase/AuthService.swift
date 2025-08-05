@@ -289,9 +289,12 @@ class AuthService: AuthenticationProtocol {
     
     private func loadCurrentUser(userId: String) async {
         do {
+            print("👤 AuthService: Loading user data for \(userId)")
             let document = try await firestore.collection("users").document(userId).getDocument()
             if let data = document.data() {
-                currentUser = try parseUser(from: data, id: userId)
+                let user = try parseUser(from: data, id: userId)
+                print("👤 AuthService: Loaded user - profileImageURL: \(user.profileImageURL ?? "nil")")
+                currentUser = user
             }
         } catch {
             print("Error loading user profile: \(error)")
@@ -426,6 +429,16 @@ class AuthService: AuthenticationProtocol {
             }
         }
         return error.localizedDescription
+    }
+    
+    /// Refresh the current user data from Firestore
+    func refreshCurrentUser() async {
+        guard let userId = authUser?.uid else { 
+            print("🔄 AuthService: No authUser.uid available for refresh")
+            return 
+        }
+        print("🔄 AuthService: Refreshing current user data...")
+        await loadCurrentUser(userId: userId)
     }
 }
 

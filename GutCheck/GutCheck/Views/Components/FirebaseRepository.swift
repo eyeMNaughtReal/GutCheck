@@ -340,6 +340,7 @@ class RepositoryManager {
     
     lazy var mealRepository: MealRepository = MealRepository.shared
     lazy var symptomRepository: SymptomRepository = SymptomRepository.shared
+    lazy var reminderSettingsRepository: ReminderSettingsRepository = ReminderSettingsRepository.shared
     
     // Add other repositories as needed
 }

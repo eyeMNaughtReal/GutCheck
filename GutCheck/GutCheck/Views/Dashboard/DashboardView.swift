@@ -51,14 +51,8 @@ struct DashboardView: View {
                 .navigationTitle("Dashboard")
                 .toolbar {
                     ToolbarItem(placement: .navigationBarTrailing) {
-                        Button(action: {
+                        ProfileAvatarButton(user: authService.currentUser) {
                             showProfileSheet = true
-                        }) {
-                            Image(systemName: "person.circle.fill")
-                                .resizable()
-                                .frame(width: 36, height: 36)
-                                .clipShape(Circle())
-                                .foregroundColor(ColorTheme.accent)
                         }
                     }
                 }

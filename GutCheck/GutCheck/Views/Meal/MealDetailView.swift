@@ -172,10 +172,10 @@ struct MealDetailView: View {
                     .padding(.horizontal)
                 }
                 
-                // Action buttons
-                HStack(spacing: 16) {
-                    if viewModel.isEditing {
-                        // Save and Cancel buttons when editing
+                // Action buttons - only show when editing (Save/Cancel)
+                if viewModel.isEditing {
+                    HStack(spacing: 16) {
+                        // Cancel button
                         Button(action: {
                             viewModel.cancelEditing()
                         }) {
@@ -192,57 +192,36 @@ struct MealDetailView: View {
                                 )
                         }
                         
+                        // Save button
                         Button(action: {
                             viewModel.saveMeal()
                         }) {
-                            Text("Save")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(ColorTheme.accent)
-                                .cornerRadius(12)
+                            HStack(spacing: 8) {
+                                if viewModel.isSaving {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .scaleEffect(0.8)
+                                }
+                                Text(viewModel.isSaving ? "Saving..." : "Save")
+                            }
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(ColorTheme.accent)
+                            .cornerRadius(12)
                         }
                         .disabled(viewModel.isSaving)
-                        
-                    } else {
-                        // Edit and Delete buttons when viewing
-                        Button(action: {
-                            viewModel.startEditing()
-                        }) {
-                            Text("Edit")
-                                .font(.headline)
-                                .foregroundColor(ColorTheme.primaryText)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(ColorTheme.surface)
-                                .cornerRadius(12)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(ColorTheme.border, lineWidth: 1)
-                                )
-                        }
-                        
-                        Button(action: {
-                            viewModel.confirmDelete()
-                        }) {
-                            Text("Delete")
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(ColorTheme.error)
-                                .cornerRadius(12)
-                        }
                     }
+                    .padding(.horizontal)
+                    .padding(.bottom, 32)
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 20)
             }
             .padding(.top, 16)
         }
         .navigationTitle(viewModel.isEditing ? "Edit Meal" : "Meal Details")
         .navigationBarTitleDisplayMode(.inline)
+        .ignoresSafeArea(.keyboard, edges: .bottom) // Allow content to scroll under keyboard
         .toolbar {
             if !viewModel.isEditing {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -250,22 +229,35 @@ struct MealDetailView: View {
                         Button(action: {
                             viewModel.startEditing()
                         }) {
-                            Label("Edit", systemImage: "pencil")
+                            Label("Edit Meal", systemImage: "pencil")
                         }
                         
-                        Button(action: {
-                            viewModel.confirmDelete()
-                        }) {
-                            Label("Delete", systemImage: "trash")
-                        }
+                        Divider()
                         
                         Button(action: {
                             viewModel.shareAsPDF()
                         }) {
                             Label("Share PDF", systemImage: "square.and.arrow.up")
                         }
+                        
+                        Divider()
+                        
+                        Button(action: {
+                            viewModel.confirmDelete()
+                        }) {
+                            Label("Delete Meal", systemImage: "trash")
+                                .foregroundColor(.red)
+                        }
                     } label: {
                         Image(systemName: "ellipsis.circle")
+                            .font(.title3)
+                    }
+                }
+            } else {
+                // When editing, add Cancel button to toolbar
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        viewModel.cancelEditing()
                     }
                 }
             }
@@ -479,18 +471,32 @@ struct EditFoodItemView: View {
             type: .breakfast,
             source: .manual,
             foodItems: [
-                FoodItem(
-                    name: "Oatmeal",
-                    quantity: "1 cup",
-                    estimatedWeightInGrams: 240,
-                    nutrition: NutritionInfo(calories: 158, protein: 6, carbs: 27, fat: 3)
-                ),
-                FoodItem(
-                    name: "Banana",
-                    quantity: "1 medium",
-                    estimatedWeightInGrams: 118,
-                    nutrition: NutritionInfo(calories: 105, protein: 1, carbs: 27, fat: 0)
-                )
+                {
+                    var oatmealNutrition = NutritionInfo()
+                    oatmealNutrition.calories = 158
+                    oatmealNutrition.protein = 6.0
+                    oatmealNutrition.carbs = 27.0
+                    oatmealNutrition.fat = 3.0
+                    return FoodItem(
+                        name: "Oatmeal",
+                        quantity: "1 cup",
+                        estimatedWeightInGrams: 240,
+                        nutrition: oatmealNutrition
+                    )
+                }(),
+                {
+                    var bananaNutrition = NutritionInfo()
+                    bananaNutrition.calories = 105
+                    bananaNutrition.protein = 1.0
+                    bananaNutrition.carbs = 27.0
+                    bananaNutrition.fat = 0.0
+                    return FoodItem(
+                        name: "Banana",
+                        quantity: "1 medium",
+                        estimatedWeightInGrams: 118,
+                        nutrition: bananaNutrition
+                    )
+                }()
             ],
             notes: "Quick breakfast before work",
             tags: ["morning", "healthy"],

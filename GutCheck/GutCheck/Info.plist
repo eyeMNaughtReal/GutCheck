@@ -6,6 +6,8 @@
 	<string></string>
 	<key>NSHealthShareUsageDescription</key>
 	<string>This app uses your health data to provide personalized nutrition and symptom insights.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>GutCheck writes nutrition data, symptoms, and digestive health information to the Health app to provide comprehensive health tracking.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>GutCheck needs access to your camera to scan food barcodes and log meals.</string>
 </dict>
