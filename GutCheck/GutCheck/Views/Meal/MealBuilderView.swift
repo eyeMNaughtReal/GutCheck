@@ -103,6 +103,9 @@ struct MealBuilderView: View {
                                     onTap: {
                                         editingFoodItem = item
                                     },
+                                    onEdit: {
+                                        editingFoodItem = item
+                                    },
                                     onDelete: {
                                         mealService.removeFoodItem(item)
                                     }
