@@ -118,7 +118,7 @@ class NavigationCoordinator: ObservableObject {
         case .settings:
             isShowingSettings = true
         case .logMeal:
-            currentNavigationPath.wrappedValue.append(.mealBuilder)
+            currentNavigationPath.wrappedValue.append(Destination.mealBuilder)
         case .mealBuilder:
             currentNavigationPath.wrappedValue.append(destination)
         case .logSymptom:
