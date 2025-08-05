@@ -98,7 +98,7 @@ jobs:
         xcodebuild clean build \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
-          -destination 'platform=iOS Simulator,name=Any iOS Simulator Device' \
+          -destination 'platform=iOS Simulator,id=dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder' \
           -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
           CODE_SIGNING_ALLOWED=NO \
           ONLY_ACTIVE_ARCH=NO
@@ -109,7 +109,7 @@ jobs:
         xcodebuild test \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
-          -destination 'platform=iOS Simulator,name=Any iOS Simulator Device' \
+          -destination 'platform=iOS Simulator,id=dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder' \
           -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
           CODE_SIGNING_ALLOWED=NO \
           ONLY_ACTIVE_ARCH=NO \
