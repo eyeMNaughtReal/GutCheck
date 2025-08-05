@@ -15,7 +15,6 @@ struct MealLoggingOptionsView: View {
     @State private var showingBarcodeScannerView = false
     @State private var showingLiDARScannerView = false
     @State private var showingRecentItemsView = false
-    @State private var showingFavoritesView = false
     @State private var showingTemplatesView = false
     @State private var showingAddWaterView = false
     
@@ -90,15 +89,6 @@ struct MealLoggingOptionsView: View {
                         showingRecentItemsView = true
                     }
                     
-                    // Favorites
-                    DropdownOptionRow(
-                        icon: "star.fill",
-                        title: "Favorites",
-                        color: ColorTheme.secondary.opacity(0.8)
-                    ) {
-                        showingFavoritesView = true
-                    }
-                    
                     // Templates
                     DropdownOptionRow(
                         icon: "square.on.square",
@@ -121,9 +111,11 @@ struct MealLoggingOptionsView: View {
         .sheet(isPresented: $showingSearchView) {
             NavigationStack {
                 FoodSearchView { foodItem in
-                    // Add food item to meal and close both sheets
+                    // Add food item to meal builder
                     MealBuilderService.shared.addFoodItem(foodItem)
-                    dismiss() // Close the MealLoggingOptionsView
+                    
+                    // Close the search sheet to return to MealBuilderView
+                    showingSearchView = false
                 }
                 .environmentObject(navigationCoordinator)
             }
@@ -151,11 +143,6 @@ struct MealLoggingOptionsView: View {
         .sheet(isPresented: $showingRecentItemsView) {
             RecentItemsView()
                 .environmentObject(navigationCoordinator)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-        }
-        .sheet(isPresented: $showingFavoritesView) {
-            FavoriteMealsView()
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
@@ -355,42 +342,6 @@ struct RecentItemsView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, minHeight: 200)
-    }
-}
-
-struct FavoriteMealsView: View {
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    Image(systemName: "star")
-                        .font(.system(size: 48))
-                        .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
-                    
-                    Text("No Favorite Meals")
-                        .font(.headline)
-                        .foregroundColor(ColorTheme.primaryText)
-                    
-                    Text("Mark meals as favorites to quickly log them again")
-                        .font(.subheadline)
-                        .foregroundColor(ColorTheme.secondaryText)
-                        .multilineTextAlignment(.center)
-                }
-                .padding()
-                .frame(maxWidth: .infinity, minHeight: 200)
-            }
-            .navigationTitle("Favorite Meals")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
-        }
     }
 }
 

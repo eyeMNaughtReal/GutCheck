@@ -92,6 +92,8 @@ struct ContentView: View {
             InsightsView()
         case .userReminders:
             UserRemindersView()
+        case .mealBuilder:
+            MealBuilderView()
         }
     }
     

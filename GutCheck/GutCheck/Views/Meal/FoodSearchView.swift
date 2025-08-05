@@ -157,8 +157,12 @@ struct FoodSearchView: View {
                             navigationPath.append(item)
                         },
                         onAdd: {
-                            // Tap on + button -> also navigate to comprehensive food detail view
-                            navigationPath.append(item)
+                            // Tap on + button -> use the callback if provided, otherwise navigate to detail view
+                            if let onSelect = onSelect {
+                                onSelect(item)
+                            } else {
+                                navigationPath.append(item)
+                            }
                         }
                     )
                 }
@@ -244,8 +248,12 @@ struct FoodSearchView: View {
                                     navigationPath.append(item)
                                 },
                                 onAdd: {
-                                    // Tap on + button -> also navigate to comprehensive food detail view
-                                    navigationPath.append(item)
+                                    // Tap on + button -> use the callback if provided, otherwise navigate to detail view
+                                    if let onSelect = onSelect {
+                                        onSelect(item)
+                                    } else {
+                                        navigationPath.append(item)
+                                    }
                                 }
                             )
                         }

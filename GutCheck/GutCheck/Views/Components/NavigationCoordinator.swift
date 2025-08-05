@@ -101,6 +101,7 @@ class NavigationCoordinator: ObservableObject {
         case foodDetail(FoodItem)
         case logMeal
         case logSymptom
+        case mealBuilder
         case calendar(Date)
         case insights
         case userReminders
@@ -117,7 +118,9 @@ class NavigationCoordinator: ObservableObject {
         case .settings:
             isShowingSettings = true
         case .logMeal:
-            isShowingMealLoggingOptions = true
+            currentNavigationPath.wrappedValue.append(.mealBuilder)
+        case .mealBuilder:
+            currentNavigationPath.wrappedValue.append(destination)
         case .logSymptom:
             currentNavigationPath.wrappedValue.append(destination)
         case .calendar, .mealDetail, .symptomDetail, .foodDetail, .insights, .userReminders:
@@ -147,6 +150,11 @@ class NavigationCoordinator: ObservableObject {
     func refreshDashboard() {
         print("🔄 NavigationCoordinator: Triggering dashboard refresh")
         shouldRefreshDashboard.toggle()
+    }
+    
+    // Method to show meal logging options from MealBuilderView
+    func showMealLoggingOptions() {
+        isShowingMealLoggingOptions = true
     }
 }
 

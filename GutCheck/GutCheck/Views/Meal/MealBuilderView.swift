@@ -9,6 +9,7 @@ import SwiftUI
 
 struct MealBuilderView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     @StateObject private var mealService = MealBuilderService.shared
     @State private var showingDatePicker = false
     @State private var showingConfirmation = false
@@ -205,12 +206,25 @@ struct MealBuilderView: View {
         }
         .navigationTitle("Build Your Meal")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    showingFoodOptions = true
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                        Text("Add Food")
+                    }
+                    .foregroundColor(ColorTheme.accent)
+                }
+            }
+        }
         .sheet(isPresented: $showingDatePicker) {
             DateTimePickerView(date: $mealService.mealDate)
         }
         .sheet(isPresented: $showingFoodOptions) {
             MealLoggingOptionsView()
-                .environmentObject(NavigationCoordinator())
+                .environmentObject(navigationCoordinator)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
