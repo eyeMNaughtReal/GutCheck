@@ -91,13 +91,17 @@ class LoadingStateManager: ObservableObject, LoadingStateManaging {
     @Published var uploadProgress: Double = 0.0
     @Published var errorMessage: String? = nil
     
-    init() {}
+    nonisolated init() {}
 }
 
 // MARK: - Specialized Loading States
 @MainActor
 class UploadLoadingStateManager: LoadingStateManager {
     @Published var isUploading: Bool = false
+    
+    override nonisolated init() {
+        super.init()
+    }
     
     func startUploading() {
         isUploading = true

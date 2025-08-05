@@ -11,14 +11,14 @@ import FirebaseFirestore
 import CryptoKit
 
 @MainActor
-class AuthService: AuthenticationProtocol {
+class AuthService: AuthenticationProtocol, HasLoadingState {
     @Published private(set) var authUser: FirebaseAuth.User?
     @Published private(set) var currentUser: User?
     @Published private(set) var isAuthenticated = false
-    @Published private(set) var isLoading = false
-    @Published var errorMessage: String?
     private var verificationId: String?
     @Published private(set) var isPhoneVerificationInProgress = false
+    
+    let loadingState = LoadingStateManager()
     
     private let auth = Auth.auth()
     private let firestore = Firestore.firestore()

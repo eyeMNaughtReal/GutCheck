@@ -10,6 +10,7 @@ struct DashboardView: View {
     @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     @StateObject private var dashboardStore = DashboardDataStore(preview: false)
     @StateObject private var recentActivityViewModel = RecentActivityViewModel()
+    @StateObject private var dataSyncManager = DataSyncManager.shared
     @State private var showProfileSheet = false
     @State private var showCalendar = false
     @State private var selectedCalendarDate: Date? = nil
@@ -94,8 +95,8 @@ struct DashboardView: View {
                         recentActivityViewModel.loadRecentActivity(for: newDate, authService: authService)
                     }
                 }
-                .onChange(of: navigationCoordinator.shouldRefreshDashboard) { _, _ in
-                    print("🔄 DashboardView: Refresh triggered by NavigationCoordinator")
+                .onChange(of: dataSyncManager.shouldRefreshDashboard) { _, _ in
+                    print("🔄 DashboardView: Refresh triggered by DataSyncManager")
                     if authService.isAuthenticated && authService.currentUser != nil {
                         recentActivityViewModel.loadRecentActivity(for: dashboardStore.selectedDate, authService: authService)
                     }

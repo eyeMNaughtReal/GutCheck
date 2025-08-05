@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 
-final class LogMealViewModel: ObservableObject {
+final class LogMealViewModel: ObservableObject, HasLoadingState {
     // MARK: - Input Properties (bound to UI)
     @Published var mealName: String = ""
     @Published var mealType: MealType = .lunch
@@ -19,16 +19,18 @@ final class LogMealViewModel: ObservableObject {
         )
     ]
     @Published var notes: String = ""
-    @Published var isSaving: Bool = false
 
     @Published private(set) var userID: String?
+    
+    let loadingState = LoadingStateManager()
 
     // MARK: - Save Function
     @MainActor
     func saveMeal() async throws {
-        isSaving = true
+        loadingState.startSaving()
         
         guard let userId = AuthenticationManager.shared.currentUserId else {
+            loadingState.setError("User not authenticated")
             throw FirebaseError.notAuthenticated
         }
         
@@ -56,33 +58,26 @@ final class LogMealViewModel: ObservableObject {
             await writeToHealthKit(newMeal)
             
             // Trigger dashboard refresh after successful save
-            await MainActor.run {
-                NavigationCoordinator.shared.refreshDashboard()
-            }
+            DataSyncManager.shared.triggerRefreshAfterSave(operation: "Meal save", dataType: .meals)
             
+            loadingState.clearError()
             self.reset()
         } catch {
             print("❌ LogMealViewModel: Error saving meal: \(error)")
-            self.isSaving = false
+            loadingState.setError(error.localizedDescription)
             throw error
         }
+        
+        loadingState.stopSaving()
     }
     
     // MARK: - HealthKit Integration
     private func writeToHealthKit(_ meal: Meal) async {
-        await withCheckedContinuation { continuation in
-            HealthKitManager.shared.writeMealToHealthKit(meal) { success, error in
-                if success {
-                    print("✅ LogMealViewModel: Successfully wrote meal to HealthKit")
-                } else if let error = error {
-                    print("⚠️ LogMealViewModel: HealthKit write failed: \(error.localizedDescription)")
-                }
-                continuation.resume()
-            }
-        }
+        await HealthKitAsyncWrapper.shared.writeMealWithLogging(meal)
     }
 
     // MARK: - Reset form after save
+    @MainActor
     func reset() {
         mealName = ""
         mealType = .lunch
@@ -98,6 +93,6 @@ final class LogMealViewModel: ObservableObject {
             )
         ]
         notes = ""
-        isSaving = false
+        loadingState.reset()
     }
 }

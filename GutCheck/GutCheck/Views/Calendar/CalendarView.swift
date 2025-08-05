@@ -14,6 +14,7 @@ struct CalendarView: View {
     @EnvironmentObject var navigationCoordinator: NavigationCoordinator
     @EnvironmentObject var authService: AuthService
     @StateObject private var viewModel = CalendarViewModel()
+    @StateObject private var dataSyncManager = DataSyncManager.shared
 
     let selectedTab: Tab?
     let selectedDate: Date?
@@ -59,8 +60,8 @@ struct CalendarView: View {
             viewModel.loadMeals()
             viewModel.loadSymptoms()
         }
-        .onChange(of: navigationCoordinator.shouldRefreshDashboard) { _, _ in
-            print("🔄 CalendarView: Refresh triggered by NavigationCoordinator")
+        .onChange(of: dataSyncManager.shouldRefreshDashboard) { _, _ in
+            print("🔄 CalendarView: Refresh triggered by DataSyncManager")
             viewModel.loadMeals()
             viewModel.loadSymptoms()
         }

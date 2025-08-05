@@ -11,7 +11,7 @@ import FirebaseAuth
 import UserNotifications
 
 @MainActor
-class LogSymptomViewModel: ObservableObject {
+class LogSymptomViewModel: ObservableObject, HasLoadingState {
     // Form state (unchanged)
     @Published var symptomDate = Date()
     @Published var selectedStoolType: StoolType?
@@ -22,10 +22,10 @@ class LogSymptomViewModel: ObservableObject {
     @Published var notes: String = ""
     
     // UI state (unchanged)
-    @Published var isSaving = false
     @Published var showingSuccessAlert = false
     @Published var showingErrorAlert = false
-    @Published var errorMessage = ""
+    
+    let loadingState = LoadingStateManager()
     
     // Available predefined tags (unchanged)
     let availableTags = [
@@ -81,25 +81,25 @@ class LogSymptomViewModel: ObservableObject {
     
     func saveSymptom() {
         guard isFormValid else {
-            errorMessage = "Please select a stool type before saving."
+            loadingState.setError("Please select a stool type before saving.")
             showingErrorAlert = true
             return
         }
         
         guard let userId = AuthenticationManager.shared.currentUserId else {
-            errorMessage = "You must be signed in to save symptoms."
+            loadingState.setError("You must be signed in to save symptoms.")
             showingErrorAlert = true
             return
         }
         
         guard let stoolType = selectedStoolType else {
-            errorMessage = "Please select a stool type."
+            loadingState.setError("Please select a stool type.")
             showingErrorAlert = true
             return
         }
         
-        isSaving = true
-        errorMessage = ""
+        loadingState.startSaving()
+        loadingState.clearError()
         
         let painLevel: PainLevel
         switch selectedPainLevel {
@@ -138,17 +138,16 @@ class LogSymptomViewModel: ObservableObject {
                 await self.writeToHealthKit(symptom)
                 
                 await MainActor.run {
-                    self.isSaving = false
+                    self.loadingState.stopSaving()
                     self.showingSuccessAlert = true
                     
                     // Trigger dashboard refresh after successful save
-                    NavigationCoordinator.shared.refreshDashboard()
+                    DataSyncManager.shared.triggerRefreshAfterSave(operation: "Symptom save", dataType: .symptoms)
                 }
             } catch {
                 print("❌ LogSymptom: Error saving symptom: \(error)")
                 await MainActor.run {
-                    self.isSaving = false
-                    self.errorMessage = error.localizedDescription
+                    self.loadingState.setError(error.localizedDescription)
                     self.showingErrorAlert = true
                 }
             }
@@ -157,16 +156,7 @@ class LogSymptomViewModel: ObservableObject {
     
     // MARK: - HealthKit Integration
     private func writeToHealthKit(_ symptom: Symptom) async {
-        await withCheckedContinuation { continuation in
-            HealthKitManager.shared.writeSymptomToHealthKit(symptom) { success, error in
-                if success {
-                    print("✅ LogSymptomViewModel: Successfully wrote symptom to HealthKit")
-                } else if let error = error {
-                    print("⚠️ LogSymptomViewModel: HealthKit write failed: \(error.localizedDescription)")
-                }
-                continuation.resume()
-            }
-        }
+        await HealthKitAsyncWrapper.shared.writeSymptomWithLogging(symptom)
     }
     
     // Other methods remain unchanged

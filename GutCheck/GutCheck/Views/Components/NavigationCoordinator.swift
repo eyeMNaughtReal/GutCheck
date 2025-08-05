@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Combine
 
 @MainActor
 class NavigationCoordinator: ObservableObject {
@@ -14,7 +15,20 @@ class NavigationCoordinator: ObservableObject {
     // Published properties for navigation state
     @Published var selectedTab: Tab = .dashboard // Using shared Tab enum
     @Published private(set) var isResettingNavigation = false
-    @Published var shouldRefreshDashboard = false // Add this for dashboard refresh
+    
+    // Data sync integration
+    private let dataSyncManager = DataSyncManager.shared
+    private var cancellables = Set<AnyCancellable>()
+    
+    // Expose data sync properties for backwards compatibility
+    var shouldRefreshDashboard: Bool {
+        dataSyncManager.shouldRefreshDashboard
+    }
+    
+    init() {
+        // Set up data sync observation
+        setupDataSyncObservation()
+    }
     
     func resetToRoot() {
         // Reset any navigation state, active sheets, etc.
@@ -148,8 +162,19 @@ class NavigationCoordinator: ObservableObject {
     
     // Method to trigger dashboard data refresh
     func refreshDashboard() {
-        print("🔄 NavigationCoordinator: Triggering dashboard refresh")
-        shouldRefreshDashboard.toggle()
+        print("🔄 NavigationCoordinator: Delegating refresh to DataSyncManager")
+        dataSyncManager.triggerRefresh()
+    }
+    
+    // Set up observation of DataSyncManager changes
+    private func setupDataSyncObservation() {
+        dataSyncManager.$shouldRefreshDashboard
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                // Trigger objectWillChange to notify views
+                self?.objectWillChange.send()
+            }
+            .store(in: &cancellables)
     }
     
     // Method to show meal logging options from MealBuilderView

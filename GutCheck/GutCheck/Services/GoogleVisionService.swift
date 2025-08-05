@@ -9,9 +9,7 @@ class GoogleVisionService {
     private init() {}
     
     func recognizeFood(from image: UIImage) async throws -> [String] {
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-            throw NSError(domain: "GoogleVisionService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert image to data"])
-        }
+        let imageData = try ImageCompressionUtility.compress(image, quality: .standard)
         
         let base64Image = imageData.base64EncodedString()
         

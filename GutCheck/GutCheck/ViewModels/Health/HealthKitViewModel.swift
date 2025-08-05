@@ -27,11 +27,7 @@ final class HealthKitViewModel: ObservableObject {
     }
 
     func requestHealthKitAccess() async {
-        let (granted, _) = await withCheckedContinuation { continuation in
-            HealthKitManager.shared.requestAuthorization { granted, error in
-                continuation.resume(returning: (granted, error))
-            }
-        }
+        let granted = await HealthKitAsyncWrapper.shared.requestAuthorizationWithLogging()
 
         if granted {
             await fetchHealthData()
@@ -42,14 +38,7 @@ final class HealthKitViewModel: ObservableObject {
     }
 
     func fetchHealthData() async {
-        await withCheckedContinuation { continuation in
-            HealthKitManager.shared.fetchUserHealthData { healthData in
-                DispatchQueue.main.async {
-                    self.healthData = healthData
-                    continuation.resume()
-                }
-            }
-        }
+        healthData = await HealthKitAsyncWrapper.shared.fetchUserHealthDataWithLogging()
     }
     
     // Update user profile with health data

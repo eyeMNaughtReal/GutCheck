@@ -31,9 +31,7 @@ class ProfileImageService: ObservableObject {
         
         do {
             // Compress and prepare image data
-            guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-                throw ProfileImageError.imageCompressionFailed
-            }
+            let imageData = try ImageCompressionUtility.compress(image, quality: .standard)
             
             // Create storage reference
             let fileName = "profile_\(userId)_\(Date().timeIntervalSince1970).jpg"

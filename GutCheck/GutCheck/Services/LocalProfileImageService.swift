@@ -27,9 +27,7 @@ class LocalProfileImageService: ObservableObject {
         }
         
         // Compress image
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-            throw NSError(domain: "ProfileImage", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to compress image"])
-        }
+        let imageData = try ImageCompressionUtility.compress(image, quality: .standard)
         
         uploadProgress = 0.3
         

@@ -132,9 +132,7 @@ class SymptomHistoryViewModel: ObservableObject {
             try await SymptomRepository.shared.save(updatedSymptom)
             
             // Trigger dashboard refresh after successful update
-            await MainActor.run {
-                NavigationCoordinator.shared.refreshDashboard()
-            }
+            DataSyncManager.shared.triggerRefreshAfterSave(operation: "Symptom update", dataType: .symptoms)
             
             // Update in grouped symptoms
             for (date, symptoms) in groupedSymptoms {

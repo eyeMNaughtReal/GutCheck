@@ -36,7 +36,7 @@ class MealConfirmationViewModel: ObservableObject {
             try await MealRepository.shared.save(meal)
             
             // Trigger dashboard refresh after successful save
-            NavigationCoordinator.shared.refreshDashboard()
+            DataSyncManager.shared.triggerRefreshAfterSave(operation: "Meal confirmation", dataType: .meals)
             
             // Additional sync can be added here in the future
             

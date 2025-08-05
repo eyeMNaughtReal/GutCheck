@@ -126,9 +126,7 @@ class MealBuilderService: ObservableObject {
         try await mealRepository.save(meal)
         
         // Trigger dashboard refresh after successful save
-        await MainActor.run {
-            NavigationCoordinator.shared.refreshDashboard()
-        }
+        DataSyncManager.shared.triggerRefreshAfterSave(operation: "Meal builder save", dataType: .meals)
         
         // Clear after successful save
         clearMeal()

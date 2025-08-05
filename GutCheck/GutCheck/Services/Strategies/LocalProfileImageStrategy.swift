@@ -15,9 +15,7 @@ class LocalProfileImageStrategy: ProfileImageStrategy {
     func uploadProfileImage(_ image: UIImage, for userId: String) async throws -> String {
         await delegate?.strategyDidUpdateProgress(0.0)
         
-        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
-            throw NSError(domain: "ProfileImage", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to compress image"])
-        }
+        let imageData = try ImageCompressionUtility.compress(image, quality: .standard)
         
         await delegate?.strategyDidUpdateProgress(0.3)
         

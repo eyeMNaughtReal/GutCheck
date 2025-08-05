@@ -332,7 +332,7 @@ struct LogSymptomView: View {
             .alert("Error", isPresented: $coordinator.showingErrorAlert) {
                 Button("OK") { }
             } message: {
-                Text(coordinator.errorMessage)
+                Text(coordinator.errorMessage ?? "An unknown error occurred.")
             }
         }
     }
