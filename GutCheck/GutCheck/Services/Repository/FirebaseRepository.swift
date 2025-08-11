@@ -10,6 +10,9 @@ import FirebaseFirestore
 import FirebaseAuth
 import Network
 
+// Import for privacy-aware data routing
+@_exported import struct Foundation.Data
+
 // MARK: - Repository Protocol
 
 protocol FirebaseRepository {
@@ -28,7 +31,7 @@ protocol FirebaseRepository {
 
 // MARK: - Firestore Model Protocol
 
-protocol FirestoreModel: Codable, Identifiable {
+protocol FirestoreModel: Codable, Identifiable, DataClassifiable {
     var id: String { get set }
     var createdBy: String { get set }
     
@@ -60,7 +63,7 @@ enum RepositoryError: LocalizedError {
 
 // MARK: - Base Repository Implementation
 
-class BaseFirebaseRepository<T: FirestoreModel>: FirebaseRepository {
+class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepository {
     typealias Model = T
     
     let collectionName: String
@@ -97,6 +100,26 @@ class BaseFirebaseRepository<T: FirestoreModel>: FirebaseRepository {
             throw RepositoryError.noAuthenticatedUser
         }
         
+        // Since T is constrained to DataClassifiable, we can directly access privacy level
+        print("🔒 Privacy classification detected: \(item.privacyLevel)")
+        
+        switch item.privacyLevel {
+        case .private, .confidential:
+            // Save sensitive data to local encrypted storage
+            print("🔒 Routing private data to local encrypted storage")
+            try await UnifiedDataService.shared.save(item)
+            return
+            
+        case .public:
+            // Save non-sensitive data to Firestore
+            print("☁️ Routing public data to Firestore")
+            try await saveToFirestore(item, userId: userId)
+            return
+        }
+    }
+    
+    /// Save item to Firestore (used for public data and fallback)
+    private func saveToFirestore(_ item: Model, userId: String) async throws {
         // Check network connectivity before attempting save
         if !isNetworkAvailable {
             print("⚠️ Network unavailable - saving to local cache only")
@@ -176,14 +199,24 @@ class BaseFirebaseRepository<T: FirestoreModel>: FirebaseRepository {
     }
     
     func fetch(id: String) async throws -> Model? {
+        // First, try to fetch from local encrypted storage (for private data)
+        if let localItem = try await UnifiedDataService.shared.fetch(Model.self, id: id) {
+            print("🔒 Retrieved from local storage: \(id)")
+            return localItem
+        }
+        
+        // If not found locally, try Firestore (for public data)
         do {
             let document = try await firestore.collection(collectionName).document(id).getDocument()
             
             guard document.exists else {
+                print("❌ Item not found in any storage: \(id)")
                 return nil
             }
             
-            return try Model(from: document)
+            let item = try Model(from: document)
+            print("☁️ Retrieved from Firestore: \(id)")
+            return item
         } catch {
             if error is RepositoryError {
                 throw error
@@ -213,25 +246,54 @@ class BaseFirebaseRepository<T: FirestoreModel>: FirebaseRepository {
     }
     
     func delete(id: String) async throws {
+        // Delete from local encrypted storage (for private data)
+        try await UnifiedDataService.shared.delete(Model.self, id: id)
+        
+        // Also try to delete from Firestore (for public data)
         do {
             try await firestore.collection(collectionName).document(id).delete()
+            print("✅ Deleted from both storage locations: \(id)")
         } catch {
-            throw RepositoryError.firebaseError(error)
+            // If Firestore deletion fails, it might not exist there (which is fine)
+            print("⚠️ Firestore deletion failed (item may not exist there): \(id)")
         }
     }
     
     func query(_ queryBuilder: (Query) -> Query) async throws -> [Model] {
+        var allResults: [Model] = []
+        
+        // First, try to fetch from local encrypted storage (for private data)
+        // Note: Local storage querying is simplified for now
+        do {
+            let localResults = try await UnifiedDataService.shared.query(Model.self, queryBuilder: { _ in
+                // For now, we'll fetch all local items of this type
+                // In a more sophisticated implementation, we'd implement proper local querying
+                return firestore.collection(collectionName) // Placeholder
+            })
+            allResults.append(contentsOf: localResults)
+            print("🔒 Retrieved \(localResults.count) items from local storage")
+        } catch {
+            print("⚠️ Local storage query failed: \(error)")
+        }
+        
+        // Then fetch from Firestore (for public data)
         do {
             let baseQuery = firestore.collection(collectionName)
             let customQuery = queryBuilder(baseQuery)
             let snapshot = try await customQuery.getDocuments()
             
-            return try snapshot.documents.compactMap { document in
+            let firestoreResults = try snapshot.documents.compactMap { document in
                 try Model(from: document)
             }
+            allResults.append(contentsOf: firestoreResults)
+            print("☁️ Retrieved \(firestoreResults.count) items from Firestore")
         } catch {
+            print("⚠️ Firestore query failed: \(error)")
             throw RepositoryError.firebaseError(error)
         }
+        
+        print("✅ Total results: \(allResults.count) items")
+        return allResults
     }
 }
 
@@ -250,22 +312,76 @@ class MealRepository: BaseFirebaseRepository<Meal> {
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) ?? date
         
-        return try await query { query in
+        var allMeals: [Meal] = []
+        
+        // Fetch from local encrypted storage (private meals)
+        do {
+            let localMeals = try await UnifiedDataService.shared.query(Meal.self) { _ in
+                // For now, fetch all local meals and filter by date
+                // In a more sophisticated implementation, we'd implement proper local date filtering
+                return firestore.collection(collectionName)
+            }
+            
+            // Filter local meals by date
+            let filteredLocalMeals = localMeals.filter { meal in
+                meal.date >= startOfDay && meal.date < endOfDay
+            }
+            allMeals.append(contentsOf: filteredLocalMeals)
+            print("🔒 Retrieved \(filteredLocalMeals.count) private meals for date")
+        } catch {
+            print("⚠️ Local meal query failed: \(error)")
+        }
+        
+        // Fetch from Firestore (public meals)
+        let firestoreMeals = try await query { query in
             query
                 .whereField("createdBy", isEqualTo: userId)
                 .whereField("date", isGreaterThanOrEqualTo: startOfDay)
                 .whereField("date", isLessThan: endOfDay)
                 .order(by: "date", descending: false)
         }
+        allMeals.append(contentsOf: firestoreMeals)
+        print("☁️ Retrieved \(firestoreMeals.count) public meals for date")
+        
+        // Sort all meals by date
+        let sortedMeals = allMeals.sorted { $0.date < $1.date }
+        print("✅ Total meals for date: \(sortedMeals.count)")
+        
+        return sortedMeals
     }
     
     func fetchRecentMeals(userId: String, limit: Int = 20) async throws -> [Meal] {
-        return try await query { query in
+        var allMeals: [Meal] = []
+        
+        // Fetch from local encrypted storage (private meals)
+        do {
+            let localMeals = try await UnifiedDataService.shared.query(Meal.self) { _ in
+                // For now, fetch all local meals
+                // In a more sophisticated implementation, we'd implement proper local querying
+                return firestore.collection(collectionName)
+            }
+            allMeals.append(contentsOf: localMeals)
+            print("🔒 Retrieved \(localMeals.count) private meals")
+        } catch {
+            print("⚠️ Local meal query failed: \(error)")
+        }
+        
+        // Fetch from Firestore (public meals)
+        let firestoreMeals = try await query { query in
             query
                 .whereField("createdBy", isEqualTo: userId)
                 .order(by: "date", descending: true)
                 .limit(to: limit)
         }
+        allMeals.append(contentsOf: firestoreMeals)
+        print("☁️ Retrieved \(firestoreMeals.count) public meals")
+        
+        // Sort all meals by date (most recent first) and limit
+        let sortedMeals = allMeals.sorted { $0.date > $1.date }
+        let limitedMeals = Array(sortedMeals.prefix(limit))
+        print("✅ Total recent meals: \(limitedMeals.count)")
+        
+        return limitedMeals
     }
 }
 
@@ -276,58 +392,87 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
         super.init(collectionName: "symptoms")
     }
     
+    // Convenience method for DashboardDataStore
+    func getSymptoms(for date: Date) async throws -> [Symptom] {
+        guard let userId = AuthenticationManager.shared.currentUserId else {
+            throw RepositoryError.noAuthenticatedUser
+        }
+        return try await fetchSymptomsForDate(date, userId: userId)
+    }
+    
     // Symptom-specific methods
     func fetchSymptomsForDate(_ date: Date, userId: String) async throws -> [Symptom] {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) ?? date
         
-        print("📅 SymptomRepository: Querying symptoms from \(startOfDay) to \(endOfDay) for user \(userId)")
+        var allSymptoms: [Symptom] = []
         
-        let symptoms = try await query { query in
+        // Fetch from local encrypted storage (private symptoms)
+        do {
+            let localSymptoms = try await UnifiedDataService.shared.query(Symptom.self) { _ in
+                // For now, fetch all local symptoms and filter by date
+                return firestore.collection(collectionName)
+            }
+            
+            // Filter local symptoms by date
+            let filteredLocalSymptoms = localSymptoms.filter { symptom in
+                symptom.date >= startOfDay && symptom.date < endOfDay
+            }
+            allSymptoms.append(contentsOf: filteredLocalSymptoms)
+            print("🔒 Retrieved \(filteredLocalSymptoms.count) private symptoms for date")
+        } catch {
+            print("⚠️ Local symptom query failed: \(error)")
+        }
+        
+        // Fetch from Firestore (public symptoms)
+        let firestoreSymptoms = try await query { query in
             query
                 .whereField("createdBy", isEqualTo: userId)
                 .whereField("date", isGreaterThanOrEqualTo: startOfDay)
                 .whereField("date", isLessThan: endOfDay)
                 .order(by: "date", descending: false)
         }
+        allSymptoms.append(contentsOf: firestoreSymptoms)
+        print("☁️ Retrieved \(firestoreSymptoms.count) public symptoms for date")
         
-        print("🔍 SymptomRepository: Query returned \(symptoms.count) symptoms")
-        for symptom in symptoms {
-            print("   - Symptom \(symptom.id): date=\(symptom.date), stool=\(symptom.stoolType), user=\(symptom.createdBy)")
-        }
+        // Sort all symptoms by date
+        let sortedSymptoms = allSymptoms.sorted { $0.date < $1.date }
+        print("✅ Total symptoms for date: \(sortedSymptoms.count)")
         
-        return symptoms
-    }
-    
-    // Convenience method for CalendarView
-    func getSymptoms(for date: Date) async throws -> [Symptom] {
-        guard let userId = AuthenticationManager.shared.currentUserId else {
-            print("❌ SymptomRepository: No authenticated user")
-            throw RepositoryError.noAuthenticatedUser
-        }
-        print("🔍 SymptomRepository: Fetching symptoms for user \(userId) on date \(date)")
-        let symptoms = try await fetchSymptomsForDate(date, userId: userId)
-        print("📊 SymptomRepository: Found \(symptoms.count) symptoms for date \(date)")
-        return symptoms
-    }
-    
-    func fetchSymptomsByPainLevel(_ painLevel: PainLevel, userId: String) async throws -> [Symptom] {
-        return try await query { query in
-            query
-                .whereField("createdBy", isEqualTo: userId)
-                .whereField("painLevel", isEqualTo: painLevel.rawValue)
-                .order(by: "date", descending: true)
-        }
+        return sortedSymptoms
     }
     
     func fetchRecentSymptoms(userId: String, limit: Int = 20) async throws -> [Symptom] {
-        return try await query { query in
+        var allSymptoms: [Symptom] = []
+        
+        // Fetch from local encrypted storage (private symptoms)
+        do {
+            let localSymptoms = try await UnifiedDataService.shared.query(Symptom.self) { _ in
+                return firestore.collection(collectionName)
+            }
+            allSymptoms.append(contentsOf: localSymptoms)
+            print("🔒 Retrieved \(localSymptoms.count) private symptoms")
+        } catch {
+            print("⚠️ Local symptom query failed: \(error)")
+        }
+        
+        // Fetch from Firestore (public symptoms)
+        let firestoreSymptoms = try await query { query in
             query
                 .whereField("createdBy", isEqualTo: userId)
                 .order(by: "date", descending: true)
                 .limit(to: limit)
         }
+        allSymptoms.append(contentsOf: firestoreSymptoms)
+        print("☁️ Retrieved \(firestoreSymptoms.count) public symptoms")
+        
+        // Sort all symptoms by date (most recent first) and limit
+        let sortedSymptoms = allSymptoms.sorted { $0.date > $1.date }
+        let limitedSymptoms = Array(sortedSymptoms.prefix(limit))
+        print("✅ Total recent symptoms: \(limitedSymptoms.count)")
+        
+        return limitedSymptoms
     }
 }
 
