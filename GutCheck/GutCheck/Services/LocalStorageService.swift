@@ -61,8 +61,21 @@ class LocalStorageService {
         let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
         let salt = "GutCheckPrivateData2025" // In production, this should be user-specific
         
-        let keyData = (deviceId + salt).data(using: .utf8)!
-        encryptionKey = SymmetricKey(data: keyData)
+        // Create a deterministic but properly sized key using SHA256
+        let combinedString = deviceId + salt
+        let keyData = Data(combinedString.utf8)
+        let hash = SHA256.hash(data: keyData)
+        
+        // Create a 256-bit key (32 bytes) from the hash
+        encryptionKey = SymmetricKey(data: hash)
+        
+        print("🔑 Generated encryption key from device ID: \(deviceId)")
+    }
+    
+    /// Regenerate encryption key (useful for recovery from key corruption)
+    private func regenerateEncryptionKey() {
+        print("🔄 Regenerating encryption key...")
+        generateEncryptionKey()
     }
     
     // MARK: - Public Methods
@@ -77,20 +90,33 @@ class LocalStorageService {
             throw LocalStorageError.encryptionKeyUnavailable
         }
         
-        // Encode the data
-        let data = try JSONEncoder().encode(item)
-        
-        // Encrypt the data
-        let encryptedData = try encrypt(data, using: encryptionKey)
-        
-        // Create file path
-        let fileName = "\(type)_\(id).encrypted"
-        let fileURL = privateDataDirectory.appendingPathComponent(fileName)
-        
-        // Write encrypted data to file
-        try encryptedData.write(to: fileURL)
-        
-        print("🔒 Stored private data: \(type)/\(id) (encrypted)")
+        do {
+            // Encode the data
+            let data = try JSONEncoder().encode(item)
+            print("🔒 Encoding data for storage: \(type)/\(id), size: \(data.count) bytes")
+            
+            // Encrypt the data
+            let encryptedData = try encrypt(data, using: encryptionKey)
+            print("🔒 Data encrypted successfully: \(encryptedData.count) bytes")
+            
+            // Create file path
+            let fileName = "\(type)_\(id).encrypted"
+            let fileURL = privateDataDirectory.appendingPathComponent(fileName)
+            
+            // Write encrypted data to file
+            try encryptedData.write(to: fileURL)
+            
+            print("🔒 Stored private data: \(type)/\(id) (encrypted)")
+        } catch let error as LocalStorageError {
+            print("❌ LocalStorage error: \(error)")
+            throw error
+        } catch {
+            print("❌ Unexpected error during encryption/storage: \(error)")
+            if let cryptoError = error as? CryptoKitError {
+                print("🔐 CryptoKit error code: \(cryptoError)")
+            }
+            throw LocalStorageError.encryptionFailed
+        }
     }
     
     /// Retrieve private data from local encrypted storage
@@ -105,26 +131,40 @@ class LocalStorageService {
             throw LocalStorageError.encryptionKeyUnavailable
         }
         
-        // Create file path
-        let fileName = "\(type)_\(id).encrypted"
-        let fileURL = privateDataDirectory.appendingPathComponent(fileName)
-        
-        // Check if file exists
-        guard fileManager.fileExists(atPath: fileURL.path) else {
-            return nil
+        do {
+            // Create file path
+            let fileName = "\(type)_\(id).encrypted"
+            let fileURL = privateDataDirectory.appendingPathComponent(fileName)
+            
+            // Check if file exists
+            guard fileManager.fileExists(atPath: fileURL.path) else {
+                print("🔍 File not found: \(fileName)")
+                return nil
+            }
+            
+            // Read encrypted data
+            let encryptedData = try Data(contentsOf: fileURL)
+            print("🔓 Reading encrypted data: \(fileName), size: \(encryptedData.count) bytes")
+            
+            // Decrypt the data
+            let decryptedData = try decrypt(encryptedData, using: encryptionKey)
+            print("🔓 Data decrypted successfully: \(decryptedData.count) bytes")
+            
+            // Decode the data
+            let item = try JSONDecoder().decode(itemType, from: decryptedData)
+            
+            print("🔓 Retrieved private data: \(type)/\(id) (decrypted)")
+            return item
+        } catch let error as LocalStorageError {
+            print("❌ LocalStorage error during retrieval: \(error)")
+            throw error
+        } catch {
+            print("❌ Unexpected error during decryption/retrieval: \(error)")
+            if let cryptoError = error as? CryptoKitError {
+                print("🔐 CryptoKit error code: \(cryptoError)")
+            }
+            throw LocalStorageError.decryptionFailed
         }
-        
-        // Read encrypted data
-        let encryptedData = try Data(contentsOf: fileURL)
-        
-        // Decrypt the data
-        let decryptedData = try decrypt(encryptedData, using: encryptionKey)
-        
-        // Decode the data
-        let item = try JSONDecoder().decode(itemType, from: decryptedData)
-        
-        print("🔓 Retrieved private data: \(type)/\(id) (decrypted)")
-        return item
     }
     
     /// Delete private data from local storage
@@ -168,6 +208,19 @@ class LocalStorageService {
         }
         
         print("🗑️ Cleared all private data")
+    }
+    
+    /// Reset encryption and clear all data (recovery from corruption)
+    func resetEncryptionAndClearData() async throws {
+        print("🔄 Resetting encryption and clearing all data...")
+        
+        // Clear all existing data
+        try await clearAllPrivateData()
+        
+        // Regenerate encryption key
+        regenerateEncryptionKey()
+        
+        print("✅ Encryption reset and data cleared")
     }
     
     // MARK: - Encryption Methods
