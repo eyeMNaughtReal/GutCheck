@@ -152,7 +152,7 @@ private struct NutritionSummaryView: View {
                 NutritionValueView(
                     label: "Calories",
                     value: "\(Int(nutrition.calories ?? 0))",
-                    unit: "kcal"
+                    unit: "calories"
                 )
                 Divider()
                 NutritionValueView(

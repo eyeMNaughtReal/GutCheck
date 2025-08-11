@@ -7,7 +7,7 @@ This document defines the complete user workflows for the GutCheck iOS applicati
 ## 🏗️ **App Structure Overview**
 
 ### **Navigation Architecture**
-- **TabView** with 4 tabs: Dashboard, Meals, Symptoms, Insights
+- **TabView** with 5 tabs: Dashboard, Meals, Symptoms, Insights, Add (+)
 - **NavigationStack** for hierarchical navigation within tabs
 - **Sheet presentations** for modal workflows (forms, profile, etc.)
 - **Quick action buttons** within views for logging
@@ -77,7 +77,7 @@ This document defines the complete user workflows for the GutCheck iOS applicati
    - Demonstrate navigation tabs
 
 2. **Log Your First Meal Tutorial:**
-   - Guided overlay on LogMealView
+   - Guided overlay on MealBuilderView
    - Step-by-step prompts:
      - "Tap here to add a meal name"
      - "Select your meal type"
@@ -98,21 +98,61 @@ This document defines the complete user workflows for the GutCheck iOS applicati
    - Highlight each tab with explanatory tooltips
    - Show how to access calendar views
    - Demonstrate the quick action buttons on Dashboard and Calendar views
-   - Show profile access via ProfileAvatarButton in top-left corner
 
-##### **1.3.4 Optional Feature Setup**
+##### **1.3.4 Dashboard Insights (Currently Implemented)**
+1. **Today's Health Score:**
+   - Visual 1-10 rating with color-coded bar
+   - Automatically calculated based on symptoms and meals
+   - Color coding: Red (1-3), Orange (4-6), Yellow (7-8), Green (9-10)
+
+2. **Today's Focus:**
+   - Actionable health tip based on current symptoms
+   - Examples: "Focus on gentle foods and stress management"
+   - "Try anti-inflammatory foods like ginger and turmeric"
+
+3. **Avoidance Tip:**
+   - Smart recommendation about what to avoid today
+   - Based on recent symptom patterns and food triggers
+   - Examples: "Consider avoiding dairy and spicy foods today"
+
+4. **Week Selector:**
+   - Browse different days without leaving dashboard
+   - All insights update for selected date
+   - Real-time data loading for historical analysis
+
+##### **1.3.5 Optional Feature Setup**
 1. **HealthKit Integration:**
    - Explanation of benefits
-   - "Enable HealthKit" vs "Skip for Now" options
-   - Privacy explanation if user chooses to enable
+   - Permission request flow
+   - Data sync options
+   - Privacy controls
 
-2. **Notification Preferences:**
+2. **Medication Tracking (Currently Implemented):**
+   - **Real-time HealthKit Integration:**
+     - Automatic medication detection via HealthKit observers
+     - Immediate updates when medications are taken
+     - Background delivery for continuous monitoring
+     - No daily polling required
+   
+   - **Privacy-First Design:**
+     - All medication data processed locally
+     - Encrypted local storage for sensitive information
+     - HealthKit UUID linking for data integrity
+     - User-controlled data sharing
+   
+   - **Smart Analysis:**
+     - Medication-symptom correlation tracking
+     - Food-medication interaction warnings
+     - Dosage timing optimization
+     - Side effect pattern recognition
+
+3. **Notification Preferences:**
    - Explain reminder benefits
    - Meal logging reminders setup
    - Symptom check-in frequency
    - "Enable Reminders" vs "Skip for Now"
 
-3. **Smart Features Preview:**
+4. **Smart Features Preview:**
    - Demo of barcode scanning (if camera permission granted)
    - LiDAR capabilities explanation
    - AI food recognition preview
@@ -767,3 +807,43 @@ class SmartFoodDataService {
 **Don't replace APIs entirely.** Instead, use AI to **fill gaps and enhance the experience** where APIs fall short. The current multi-source approach is sophisticated—add AI as another layer for edge cases and personalization.
 
 The health/medical nature of gut health tracking makes accuracy paramount, so keeping verified nutrition databases as the primary source while leveraging AI for enhanced features is the safest and most effective approach.
+
+## Data Sources
+
+### 1. **User Input**
+- Manual food logging
+- Symptom tracking
+- Meal notes and observations
+- Custom health indicators
+
+### 2. **External APIs**
+- **Nutritionix**: Comprehensive nutrition database
+- **OpenFoodFacts**: Barcode product information
+- **Google Vision**: AI-powered food recognition
+- **AI Enhancement**: Fallback for missing nutrition data
+
+### 3. **Device Sensors**
+- **Camera**: Food photo capture
+- **LiDAR**: 3D food scanning (future)
+- **GPS**: Location-based insights (optional)
+
+### 4. **HealthKit Integration**
+- **User Characteristics**: Age, weight, height, activity level
+- **Health Data**: Heart rate, steps, sleep patterns
+- **Medication Data**: **Real-time medication tracking** via HealthKit observers
+  - Immediate updates when medications are taken
+  - Automatic background delivery
+  - Privacy-compliant local processing
+  - No daily polling required
+
+### 5. **AI Analysis**
+- Pattern recognition in food-symptom correlations
+- Nutritional impact predictions
+- Personalized recommendations
+- Medication interaction analysis
+
+### 6. **Dashboard Insights (New)**
+- **Health Score Calculation**: Automated 1-10 rating based on symptoms and meals
+- **Smart Focus Generation**: AI-powered daily health recommendations
+- **Pattern-Based Avoidance Tips**: Data-driven food trigger warnings
+- **Historical Trend Analysis**: Week-over-week health pattern tracking

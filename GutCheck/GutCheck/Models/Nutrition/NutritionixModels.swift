@@ -309,3 +309,53 @@ struct NutritionixBrandedFood: Codable, Identifiable {
 struct NutritionixPhoto: Codable {
     let thumb: String?
 }
+
+// MARK: - AI Enhancement Extension
+extension NutritionixFood {
+    func withAIEnhancement(_ estimate: NutritionEstimate) -> NutritionixFood {
+        return NutritionixFood(
+            id: self.id,
+            name: self.name,
+            brand: self.brand,
+            calories: estimate.calories,
+            protein: estimate.protein,
+            carbs: estimate.carbs,
+            fat: estimate.fat,
+            fiber: estimate.fiber,
+            sugar: estimate.sugar,
+            sodium: estimate.sodium,
+            servingUnit: self.servingUnit,
+            servingQty: self.servingQty,
+            servingWeight: self.servingWeight,
+            ingredients: self.ingredients,
+            saturatedFat: self.saturatedFat,
+            transFat: self.transFat,
+            polyunsaturatedFat: self.polyunsaturatedFat,
+            monounsaturatedFat: self.monounsaturatedFat,
+            cholesterol: self.cholesterol,
+            potassium: self.potassium,
+            calcium: self.calcium,
+            iron: self.iron,
+            magnesium: self.magnesium,
+            phosphorus: self.phosphorus,
+            zinc: self.zinc,
+            copper: self.copper,
+            manganese: self.manganese,
+            selenium: self.selenium,
+            vitaminA: self.vitaminA,
+            vitaminC: self.vitaminC,
+            vitaminD: self.vitaminD,
+            vitaminE: self.vitaminE,
+            vitaminK: self.vitaminK,
+            thiamin: self.thiamin,
+            riboflavin: self.riboflavin,
+            niacin: self.niacin,
+            vitaminB6: self.vitaminB6,
+            folate: self.folate,
+            vitaminB12: self.vitaminB12,
+            biotin: self.biotin,
+            pantothenicAcid: self.pantothenicAcid,
+            proline: self.proline
+        )
+    }
+}

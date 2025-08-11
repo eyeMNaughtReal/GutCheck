@@ -41,6 +41,40 @@ struct Symptom: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
     var tags: [String] = []
     var createdBy: String = ""  // Firebase UID - required for FirestoreModel
     
+    // MARK: - Privacy Classification
+    
+    /// Determines the privacy level of this symptom data
+    /// This affects where and how the data is stored
+    var privacyLevel: DataPrivacyLevel {
+        // Detailed personal notes are private
+        if let notes = notes, !notes.isEmpty {
+            return .private
+        }
+        
+        // High severity symptoms are private
+        if painLevel == .severe || urgencyLevel == .urgent {
+            return .private
+        }
+        
+        // Personal tags make symptoms private
+        if tags.contains("personal") || tags.contains("private") {
+            return .private
+        }
+        
+        // Basic symptom structure is non-private
+        return .public
+    }
+    
+    /// Whether this symptom requires local encrypted storage
+    var requiresLocalStorage: Bool {
+        return privacyLevel == .private || privacyLevel == .confidential
+    }
+    
+    /// Whether this symptom can be synced to the cloud
+    var allowsCloudSync: Bool {
+        return privacyLevel == .public
+    }
+    
     // MARK: - Initializers
     init(id: String = UUID().uuidString, 
          date: Date, 

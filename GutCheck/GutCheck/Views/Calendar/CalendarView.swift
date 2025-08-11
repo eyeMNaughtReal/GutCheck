@@ -75,19 +75,9 @@ struct CalendarView: View {
         }
         .navigationTitle(title)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .navigationBarTrailing) {
                 ProfileAvatarButton(user: authService.currentUser) {
                     router.showProfile()
-                }
-            }
-            
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    showLogOptions()
-                }) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 20))
-                        .foregroundColor(ColorTheme.primary)
                 }
             }
         }
@@ -114,34 +104,6 @@ struct CalendarView: View {
             viewModel.loadMeals()
             viewModel.loadSymptoms()
         }
-    }
-    
-    private func showLogOptions() {
-        // Create an ActionSheet or Menu to select between logging a meal or symptom
-        // For iOS 16+, we can use a confirmation dialog
-        #if canImport(UIKit)
-        let alertController = UIAlertController(
-            title: "Log an Entry",
-            message: "What would you like to log?",
-            preferredStyle: .actionSheet
-        )
-        
-        alertController.addAction(UIAlertAction(title: "Log Meal", style: .default) { _ in
-            router.startMealLogging()
-        })
-        
-        alertController.addAction(UIAlertAction(title: "Log Symptom", style: .default) { _ in
-            router.startSymptomLogging()
-        })
-        
-        alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-        
-        // Present the alert
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let window = windowScene.windows.first {
-            window.rootViewController?.present(alertController, animated: true)
-        }
-        #endif
     }
     
     private var title: String {

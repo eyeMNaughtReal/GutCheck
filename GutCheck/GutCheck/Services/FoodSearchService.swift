@@ -90,19 +90,12 @@ class FoodSearchService: ObservableObject, HasLoadingState {
             }
         }
         
-        // Add branded foods with basic info
+        // Add branded foods with enhanced nutrition via AI
         if let brandedFoods = searchResponse.branded {
-            allFoods.append(contentsOf: brandedFoods.prefix(10).map { brandedFood in
-                NutritionixFood(
-                    id: brandedFood.id,
-                    name: brandedFood.name,
-                    brand: brandedFood.brand,
-                    calories: brandedFood.calories,
-                    servingUnit: brandedFood.servingUnit,
-                    servingQty: brandedFood.servingQty,
-                    servingWeight: 100
-                )
-            })
+            for brandedFood in brandedFoods.prefix(10) {
+                let enhancedFood = await enhanceBrandedFoodWithAI(brandedFood)
+                allFoods.append(enhancedFood)
+            }
         }
         
         return allFoods
@@ -346,5 +339,47 @@ class FoodSearchService: ObservableObject, HasLoadingState {
             vitaminA: vitaminA,
             vitaminC: vitaminC
         )
+    }
+    
+    // MARK: - AI Enhancement for Branded Foods
+    
+    private func enhanceBrandedFoodWithAI(_ brandedFood: NutritionixBrandedFood) async -> NutritionixFood {
+        // Start with basic branded food data
+        var enhancedFood = NutritionixFood(
+            id: brandedFood.id,
+            name: brandedFood.name,
+            brand: brandedFood.brand,
+            calories: brandedFood.calories,
+            servingUnit: brandedFood.servingUnit,
+            servingQty: brandedFood.servingQty,
+            servingWeight: 100
+        )
+        
+        // If we have calories but missing detailed nutrition, use AI to estimate
+        if let calories = brandedFood.calories, 
+           calories > 0 {
+            
+            print("🤖 Using AI to enhance nutrition for branded food: \(brandedFood.name)")
+            
+            do {
+                let aiEstimate = try await AIAnalysisService.shared.estimateNutritionForBrandedFood(
+                    name: brandedFood.name,
+                    brand: brandedFood.brand,
+                    knownCalories: calories,
+                    servingSize: "\(brandedFood.servingQty) \(brandedFood.servingUnit)"
+                )
+                
+                // Apply AI estimates while keeping known values
+                enhancedFood = enhancedFood.withAIEnhancement(aiEstimate)
+                
+                print("🤖 AI enhanced \(brandedFood.name): P:\(aiEstimate.protein ?? 0)g C:\(aiEstimate.carbs ?? 0)g F:\(aiEstimate.fat ?? 0)g")
+                
+            } catch {
+                print("🤖 AI enhancement failed for \(brandedFood.name): \(error)")
+                // Return basic food info if AI fails
+            }
+        }
+        
+        return enhancedFood
     }
 }

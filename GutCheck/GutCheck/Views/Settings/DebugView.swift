@@ -105,7 +105,7 @@ struct DebugView: View {
             }
             
             // Clear Core Data
-            try await LocalStorageService.shared.clearAllData()
+            try await LocalStorageService.shared.clearAllPrivateData()
             
             // Clear document directory
             try FileManager.default.clearDocumentDirectory()

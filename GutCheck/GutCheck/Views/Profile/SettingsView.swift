@@ -6,20 +6,46 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                NavigationLink(destination: LanguageSelectionView()) {
-                    HStack {
-                        Text("Language")
-                        Spacer()
-                        Text(settingsVM.language.displayName)
-                            .foregroundColor(.secondary)
+                Section("Preferences") {
+                    NavigationLink(destination: LanguageSelectionView()) {
+                        HStack {
+                            Text("Language")
+                            Spacer()
+                            Text(settingsVM.language.displayName)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    NavigationLink(destination: UnitSelectionView()) {
+                        HStack {
+                            Text("Units")
+                            Spacer()
+                            Text(settingsVM.unitOfMeasure.displayName)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
-                NavigationLink(destination: UnitSelectionView()) {
-                    HStack {
-                        Text("Units")
-                        Spacer()
-                        Text(settingsVM.unitOfMeasure.displayName)
-                            .foregroundColor(.secondary)
+                
+                Section("Healthcare") {
+                    NavigationLink(destination: HealthcareExportView()) {
+                        HStack {
+                            Image(systemName: "heart.text.square")
+                                .foregroundColor(.blue)
+                            Text("Export Health Data")
+                            Spacer()
+                            Text("For Healthcare Professionals")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                
+                Section("Privacy & Security") {
+                    NavigationLink(destination: PrivacyPolicyView()) {
+                        HStack {
+                            Image(systemName: "lock.shield")
+                                .foregroundColor(.green)
+                            Text("Privacy Policy")
+                        }
                     }
                 }
             }

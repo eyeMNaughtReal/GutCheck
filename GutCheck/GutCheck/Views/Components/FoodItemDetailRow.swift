@@ -41,7 +41,7 @@ struct FoodItemDetailRow: View {
             
             // Nutrition details
             if let calories = foodItem.nutrition.calories {
-                Text("\(calories) kcal")
+                Text("\(calories) calories")
                     .font(.subheadline)
                     .foregroundColor(ColorTheme.primaryText)
             }

@@ -5,6 +5,7 @@ struct SymptomHistoryView: View {
     @State private var selectedFilter: SymptomFilter = .all
     @State private var showingDatePicker = false
     @EnvironmentObject var router: AppRouter
+    @EnvironmentObject var authService: AuthService
     
     private var symptomsList: some View {
         let sortedDates = viewModel.groupedSymptoms.keys.sorted(by: >)
@@ -49,13 +50,13 @@ struct SymptomHistoryView: View {
         .navigationTitle("Symptom History")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .navigationBarLeading) {
                 Menu {
                     Button(action: { showingDatePicker = true }) {
-                        Label("Choose Date", systemImage: "calendar")
+                        Label("Select Date Range", systemImage: "calendar")
                     }
                     
-                    Button(action: { exportSymptoms() }) {
+                    Button(action: exportSymptoms) {
                         Label("Export Data", systemImage: "square.and.arrow.up")
                     }
                 } label: {
@@ -64,10 +65,8 @@ struct SymptomHistoryView: View {
             }
             
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(action: {
-                    router.startSymptomLogging()
-                }) {
-                    Image(systemName: "plus")
+                ProfileAvatarButton(user: authService.currentUser) {
+                    router.showProfile()
                 }
             }
         }

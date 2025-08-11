@@ -280,7 +280,7 @@ struct NutritionSummaryCard: View {
                 
                 Spacer()
                 
-                Text("\(Int(nutrition.calories ?? 0)) kcal")
+                Text("\(Int(nutrition.calories ?? 0)) calories")
                     .font(.headline)
                     .foregroundColor(ColorTheme.primary)
             }

@@ -591,6 +591,26 @@ class FoodCompoundDatabase {
             ingredientName: "Processed Meats"
         ),
         
+        // Coffee and Caffeine Products
+        IngredientMapping(
+            keywords: ["coffee", "coffee beans", "espresso", "caffeine"],
+            compounds: [
+                FoodCompound(name: "Caffeine", category: .neurologicalTrigger, severity: .medium, description: "Stimulant that can cause anxiety, insomnia, and dependency in sensitive individuals.", icon: "brain.head.profile", color: "orange"),
+                FoodCompound(name: "Chlorogenic Acids", category: .phenolic, severity: .low, description: "Antioxidant compounds that may cause digestive upset in sensitive individuals.", icon: "leaf.fill", color: "yellow")
+            ],
+            ingredientName: "Coffee"
+        ),
+        
+        // Sugar and Sweeteners
+        IngredientMapping(
+            keywords: ["sugar", "cane sugar", "brown sugar", "white sugar", "sucrose", "high fructose corn syrup", "corn syrup"],
+            compounds: [
+                FoodCompound(name: "Sucrose", category: .metabolicDisruptor, severity: .low, description: "Simple sugar that can cause blood sugar spikes and energy crashes.", icon: "drop.triangle.fill", color: "yellow"),
+                FoodCompound(name: "Fructose", category: .foodIntolerance, severity: .low, description: "Fruit sugar that can cause digestive issues in people with fructose malabsorption.", icon: "drop.triangle.fill", color: "yellow")
+            ],
+            ingredientName: "Sugar/Sweeteners"
+        ),
+        
         // Spices & Seasonings
         IngredientMapping(
             keywords: ["cinnamon", "nutmeg", "cloves", "allspice", "ginger", "turmeric", "cumin", "coriander"],
@@ -677,6 +697,11 @@ class FoodCompoundDatabase {
             keywords: ["breakfast cereal", "cereal", "corn flakes"],
             likelyIngredients: ["grains", "sugar", "milk", "vitamins", "preservatives"],
             description: "Processed grain product typically eaten with milk"
+        ),
+        CompositeFood(
+            keywords: ["coffee cream sugar", "coffee with cream", "coffee with milk", "latte", "cappuccino", "flat white", "coffee drink"],
+            likelyIngredients: ["coffee", "cream", "milk", "sugar"],
+            description: "Coffee beverage with dairy and sweetener"
         ),
         CompositeFood(
             keywords: ["hot dog", "frankfurter", "wiener"],
@@ -934,7 +959,7 @@ class FoodCompoundDatabase {
             ("bread", ["wheat flour", "yeast"]),
             ("cheese", ["milk", "cheese"]),
             ("chocolate", ["cocoa", "sugar"]),
-            ("coffee", ["coffee beans"]),
+            ("coffee", ["coffee", "coffee beans"]),
             ("tea", ["tea leaves"]),
             ("wine", ["grapes", "alcohol"]),
             ("beer", ["hops", "barley", "alcohol"]),

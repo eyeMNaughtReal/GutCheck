@@ -52,9 +52,11 @@ struct UnifiedFoodItemRow: View {
     }
     
     var body: some View {
-        HStack(spacing: config.iconSpacing) {
-            // Food icon
-            foodIcon
+        HStack(spacing: style == .mealBuilder ? 0 : config.iconSpacing) {
+            // Food icon (only for non-mealBuilder styles)
+            if style != .mealBuilder {
+                foodIcon
+            }
             
             // Main content area - tappable for details
             if let onTap = actions.onTap {
@@ -94,29 +96,47 @@ struct UnifiedFoodItemRow: View {
     
     private var mainContent: some View {
         VStack(alignment: .leading, spacing: config.contentSpacing) {
-            // Food name
-            Text(item.name)
-                .font(config.nameFont)
-                .foregroundColor(ColorTheme.primaryText)
-                .multilineTextAlignment(.leading)
-                .lineLimit(config.nameLineLimit)
-            
-            // Brand (if available and style supports it)
-            if config.showBrand, let brand = item.nutritionDetails["brand"] {
-                Text(brand)
-                    .font(.subheadline)
-                    .foregroundColor(ColorTheme.accent)
-                    .lineLimit(1)
+            // Top section: Image, name, and serving size
+            HStack(spacing: config.iconSpacing) {
+                // Food icon (moved here for mealBuilder style)
+                if style == .mealBuilder {
+                    foodIcon
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    // Food name
+                    Text(item.name)
+                        .font(config.nameFont)
+                        .foregroundColor(ColorTheme.primaryText)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(config.nameLineLimit)
+                    
+                    // Brand (if available and style supports it)
+                    if config.showBrand, let brand = item.nutritionDetails["brand"] {
+                        Text(brand)
+                            .font(.subheadline)
+                            .foregroundColor(ColorTheme.accent)
+                            .lineLimit(1)
+                    }
+                    
+                    // Quantity
+                    Text(item.quantity)
+                        .font(config.quantityFont)
+                        .foregroundColor(ColorTheme.secondaryText)
+                        .lineLimit(1)
+                }
+                
+                Spacer()
             }
             
-            // Quantity
-            Text(item.quantity)
-                .font(config.quantityFont)
-                .foregroundColor(ColorTheme.secondaryText)
-                .lineLimit(1)
-            
-            // Nutrition preview
-            nutritionPreview
+            // Bottom section: Nutrition info (separated for mealBuilder style)
+            if style == .mealBuilder {
+                nutritionPreview
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                // Original inline layout for other styles
+                nutritionPreview
+            }
             
             // Allergens (if any and style supports it)
             if config.showAllergens && !item.allergens.isEmpty {
@@ -130,7 +150,7 @@ struct UnifiedFoodItemRow: View {
         HStack(spacing: config.nutritionSpacing) {
             if let calories = item.nutrition.calories {
                 NutritionBadge(
-                    text: "\(Int(calories)) kcal",
+                    text: "\(Int(calories)) calories",
                     color: ColorTheme.accent,
                     size: config.badgeSize
                 )
@@ -346,8 +366,8 @@ struct StyleConfig {
                 padding: 16,
                 cornerRadius: 12,
                 shadowRadius: 4,
-                contentSpacing: 8,
-                nutritionSpacing: 12,
+                contentSpacing: 12, // Increased from 8 to 12 for better separation
+                nutritionSpacing: 8, // Reduced from 12 to 8 for tighter nutrition badges
                 nameFont: .headline,
                 quantityFont: .subheadline,
                 actionButtonFont: .system(size: 16),

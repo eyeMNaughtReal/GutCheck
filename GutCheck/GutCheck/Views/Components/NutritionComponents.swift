@@ -44,7 +44,7 @@ struct UnifiedNutritionBadge: View {
     
     // Convenience initializers
     init(calories: Int, style: BadgeStyle = .standard) {
-        self.init(value: "\(calories)", unit: "kcal", color: .orange, style: style)
+        self.init(value: "\(calories)", unit: "calories", color: .orange, style: style)
     }
     
     init(protein: Double, style: BadgeStyle = .standard) {
@@ -147,7 +147,7 @@ struct UnifiedNutritionSummary: View {
                     
                     Spacer()
                     
-                    Text("\(calories) kcal")
+                    Text("\(calories) calories")
                         .font(.headline)
                         .foregroundColor(ColorTheme.primary)
                 }
@@ -257,7 +257,7 @@ enum MacroType {
     static func config(for type: MacroType, nutrition: NutritionInfo) -> (label: String, value: String, unit: String, color: Color) {
         switch type {
         case .calories:
-            return ("Calories", "\(nutrition.calories ?? 0)", "kcal", .orange)
+            return ("Calories", "\(nutrition.calories ?? 0)", "calories", .orange)
         case .protein:
             return ("Protein", String(format: "%.1f", nutrition.protein ?? 0), "g", .blue)
         case .carbs:

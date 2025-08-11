@@ -26,6 +26,24 @@ struct ReminderSettings: Identifiable, Codable, Hashable, Equatable, FirestoreMo
     // Metadata
     var lastUpdated: Date = Date()
     
+    // MARK: - DataClassifiable Conformance
+    
+    /// Privacy level for reminder settings
+    /// Reminder settings are considered public as they don't contain sensitive personal information
+    var privacyLevel: DataPrivacyLevel {
+        return .public
+    }
+    
+    /// Whether reminder settings require local encrypted storage
+    var requiresLocalStorage: Bool {
+        return privacyLevel == .private || privacyLevel == .confidential
+    }
+    
+    /// Whether reminder settings can be synced to the cloud
+    var allowsCloudSync: Bool {
+        return privacyLevel == .public
+    }
+    
     // MARK: - Initializers
     init(id: String = UUID().uuidString,
          createdBy: String = "",

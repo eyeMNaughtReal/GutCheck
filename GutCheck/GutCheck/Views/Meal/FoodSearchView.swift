@@ -11,6 +11,7 @@ struct FoodSearchView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = FoodSearchViewModel()
     @State private var navigationPath = NavigationPath()
+    @State private var selectedFoodItem: FoodItem?
     var onSelect: ((FoodItem) -> Void)?
     
     init(onSelect: ((FoodItem) -> Void)? = nil) {
@@ -91,9 +92,7 @@ struct FoodSearchView: View {
             }
             .navigationTitle("Search Food")
             .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(for: FoodItem.self) { foodItem in
-                UnifiedFoodDetailView(foodItem: foodItem)
-            }
+            // Remove navigationDestination - will use sheet instead
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
@@ -104,6 +103,21 @@ struct FoodSearchView: View {
             .onAppear {
                 viewModel.loadRecentItems()
             }
+        }
+        .sheet(item: $selectedFoodItem) { foodItem in
+            UnifiedFoodDetailView(
+                foodItem: foodItem,
+                style: .full,
+                onUpdate: { updatedItem in
+                    // Handle the updated item if needed
+                    if let onSelect = onSelect {
+                        onSelect(updatedItem)
+                    }
+                    selectedFoodItem = nil
+                }
+            )
+            .presentationDetents([.large])
+            .presentationDragIndicator(.visible)
         }
     }
     
@@ -138,7 +152,7 @@ struct FoodSearchView: View {
                     quantity: "1 serving",
                     nutrition: NutritionInfo()
                 )
-                navigationPath.append(customFoodItem)
+                selectedFoodItem = customFoodItem
             }
             .buttonStyle(.borderedProminent)
         }
@@ -153,15 +167,15 @@ struct FoodSearchView: View {
                     FoodItemResultRow(
                         item: item,
                         onSelect: {
-                            // Navigate to food detail view
-                            navigationPath.append(item)
+                            // Show food detail sheet
+                            selectedFoodItem = item
                         },
                         onAdd: {
                             // Tap on + button -> use the callback if provided, otherwise navigate to detail view
                             if let onSelect = onSelect {
                                 onSelect(item)
                             } else {
-                                navigationPath.append(item)
+                                selectedFoodItem = item
                             }
                         }
                     )
@@ -244,15 +258,15 @@ struct FoodSearchView: View {
                             SimpleRecentFoodRow(
                                 item: item,
                                 onSelect: {
-                                    // Tap on item details -> navigate to comprehensive food detail view
-                                    navigationPath.append(item)
+                                    // Tap on item details -> show comprehensive food detail sheet
+                                    selectedFoodItem = item
                                 },
                                 onAdd: {
                                     // Tap on + button -> use the callback if provided, otherwise navigate to detail view
                                     if let onSelect = onSelect {
                                         onSelect(item)
                                     } else {
-                                        navigationPath.append(item)
+                                        selectedFoodItem = item
                                     }
                                 }
                             )
@@ -378,7 +392,7 @@ struct SimpleRecentFoodRow: View {
                     // Nutrition preview - matching screenshot style
                     HStack(spacing: 8) {
                         if let calories = item.nutrition.calories {
-                            Text("\(Int(calories)) kcal")
+                            Text("\(Int(calories)) calories")
                                 .font(.caption)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)

@@ -251,7 +251,7 @@ struct BarcodeScannerView: View {
                                 .foregroundColor(ColorTheme.secondaryText)
                                 .lineLimit(2)
                             
-                            Text("Per 100g: \(viewModel.productCalories) kcal")
+                            Text("Per 100g: \(viewModel.productCalories) calories")
                                 .font(.caption)
                                 .foregroundColor(ColorTheme.secondaryText)
                         }

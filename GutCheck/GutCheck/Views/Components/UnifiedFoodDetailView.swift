@@ -88,10 +88,7 @@ struct UnifiedFoodDetailView: View {
                 
                 nutritionSection
                 
-                // Health indicators section
-                if config.showDetailedSections {
-                    healthIndicatorsSection
-                }
+                // Health indicators are now integrated into Allergens & Warnings
                 
                 if config.showDetailedSections {
                     detailSectionsLinks
@@ -123,7 +120,7 @@ struct UnifiedFoodDetailView: View {
                 .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $detailService.showingAllergens) {
-            AllergensView(allergens: foodItem.allergens)
+            AllergensView(allergens: foodItem.allergens, healthIndicators: healthIndicators)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
@@ -222,8 +219,23 @@ struct UnifiedFoodDetailView: View {
                 .font(.headline)
                 .foregroundColor(ColorTheme.primaryText)
             
-            // Use the unified nutrition summary component
-            NutritionSummaryCard(nutrition: foodItem.nutrition)
+            // TEMPORARILY SIMPLIFIED - Replace NutritionSummaryCard to test for freeze
+            VStack(spacing: 8) {
+                Text("\(Int(foodItem.nutrition.calories ?? 0)) calories")
+                    .font(.headline)
+                    .foregroundColor(ColorTheme.primary)
+                
+                HStack(spacing: 16) {
+                    Text("Protein: \(String(format: "%.1f", foodItem.nutrition.protein ?? 0))g")
+                    Text("Carbs: \(String(format: "%.1f", foodItem.nutrition.carbs ?? 0))g")
+                    Text("Fat: \(String(format: "%.1f", foodItem.nutrition.fat ?? 0))g")
+                }
+                .font(.subheadline)
+                .foregroundColor(ColorTheme.secondaryText)
+            }
+            .padding()
+            .background(ColorTheme.cardBackground)
+            .cornerRadius(12)
         }
     }
     
@@ -231,7 +243,7 @@ struct UnifiedFoodDetailView: View {
         VStack(alignment: .leading, spacing: 8) {
             // Calories
             if let calories = foodItem.nutrition.calories {
-                Text("\(calories) kcal")
+                Text("\(calories) calories")
                     .font(.subheadline)
                     .foregroundColor(ColorTheme.primaryText)
             }
@@ -300,6 +312,21 @@ struct UnifiedFoodDetailView: View {
         return getHealthIndicators()
     }
     
+    private func getAllergensAndHealthSummary() -> String {
+        let allergenCount = foodItem.allergens.count
+        let healthCount = healthIndicators.count
+        
+        if allergenCount > 0 && healthCount > 0 {
+            return "\(allergenCount) allergens, \(healthCount) health indicators"
+        } else if allergenCount > 0 {
+            return "\(allergenCount) allergens detected"
+        } else if healthCount > 0 {
+            return "\(healthCount) health indicators"
+        } else {
+            return "No warnings detected"
+        }
+    }
+    
     private var detailSectionsLinks: some View {
         VStack(spacing: 12) {
             // Full nutrition details
@@ -326,15 +353,16 @@ struct UnifiedFoodDetailView: View {
                 }
             }
             
-            // Allergens
-            if !foodItem.allergens.isEmpty {
+            // Allergens & Health Indicators
+            let totalWarnings = foodItem.allergens.count + healthIndicators.count
+            if totalWarnings > 0 {
                 Button(action: {
                     detailService.showingAllergens = true
                 }) {
                     DetailSectionRow(
                         icon: "exclamationmark.triangle.fill",
-                        title: "Allergens & Warnings",
-                        subtitle: "\(foodItem.allergens.count) allergens detected",
+                        title: "Allergens & Warnings", 
+                        subtitle: getAllergensAndHealthSummary(),
                         iconColor: ColorTheme.error
                     )
                 }
@@ -394,14 +422,30 @@ struct UnifiedFoodDetailView: View {
         let name = foodItem.name.lowercased()
         let ingredients = foodItem.ingredients.map { $0.lowercased() }
         
-        // Use comprehensive compound database
+        // Get all ingredients for this food item
+        let allIngredients = FoodCompoundDatabase.shared.getIngredientsForFood(name: name, providedIngredients: ingredients)
+        
+        // Analyze each ingredient separately to maintain ingredient-compound mapping
+        var compoundToIngredientMap: [String: [String]] = [:]
+        
+        for ingredient in allIngredients {
+            let compoundsForIngredient = FoodCompoundDatabase.shared.analyzeIngredients([ingredient])
+            
+            for compound in compoundsForIngredient {
+                if compoundToIngredientMap[compound.name] == nil {
+                    compoundToIngredientMap[compound.name] = []
+                }
+                compoundToIngredientMap[compound.name]?.append(ingredient.capitalized)
+            }
+        }
+        
+        // Use comprehensive compound database to get all compounds
         let detectedCompounds = FoodCompoundDatabase.shared.getCompoundsForFood(name: name, ingredients: ingredients)
         
         // Group compounds by category for better organization
         let groupedCompounds = Dictionary(grouping: detectedCompounds) { $0.category }
         
         for (category, compounds) in groupedCompounds {
-            let compoundNames = compounds.map { $0.name }
             let highestSeverity = compounds.max(by: { $0.severity.rawValue < $1.severity.rawValue })?.severity ?? .low
             let categoryColor: Color = {
                 switch highestSeverity {
@@ -411,12 +455,22 @@ struct UnifiedFoodDetailView: View {
                 }
             }()
             
+            // Create compound descriptions with ingredient sources
+            let compoundDescriptions = compounds.compactMap { compound -> String? in
+                if let ingredientSources = compoundToIngredientMap[compound.name], !ingredientSources.isEmpty {
+                    let uniqueSources = Array(Set(ingredientSources)).sorted()
+                    return "\(compound.name) - \(uniqueSources.joined(separator: ", "))"
+                } else {
+                    return compound.name
+                }
+            }
+            
             indicators.append(HealthIndicator(
                 text: category.rawValue,
                 icon: getIconForCategory(category),
                 color: categoryColor,
                 severity: highestSeverity,
-                description: "\(category.rawValue): \(compoundNames.joined(separator: ", "))"
+                description: "\(category.rawValue): \(compoundDescriptions.joined(separator: "; "))"
             ))
         }
         
@@ -879,7 +933,7 @@ struct NutritionDetailItem: View {
         
         // Energy
         else if lowerLabel.contains("energy") || lowerLabel.contains("calorie") {
-            return "kcal"
+            return "calories"
         }
         
         // Water and ash
@@ -959,22 +1013,28 @@ struct IngredientsView: View {
 struct AllergensView: View {
     @Environment(\.dismiss) private var dismiss
     let allergens: [String]
+    let healthIndicators: [HealthIndicator]
+    
+    init(allergens: [String], healthIndicators: [HealthIndicator] = []) {
+        self.allergens = allergens
+        self.healthIndicators = healthIndicators
+    }
     
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    if allergens.isEmpty {
+                    if allergens.isEmpty && healthIndicators.isEmpty {
                         VStack(spacing: 16) {
                             Image(systemName: "checkmark.shield.fill")
                                 .font(.system(size: 48))
                                 .foregroundColor(ColorTheme.success)
                             
-                            Text("No Known Allergens")
+                            Text("No Known Allergens or Warnings")
                                 .font(.headline)
                                 .foregroundColor(ColorTheme.primaryText)
                             
-                            Text("No common allergens were detected in this food item. However, always check the original packaging for complete allergen information.")
+                            Text("No common allergens or health indicators were detected in this food item. However, always check the original packaging for complete allergen information.")
                                 .font(.subheadline)
                                 .foregroundColor(ColorTheme.secondaryText)
                                 .multilineTextAlignment(.center)
@@ -982,32 +1042,101 @@ struct AllergensView: View {
                         .frame(maxWidth: .infinity, minHeight: 200)
                         .padding()
                     } else {
-                        Text("This food contains or may contain the following allergens:")
-                            .font(.subheadline)
-                            .foregroundColor(ColorTheme.secondaryText)
-                            .padding(.horizontal)
-                        
-                        ForEach(allergens, id: \.self) { allergen in
-                            HStack {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundColor(ColorTheme.error)
-                                
-                                Text(allergen)
-                                    .font(.body)
-                                    .foregroundColor(ColorTheme.primaryText)
-                                
-                                Spacer()
+                        // Allergens section
+                        if !allergens.isEmpty {
+                            Text("Allergens:")
+                                .font(.headline)
+                                .foregroundColor(ColorTheme.primaryText)
+                                .padding(.horizontal)
+                            
+                            Text("This food contains or may contain the following allergens:")
+                                .font(.subheadline)
+                                .foregroundColor(ColorTheme.secondaryText)
+                                .padding(.horizontal)
+                            
+                            ForEach(allergens, id: \.self) { allergen in
+                                HStack {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundColor(ColorTheme.error)
+                                    
+                                    Text(allergen)
+                                        .font(.body)
+                                        .foregroundColor(ColorTheme.primaryText)
+                                    
+                                    Spacer()
+                                }
+                                .padding()
+                                .background(ColorTheme.error.opacity(0.1))
+                                .cornerRadius(12)
+                                .padding(.horizontal)
                             }
-                            .padding()
-                            .background(ColorTheme.error.opacity(0.1))
-                            .cornerRadius(12)
-                            .padding(.horizontal)
+                        }
+                        
+                        // Health Indicators section
+                        if !healthIndicators.isEmpty {
+                            if !allergens.isEmpty {
+                                Divider()
+                                    .padding(.horizontal)
+                            }
+                            
+                            Text("Health Indicators:")
+                                .font(.headline)
+                                .foregroundColor(ColorTheme.primaryText)
+                                .padding(.horizontal)
+                            
+                            Text("Compounds that may affect your health:")
+                                .font(.subheadline)
+                                .foregroundColor(ColorTheme.secondaryText)
+                                .padding(.horizontal)
+                            
+                            ForEach(healthIndicators, id: \.text) { indicator in
+                                VStack(alignment: .leading, spacing: 8) {
+                                    // Category header
+                                    HStack {
+                                        Image(systemName: indicator.icon)
+                                            .foregroundColor(indicator.color)
+                                        
+                                        Text(indicator.text)
+                                            .font(.headline)
+                                            .foregroundColor(ColorTheme.primaryText)
+                                        
+                                        Spacer()
+                                    }
+                                    
+                                    // Description of what this category does
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Description:")
+                                            .font(.subheadline)
+                                            .foregroundColor(ColorTheme.secondaryText)
+                                            .padding(.leading, 24) // Indent to align with icon
+                                        
+                                        Text(getCategoryDescription(indicator.text))
+                                            .font(.caption)
+                                            .foregroundColor(ColorTheme.secondaryText)
+                                            .padding(.leading, 24) // Indent to align with icon
+                                    }
+                                    
+                                    // Individual compounds - smaller and grey
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        ForEach(getCompoundsFromDescription(indicator.description), id: \.self) { compound in
+                                            Text(compound)
+                                                .font(.caption)
+                                                .foregroundColor(ColorTheme.secondaryText)
+                                                .padding(.leading, 24) // Indent to align with icon
+                                        }
+                                    }
+                                }
+                                .padding()
+                                .background(indicator.color.opacity(0.1))
+                                .cornerRadius(12)
+                                .padding(.horizontal)
+                            }
                         }
                     }
                 }
                 .padding(.vertical)
             }
-            .navigationTitle("Allergens")
+            .navigationTitle("Allergens & Warnings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -1016,6 +1145,49 @@ struct AllergensView: View {
                     }
                 }
             }
+        }
+    }
+    
+    // Helper function to parse compound descriptions
+    private func getCompoundsFromDescription(_ description: String) -> [String] {
+        // Remove the category prefix (e.g., "Food Intolerances: ")
+        let withoutPrefix = description.components(separatedBy: ": ").dropFirst().joined(separator: ": ")
+        
+        // Split by semicolon to get individual compounds (don't split on comma within ingredient lists)
+        return withoutPrefix.components(separatedBy: "; ")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+    
+    // Helper function to get category descriptions
+    private func getCategoryDescription(_ categoryName: String) -> String {
+        switch categoryName {
+        case "Food Intolerances":
+            return "Compounds that can cause digestive issues, gas, bloating, or discomfort in sensitive individuals."
+        case "Phenolic Compounds":
+            return "Natural plant compounds that act as antioxidants but may cause sensitivity reactions in some people."
+        case "Neurological Triggers":
+            return "Substances that can affect the nervous system, potentially causing headaches, anxiety, or sleep issues."
+        case "Metabolic Disruptors":
+            return "Compounds that may interfere with normal metabolism, blood sugar regulation, or nutrient absorption."
+        case "Inflammatory Compounds":
+            return "Substances that may trigger inflammatory responses in the body, potentially causing joint pain or digestive issues."
+        case "Major Allergens":
+            return "Common allergens that can cause severe allergic reactions including anaphylaxis in sensitive individuals."
+        case "Toxic Compounds":
+            return "Naturally occurring or synthetic compounds that may be harmful in larger quantities or to sensitive individuals."
+        case "Alkaloids":
+            return "Natural plant compounds that can have psychoactive or physiological effects on the body."
+        case "Biogenic Amines":
+            return "Compounds formed during fermentation or aging that can trigger headaches or blood pressure changes."
+        case "Heavy Metals":
+            return "Metallic elements that can accumulate in the body and potentially cause health issues over time."
+        case "Preservatives & Additives":
+            return "Chemical compounds added to food for preservation that may cause sensitivity reactions in some people."
+        case "Natural Toxins":
+            return "Naturally occurring compounds in foods that can be harmful in certain quantities or preparation methods."
+        default:
+            return "Compounds that may affect your health in various ways."
         }
     }
 }

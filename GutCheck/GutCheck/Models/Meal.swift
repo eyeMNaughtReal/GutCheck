@@ -30,6 +30,35 @@ struct Meal: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
     var tags: [String] = []
     var createdBy: String = ""
     
+    // MARK: - Privacy Classification
+    
+    /// Determines the privacy level of this meal data
+    /// This affects where and how the data is stored
+    var privacyLevel: DataPrivacyLevel {
+        // Personal notes and detailed observations are private
+        if let notes = notes, !notes.isEmpty {
+            return .private
+        }
+        
+        // Location-based meals are private
+        if tags.contains("location") || tags.contains("personal") {
+            return .private
+        }
+        
+        // Basic meal structure and nutrition is non-private
+        return .public
+    }
+    
+    /// Whether this meal requires local encrypted storage
+    var requiresLocalStorage: Bool {
+        return privacyLevel == .private || privacyLevel == .confidential
+    }
+    
+    /// Whether this meal can be synced to the cloud
+    var allowsCloudSync: Bool {
+        return privacyLevel == .public
+    }
+    
     // MARK: - Initializers
     
     init(id: String = UUID().uuidString,

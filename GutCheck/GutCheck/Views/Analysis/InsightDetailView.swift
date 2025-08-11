@@ -18,6 +18,7 @@ struct InsightDetailView: View {
                             .foregroundColor(ColorTheme.text.opacity(0.8))
                     }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding()
                 .roundedCard()
                 
@@ -38,6 +39,7 @@ struct InsightDetailView: View {
                                     .font(.headline)
                             )
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
                     .roundedCard()
                 }
@@ -53,6 +55,7 @@ struct InsightDetailView: View {
                             ContributingFactorRow(factor: factor)
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
                     .roundedCard()
                 }
@@ -68,6 +71,7 @@ struct InsightDetailView: View {
                             RecommendationRow(text: recommendation)
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
                     .roundedCard()
                 }
@@ -83,6 +87,7 @@ struct InsightDetailView: View {
                             RelatedInsightRow(insight: relatedInsight)
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
                     .roundedCard()
                 }
@@ -143,6 +148,7 @@ private struct ContributingFactorRow: View {
                 .font(.headline)
                 .foregroundColor(impactColor)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 8)
     }
     
@@ -162,6 +168,7 @@ private struct RecommendationRow: View {
     var body: some View {
         Label(text, systemImage: "checkmark.circle")
             .font(.subheadline)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 4)
     }
 }
@@ -178,6 +185,7 @@ private struct RelatedInsightRow: View {
                 Image(systemName: "chevron.right")
                     .foregroundColor(.secondary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 4)
         }
     }
