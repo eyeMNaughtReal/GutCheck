@@ -46,6 +46,21 @@ jobs:
       run: xcrun simctl list devices
       working-directory: GutCheck
 
+    - name: Boot iOS Simulator
+      run: |
+        # Get the first available iOS simulator
+        SIMULATOR_ID=$(xcrun simctl list devices | grep "iPhone" | grep "Available" | head -1 | sed -E 's/.*\(([A-F0-9-]+)\).*/\1/')
+        if [ -n "$SIMULATOR_ID" ]; then
+          echo "Booting simulator: $SIMULATOR_ID"
+          xcrun simctl boot $SIMULATOR_ID
+          # Wait a bit for simulator to fully boot
+          sleep 10
+        else
+          echo "No available iOS simulators found"
+          exit 1
+        fi
+      working-directory: GutCheck
+
     - name: Create GoogleService-Info.plist (Mock)
       run: |
         cat > GoogleService-Info.plist << EOF
@@ -98,7 +113,7 @@ jobs:
         xcodebuild clean build \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
-          -destination 'platform=iOS Simulator,id=dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder' \
+          -destination 'platform=iOS Simulator,OS=latest' \
           -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
           CODE_SIGNING_ALLOWED=NO \
           ONLY_ACTIVE_ARCH=NO
@@ -109,7 +124,7 @@ jobs:
         xcodebuild test \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
-          -destination 'platform=iOS Simulator,id=dvtdevice-DVTiOSDeviceSimulatorPlaceholder-iphonesimulator:placeholder' \
+          -destination 'platform=iOS Simulator,OS=latest' \
           -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
           CODE_SIGNING_ALLOWED=NO \
           ONLY_ACTIVE_ARCH=NO \
