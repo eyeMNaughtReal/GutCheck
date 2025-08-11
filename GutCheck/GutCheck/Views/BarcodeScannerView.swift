@@ -39,28 +39,13 @@ struct BarcodeScannerView: View {
                 scanningOverlay
             } else {
                 // Camera not authorized view
-                VStack(spacing: 20) {
-                    Image(systemName: "camera.metering.none")
-                        .font(.system(size: 72))
-                        .foregroundColor(ColorTheme.secondaryText)
-                    
-                    Text("Camera Access Needed")
-                        .font(.title2.bold())
-                        .foregroundColor(ColorTheme.primaryText)
-                    
-                    Text("GutCheck needs camera access to scan barcodes.\nPlease enable camera access in Settings.")
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(ColorTheme.secondaryText)
-                    
-                    Button("Open Settings") {
-                        viewModel.openSettings()
+                BarcodeCameraPermissionView {
+                    Task {
+                        let granted = await viewModel.requestCameraPermission()
+                        if granted {
+                            viewModel.checkCameraPermission()
+                        }
                     }
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(ColorTheme.primary)
-                    .cornerRadius(12)
-                    .padding(.top, 8)
                 }
                 .padding()
                 .background(ColorTheme.background.ignoresSafeArea())

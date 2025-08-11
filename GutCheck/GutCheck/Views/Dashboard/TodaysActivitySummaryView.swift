@@ -4,7 +4,7 @@ import FirebaseAuth
 
 struct TodaysActivitySummaryView: View {
     @ObservedObject var viewModel: RecentActivityViewModel
-    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
+    @EnvironmentObject var router: AppRouter
     @EnvironmentObject var authService: AuthService
     let selectedDate: Date
     @State private var isExpanded = false
@@ -110,9 +110,9 @@ struct TodaysActivitySummaryView: View {
     private func handleEntryTap(_ entry: ActivityEntry) {
         switch entry.type {
         case .meal(let meal):
-            navigationCoordinator.navigateTo(.mealDetail(meal))
+            router.navigateTo(.mealDetail(meal.id))
         case .symptom(let symptom):
-            navigationCoordinator.navigateTo(.symptomDetail(symptom))
+            router.navigateTo(.symptomDetail(symptom.id))
         }
     }
 }
@@ -123,7 +123,7 @@ struct TodaysActivitySummaryView: View {
         viewModel: RecentActivityViewModel(),
         selectedDate: Date()
     )
-    .environmentObject(NavigationCoordinator())
+    .environmentObject(AppRouter.shared)
     .environmentObject(PreviewAuthService())
     .padding()
 }

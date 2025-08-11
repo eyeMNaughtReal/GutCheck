@@ -3,7 +3,7 @@ import SwiftUI
 struct QuickActionButtonsView: View {
     var body: some View {
         HStack(spacing: 16) {
-            NavigationLink(destination: LogMealView()) {
+            NavigationLink(destination: MealBuilderView()) {
                 ActionButton(icon: "fork.knife", label: "Log Meal", color: ColorTheme.accent)
             }
             NavigationLink(destination: LogSymptomView()) {

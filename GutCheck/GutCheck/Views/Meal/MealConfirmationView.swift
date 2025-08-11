@@ -3,7 +3,7 @@ import SwiftUI
 struct MealConfirmationView: View {
     let meal: Meal
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
+    @EnvironmentObject private var router: AppRouter
     @StateObject private var viewModel = MealConfirmationViewModel()
     
     var body: some View {
@@ -105,7 +105,7 @@ struct MealConfirmationView: View {
                     .cornerRadius(10)
                     
                     Button("Edit Meal") {
-                        navigationCoordinator.currentNavigationPath.wrappedValue.removeLast()
+                        router.navigateBack()
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -135,7 +135,7 @@ struct MealConfirmationView: View {
     private func confirmMeal() {
         Task {
             if await viewModel.saveMeal(meal) {
-                navigationCoordinator.popToRoot()
+                router.navigateToRoot()
             }
         }
     }
@@ -285,6 +285,6 @@ struct MealAnalysis {
             notes: "Quick lunch at home",
             createdBy: "preview-user"
         ))
-        .environmentObject(NavigationCoordinator())
+        .environmentObject(AppRouter.shared)
     }
 }

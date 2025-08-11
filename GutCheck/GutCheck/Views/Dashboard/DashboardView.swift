@@ -1,5 +1,8 @@
 import SwiftUI
 import FirebaseAuth
+#if canImport(UIKit)
+import UIKit
+#endif
 
 #if DEBUG
 @_spi(Preview) import FirebaseAuth // For preview support
@@ -7,108 +10,121 @@ import FirebaseAuth
 
 struct DashboardView: View {
     @EnvironmentObject var authService: AuthService
-    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
+    @EnvironmentObject var router: AppRouter
     @StateObject private var dashboardStore = DashboardDataStore(preview: false)
     @StateObject private var recentActivityViewModel = RecentActivityViewModel()
-    @StateObject private var dataSyncManager = DataSyncManager.shared
-    @State private var showProfileSheet = false
-    @State private var showCalendar = false
-    @State private var selectedCalendarDate: Date? = nil
-    // Removed floating + button state
+    @EnvironmentObject private var refreshManager: RefreshManager
     
     var body: some View {
-        ZStack(alignment: .bottom) {
-            NavigationStack {
-                ScrollView {
-                    VStack(spacing: 20) {
-                        GreetingHeaderView()
-                        
-                        WeekSelector(selectedDate: $dashboardStore.selectedDate) { date in
-                            dashboardStore.selectedDate = date
-                            selectedCalendarDate = date
-                            showCalendar = true
-                        }
-                        
-                        // Combined Today's Summary and Activity
-                        TodaysActivitySummaryView(
-                            viewModel: recentActivityViewModel,
-                            selectedDate: dashboardStore.selectedDate
-                        )
+        ScrollView {
+            VStack(spacing: 20) {
+                GreetingHeaderView()
+                
+                WeekSelector(selectedDate: $dashboardStore.selectedDate) { date in
+                    dashboardStore.selectedDate = date
+                    // Navigate to calendar view using the AppRouter
+                    router.navigateToCalendar(date: date)
+                }
+                
+                // Combined Today's Summary and Activity
+                TodaysActivitySummaryView(
+                    viewModel: recentActivityViewModel,
+                    selectedDate: dashboardStore.selectedDate
+                )
 
-                        if let insight = dashboardStore.insightMessage {
-                            InsightsCardView(message: insight)
+                if let insight = dashboardStore.insightMessage {
+                    InsightsCardView(message: insight)
+                }
+                
+                if !dashboardStore.triggerAlerts.isEmpty {
+                    TriggerAlertBanner(alerts: dashboardStore.triggerAlerts)
+                }
+                
+                // Quick action buttons
+                HStack(spacing: 20) {
+                    Button(action: {
+                        router.startMealLogging()
+                    }) {
+                        VStack {
+                            Image(systemName: "fork.knife")
+                                .font(.title)
+                            Text("Log Meal")
+                                .font(.caption)
                         }
-                        
-                        if !dashboardStore.triggerAlerts.isEmpty {
-                            TriggerAlertBanner(alerts: dashboardStore.triggerAlerts)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(10)
+                    }
+                    
+                    Button(action: {
+                        router.startSymptomLogging()
+                    }) {
+                        VStack {
+                            Image(systemName: "heart.text.square")
+                                .font(.title)
+                            Text("Log Symptom")
+                                .font(.caption)
                         }
-                        
-                        // Spacer for tab bar
-                        Spacer(minLength: 80)
-                    }
-                    .padding(.horizontal)
-                    .padding(.top)
-                }
-                .navigationTitle("Dashboard")
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        ProfileAvatarButton(user: authService.currentUser) {
-                            showProfileSheet = true
-                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.purple.opacity(0.1))
+                        .cornerRadius(10)
                     }
                 }
-                .sheet(isPresented: $showProfileSheet) {
-                    ProfileSheetView()
-                        .environmentObject(authService)
-                }
-                .navigationDestination(isPresented: $showCalendar) {
-                    if let date = selectedCalendarDate {
-                        CalendarView(selectedDate: date)
-                    }
-                }
-                .onAppear {
-                    print("📱 DashboardView: onAppear - checking auth state and loading data")
-                    if authService.isAuthenticated && authService.currentUser != nil {
-                        print("📱 DashboardView: User is authenticated with currentUser, loading recent activity data")
-                        recentActivityViewModel.loadRecentActivity(for: dashboardStore.selectedDate, authService: authService)
-                    } else {
-                        print("📱 DashboardView: User not fully authenticated yet (isAuth: \(authService.isAuthenticated), currentUser: \(authService.currentUser != nil)), waiting for auth state change")
-                    }
-                }
-                .onChange(of: authService.isAuthenticated) { _, isAuthenticated in
-                    print("🔐 DashboardView: Authentication state changed to \(isAuthenticated)")
-                    if isAuthenticated && authService.currentUser != nil {
-                        print("🔐 DashboardView: User authenticated with currentUser, loading recent activity data")
-                        recentActivityViewModel.loadRecentActivity(for: dashboardStore.selectedDate, authService: authService)
-                    }
-                }
-                .onChange(of: authService.currentUser) { _, currentUser in
-                    print("👤 DashboardView: CurrentUser changed to \(currentUser?.id ?? "nil")")
-                    if authService.isAuthenticated && currentUser != nil {
-                        print("👤 DashboardView: CurrentUser is now available, loading recent activity data")
-                        recentActivityViewModel.loadRecentActivity(for: dashboardStore.selectedDate, authService: authService)
-                    }
-                }
-                .onChange(of: dashboardStore.selectedDate) { _, newDate in
-                    print("📅 DashboardView: Date changed to \(newDate) - reloading recent activity")
-                    if authService.isAuthenticated && authService.currentUser != nil {
-                        recentActivityViewModel.loadRecentActivity(for: newDate, authService: authService)
-                    }
-                }
-                .onChange(of: dataSyncManager.shouldRefreshDashboard) { _, _ in
-                    print("🔄 DashboardView: Refresh triggered by DataSyncManager")
-                    if authService.isAuthenticated && authService.currentUser != nil {
-                        recentActivityViewModel.loadRecentActivity(for: dashboardStore.selectedDate, authService: authService)
-                    }
+                .padding(.top, 10)
+                
+                // Spacer for tab bar
+                Spacer(minLength: 80)
+            }
+            .padding(.horizontal)
+            .padding(.top)
+        }
+        .navigationTitle("Dashboard")
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                ProfileAvatarButton(user: authService.currentUser) {
+                    router.showProfile()
                 }
             }
-            // Floating + button for logging meal
+        }
+        .onAppear {
+            loadDataIfAuthenticated()
+        }
+        .onChange(of: authService.isAuthenticated) { _, isAuthenticated in
+            if isAuthenticated && authService.currentUser != nil {
+                loadDataIfAuthenticated()
+            }
+        }
+        .onChange(of: authService.currentUser) { _, _ in
+            loadDataIfAuthenticated()
+        }
+        .onChange(of: dashboardStore.selectedDate) { _, _ in
+            loadDataIfAuthenticated()
+        }
+        .onChange(of: refreshManager.refreshToken) { _, _ in
+            print("📱 DashboardView: Refresh triggered by RefreshManager")
+            loadDataIfAuthenticated()
         }
     }
+    
+    private func loadDataIfAuthenticated() {
+        guard authService.isAuthenticated, authService.currentUser != nil else {
+            print("📱 DashboardView: Cannot load data - user not authenticated or currentUser nil")
+            return
+        }
+        
+        print("📱 DashboardView: Loading data for \(dashboardStore.selectedDate)")
+        recentActivityViewModel.loadRecentActivity(for: dashboardStore.selectedDate, authService: authService)
+    }
+    
+
 }
 
 #Preview {
     DashboardView()
         .environmentObject(PreviewAuthService())
-        .environmentObject(DashboardDataStore(preview: true))
+        .environmentObject(AppRouter.shared)
+        .environmentObject(RefreshManager.shared)
+
 }

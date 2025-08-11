@@ -104,40 +104,38 @@ class BarcodeScannerViewModel: NSObject, ObservableObject, AVCaptureMetadataOutp
         }
     }
     
-    // Configure camera
+    // Configure camera - now uses centralized PermissionManager
     func checkCameraPermission() {
-        let authStatus = AVCaptureDevice.authorizationStatus(for: .video)
-        Swift.print("🎥 Camera permission status: \(authStatus.rawValue)")
+        let permissionManager = PermissionManager.shared
         
-        switch authStatus {
-        case .authorized:
-            Swift.print("🎥 Camera already authorized")
-            self.isAuthorized = true
+        // Update from centralized permission status
+        self.isAuthorized = permissionManager.cameraStatus.isGranted
+        
+        if permissionManager.cameraStatus.isGranted {
+            Swift.print("🎥 Camera already authorized via PermissionManager")
             self.setupCameraSession()
-        case .notDetermined:
-            Swift.print("🎥 Camera permission not determined, requesting access...")
-            AVCaptureDevice.requestAccess(for: .video) { [weak self] granted in
-                Swift.print("🎥 Camera permission request result: \(granted)")
-                DispatchQueue.main.async {
-                    self?.isAuthorized = granted
-                    if granted {
-                        Swift.print("🎥 Setting up camera session after permission granted")
-                        self?.setupCameraSession()
-                    } else {
-                        Swift.print("🎥 Camera permission denied by user")
-                    }
-                }
-            }
-        case .denied:
-            Swift.print("🎥 Camera permission denied")
+        } else if permissionManager.cameraStatus.needsRequest {
+            Swift.print("🎥 Camera permission not determined, will be handled by UI")
             self.isAuthorized = false
-        case .restricted:
-            Swift.print("🎥 Camera permission restricted")
-            self.isAuthorized = false
-        @unknown default:
-            Swift.print("🎥 Unknown camera permission status")
+        } else {
+            Swift.print("🎥 Camera permission denied or restricted")
             self.isAuthorized = false
         }
+    }
+    
+    // Request permission through centralized system
+    func requestCameraPermission() async -> Bool {
+        let permissionManager = PermissionManager.shared
+        let granted = await permissionManager.requestCameraPermission()
+        
+        await MainActor.run {
+            self.isAuthorized = granted
+            if granted {
+                self.setupCameraSession()
+            }
+        }
+        
+        return granted
     }
     
     func openSettings() {

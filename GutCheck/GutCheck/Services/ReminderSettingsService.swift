@@ -117,16 +117,12 @@ class ReminderSettingsService: ObservableObject {
     
     private func scheduleNotifications(for settings: ReminderSettings) async {
         let center = UNUserNotificationCenter.current()
+        let permissionManager = PermissionManager.shared
         
-        // Request permission first
-        do {
-            let granted = try await center.requestAuthorization(options: [.alert, .sound, .badge])
-            if !granted {
-                print("⚠️ ReminderSettingsService: Notification permission denied")
-                return
-            }
-        } catch {
-            print("❌ ReminderSettingsService: Error requesting notification permission: \(error)")
+        // Check permission through centralized system
+        if !permissionManager.notificationStatus.isGranted {
+            print("⚠️ ReminderSettingsService: Notification permission not granted")
+            // Don't request here - should be handled by proper UI flow
             return
         }
         

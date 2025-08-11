@@ -114,7 +114,7 @@ class LocalProfileImageStrategy: ProfileImageStrategy {
     }
     
     private func updateUserProfileImageURL(userId: String, imageURL: String) async throws {
-        let userRef = FirebaseCollectionManager.shared.userDocument(userId)
+        let userRef = FirebaseManager.shared.userDocument(userId)
         
         print("🔥 LocalProfileImageStrategy: Updating Firestore for user \(userId) with imageURL: \(imageURL)")
         
@@ -134,7 +134,7 @@ class LocalProfileImageStrategy: ProfileImageStrategy {
     }
     
     private func removeProfileImageURL(for userId: String) async throws {
-        let userRef = FirebaseCollectionManager.shared.userDocument(userId)
+        let userRef = FirebaseManager.shared.userDocument(userId)
         
         try await userRef.updateData([
             "profileImageURL": FieldValue.delete(),

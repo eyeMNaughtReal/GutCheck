@@ -5,10 +5,16 @@
 	<key>CFBundleGetInfoString</key>
 	<string></string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>This app uses your health data to provide personalized nutrition and symptom insights.</string>
+	<string>GutCheck uses your health data to provide personalized nutrition insights and help identify food triggers that may affect your digestive health.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>GutCheck writes nutrition data, symptoms, and digestive health information to the Health app to provide comprehensive health tracking.</string>
+	<string>GutCheck saves your meal nutrition and symptom data to the Health app to help you track patterns and share with healthcare providers.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>GutCheck needs access to your camera to scan food barcodes and log meals.</string>
+	<string>GutCheck uses your camera to scan food barcodes for accurate nutrition data and estimate portion sizes using advanced scanning technology.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>GutCheck can save meal photos to your photo library to help you visually track your food intake and portion sizes.</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>GutCheck sends you helpful reminders to log meals and symptoms so you can maintain consistent tracking for better health insights.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>GutCheck can optionally use your location to suggest nearby restaurants and provide contextual meal logging when dining out.</string>
 </dict>
 </plist>

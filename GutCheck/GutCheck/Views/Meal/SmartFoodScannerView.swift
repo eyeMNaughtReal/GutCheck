@@ -217,7 +217,9 @@ struct SmartFoodScannerView: View {
                     barcodeControlsView
                 }
             } else {
-                cameraPermissionView
+                SmartScanCameraPermissionView {
+                    barcodeViewModel.checkCameraPermission()
+                }
             }
         }
         .padding()
@@ -381,31 +383,7 @@ struct SmartFoodScannerView: View {
         .cornerRadius(16)
     }
     
-    private var cameraPermissionView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "camera.metering.none")
-                .font(.system(size: 72))
-                .foregroundColor(ColorTheme.secondaryText)
-            
-            Text("Camera Access Needed")
-                .font(.title2.bold())
-                .foregroundColor(ColorTheme.primaryText)
-            
-            Text("We need camera access to scan barcodes and estimate portions.")
-                .multilineTextAlignment(.center)
-                .foregroundColor(ColorTheme.secondaryText)
-            
-            Button("Enable Camera Access") {
-                barcodeViewModel.openSettings()
-            }
-            .font(.headline)
-            .foregroundColor(.white)
-            .padding()
-            .background(ColorTheme.primary)
-            .cornerRadius(12)
-        }
-        .padding()
-    }
+
     
     private var lidarEnhancementStep: some View {
         VStack(spacing: 20) {

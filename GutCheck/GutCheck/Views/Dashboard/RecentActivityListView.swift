@@ -4,7 +4,7 @@ import FirebaseAuth
 
 struct RecentActivityListView: View {
     @StateObject private var viewModel = RecentActivityViewModel()
-    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
+    @EnvironmentObject var router: AppRouter
     @EnvironmentObject var authService: AuthService
     let selectedDate: Date
     
@@ -20,7 +20,7 @@ struct RecentActivityListView: View {
                 
                 Button("See All") {
                     // Switch to meals tab which shows the calendar view
-                    navigationCoordinator.selectedTab = .meals
+                    router.selectedTab = .meals
                 }
                 .font(.caption)
                 .foregroundColor(ColorTheme.primary)
@@ -56,9 +56,9 @@ struct RecentActivityListView: View {
     private func handleEntryTap(_ entry: ActivityEntry) {
         switch entry.type {
         case .meal(let meal):
-            navigationCoordinator.navigateTo(.mealDetail(meal))
+            router.navigateTo(.mealDetail(meal.id))
         case .symptom(let symptom):
-            navigationCoordinator.navigateTo(.symptomDetail(symptom))
+            router.navigateTo(.symptomDetail(symptom.id))
         }
     }
 }

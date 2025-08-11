@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MealLoggingOptionsView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
+    @EnvironmentObject var router: AppRouter
     @State private var showingSmartScannerView = false
     @State private var showingSearchView = false
     @State private var showingBarcodeScannerView = false
@@ -117,32 +117,32 @@ struct MealLoggingOptionsView: View {
                     // Close the search sheet to return to MealBuilderView
                     showingSearchView = false
                 }
-                .environmentObject(navigationCoordinator)
+                .environmentObject(router)
             }
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingSmartScannerView) {
             SmartFoodScannerView()
-                .environmentObject(navigationCoordinator)
+                .environmentObject(router)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingBarcodeScannerView) {
             BarcodeScannerView()
-                .environmentObject(navigationCoordinator)
+                .environmentObject(router)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingLiDARScannerView) {
             LiDARScannerView()
-                .environmentObject(navigationCoordinator)
+                .environmentObject(router)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showingRecentItemsView) {
             RecentItemsView()
-                .environmentObject(navigationCoordinator)
+                .environmentObject(router)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
@@ -249,7 +249,7 @@ struct LoggingOptionCard: View {
 
 struct RecentItemsView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
+    @EnvironmentObject var router: AppRouter
     @StateObject private var viewModel = RecentItemsViewModel()
     @State private var selectedFoodItem: FoodItem?
     
@@ -484,7 +484,7 @@ class RecentItemsViewModel: ObservableObject {
 // Preview
 #Preview {
     MealLoggingOptionsView()
-        .environmentObject(NavigationCoordinator())
+        .environmentObject(AppRouter.shared)
 }
 
 // MARK: - Recent Food Item Row Component

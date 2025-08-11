@@ -4,29 +4,34 @@ struct SymptomHistoryView: View {
     @StateObject private var viewModel = SymptomHistoryViewModel()
     @State private var selectedFilter: SymptomFilter = .all
     @State private var showingDatePicker = false
+    @EnvironmentObject var router: AppRouter
     
     private var symptomsList: some View {
-        ForEach(viewModel.groupedSymptoms.keys.sorted(by: >), id: \.self) { date in
-            Section(header: Text(formatDate(date))) {
-                ForEach(viewModel.groupedSymptoms[date] ?? []) { symptom in
-                    NavigationLink(destination: SymptomDetailView(
-                        symptom: symptom,
-                        onEdit: { updatedSymptom in
-                            Task {
-                                await viewModel.updateSymptom(updatedSymptom)
-                            }
-                        },
-                        onDelete: { symptomToDelete in
-                            Task {
-                                await viewModel.deleteSymptom(symptomToDelete)
-                            }
-                        }
-                    )) {
-                        SymptomRow(symptom: symptom)
-                    }
-                }
+        let sortedDates = viewModel.groupedSymptoms.keys.sorted(by: >)
+        
+        return ForEach(sortedDates, id: \.self) { date in
+            symptomSection(for: date)
+        }
+    }
+    
+    private func symptomSection(for date: Date) -> some View {
+        let symptoms = viewModel.groupedSymptoms[date] ?? []
+        
+        return Section(header: Text(formatDate(date))) {
+            ForEach(symptoms) { symptom in
+                symptomNavigationLink(for: symptom)
             }
         }
+    }
+    
+    private func symptomNavigationLink(for symptom: Symptom) -> some View {
+        NavigationLink(destination: symptomDetailView(for: symptom)) {
+            SymptomRow(symptom: symptom)
+        }
+    }
+    
+    private func symptomDetailView(for symptom: Symptom) -> some View {
+        SymptomDetailView(symptom: symptom)
     }
     
     var body: some View {
@@ -55,6 +60,14 @@ struct SymptomHistoryView: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
+                }
+            }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    router.startSymptomLogging()
+                }) {
+                    Image(systemName: "plus")
                 }
             }
         }

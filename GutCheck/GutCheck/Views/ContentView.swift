@@ -4,7 +4,7 @@ struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
             .environmentObject(AuthService())
-            .environmentObject(NavigationCoordinator())
+            .environmentObject(AppRouter.shared)
     }
 }
 #endif
@@ -19,81 +19,82 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var authService: AuthService
-    @StateObject private var navigationCoordinator = NavigationCoordinator()
+    @StateObject private var router = AppRouter.shared
     
     var body: some View {
         ZStack(alignment: .bottom) {
-            NavigationStack(path: navigationCoordinator.currentNavigationPath) {
+            NavigationStack(path: $router.path) {
                 Group {
-                    switch navigationCoordinator.selectedTab {
+                    switch router.selectedTab {
                     case .dashboard:
                         DashboardView()
                     case .meals, .symptoms:
-                        CalendarView(selectedTab: navigationCoordinator.selectedTab)
+                        CalendarView(selectedTab: router.selectedTab)
                     case .insights:
                         InsightsView()
-                    case .add:
-                        DashboardView() // Plus button shows actions, doesn't navigate
                     }
                 }
-                .navigationDestination(for: NavigationCoordinator.Destination.self) { destination in
+                .navigationDestination(for: AppDestination.self) { destination in
                     destinationView(for: destination)
                 }
-                .sheet(isPresented: $navigationCoordinator.isShowingProfile) {
-                    if let currentUser = authService.currentUser {
-                        UserProfileView(user: currentUser)
-                    }
-                }
-                .sheet(isPresented: $navigationCoordinator.isShowingSettings) {
-                    SettingsView()
+                .sheet(item: $router.activeSheet) { sheet in
+                    sheetView(for: sheet)
                 }
             }
 
-            CustomTabBar(selectedTab: $navigationCoordinator.selectedTab) { action in
+            CustomTabBar(selectedTab: $router.selectedTab) { action in
                 handleTabBarAction(action)
             }
         }
-        .environmentObject(navigationCoordinator)
+        .environmentObject(router)
         .background(ColorTheme.background.ignoresSafeArea())
-        .sheet(isPresented: $navigationCoordinator.isShowingMealLoggingOptions) {
-            MealLoggingOptionsView()
-                .environmentObject(navigationCoordinator)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-        }
-        .sheet(isPresented: $navigationCoordinator.isShowingSymptomLoggingSheet) {
-            LogSymptomView()
-                .environmentObject(authService)
-                .environmentObject(navigationCoordinator)
+
+    }
+    
+    @ViewBuilder
+    private func destinationView(for destination: AppDestination) -> some View {
+        switch destination {
+        case .dashboard:
+            DashboardView()
+        case .calendar(let date):
+            CalendarView(selectedDate: date)
+        case .mealDetail(let id):
+            if let id = id {
+                MealDetailView(mealId: id)
+            } else {
+                Text("Invalid meal")
+            }
+        case .symptomDetail(let id):
+            if let id = id {
+                SymptomDetailView(symptomId: id)
+            } else {
+                Text("Invalid symptom")
+            }
+        case .settings:
+            SettingsView()
+        case .analytics:
+            InsightsView()
         }
     }
     
     @ViewBuilder
-    private func destinationView(for destination: NavigationCoordinator.Destination) -> some View {
-        switch destination {
-        case .profile(let user):
-            UserProfileView(user: user)
-        case .settings:
-            SettingsView()
-        case .mealDetail(let meal):
-            MealDetailView(meal: meal)
-        case .symptomDetail(let symptom):
-            SymptomDetailView(symptom: symptom)
-        case .foodDetail(let foodItem):
-            UnifiedFoodDetailView(foodItem: foodItem)  // Full comprehensive view with all health details
-        case .logMeal:
-            // This now goes to options view as a sheet instead
-            EmptyView()
-        case .logSymptom:
-            LogSymptomView()
-        case .calendar(let date):
-            CalendarView(selectedDate: date)
-        case .insights:
-            InsightsView()
-        case .userReminders:
-            UserRemindersView()
-        case .mealBuilder:
+    private func sheetView(for sheet: SheetDestination) -> some View {
+        switch sheet {
+        case .profile:
+            if let currentUser = authService.currentUser {
+                UserProfileView(user: currentUser)
+            } else {
+                Text("User information unavailable")
+            }
+        case .mealForm(_):
             MealBuilderView()
+                .environmentObject(router)
+        case .symptomForm(_):
+            LogSymptomView()
+                .environmentObject(router)
+        case .logEntry:
+            LogEntryView()
+                .environmentObject(router)
         }
     }
     
@@ -101,9 +102,12 @@ struct ContentView: View {
         switch action {
         case .logMeal:
             // Show meal logging options as a sheet
-            navigationCoordinator.isShowingMealLoggingOptions = true
+            router.presentLogEntryView()
         case .logSymptom:
-            navigationCoordinator.isShowingSymptomLoggingSheet = true
+            router.startSymptomLogging()
+        case .tabTapped(_):
+            // Handle same tab tapped - already handled in CustomTabBar
+            break
         }
     }
 }
@@ -112,6 +116,7 @@ struct ContentView: View {
 enum TabBarAction {
     case logMeal
     case logSymptom
+    case tabTapped(Tab)
 }
 
 

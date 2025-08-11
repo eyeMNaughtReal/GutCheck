@@ -40,7 +40,7 @@ struct GutCheckApp: App {
     
     static private func testFirebaseConnection() async {
         do {
-            let testDoc = FirebaseCollectionManager.shared.testDocument("connection")
+            let testDoc = FirebaseManager.shared.testDocument("connection")
             let _ = try await testDoc.getDocument()
             print("✅ Firebase connection test successful")
         } catch {
@@ -53,7 +53,7 @@ struct GutCheckApp: App {
         WindowGroup {
             Group {
                 if authService.isAuthenticated {
-                    ContentView()
+                    AppRoot()
                         .environmentObject(authService)
                         .environmentObject(settingsVM)
                         .environmentObject(TimeoutManager.shared)
@@ -64,7 +64,7 @@ struct GutCheckApp: App {
             .onChange(of: TimeoutManager.shared.shouldResetToHome) { _, shouldReset in
                 if shouldReset {
                     // Reset navigation state
-                    NavigationCoordinator.shared.resetToRoot()
+                    AppRouter.shared.navigateToRoot()
                     // Reset the timeout state
                     TimeoutManager.shared.resetTimeoutState()
                 }

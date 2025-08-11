@@ -3,7 +3,6 @@ import Foundation
 enum Tab: String, CaseIterable {
     case dashboard
     case meals
-    case add
     case symptoms
     case insights
     
@@ -11,7 +10,6 @@ enum Tab: String, CaseIterable {
         switch self {
         case .dashboard: return "Home"
         case .meals: return "Meals"
-        case .add: return ""
         case .symptoms: return "Symptoms"
         case .insights: return "Insights"
         }
@@ -21,7 +19,6 @@ enum Tab: String, CaseIterable {
         switch self {
         case .dashboard: return "house"
         case .meals: return "list.bullet"
-        case .add: return "plus"
         case .symptoms: return "waveform.path.ecg"
         case .insights: return "chart.bar.xaxis"
         }

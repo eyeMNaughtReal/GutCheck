@@ -7,14 +7,19 @@
 
 import SwiftUI
 import FirebaseAuth
+#if canImport(UIKit)
+import UIKit
+#endif
 
 // Using shared Tab enum from Core models
 import Foundation // Required for Tab enum
+
 struct CalendarView: View {
-    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
+    @EnvironmentObject var router: AppRouter
     @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var refreshManager: RefreshManager
     @StateObject private var viewModel = CalendarViewModel()
-    @StateObject private var dataSyncManager = DataSyncManager.shared
+    @State private var isShowingActionMenu = false
 
     let selectedTab: Tab?
     let selectedDate: Date?
@@ -25,25 +30,64 @@ struct CalendarView: View {
     }
 
     var body: some View {
-        VStack {
-            WeekSelector(selectedDate: $viewModel.selectedDate) { date in
-                viewModel.selectedDate = date
-            }
-            .padding(.vertical)
+        ZStack(alignment: .bottomTrailing) {
+            VStack {
+                WeekSelector(selectedDate: $viewModel.selectedDate) { date in
+                    viewModel.selectedDate = date
+                }
+                .padding(.vertical)
 
-            ScrollView {
-                CalendarContentView(
-                    selectedTab: selectedTab,
-                    viewModel: viewModel
-                )
-                .padding(.bottom, 80)
+                ScrollView {
+                    CalendarContentView(
+                        selectedTab: selectedTab,
+                        viewModel: viewModel
+                    )
+                    .padding(.bottom, 80)
+                }
+            }
+            
+            // Floating Action Button for logging
+            if selectedTab == .meals || selectedTab == .symptoms {
+                Button(action: {
+                    if selectedTab == .meals {
+                        router.startMealLogging()
+                    } else if selectedTab == .symptoms {
+                        router.startSymptomLogging()
+                    }
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: selectedTab == .meals ? "plus.circle.fill" : "plus.circle.fill")
+                            .font(.system(size: 20))
+                        
+                        Text("Log \(selectedTab == .meals ? "Meal" : "Symptom")")
+                            .fontWeight(.semibold)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(selectedTab == .meals ? ColorTheme.primary : ColorTheme.accent)
+                    .foregroundColor(.white)
+                    .cornerRadius(24)
+                    .shadow(color: ColorTheme.shadowColor.opacity(0.3), radius: 5, x: 0, y: 2)
+                }
+                .padding(.trailing, 16)
+                .padding(.bottom, 100) // Position above the tab bar
             }
         }
         .navigationTitle(title)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .navigationBarLeading) {
                 ProfileAvatarButton(user: authService.currentUser) {
-                    navigationCoordinator.isShowingProfile = true
+                    router.showProfile()
+                }
+            }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    showLogOptions()
+                }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 20))
+                        .foregroundColor(ColorTheme.primary)
                 }
             }
         }
@@ -60,8 +104,8 @@ struct CalendarView: View {
             viewModel.loadMeals()
             viewModel.loadSymptoms()
         }
-        .onChange(of: dataSyncManager.shouldRefreshDashboard) { _, _ in
-            print("🔄 CalendarView: Refresh triggered by DataSyncManager")
+        .onChange(of: refreshManager.refreshToken) { _, _ in
+            print("🔄 CalendarView: Refresh triggered by RefreshManager")
             viewModel.loadMeals()
             viewModel.loadSymptoms()
         }
@@ -71,12 +115,50 @@ struct CalendarView: View {
             viewModel.loadSymptoms()
         }
     }
+    
+    private func showLogOptions() {
+        // Create an ActionSheet or Menu to select between logging a meal or symptom
+        // For iOS 16+, we can use a confirmation dialog
+        #if canImport(UIKit)
+        let alertController = UIAlertController(
+            title: "Log an Entry",
+            message: "What would you like to log?",
+            preferredStyle: .actionSheet
+        )
+        
+        alertController.addAction(UIAlertAction(title: "Log Meal", style: .default) { _ in
+            router.startMealLogging()
+        })
+        
+        alertController.addAction(UIAlertAction(title: "Log Symptom", style: .default) { _ in
+            router.startSymptomLogging()
+        })
+        
+        alertController.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        
+        // Present the alert
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let window = windowScene.windows.first {
+            window.rootViewController?.present(alertController, animated: true)
+        }
+        #endif
+    }
+    
+    private var title: String {
+        switch selectedTab {
+        case .meals: return "Meals"
+        case .symptoms: return "Symptoms"
+        default: return "Calendar"
+        }
+    }
+}
 
 // Extracted subview to help compiler
 struct CalendarContentView: View {
     let selectedTab: Tab?
     @ObservedObject var viewModel: CalendarViewModel
-    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
+    @EnvironmentObject var router: AppRouter
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             if selectedTab == .meals || selectedTab == nil {
@@ -93,7 +175,7 @@ struct CalendarContentView: View {
                     } else {
                         ForEach(viewModel.meals) { meal in
                             MealCalendarRow(meal: meal) {
-                                navigationCoordinator.navigateTo(.mealDetail(meal))
+                                router.viewMealDetails(id: meal.id)
                             }
                             .padding(.horizontal)
                         }
@@ -101,9 +183,11 @@ struct CalendarContentView: View {
                 }
             }
             if selectedTab == .symptoms || selectedTab == nil {
-                Section(header: Text("Symptoms on \(viewModel.formattedDate)")
-                    .font(.headline)
-                    .padding(.horizontal)) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Symptoms on \(viewModel.formattedDate)")
+                        .font(.headline)
+                        .padding(.horizontal)
+                    
                     if viewModel.isLoadingSymptoms {
                         ProgressView()
                             .frame(maxWidth: .infinity, minHeight: 100)
@@ -114,24 +198,14 @@ struct CalendarContentView: View {
                     } else {
                         ForEach(viewModel.symptoms) { symptom in
                             SymptomCalendarRow(symptom: symptom) {
-                                // Ensure we are on the symptoms tab before navigating
-                                navigationCoordinator.selectedTab = .symptoms
-                                navigationCoordinator.navigateTo(.symptomDetail(symptom))
+                                // Navigate to symptom detail
+                                router.navigateTo(.symptomDetail(symptom.id))
                             }
                             .padding(.horizontal)
                         }
                     }
                 }
             }
-        }
-    }
-}
-
-    private var title: String {
-        switch selectedTab {
-        case .meals: return "Meals"
-        case .symptoms: return "Symptoms"
-        default: return "Calendar"
         }
     }
 }
@@ -169,7 +243,7 @@ class CalendarViewModel: ObservableObject {
                 await MainActor.run {
                     self.meals = loadedMeals
                     self.isLoadingMeals = false
-                    print("🍽️ CalendarView: Updated UI with \(self.meals.count) meals")
+                                    print("🍽️ CalendarView: Updated UI with \(self.meals.count) meals")
                 }
             } catch {
                 print("❌ CalendarView: Error loading meals: \(error)")
@@ -228,16 +302,23 @@ class CalendarViewModel: ObservableObject {
         for day in 1...monthRange.count {
             var components = calendar.dateComponents([.year, .month], from: date)
             components.day = day
+            
             guard let dayDate = calendar.date(from: components) else { continue }
             
-            // Check if this is the selected date to determine if we have real data
+            // Check if we have meal or symptom data for this day
             let hasMealsData = calendar.isDate(dayDate, inSameDayAs: selectedDate) && !meals.isEmpty
             let hasSymptomsData = calendar.isDate(dayDate, inSameDayAs: selectedDate) && !symptoms.isEmpty
             
             var entryTypes: Set<CalendarDay.EntryType> = []
-            if hasMealsData { entryTypes.insert(.meals) }
-            if hasSymptomsData { entryTypes.insert(.symptom) }
-            if hasMealsData && hasSymptomsData { entryTypes.insert(.both) }
+            if hasMealsData {
+                entryTypes.insert(.meals)
+            }
+            if hasSymptomsData {
+                entryTypes.insert(.symptom)
+            }
+            if hasMealsData && hasSymptomsData {
+                entryTypes.insert(.both)
+            }
             
             let calendarDay = CalendarDay(
                 date: dayDate,
@@ -245,6 +326,7 @@ class CalendarViewModel: ObservableObject {
                 hasEntries: hasMealsData || hasSymptomsData,
                 entryTypes: entryTypes
             )
+            
             days.append(calendarDay)
         }
         
@@ -252,11 +334,12 @@ class CalendarViewModel: ObservableObject {
     }
 }
 
-// MARK: - Meal Row (reuse from previous)
+// MARK: - Meal Row
 struct MealCalendarRow: View {
     let meal: Meal
     let onTap: () -> Void
-    @EnvironmentObject var navigationCoordinator: NavigationCoordinator
+    @EnvironmentObject var router: AppRouter
+    
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 8) {
@@ -271,10 +354,9 @@ struct MealCalendarRow: View {
                 }
                 if !meal.foodItems.isEmpty {
                     HStack(spacing: 4) {
-                        ForEach(meal.foodItems.indices, id: \.self) { idx in
-                            let item = meal.foodItems[idx]
+                        ForEach(Array(meal.foodItems.enumerated()), id: \.offset) { idx, item in
                             Button(action: {
-                                navigationCoordinator.navigateTo(.foodDetail(item))
+                                router.navigateTo(.mealDetail(item.id))
                             }) {
                                 Text(item.name)
                                     .font(.caption)
@@ -292,10 +374,11 @@ struct MealCalendarRow: View {
         }
         .buttonStyle(PlainButtonStyle())
     }
-// ...existing code...
+    
     private var formattedTime: String {
         meal.date.formattedTime
     }
+    
     private var foodItemsPreview: String {
         let names = meal.foodItems.prefix(3).map { $0.name }
         let preview = names.joined(separator: ", ")
@@ -304,6 +387,7 @@ struct MealCalendarRow: View {
         }
         return preview
     }
+    
     private var typeColor: Color {
         switch meal.type {
         case .breakfast: return .orange
@@ -319,6 +403,7 @@ struct MealCalendarRow: View {
 struct SymptomCalendarRow: View {
     let symptom: Symptom
     let onTap: () -> Void
+    
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 8) {
@@ -353,6 +438,7 @@ struct SymptomCalendarRow: View {
         }
         .buttonStyle(PlainButtonStyle())
     }
+    
     private var formattedTime: String {
         symptom.date.formattedTime
     }
@@ -361,6 +447,6 @@ struct SymptomCalendarRow: View {
 // MARK: - Preview
 #Preview {
     CalendarView(selectedTab: Tab.meals)
-        .environmentObject(NavigationCoordinator())
+        .environmentObject(AppRouter())
         .environmentObject(AuthService())
 }

@@ -161,6 +161,14 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
     
     // Other methods remain unchanged
     func remindMeLater() {
+        let permissionManager = PermissionManager.shared
+        
+        // Check permission through centralized system
+        guard permissionManager.notificationStatus.isGranted else {
+            print("⚠️ LogSymptomViewModel: Cannot schedule reminder - notification permission not granted")
+            return
+        }
+        
         let interval = UserDefaults.standard.object(forKey: "remindMeLaterInterval") as? Int ?? 15
         
         let content = UNMutableNotificationContent()
@@ -173,7 +181,9 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
         
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                print("Error scheduling reminder: \(error)")
+                print("❌ LogSymptomViewModel: Error scheduling reminder: \(error)")
+            } else {
+                print("✅ LogSymptomViewModel: Reminder scheduled successfully")
             }
         }
     }

@@ -1,10 +1,3 @@
-//
-//  MealDetailViewModel.swift
-//  GutCheck
-//
-//  Created by Mark Conley on 7/14/25.
-//
-
 import Foundation
 import FirebaseFirestore
 import SwiftUI
@@ -12,9 +5,11 @@ import SwiftUI
 @MainActor
 class MealDetailViewModel: ObservableObject {
     @Published var meal: Meal
-    @Published var notes: String
+    @Published var mealId: String?
+    @Published var notes: String = ""
     @Published var isEditing = false
     @Published var isSaving = false
+    @Published var isLoading = false
     @Published var editingFoodItem: FoodItem?
     @Published var showingDeleteConfirmation = false
     @Published var showingErrorAlert = false
@@ -24,12 +19,46 @@ class MealDetailViewModel: ObservableObject {
     // Repository dependency
     private let mealRepository: MealRepository
     
-    // Using DateFormattingService instead of local formatters
-    
+    // Initialize with a Meal object
     init(meal: Meal, mealRepository: MealRepository = MealRepository.shared) {
         self.meal = meal
+        self.mealId = meal.id
         self.notes = meal.notes ?? ""
         self.mealRepository = mealRepository
+    }
+    
+    // Initialize with a meal ID
+    init(mealId: String, mealRepository: MealRepository = MealRepository.shared) {
+        self.mealId = mealId
+        self.meal = Meal.emptyMeal()
+        self.mealRepository = mealRepository
+        self.isLoading = true
+    }
+    
+    // Load meal by ID
+    func loadMeal() async {
+        guard let id = mealId else { return }
+        
+        isLoading = true
+        
+        do {
+            if let loadedMeal = try await mealRepository.fetch(id: id) {
+                self.meal = loadedMeal
+                self.notes = loadedMeal.notes ?? ""
+                
+                print("✅ Meal loaded successfully: \(loadedMeal.name)")
+            } else {
+                self.errorMessage = "Could not find the meal"
+                self.showingErrorAlert = true
+                print("⚠️ No meal found with ID: \(id)")
+            }
+        } catch {
+            self.errorMessage = "Error loading meal: \(error.localizedDescription)"
+            self.showingErrorAlert = true
+            print("❌ Error loading meal: \(error)")
+        }
+        
+        isLoading = false
     }
     
     // Computed properties using DateFormattingService
@@ -50,115 +79,84 @@ class MealDetailViewModel: ObservableObject {
         }
     }
     
-    var totalNutrition: NutritionInfo {
-        var total = NutritionInfo()
-        
-        for item in meal.foodItems {
-            if let itemCalories = item.nutrition.calories {
-                total.calories = (total.calories ?? 0) + itemCalories
-            }
-            if let itemProtein = item.nutrition.protein {
-                total.protein = (total.protein ?? 0) + itemProtein
-            }
-            if let itemCarbs = item.nutrition.carbs {
-                total.carbs = (total.carbs ?? 0) + itemCarbs
-            }
-            if let itemFat = item.nutrition.fat {
-                total.fat = (total.fat ?? 0) + itemFat
-            }
-            if let itemFiber = item.nutrition.fiber {
-                total.fiber = (total.fiber ?? 0) + itemFiber
-            }
-            if let itemSugar = item.nutrition.sugar {
-                total.sugar = (total.sugar ?? 0) + itemSugar
-            }
-            if let itemSodium = item.nutrition.sodium {
-                total.sodium = (total.sodium ?? 0) + itemSodium
-            }
-        }
-        
-        return total
-    }
-    
-    // MARK: - Methods (Simplified using Repository)
-    
-    func startEditing() {
-        isEditing = true
-    }
-    
-    func cancelEditing() {
-        isEditing = false
-        notes = meal.notes ?? ""
-    }
-    
-    func editFoodItem(_ item: FoodItem) {
-        editingFoodItem = item
-    }
-    
-    func updateFoodItem(_ updatedItem: FoodItem) {
-        if let index = meal.foodItems.firstIndex(where: { $0.id == updatedItem.id }) {
-            meal.foodItems[index] = updatedItem
-        }
-    }
-    
-    func removeFoodItem(_ item: FoodItem) {
-        meal.foodItems.removeAll { $0.id == item.id }
-    }
-    
-    func addNewFoodItem() {
-        let newItem = FoodItem(
-            name: "New Food Item",
-            quantity: "1 serving",
-            nutrition: NutritionInfo()
-        )
-        
-        editingFoodItem = newItem
-    }
-    
-    // MARK: - Save Method (Refactored)
-    
-    func saveMeal() {
-        isSaving = true
-        errorMessage = ""
-        
+    func updateNotes() {
         meal.notes = notes.isEmpty ? nil : notes
+    }
+    
+    func saveMeal() async -> Bool {
+        isSaving = true
         
-        Task {
-            do {
-                try await mealRepository.save(meal)
-                
-                await MainActor.run {
-                    self.isSaving = false
-                    self.isEditing = false
-                }
-            } catch {
-                await MainActor.run {
-                    self.isSaving = false
-                    self.errorMessage = error.localizedDescription
-                    self.showingErrorAlert = true
-                }
-            }
+        // Update the notes before saving
+        updateNotes()
+        
+        do {
+            try await mealRepository.save(meal)
+            isSaving = false
+            isEditing = false
+            return true
+        } catch {
+            errorMessage = "Failed to save meal: \(error.localizedDescription)"
+            showingErrorAlert = true
+            isSaving = false
+            return false
         }
     }
     
-    // MARK: - Delete Method (Refactored)
-    
-    func confirmDelete() {
-        showingDeleteConfirmation = true
-    }
-    
-    func deleteMeal() async {
+    func deleteMeal() async -> Bool {
         do {
             try await mealRepository.delete(id: meal.id)
-            shouldDismiss = true
+            return true
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = "Failed to delete meal: \(error.localizedDescription)"
             showingErrorAlert = true
+            return false
         }
     }
     
-    func shareAsPDF() {
-        errorMessage = "PDF sharing is not implemented yet"
-        showingErrorAlert = true
+    func updateFoodItem(_ foodItem: FoodItem) {
+        if let index = meal.foodItems.firstIndex(where: { $0.id == foodItem.id }) {
+            meal.foodItems[index] = foodItem
+        }
+    }
+    
+    func removeFoodItem(_ foodItem: FoodItem) {
+        meal.foodItems.removeAll { $0.id == foodItem.id }
+    }
+}
+
+// Extension on Meal to provide an empty meal for initialization
+extension Meal {
+    static func emptyMeal() -> Meal {
+        return Meal(
+            id: "",
+            name: "Loading...",
+            date: Date(),
+            type: .breakfast,
+            source: .manual,
+            foodItems: []
+        )
+    }
+    
+    static var sampleMeal: Meal {
+        return Meal(
+            id: UUID().uuidString,
+            name: "Sample Lunch",
+            date: Date(),
+            type: .lunch,
+            source: .manual,
+            foodItems: [
+                FoodItem(
+                    name: "Salad", 
+                    quantity: "1 serving",
+                    nutrition: NutritionInfo(calories: 250)
+                ),
+                FoodItem(
+                    name: "Chicken", 
+                    quantity: "3 oz",
+                    nutrition: NutritionInfo(calories: 350)
+                )
+            ],
+            notes: "This is a sample meal"
+        )
     }
 }

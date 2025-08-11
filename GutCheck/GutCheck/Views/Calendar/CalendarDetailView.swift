@@ -4,7 +4,7 @@ struct CalendarDetailView: View {
     let date: Date
     @StateObject private var viewModel = CalendarDetailViewModel()
     @EnvironmentObject private var authService: AuthService
-    @EnvironmentObject private var navigationCoordinator: NavigationCoordinator
+    @EnvironmentObject private var router: AppRouter
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -42,7 +42,7 @@ struct CalendarDetailView: View {
                         
                         ForEach(viewModel.symptoms) { symptom in
                             Button(action: {
-                                navigationCoordinator.navigateTo(.symptomDetail(symptom))
+                                router.navigateTo(.symptomDetail(symptom.id))
                             }) {
                                 SymptomSummaryCard(symptom: symptom)
                             }
@@ -93,5 +93,5 @@ struct CalendarDetailView: View {
         CalendarDetailView(date: Date())
     }
     .environmentObject(AuthService())
-    .environmentObject(NavigationCoordinator())
+    .environmentObject(AppRouter.shared)
 }

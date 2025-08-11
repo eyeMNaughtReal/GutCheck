@@ -1,233 +1,205 @@
-//
-//  SymptomDetailView.swift
-//  GutCheck
-//
-//  Created by Mark Conley on 7/14/25.
-//
-
-
 import SwiftUI
 
 struct SymptomDetailView: View {
-    let symptom: Symptom
-    var onEdit: ((Symptom) -> Void)? = nil
-    var onDelete: ((Symptom) -> Void)? = nil
-
-    @State private var isEditing = false
-    @State private var showDeleteAlert = false
-    @StateObject private var viewModel = SymptomDetailViewModel()
+    @StateObject private var viewModel: SymptomDetailViewModel
     @Environment(\.dismiss) private var dismiss
-
+    @EnvironmentObject var router: AppRouter
+    @EnvironmentObject var refreshManager: RefreshManager
+    
+    // New initializer that takes a symptom ID
+    init(symptomId: String) {
+        self._viewModel = StateObject(wrappedValue: SymptomDetailViewModel(symptomId: symptomId))
+    }
+    
+    // Keep the original initializer for backward compatibility
+    init(symptom: Symptom) {
+        self._viewModel = StateObject(wrappedValue: SymptomDetailViewModel(entity: symptom))
+    }
+    
     var body: some View {
+        Group {
+            if viewModel.isLoading {
+                loadingView
+            } else {
+                contentView
+            }
+        }
+        .onAppear {
+            if viewModel.symptomId != nil {
+                Task {
+                    await viewModel.loadEntity()
+                }
+            }
+        }
+    }
+    
+    private var loadingView: some View {
+        VStack {
+            ProgressView("Loading symptom details...")
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    private var contentView: some View {
         ScrollView {
             VStack(spacing: 24) {
-                Text("Symptom Detail")
-                    .font(.title)
-                    .padding(.top)
-
-                // Symptom information
-                VStack(alignment: .leading, spacing: 16) {
-                    // Date
-                    HStack {
-                        Text("Date:")
-                            .font(.headline)
-                        Spacer()
-                        Text(formattedDate)
-                            .font(.body)
-                    }
-                    .padding()
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(8)
-
-                    // Stool Type
-                    HStack {
-                        Text("Bristol Stool Type:")
-                            .font(.headline)
-                        Spacer()
-                        Text("Type \(symptom.stoolType.rawValue)")
-                            .font(.body)
-                    }
-                    .padding()
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(8)
-
-                    // Pain Level
-                    HStack {
-                        Text("Pain Level:")
-                            .font(.headline)
-                        Spacer()
-                        PainLevelIndicator(level: symptom.painLevel)
-                    }
-                    .padding()
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(8)
-
-                    // Urgency Level
-                    HStack {
-                        Text("Urgency Level:")
-                            .font(.headline)
-                        Spacer()
-                        UrgencyLevelIndicator(level: symptom.urgencyLevel)
-                    }
-                    .padding()
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(8)
-
-                    // Notes
-                    if let notes = symptom.notes, !notes.isEmpty {
-                        VStack(alignment: .leading) {
-                            Text("Notes:")
-                                .font(.headline)
-                            Text(notes)
-                                .font(.body)
-                                .padding()
-                                .background(Color.gray.opacity(0.1))
-                                .cornerRadius(8)
-                        }
-                    }
-                }
-                .padding(.horizontal)
-
-                Spacer()
-
-                // Action buttons
-                HStack(spacing: 16) {
-                    Button(action: {
-                        isEditing = true
-                    }) {
-                        Text("Edit")
-                            .font(.headline)
-                            .foregroundColor(ColorTheme.primaryText)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(ColorTheme.surface)
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(ColorTheme.border, lineWidth: 1)
-                            )
-                    }
-
-                    Button(action: {
-                        showDeleteAlert = true
-                    }) {
-                        Text("Delete")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(ColorTheme.error)
-                            .cornerRadius(12)
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.bottom, 20)
+                headerView
+                symptomInformationView
             }
+            .padding(.bottom, 80)
         }
         .navigationTitle("Symptom Details")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Delete Symptom?", isPresented: $showDeleteAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Delete", role: .destructive) {
-                if let onDelete = onDelete {
-                    onDelete(symptom)
-                } else {
-                    Task {
-                        await viewModel.deleteSymptom(symptom)
-                        dismiss()
-                    }
-                }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                trailingToolbarContent
             }
+            ToolbarItem(placement: .navigationBarLeading) {
+                leadingToolbarContent
+            }
+        }
+        .alert("Error", isPresented: $viewModel.showingErrorAlert) {
+            Button("OK", role: .cancel) { }
         } message: {
-            Text("Are you sure you want to delete this symptom? This action cannot be undone.")
+            Text(viewModel.errorMessage ?? "An unknown error occurred")
         }
-        .sheet(isPresented: $isEditing) {
-            SymptomEditView(
-                symptom: symptom,
-                onSave: { updatedSymptom in
-                    if let onEdit = onEdit {
-                        onEdit(updatedSymptom)
-                    } else {
-                        Task {
-                            await viewModel.updateSymptom(updatedSymptom)
-                        }
-                    }
-                },
-                onComplete: {
-                    isEditing = false
+        .confirmationDialog(
+            "Are you sure you want to delete this symptom record?",
+            isPresented: $viewModel.showingDeleteConfirmation
+        ) {
+            deleteConfirmationButton
+        }
+        .onChange(of: viewModel.shouldDismiss) { _, shouldDismiss in
+            if shouldDismiss {
+                router.navigateBack()
+            }
+        }
+    }
+    
+    private var headerView: some View {
+        Text(viewModel.isEditing ? "Edit Symptom" : "Symptom Detail")
+            .font(.title)
+            .padding(.top)
+    }
+    
+    private var symptomInformationView: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            dateRow
+            stoolTypeRow
+            
+            // Additional symptom fields can be added here
+            // painLevelRow
+            // urgencyLevelRow
+            // notesRow
+        }
+        .padding(.horizontal)
+    }
+    
+    private var dateRow: some View {
+        HStack {
+            Text("Date:")
+                .font(.headline)
+            Spacer()
+            Text(viewModel.entity.date.formatted(.dateTime.month().day().year()))
+                .font(.body)
+        }
+        .padding()
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(8)
+    }
+    
+    private var stoolTypeRow: some View {
+        HStack {
+            Text("Bristol Stool Type:")
+                .font(.headline)
+            Spacer()
+            Text("Type \(viewModel.entity.stoolType.rawValue)")
+                .font(.body)
+        }
+        .padding()
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(8)
+    }
+    
+    private var trailingToolbarContent: some View {
+        HStack {
+            if viewModel.isEditing {
+                saveButton
+            } else {
+                editMenu
+            }
+        }
+    }
+    
+    private var leadingToolbarContent: some View {
+        Group {
+            if viewModel.isEditing {
+                Button("Cancel") {
+                    viewModel.isEditing = false
                 }
-            )
-        }
-    }
-
-    private var formattedDate: String {
-        symptom.date.formattedDateTime
-    }
-}
-
-struct PainLevelIndicator: View {
-    let level: PainLevel
-    
-    var body: some View {
-        HStack(spacing: 4) {
-            ForEach(0..<4) { index in
-                Circle()
-                    .fill(index <= level.rawValue ? painColor : Color.gray.opacity(0.3))
-                    .frame(width: 16, height: 16)
             }
         }
     }
     
-    private var painColor: Color {
-        switch level {
-        case .none:
-            return Color.green
-        case .mild:
-            return Color.yellow
-        case .moderate:
-            return Color.orange
-        case .severe:
-            return Color.red
-        }
-    }
-}
-
-struct UrgencyLevelIndicator: View {
-    let level: UrgencyLevel
-    
-    var body: some View {
-        HStack(spacing: 4) {
-            ForEach(0..<4) { index in
-                Circle()
-                    .fill(index <= level.rawValue ? urgencyColor : Color.gray.opacity(0.3))
-                    .frame(width: 16, height: 16)
+    private var saveButton: some View {
+        Button("Save") {
+            Task {
+                if await viewModel.saveSymptom() {
+                    refreshManager.triggerRefresh()
+                }
             }
         }
+        .disabled(viewModel.isSaving)
     }
     
-    private var urgencyColor: Color {
-        switch level {
-        case .none:
-            return Color.green
-        case .mild:
-            return Color.yellow
-        case .moderate:
-            return Color.orange
-        case .urgent:
-            return Color.red
+    private var editMenu: some View {
+        Menu {
+            Button {
+                viewModel.isEditing = true
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+            
+            Button(role: .destructive) {
+                viewModel.showingDeleteConfirmation = true
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+        }
+    }
+    
+    private var deleteConfirmationButton: some View {
+        Button("Delete", role: .destructive) {
+            Task {
+                if await viewModel.deleteSymptom() {
+                    refreshManager.triggerRefresh()
+                    router.navigateBack()
+                }
+            }
         }
     }
 }
 
 #Preview {
-    NavigationStack {
-        SymptomDetailView(symptom: Symptom(
+    SymptomDetailView(symptom: Symptom.sampleSymptom())
+        .environmentObject(AppRouter.shared)
+        .environmentObject(RefreshManager.shared)
+}
+
+// Add this if not available elsewhere
+extension Symptom {
+    static func sampleSymptom() -> Symptom {
+        return Symptom(
+            id: "sample-id",
             date: Date(),
             stoolType: .type4,
-            painLevel: .moderate,
-            urgencyLevel: .mild,
-            notes: "Felt uncomfortable after lunch",
-            createdBy: "testUser"
-        ))
+            painLevel: .none,
+            urgencyLevel: .none,
+            notes: nil,
+            tags: [],
+            createdBy: ""
+        )
     }
 }

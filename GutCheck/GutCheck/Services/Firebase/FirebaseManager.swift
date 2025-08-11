@@ -2,8 +2,6 @@ import Foundation
 import FirebaseFirestore
 import FirebaseAuth
 
-// FirebaseError moved to FirebaseBatchManager.swift to avoid duplicate declarations
-
 class FirebaseManager {
     static let shared = FirebaseManager()
     
@@ -11,6 +9,126 @@ class FirebaseManager {
     private let auth = Auth.auth()
     
     private init() {}
+    
+    // MARK: - Collection Names
+    private enum CollectionName {
+        static let users = "users"
+        static let meals = "meals"
+        static let symptoms = "symptoms"
+        static let activities = "activities"
+        static let reminders = "reminders"
+        static let reminderSettings = "reminderSettings"
+        static let test = "test"
+        static let foodItems = "foodItems"
+    }
+    
+    // MARK: - Storage Paths
+    private enum StoragePath {
+        static let profileImages = "profile_images"
+        static let users = "users"
+    }
+    
+    // MARK: - Collection Management
+    
+    // User Collection
+    func usersCollection() -> CollectionReference {
+        return db.collection(CollectionName.users)
+    }
+    
+    func userDocument(_ userId: String) -> DocumentReference {
+        return usersCollection().document(userId)
+    }
+    
+    func userMealsCollection(_ userId: String) -> CollectionReference {
+        return userDocument(userId).collection(CollectionName.meals)
+    }
+    
+    func userMealDocument(_ userId: String, mealId: String) -> DocumentReference {
+        return userMealsCollection(userId).document(mealId)
+    }
+    
+    // Symptoms Collection
+    func userSymptomsCollection(_ userId: String) -> CollectionReference {
+        return userDocument(userId).collection(CollectionName.symptoms)
+    }
+    
+    func userSymptomDocument(_ userId: String, symptomId: String) -> DocumentReference {
+        return userSymptomsCollection(userId).document(symptomId)
+    }
+    
+    // Activities Collection
+    func userActivitiesCollection(_ userId: String) -> CollectionReference {
+        return userDocument(userId).collection(CollectionName.activities)
+    }
+    
+    func userActivityDocument(_ userId: String, activityId: String) -> DocumentReference {
+        return userActivitiesCollection(userId).document(activityId)
+    }
+    
+    // Reminders Collection
+    func userRemindersCollection(_ userId: String) -> CollectionReference {
+        return userDocument(userId).collection(CollectionName.reminders)
+    }
+    
+    func userReminderDocument(_ userId: String, reminderId: String) -> DocumentReference {
+        return userRemindersCollection(userId).document(reminderId)
+    }
+    
+    // Global Collections
+    func globalMealsCollection() -> CollectionReference {
+        return db.collection(CollectionName.meals)
+    }
+    
+    func globalSymptomsCollection() -> CollectionReference {
+        return db.collection(CollectionName.symptoms)
+    }
+    
+    // Additional Collections
+    func reminderSettingsCollection() -> CollectionReference {
+        return db.collection(CollectionName.reminderSettings)
+    }
+    
+    func testCollection() -> CollectionReference {
+        return db.collection(CollectionName.test)
+    }
+    
+    func testDocument(_ documentId: String) -> DocumentReference {
+        return testCollection().document(documentId)
+    }
+    
+    // Food Items Subcollection
+    func mealFoodItemsCollection(_ userId: String, mealId: String) -> CollectionReference {
+        return userMealDocument(userId, mealId: mealId).collection(CollectionName.foodItems)
+    }
+    
+    // Storage Path Helpers
+    func profileImagesStoragePath() -> String {
+        return StoragePath.profileImages
+    }
+    
+    func userStoragePath() -> String {
+        return StoragePath.users
+    }
+    
+    // Query Helpers
+    func createUserQuery(_ userId: String, collection: String) -> Query {
+        return db.collection(CollectionName.users)
+            .document(userId)
+            .collection(collection)
+    }
+    
+    func queryMealsByUser(_ userId: String) -> Query {
+        return db.collection(CollectionName.meals).whereField("userId", isEqualTo: userId)
+    }
+    
+    func querySymptomsByUser(_ userId: String) -> Query {
+        return db.collection(CollectionName.symptoms).whereField("userId", isEqualTo: userId)
+    }
+    
+    // Batch Operations Helper
+    func batch() -> WriteBatch {
+        return db.batch()
+    }
     
     // MARK: - Authentication
     
@@ -286,6 +404,43 @@ enum BatchOperation {
              .update(_, let documentId, _),
              .delete(_, let documentId):
             return documentId
+        }
+    }
+}
+
+// MARK: - Error Types
+
+enum FirebaseError: LocalizedError {
+    case notAuthenticated
+    case documentNotFound
+    case invalidData
+    case encodingError
+    case decodingError
+    case invalidQuery
+    case networkError
+    case permissionDenied
+    case unknown(Error)
+    
+    var errorDescription: String? {
+        switch self {
+        case .notAuthenticated:
+            return "User not authenticated"
+        case .documentNotFound:
+            return "Document not found"
+        case .invalidData:
+            return "Invalid data format"
+        case .encodingError:
+            return "Failed to encode data"
+        case .decodingError:
+            return "Failed to decode data"
+        case .invalidQuery:
+            return "Invalid query parameters"
+        case .networkError:
+            return "Network error occurred"
+        case .permissionDenied:
+            return "Permission denied"
+        case .unknown(let error):
+            return "Unknown error: \(error.localizedDescription)"
         }
     }
 }
