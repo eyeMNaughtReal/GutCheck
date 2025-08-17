@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseFirestore
+import HealthKit
 
 @MainActor
 class RecentActivityViewModel: ObservableObject {
@@ -99,20 +100,38 @@ class RecentActivityViewModel: ObservableObject {
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
         
-        // Fetch medications from HealthKit service
-        let service = getMedicationService()
-        let allMedications = try await service.fetchMedicationsFromHealthKit()
-        
-        // Filter medications that were active on the specified date
-        let medicationsForDate = allMedications.filter { medication in
-            // Check if medication was active on the specified date
-            let medicationStart = medication.startDate
-            let medicationEnd = medication.endDate ?? Date.distantFuture
+        do {
+            // Fetch medications from HealthKit service
+            let service = getMedicationService()
+            let allMedications = try await service.fetchMedicationsFromHealthKit()
             
-            // Medication is active if it started before or on the date and hasn't ended yet
-            return medicationStart <= endOfDay && medicationEnd >= startOfDay
+            // Filter medications that were active on the specified date
+            let medicationsForDate = allMedications.filter { medication in
+                // Check if medication was active on the specified date
+                let medicationStart = medication.startDate
+                let medicationEnd = medication.endDate ?? Date.distantFuture
+                
+                // Medication is active if it started before or on the date and hasn't ended yet
+                return medicationStart <= endOfDay && medicationEnd >= startOfDay
+            }
+            
+            print("💊 RecentActivityViewModel: Found \(medicationsForDate.count) medications for date \(date)")
+            return medicationsForDate
+        } catch {
+            // Handle HealthKit authorization errors gracefully
+            if let healthKitError = error as? HKError {
+                switch healthKitError.code {
+                case .errorAuthorizationDenied, .errorAuthorizationNotDetermined:
+                    print("💊 RecentActivityViewModel: HealthKit authorization not granted for medications - skipping")
+                    return []
+                default:
+                    print("💊 RecentActivityViewModel: HealthKit error: \(healthKitError.localizedDescription)")
+                    return []
+                }
+            } else {
+                print("💊 RecentActivityViewModel: Error fetching medications: \(error.localizedDescription)")
+                return []
+            }
         }
-        
-        return medicationsForDate
     }
 }
