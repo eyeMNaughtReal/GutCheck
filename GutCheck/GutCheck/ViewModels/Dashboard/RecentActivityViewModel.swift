@@ -94,6 +94,8 @@ class RecentActivityViewModel: ObservableObject {
         return medicationService!
     }
     
+
+    
     private func fetchMedicationsForDate(_ date: Date) async throws -> [MedicationRecord] {
         // Get the start and end of the specified date
         let calendar = Calendar.current
