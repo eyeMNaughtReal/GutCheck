@@ -23,10 +23,38 @@ final class HealthKitManager {
         }
 
         let readTypes: Set<HKObjectType> = Set([
+            // Basic health characteristics
             HKObjectType.characteristicType(forIdentifier: .dateOfBirth),
             HKObjectType.characteristicType(forIdentifier: .biologicalSex),
             HKObjectType.quantityType(forIdentifier: .bodyMass),
-            HKObjectType.quantityType(forIdentifier: .height)
+            HKObjectType.quantityType(forIdentifier: .height),
+            
+            // Sleep data
+            HKObjectType.categoryType(forIdentifier: .sleepAnalysis),
+            
+            // Cardiovascular data
+            HKObjectType.quantityType(forIdentifier: .bloodPressureSystolic),
+            HKObjectType.quantityType(forIdentifier: .bloodPressureDiastolic),
+            HKObjectType.quantityType(forIdentifier: .bloodGlucose),
+            HKObjectType.quantityType(forIdentifier: .heartRate),
+            HKObjectType.quantityType(forIdentifier: .restingHeartRate),
+            
+            // Stress and activity data
+            HKObjectType.quantityType(forIdentifier: .activeEnergyBurned),
+            HKObjectType.quantityType(forIdentifier: .stepCount),
+            HKObjectType.quantityType(forIdentifier: .distanceWalkingRunning),
+            
+            // Additional gut health indicators
+            HKObjectType.quantityType(forIdentifier: .bodyFatPercentage),
+            HKObjectType.quantityType(forIdentifier: .waistCircumference),
+            HKObjectType.quantityType(forIdentifier: .bodyMassIndex),
+            
+            // Water and hydration
+            HKObjectType.quantityType(forIdentifier: .dietaryWater),
+            
+            // Stress indicators
+            HKObjectType.quantityType(forIdentifier: .respiratoryRate),
+            HKObjectType.quantityType(forIdentifier: .oxygenSaturation)
         ].compactMap { $0 })
         
         let writeTypes: Set<HKSampleType> = Set([
@@ -276,5 +304,179 @@ final class HealthKitManager {
         }
     }
     
+    // MARK: - Fetch Additional Health Data
+    
+    /// Fetch sleep data for a specific date range
+    func fetchSleepData(from startDate: Date, to endDate: Date, completion: @escaping ([HKSample]) -> Void) {
+        guard let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
+            completion([])
+            return
+        }
+        
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+        let query = HKSampleQuery(sampleType: sleepType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, results, _ in
+            completion(results ?? [])
+        }
+        
+        healthStore.execute(query)
+    }
+    
+    /// Fetch blood pressure data for a specific date range
+    func fetchBloodPressureData(from startDate: Date, to endDate: Date, completion: @escaping ([HKSample]) -> Void) {
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+        
+        // Fetch systolic blood pressure
+        if let systolicType = HKObjectType.quantityType(forIdentifier: .bloodPressureSystolic) {
+            let systolicQuery = HKSampleQuery(sampleType: systolicType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, results, _ in
+                // Handle systolic results
+            }
+            healthStore.execute(systolicQuery)
+        }
+        
+        // Fetch diastolic blood pressure
+        if let diastolicType = HKObjectType.quantityType(forIdentifier: .bloodPressureDiastolic) {
+            let diastolicQuery = HKSampleQuery(sampleType: diastolicType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, results, _ in
+                // Handle diastolic results
+            }
+            healthStore.execute(diastolicQuery)
+        }
+        
+        // For now, return empty array - you can implement more sophisticated blood pressure handling
+        completion([])
+    }
+    
+    /// Fetch blood glucose data for a specific date range
+    func fetchBloodGlucoseData(from startDate: Date, to endDate: Date, completion: @escaping ([HKSample]) -> Void) {
+        guard let glucoseType = HKObjectType.quantityType(forIdentifier: .bloodGlucose) else {
+            completion([])
+            return
+        }
+        
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+        let query = HKSampleQuery(sampleType: glucoseType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, results, _ in
+            completion(results ?? [])
+        }
+        
+        healthStore.execute(query)
+    }
+    
+    /// Fetch heart rate data for a specific date range
+    func fetchHeartRateData(from startDate: Date, to endDate: Date, completion: @escaping ([HKSample]) -> Void) {
+        guard let heartRateType = HKObjectType.quantityType(forIdentifier: .heartRate) else {
+            completion([])
+            return
+        }
+        
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+        let query = HKSampleQuery(sampleType: heartRateType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, results, _ in
+            completion(results ?? [])
+        }
+        
+        healthStore.execute(query)
+    }
+    
+    /// Fetch step count data for a specific date range
+    func fetchStepCountData(from startDate: Date, to endDate: Date, completion: @escaping ([HKSample]) -> Void) {
+        guard let stepType = HKObjectType.quantityType(forIdentifier: .stepCount) else {
+            completion([])
+            return
+        }
+        
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+        let query = HKSampleQuery(sampleType: stepType, predicate: predicate, limit: HKObjectQueryNoLimit, sortDescriptors: nil) { _, results, _ in
+            completion(results ?? [])
+        }
+        
+        healthStore.execute(query)
+    }
+    
+    /// Fetch comprehensive health data for gut health analysis
+    func fetchGutHealthData(from startDate: Date, to endDate: Date, completion: @escaping (GutHealthData) -> Void) {
+        var gutHealthData = GutHealthData()
+        let group = DispatchGroup()
+        
+        // Fetch sleep data
+        group.enter()
+        fetchSleepData(from: startDate, to: endDate) { samples in
+            gutHealthData.sleepData = samples
+            group.leave()
+        }
+        
+        // Fetch blood pressure data
+        group.enter()
+        fetchBloodPressureData(from: startDate, to: endDate) { samples in
+            gutHealthData.bloodPressureData = samples
+            group.leave()
+        }
+        
+        // Fetch blood glucose data
+        group.enter()
+        fetchBloodGlucoseData(from: startDate, to: endDate) { samples in
+            gutHealthData.bloodGlucoseData = samples
+            group.leave()
+        }
+        
+        // Fetch heart rate data
+        group.enter()
+        fetchHeartRateData(from: startDate, to: endDate) { samples in
+            gutHealthData.heartRateData = samples
+            group.leave()
+        }
+        
+        // Fetch step count data
+        group.enter()
+        fetchStepCountData(from: startDate, to: endDate) { samples in
+            gutHealthData.stepCountData = samples
+            group.leave()
+        }
+        
+        // Fetch additional metrics
+        group.enter()
+        fetchLatestQuantity(for: .bodyFatPercentage) { quantity in
+            gutHealthData.bodyFatPercentage = quantity?.doubleValue(for: .percent())
+            group.leave()
+        }
+        
+        group.enter()
+        fetchLatestQuantity(for: .waistCircumference) { quantity in
+            gutHealthData.waistCircumference = quantity?.doubleValue(for: .meter())
+            group.leave()
+        }
+        
+        group.enter()
+        fetchLatestQuantity(for: .bodyMassIndex) { quantity in
+            gutHealthData.bodyMassIndex = quantity?.doubleValue(for: .count())
+            group.leave()
+        }
+        
+        group.enter()
+        fetchLatestQuantity(for: .respiratoryRate) { quantity in
+            gutHealthData.respiratoryRate = quantity?.doubleValue(for: .count().unitDivided(by: .minute()))
+            group.leave()
+        }
+        
+        group.enter()
+        fetchLatestQuantity(for: .oxygenSaturation) { quantity in
+            gutHealthData.oxygenSaturation = quantity?.doubleValue(for: .percent())
+            group.leave()
+        }
+        
+        group.notify(queue: .main) {
+            completion(gutHealthData)
+        }
+    }
+}
 
+// MARK: - Gut Health Data Model
+struct GutHealthData {
+    var sleepData: [HKSample] = []
+    var bloodPressureData: [HKSample] = []
+    var bloodGlucoseData: [HKSample] = []
+    var heartRateData: [HKSample] = []
+    var stepCountData: [HKSample] = []
+    var bodyFatPercentage: Double?
+    var waistCircumference: Double?
+    var bodyMassIndex: Double?
+    var respiratoryRate: Double?
+    var oxygenSaturation: Double?
 }
