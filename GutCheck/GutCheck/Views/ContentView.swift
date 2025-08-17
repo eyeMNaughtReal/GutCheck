@@ -19,7 +19,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var authService: AuthService
-    @StateObject private var router = AppRouter.shared
+    @ObservedObject var router = AppRouter.shared
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -39,6 +39,14 @@ struct ContentView: View {
                 }
                 .sheet(item: $router.activeSheet) { sheet in
                     sheetView(for: sheet)
+                }
+                .sheet(item: $router.symptomDetailSheet) { symptomSheet in
+                    SymptomDetailView(symptomId: symptomSheet.symptomId)
+                        .environmentObject(router)
+                }
+                .sheet(item: $router.mealDetailSheet) { mealSheet in
+                    MealDetailView(mealId: mealSheet.mealId)
+                        .environmentObject(router)
                 }
             }
 
@@ -60,13 +68,21 @@ struct ContentView: View {
             CalendarView(selectedDate: date)
         case .mealDetail(let id):
             if let id = id {
-                MealDetailView(mealId: id)
+                // Use the new sheet-based approach instead of navigation
+                EmptyView()
+                    .onAppear {
+                        router.viewMealDetails(id: id)
+                    }
             } else {
                 Text("Invalid meal")
             }
         case .symptomDetail(let id):
             if let id = id {
-                SymptomDetailView(symptomId: id)
+                // Use the new sheet-based approach instead of navigation
+                EmptyView()
+                    .onAppear {
+                        router.viewSymptomDetails(id: id)
+                    }
             } else {
                 Text("Invalid symptom")
             }

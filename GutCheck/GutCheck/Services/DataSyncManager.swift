@@ -29,6 +29,9 @@ class DataSyncManager: ObservableObject {
     func triggerRefresh() {
         print("🔄 DataSyncManager: Triggering dashboard refresh")
         updateRefreshStates()
+        
+        // Also trigger RefreshManager to ensure all views are updated
+        RefreshManager.shared.triggerRefresh()
     }
     
     /// Trigger a specific data type refresh
@@ -51,6 +54,9 @@ class DataSyncManager: ObservableObject {
         case .all:
             updateAllRefreshStates()
         }
+        
+        // Also trigger RefreshManager to ensure all views are updated
+        RefreshManager.shared.triggerRefresh()
     }
     
     /// Trigger refresh after successful save operation
@@ -58,6 +64,9 @@ class DataSyncManager: ObservableObject {
         print("✅ DataSyncManager: \(operation) successful, triggering \(dataType.rawValue) refresh")
         Task { @MainActor in
             triggerRefresh(for: dataType)
+            
+            // Also trigger RefreshManager to ensure all views are updated
+            RefreshManager.shared.triggerRefresh()
         }
     }
     

@@ -56,9 +56,13 @@ struct RecentActivityListView: View {
     private func handleEntryTap(_ entry: ActivityEntry) {
         switch entry.type {
         case .meal(let meal):
-            router.navigateTo(.mealDetail(meal.id))
+            router.viewMealDetails(id: meal.id)
         case .symptom(let symptom):
-            router.navigateTo(.symptomDetail(symptom.id))
+            router.viewSymptomDetails(id: symptom.id)
+        case .medication(let medication):
+            // For now, we'll just show a simple alert since we don't have a medication detail view yet
+            // In the future, this could navigate to a medication detail view
+            break
         }
     }
 }

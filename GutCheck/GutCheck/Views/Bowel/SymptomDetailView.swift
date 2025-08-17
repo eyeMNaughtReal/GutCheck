@@ -18,18 +18,32 @@ struct SymptomDetailView: View {
     
     var body: some View {
         Group {
-            if viewModel.isLoading {
+            if viewModel.isLoading && viewModel.entity.id.isEmpty {
                 loadingView
             } else {
                 contentView
             }
         }
         .onAppear {
-            if viewModel.symptomId != nil {
+            print("🔄 SymptomDetailView: View appeared, symptomId: \(viewModel.symptomId ?? "nil")")
+            print("🔄 SymptomDetailView: Current entity ID: \(viewModel.entity.id)")
+            print("🔄 SymptomDetailView: Is loading: \(viewModel.isLoading)")
+            print("🔄 SymptomDetailView: View frame: \(UIScreen.main.bounds)")
+            print("🔄 SymptomDetailView: Entity data - date: \(viewModel.entity.date), stoolType: \(viewModel.entity.stoolType.rawValue)")
+            print("🔄 SymptomDetailView: Entity data - painLevel: \(viewModel.entity.painLevel.rawValue), urgencyLevel: \(viewModel.entity.urgencyLevel.rawValue)")
+            print("🔄 SymptomDetailView: Entity data - notes: \(viewModel.entity.notes ?? "nil"), tags: \(viewModel.entity.tags)")
+            
+            if viewModel.symptomId != nil && viewModel.entity.id.isEmpty {
                 Task {
                     await viewModel.loadEntity()
                 }
             }
+        }
+        .onChange(of: viewModel.entity) { _, newEntity in
+            print("🔄 SymptomDetailView: Entity changed to: \(newEntity.id), date: \(newEntity.date)")
+        }
+        .onChange(of: viewModel.isLoading) { _, isLoading in
+            print("🔄 SymptomDetailView: Loading state changed to: \(isLoading)")
         }
     }
     
@@ -71,7 +85,8 @@ struct SymptomDetailView: View {
         }
         .onChange(of: viewModel.shouldDismiss) { _, shouldDismiss in
             if shouldDismiss {
-                router.navigateBack()
+                // When presented as a sheet, dismiss the sheet instead of navigating back
+                dismiss()
             }
         }
     }
@@ -86,11 +101,10 @@ struct SymptomDetailView: View {
         VStack(alignment: .leading, spacing: 16) {
             dateRow
             stoolTypeRow
-            
-            // Additional symptom fields can be added here
-            // painLevelRow
-            // urgencyLevelRow
-            // notesRow
+            painLevelRow
+            urgencyLevelRow
+            notesRow
+            tagsRow
         }
         .padding(.horizontal)
     }
@@ -119,6 +133,99 @@ struct SymptomDetailView: View {
         .padding()
         .background(Color.gray.opacity(0.1))
         .cornerRadius(8)
+    }
+    
+    private var painLevelRow: some View {
+        HStack {
+            Text("Pain Level:")
+                .font(.headline)
+            Spacer()
+            Text(painLevelDescription)
+                .font(.body)
+        }
+        .padding()
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(8)
+    }
+    
+    private var urgencyLevelRow: some View {
+        HStack {
+            Text("Urgency Level:")
+                .font(.headline)
+            Spacer()
+            Text(urgencyLevelDescription)
+                .font(.body)
+        }
+        .padding()
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(8)
+    }
+    
+    private var notesRow: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Notes:")
+                .font(.headline)
+            if let notes = viewModel.entity.notes, !notes.isEmpty {
+                Text(notes)
+                    .font(.body)
+                    .padding()
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
+            } else {
+                Text("No notes")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .padding()
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
+            }
+        }
+    }
+    
+    private var tagsRow: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Tags:")
+                .font(.headline)
+            if !viewModel.entity.tags.isEmpty {
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 8) {
+                    ForEach(viewModel.entity.tags, id: \.self) { tag in
+                        Text(tag)
+                            .font(.caption)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.blue.opacity(0.2))
+                            .cornerRadius(12)
+                    }
+                }
+            } else {
+                Text("No tags")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding()
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(8)
+    }
+    
+    // MARK: - Computed Properties
+    
+    private var painLevelDescription: String {
+        switch viewModel.entity.painLevel {
+        case .none: return "None"
+        case .mild: return "Mild"
+        case .moderate: return "Moderate"
+        case .severe: return "Severe"
+        }
+    }
+    
+    private var urgencyLevelDescription: String {
+        switch viewModel.entity.urgencyLevel {
+        case .none: return "None"
+        case .mild: return "Mild"
+        case .moderate: return "Moderate"
+        case .urgent: return "Urgent"
+        }
     }
     
     private var trailingToolbarContent: some View {

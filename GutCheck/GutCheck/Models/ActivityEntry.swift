@@ -13,6 +13,8 @@ struct ActivityEntry: Identifiable, Hashable {
             return meal.type.rawValue.capitalized
         case .symptom:
             return "Symptom Logged"
+        case .medication(let medication):
+            return medication.name
         }
     }
     
@@ -29,6 +31,13 @@ struct ActivityEntry: Identifiable, Hashable {
                 components.append("Urgency: \(symptom.urgencyLevel.description)")
             }
             return components.isEmpty ? nil : components.joined(separator: "\n")
+        case .medication(let medication):
+            var components: [String] = []
+            components.append("\(medication.dosage.amount) \(medication.dosage.unit)")
+            if let notes = medication.notes, !notes.isEmpty {
+                components.append(notes)
+            }
+            return components.joined(separator: " • ")
         }
     }
     
@@ -38,6 +47,8 @@ struct ActivityEntry: Identifiable, Hashable {
             return "fork.knife"
         case .symptom:
             return "exclamationmark.triangle"
+        case .medication:
+            return "pills"
         }
     }
     
@@ -47,6 +58,8 @@ struct ActivityEntry: Identifiable, Hashable {
             return ColorTheme.accent
         case .symptom:
             return ColorTheme.warning
+        case .medication:
+            return ColorTheme.primary
         }
     }
 }
@@ -54,6 +67,7 @@ struct ActivityEntry: Identifiable, Hashable {
 enum ActivityType: Hashable, Equatable {
     case meal(Meal)
     case symptom(Symptom)
+    case medication(MedicationRecord)
     
     static func == (lhs: ActivityType, rhs: ActivityType) -> Bool {
         switch (lhs, rhs) {
@@ -61,6 +75,8 @@ enum ActivityType: Hashable, Equatable {
             return lhsMeal.id == rhsMeal.id
         case (.symptom(let lhsSymptom), .symptom(let rhsSymptom)):
             return lhsSymptom.id == rhsSymptom.id
+        case (.medication(let lhsMed), .medication(let rhsMed)):
+            return lhsMed.id == rhsMed.id
         default:
             return false
         }
@@ -74,6 +90,9 @@ enum ActivityType: Hashable, Equatable {
         case .symptom(let symptom):
             hasher.combine("symptom")
             hasher.combine(symptom.id)
+        case .medication(let medication):
+            hasher.combine("medication")
+            hasher.combine(medication.id)
         }
     }
 }

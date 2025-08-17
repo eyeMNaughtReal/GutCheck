@@ -18,13 +18,21 @@ struct AppRoot: View {
                                 CalendarView(selectedDate: date)
                             case .mealDetail(let id):
                                 if let id = id {
-                                    MealDetailView(mealId: id)
+                                    // Use the new sheet-based approach instead of navigation
+                                    EmptyView()
+                                        .onAppear {
+                                            router.viewMealDetails(id: id)
+                                        }
                                 } else {
                                     Text("Invalid meal")
                                 }
                             case .symptomDetail(let id):
                                 if let id = id {
-                                    SymptomDetailView(symptomId: id)
+                                    // Use the new sheet-based approach instead of navigation
+                                    EmptyView()
+                                        .onAppear {
+                                            router.viewSymptomDetails(id: id)
+                                        }
                                 } else {
                                     Text("Invalid symptom")
                                 }
@@ -112,6 +120,16 @@ struct AppRoot: View {
                     }
                 }
             }
+        }
+        .sheet(item: $router.symptomDetailSheet) { symptomSheet in
+            SymptomDetailView(symptomId: symptomSheet.symptomId)
+                .environmentObject(router)
+                .environmentObject(refreshManager)
+        }
+        .sheet(item: $router.mealDetailSheet) { mealSheet in
+            MealDetailView(mealId: mealSheet.mealId)
+                .environmentObject(router)
+                .environmentObject(refreshManager)
         }
         .environmentObject(router)
         .environmentObject(refreshManager)

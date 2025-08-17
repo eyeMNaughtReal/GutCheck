@@ -160,8 +160,8 @@ struct CalendarContentView: View {
                     } else {
                         ForEach(viewModel.symptoms) { symptom in
                             SymptomCalendarRow(symptom: symptom) {
-                                // Navigate to symptom detail
-                                router.navigateTo(.symptomDetail(symptom.id))
+                                // Show symptom detail sheet
+                                router.viewSymptomDetails(id: symptom.id)
                             }
                             .padding(.horizontal)
                         }
@@ -318,7 +318,7 @@ struct MealCalendarRow: View {
                     HStack(spacing: 4) {
                         ForEach(Array(meal.foodItems.enumerated()), id: \.offset) { idx, item in
                             Button(action: {
-                                router.navigateTo(.mealDetail(item.id))
+                                router.viewMealDetails(id: item.id)
                             }) {
                                 Text(item.name)
                                     .font(.caption)

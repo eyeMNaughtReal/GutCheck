@@ -98,15 +98,32 @@ class UnifiedDataService: ObservableObject {
     func query<T: DataClassifiable & Codable>(_ type: T.Type, queryBuilder: (Query) -> Query) async throws -> [T] {
         print("🔄 UnifiedDataService: Querying data of type: \(String(describing: type))")
         
-        let results: [T] = []
+        var results: [T] = []
         
         // Query private storage for sensitive data
         let privateTypes = privateStorage.listPrivateDataTypes()
+        print("🔒 Available private data types: \(privateTypes)")
+        
         for dataType in privateTypes {
             if dataType == String(describing: type) {
-                // For now, we'll need to implement a more sophisticated query system
-                // This is a simplified approach
                 print("🔒 Querying private storage for type: \(dataType)")
+                
+                // Get all private data files for this type
+                let privateDataFiles = try await privateStorage.listPrivateDataFiles(for: dataType)
+                print("🔒 Found \(privateDataFiles.count) private data files for type: \(dataType)")
+                
+                // Load and decode each private data item
+                for fileName in privateDataFiles {
+                    do {
+                        let id = fileName.replacingOccurrences(of: "\(dataType)_", with: "").replacingOccurrences(of: ".encrypted", with: "")
+                        if let item = try await privateStorage.retrievePrivateData(type: dataType, id: id, as: type) {
+                            results.append(item)
+                            print("🔒 Successfully loaded private data: \(dataType)/\(id)")
+                        }
+                    } catch {
+                        print("⚠️ Failed to load private data from file \(fileName): \(error)")
+                    }
+                }
             }
         }
         

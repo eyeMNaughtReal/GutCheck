@@ -126,13 +126,17 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
         print("🕐 LogSymptom: Symptom date: \(symptomDate)")
         print("📝 LogSymptom: Current date: \(Date())")
         print("🗓️ LogSymptom: Same day check: \(Calendar.current.isDate(symptomDate, inSameDayAs: Date()))")
+        print("🕐 LogSymptom: Symptom date components - year: \(Calendar.current.component(.year, from: symptomDate)), month: \(Calendar.current.component(.month, from: symptomDate)), day: \(Calendar.current.component(.day, from: symptomDate))")
         
         Task {
             do {
                 // Use repository instead of direct Firestore calls
                 print("💾 LogSymptom: Saving symptom with ID: \(symptom.id), date: \(symptom.date), user: \(symptom.createdBy)")
+                print("🔒 LogSymptom: Symptom privacy level: \(symptom.privacyLevel)")
+                print("🔒 LogSymptom: Requires local storage: \(symptom.requiresLocalStorage)")
+                print("🔒 LogSymptom: Allows cloud sync: \(symptom.allowsCloudSync)")
                 try await symptomRepository.save(symptom)
-                print("✅ LogSymptom: Successfully saved symptom to Firebase")
+                print("✅ LogSymptom: Successfully saved symptom")
                 
                 // Write to HealthKit
                 await self.writeToHealthKit(symptom)

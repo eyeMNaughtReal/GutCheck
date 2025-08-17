@@ -101,19 +101,23 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
         }
         
         // Since T is constrained to DataClassifiable, we can directly access privacy level
-        print("🔒 Privacy classification detected: \(item.privacyLevel)")
+        print("🔒 BaseFirebaseRepository: Privacy classification detected: \(item.privacyLevel)")
+        print("🔒 BaseFirebaseRepository: Item type: \(String(describing: type(of: item)))")
+        print("🔒 BaseFirebaseRepository: Item ID: \(item.id)")
         
         switch item.privacyLevel {
         case .private, .confidential:
             // Save sensitive data to local encrypted storage
-            print("🔒 Routing private data to local encrypted storage")
+            print("🔒 BaseFirebaseRepository: Routing private data to local encrypted storage")
             try await UnifiedDataService.shared.save(item)
+            print("🔒 BaseFirebaseRepository: Successfully saved to local storage")
             return
             
         case .public:
             // Save non-sensitive data to Firestore
-            print("☁️ Routing public data to Firestore")
+            print("☁️ BaseFirebaseRepository: Routing public data to Firestore")
             try await saveToFirestore(item, userId: userId)
+            print("☁️ BaseFirebaseRepository: Successfully saved to Firestore")
             return
         }
     }
@@ -295,6 +299,24 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
         print("✅ Total results: \(allResults.count) items")
         return allResults
     }
+    
+    /// Query only Firestore (used when local storage is already handled separately)
+    func queryFirestoreOnly(_ queryBuilder: (Query) -> Query) async throws -> [Model] {
+        do {
+            let baseQuery = firestore.collection(collectionName)
+            let customQuery = queryBuilder(baseQuery)
+            let snapshot = try await customQuery.getDocuments()
+            
+            let firestoreResults = try snapshot.documents.compactMap { document in
+                try Model(from: document)
+            }
+            print("☁️ Retrieved \(firestoreResults.count) items from Firestore only")
+            return firestoreResults
+        } catch {
+            print("⚠️ Firestore query failed: \(error)")
+            throw RepositoryError.firebaseError(error)
+        }
+    }
 }
 
 // MARK: - Specific Repository Implementations
@@ -406,27 +428,41 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) ?? date
         
+        print("🔍 SymptomRepository: Fetching symptoms for date \(date) (start: \(startOfDay), end: \(endOfDay))")
+        
         var allSymptoms: [Symptom] = []
         
         // Fetch from local encrypted storage (private symptoms)
         do {
+            print("🔍 SymptomRepository: Querying local encrypted storage...")
             let localSymptoms = try await UnifiedDataService.shared.query(Symptom.self) { _ in
                 // For now, fetch all local symptoms and filter by date
                 return firestore.collection(collectionName)
             }
             
+            print("🔍 SymptomRepository: Found \(localSymptoms.count) total local symptoms")
+            
             // Filter local symptoms by date
+            print("🔍 SymptomRepository: Date filtering - startOfDay: \(startOfDay), endOfDay: \(endOfDay)")
             let filteredLocalSymptoms = localSymptoms.filter { symptom in
-                symptom.date >= startOfDay && symptom.date < endOfDay
+                let isInRange = symptom.date >= startOfDay && symptom.date < endOfDay
+                print("🔍 SymptomRepository: Symptom \(symptom.id) date: \(symptom.date) - in range: \(isInRange)")
+                return isInRange
             }
             allSymptoms.append(contentsOf: filteredLocalSymptoms)
-            print("🔒 Retrieved \(filteredLocalSymptoms.count) private symptoms for date")
+            print("🔒 SymptomRepository: Retrieved \(filteredLocalSymptoms.count) private symptoms for date")
+            
+            // Debug: Print details of each local symptom
+            for symptom in filteredLocalSymptoms {
+                print("🔒 SymptomRepository: Local symptom - ID: \(symptom.id), date: \(symptom.date), notes: \(symptom.notes ?? "none")")
+            }
         } catch {
-            print("⚠️ Local symptom query failed: \(error)")
+            print("⚠️ SymptomRepository: Local symptom query failed: \(error)")
         }
         
-        // Fetch from Firestore (public symptoms)
-        let firestoreSymptoms = try await query { query in
+        // Fetch from Firestore (public symptoms only - local storage already handled above)
+        print("🔍 SymptomRepository: Querying Firestore...")
+        let firestoreSymptoms = try await queryFirestoreOnly { query in
             query
                 .whereField("createdBy", isEqualTo: userId)
                 .whereField("date", isGreaterThanOrEqualTo: startOfDay)
@@ -434,11 +470,46 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
                 .order(by: "date", descending: false)
         }
         allSymptoms.append(contentsOf: firestoreSymptoms)
-        print("☁️ Retrieved \(firestoreSymptoms.count) public symptoms for date")
+        print("☁️ SymptomRepository: Retrieved \(firestoreSymptoms.count) public symptoms for date")
+        
+        // Debug: Print details of each Firestore symptom
+        for symptom in firestoreSymptoms {
+            print("☁️ SymptomRepository: Firestore symptom - ID: \(symptom.id), date: \(symptom.date), notes: \(symptom.notes ?? "none")")
+        }
         
         // Sort all symptoms by date
         let sortedSymptoms = allSymptoms.sorted { $0.date < $1.date }
-        print("✅ Total symptoms for date: \(sortedSymptoms.count)")
+        print("✅ SymptomRepository: Total symptoms for date: \(sortedSymptoms.count)")
+        
+        // Debug: Check for duplicates
+        let symptomIds = sortedSymptoms.map { $0.id }
+        let uniqueIds = Set(symptomIds)
+        if symptomIds.count != uniqueIds.count {
+            print("⚠️ SymptomRepository: DUPLICATE SYMPTOMS DETECTED!")
+            print("⚠️ SymptomRepository: Total count: \(symptomIds.count), Unique count: \(uniqueIds.count)")
+            
+            // Find duplicates
+            let duplicateIds = symptomIds.filter { id in
+                symptomIds.filter { $0 == id }.count > 1
+            }
+            print("⚠️ SymptomRepository: Duplicate IDs: \(duplicateIds)")
+            
+            // Remove duplicates by keeping only the first occurrence of each ID
+            var deduplicatedSymptoms: [Symptom] = []
+            var seenIds = Set<String>()
+            
+            for symptom in sortedSymptoms {
+                if !seenIds.contains(symptom.id) {
+                    deduplicatedSymptoms.append(symptom)
+                    seenIds.insert(symptom.id)
+                } else {
+                    print("🔄 SymptomRepository: Removing duplicate symptom with ID: \(symptom.id)")
+                }
+            }
+            
+            print("✅ SymptomRepository: After deduplication: \(deduplicatedSymptoms.count) symptoms")
+            return deduplicatedSymptoms
+        }
         
         return sortedSymptoms
     }
@@ -457,8 +528,8 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
             print("⚠️ Local symptom query failed: \(error)")
         }
         
-        // Fetch from Firestore (public symptoms)
-        let firestoreSymptoms = try await query { query in
+        // Fetch from Firestore (public symptoms only - local storage already handled above)
+        let firestoreSymptoms = try await queryFirestoreOnly { query in
             query
                 .whereField("createdBy", isEqualTo: userId)
                 .order(by: "date", descending: true)
@@ -469,8 +540,22 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
         
         // Sort all symptoms by date (most recent first) and limit
         let sortedSymptoms = allSymptoms.sorted { $0.date > $1.date }
-        let limitedSymptoms = Array(sortedSymptoms.prefix(limit))
-        print("✅ Total recent symptoms: \(limitedSymptoms.count)")
+        
+        // Remove duplicates by keeping only the first occurrence of each ID
+        var deduplicatedSymptoms: [Symptom] = []
+        var seenIds = Set<String>()
+        
+        for symptom in sortedSymptoms {
+            if !seenIds.contains(symptom.id) {
+                deduplicatedSymptoms.append(symptom)
+                seenIds.insert(symptom.id)
+            } else {
+                print("🔄 SymptomRepository: Removing duplicate symptom with ID: \(symptom.id) from recent symptoms")
+            }
+        }
+        
+        let limitedSymptoms = Array(deduplicatedSymptoms.prefix(limit))
+        print("✅ SymptomRepository: Total recent symptoms after deduplication: \(limitedSymptoms.count)")
         
         return limitedSymptoms
     }

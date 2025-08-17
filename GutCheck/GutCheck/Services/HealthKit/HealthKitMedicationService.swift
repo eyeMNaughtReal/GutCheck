@@ -172,7 +172,7 @@ class HealthKitMedicationService: ObservableObject {
         }
     }
     
-    private func fetchMedicationsFromHealthKit() async throws -> [MedicationRecord] {
+    func fetchMedicationsFromHealthKit() async throws -> [MedicationRecord] {
         let medicationType = HKObjectType.clinicalType(forIdentifier: .medicationRecord)!
         
         let predicate = HKQuery.predicateForSamples(

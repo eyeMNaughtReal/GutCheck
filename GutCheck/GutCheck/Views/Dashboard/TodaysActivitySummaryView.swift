@@ -28,6 +28,15 @@ struct TodaysActivitySummaryView: View {
         }.count
     }
     
+    private var medicationsCount: Int {
+        viewModel.recentEntries.filter { entry in
+            if case .medication = entry.type {
+                return true
+            }
+            return false
+        }.count
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Header with title
@@ -66,13 +75,20 @@ struct TodaysActivitySummaryView: View {
                         .foregroundColor(ColorTheme.accent)
                 }
                 
-                Spacer()
-                
                 HStack(spacing: 4) {
                     Image(systemName: "exclamationmark.triangle")
                         .foregroundColor(ColorTheme.warning)
                     Text("\(symptomsCount) Symptoms")
                         .foregroundColor(ColorTheme.warning)
+                }
+                
+                Spacer()
+                
+                HStack(spacing: 4) {
+                    Image(systemName: "pills")
+                        .foregroundColor(ColorTheme.primary)
+                    Text("\(medicationsCount) Medications")
+                        .foregroundColor(ColorTheme.primary)
                 }
             }
             .font(.subheadline)
@@ -108,11 +124,20 @@ struct TodaysActivitySummaryView: View {
     }
     
     private func handleEntryTap(_ entry: ActivityEntry) {
+        print("🔄 TodaysActivitySummaryView: Entry tapped - type: \(entry.type)")
+        
         switch entry.type {
         case .meal(let meal):
-            router.navigateTo(.mealDetail(meal.id))
+            print("🍽️ TodaysActivitySummaryView: Showing meal detail sheet: \(meal.id)")
+            router.viewMealDetails(id: meal.id)
         case .symptom(let symptom):
-            router.navigateTo(.symptomDetail(symptom.id))
+            print("🏥 TodaysActivitySummaryView: Showing symptom detail sheet: \(symptom.id)")
+            router.viewSymptomDetails(id: symptom.id)
+        case .medication(let medication):
+            print("💊 TodaysActivitySummaryView: Medication tapped: \(medication.name)")
+            // For now, we'll just show a simple alert since we don't have a medication detail view yet
+            // In the future, this could navigate to a medication detail view
+            break
         }
     }
 }

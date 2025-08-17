@@ -10,7 +10,7 @@ class RecentActivityViewModel: ObservableObject {
     // Repository dependencies
     private let mealRepository: MealRepository
     private let symptomRepository: SymptomRepository
-    private let maxEntries = 5
+    private var medicationService: HealthKitMedicationService?
     
     init(mealRepository: MealRepository = MealRepository.shared,
          symptomRepository: SymptomRepository = SymptomRepository.shared) {
@@ -68,13 +68,51 @@ class RecentActivityViewModel: ObservableObject {
             print("   - Symptom: \(symptom.id) at \(symptom.date)")
         }
         
-        // Sort by timestamp (most recent first) and limit
+        // Fetch medications for the date
+        let medications = try await fetchMedicationsForDate(date)
+        print("💊 RecentActivityViewModel: Found \(medications.count) medications")
+        for medication in medications {
+            entries.append(ActivityEntry(type: .medication(medication), timestamp: medication.startDate))
+            print("   - Medication: \(medication.name) at \(medication.startDate)")
+        }
+        
+        // Sort by timestamp (most recent first) - no limit, show all entries for the day
         let sortedEntries = entries
             .sorted { $0.timestamp > $1.timestamp }
-            .prefix(maxEntries)
-            .map { $0 }
         
         print("📊 RecentActivityViewModel: Returning \(sortedEntries.count) total entries")
         return sortedEntries
+    }
+    
+    // MARK: - Medication Fetching
+    
+    private func getMedicationService() -> HealthKitMedicationService {
+        if medicationService == nil {
+            medicationService = HealthKitMedicationService()
+        }
+        return medicationService!
+    }
+    
+    private func fetchMedicationsForDate(_ date: Date) async throws -> [MedicationRecord] {
+        // Get the start and end of the specified date
+        let calendar = Calendar.current
+        let startOfDay = calendar.startOfDay(for: date)
+        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
+        
+        // Fetch medications from HealthKit service
+        let service = getMedicationService()
+        let allMedications = try await service.fetchMedicationsFromHealthKit()
+        
+        // Filter medications that were active on the specified date
+        let medicationsForDate = allMedications.filter { medication in
+            // Check if medication was active on the specified date
+            let medicationStart = medication.startDate
+            let medicationEnd = medication.endDate ?? Date.distantFuture
+            
+            // Medication is active if it started before or on the date and hasn't ended yet
+            return medicationStart <= endOfDay && medicationEnd >= startOfDay
+        }
+        
+        return medicationsForDate
     }
 }

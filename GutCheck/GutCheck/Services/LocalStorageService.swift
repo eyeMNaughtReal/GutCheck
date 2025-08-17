@@ -199,6 +199,27 @@ class LocalStorageService {
         }
     }
     
+    /// List all private data files for a specific type
+    /// - Parameter type: The data type to list files for
+    /// - Returns: Array of filenames for the specified type
+    func listPrivateDataFiles(for type: String) async throws -> [String] {
+        do {
+            let files = try fileManager.contentsOfDirectory(at: privateDataDirectory, includingPropertiesForKeys: nil)
+            let typeFiles = files.compactMap { file -> String? in
+                let fileName = file.lastPathComponent
+                if fileName.hasPrefix("\(type)_") && fileName.hasSuffix(".encrypted") {
+                    return fileName
+                }
+                return nil
+            }
+            print("🔍 Found \(typeFiles.count) files for type: \(type)")
+            return typeFiles
+        } catch {
+            print("❌ Error listing private data files for type \(type): \(error)")
+            return []
+        }
+    }
+    
     /// Clear all private data (used for account deletion)
     func clearAllPrivateData() async throws {
         let files = try fileManager.contentsOfDirectory(at: privateDataDirectory, includingPropertiesForKeys: nil)

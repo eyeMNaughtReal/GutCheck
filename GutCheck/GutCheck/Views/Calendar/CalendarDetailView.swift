@@ -42,7 +42,7 @@ struct CalendarDetailView: View {
                         
                         ForEach(viewModel.symptoms) { symptom in
                             Button(action: {
-                                router.navigateTo(.symptomDetail(symptom.id))
+                                router.viewSymptomDetails(id: symptom.id)
                             }) {
                                 SymptomSummaryCard(symptom: symptom)
                             }

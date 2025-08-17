@@ -13,11 +13,15 @@ class LocalProfileImageStrategy: ProfileImageStrategy {
     weak var delegate: ProfileImageStrategyDelegate?
     
     func uploadProfileImage(_ image: UIImage, for userId: String) async throws -> String {
-        await delegate?.strategyDidUpdateProgress(0.0)
+        await MainActor.run {
+            delegate?.strategyDidUpdateProgress(0.0)
+        }
         
         let imageData = try ImageCompressionUtility.compress(image, quality: .standard)
         
-        await delegate?.strategyDidUpdateProgress(0.3)
+        await MainActor.run {
+            delegate?.strategyDidUpdateProgress(0.3)
+        }
         
         guard let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
             throw NSError(domain: "ProfileImage", code: 2, userInfo: [NSLocalizedDescriptionKey: "Could not access documents directory"])
@@ -28,7 +32,9 @@ class LocalProfileImageStrategy: ProfileImageStrategy {
             try FileManager.default.createDirectory(at: profileImagesDirectory, withIntermediateDirectories: true)
         }
         
-        await delegate?.strategyDidUpdateProgress(0.5)
+        await MainActor.run {
+            delegate?.strategyDidUpdateProgress(0.5)
+        }
         
         let fileName = "profile_\(userId).jpg"
         let fileURL = profileImagesDirectory.appendingPathComponent(fileName)
@@ -37,7 +43,9 @@ class LocalProfileImageStrategy: ProfileImageStrategy {
         
         let localImagePath = "local://\(fileName)"
         
-        await delegate?.strategyDidUpdateProgress(1.0)
+        await MainActor.run {
+            delegate?.strategyDidUpdateProgress(1.0)
+        }
         
         print("📢 LocalProfileImageStrategy: Local image saved, posting refresh notification")
         NotificationCenter.default.post(name: .profileImageUpdated, object: nil)
