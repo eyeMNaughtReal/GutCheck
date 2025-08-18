@@ -506,30 +506,10 @@ class RecentItemsViewModel: ObservableObject {
     func loadRecentItems() {
         isLoading = true
         
-        // For now, we'll use mock data
-        // In a real app, this would load from UserDefaults or Firebase
-        
+        // TODO: Load real recent items from user's history
+        // For now, show empty state until real data is implemented
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.recentItems = [
-                FoodItem(
-                    name: "Oatmeal with Banana",
-                    quantity: "1 cup",
-                    estimatedWeightInGrams: 240,
-                    nutrition: NutritionInfo(calories: 200, protein: 6, carbs: 35, fat: 4)
-                ),
-                FoodItem(
-                    name: "Grilled Chicken Breast",
-                    quantity: "6 oz",
-                    estimatedWeightInGrams: 170,
-                    nutrition: NutritionInfo(calories: 280, protein: 54, carbs: 0, fat: 6)
-                ),
-                FoodItem(
-                    name: "Greek Yogurt",
-                    quantity: "1 cup",
-                    estimatedWeightInGrams: 245,
-                    nutrition: NutritionInfo(calories: 150, protein: 20, carbs: 9, fat: 4)
-                )
-            ]
+            self.recentItems = []
             self.isLoading = false
         }
     }

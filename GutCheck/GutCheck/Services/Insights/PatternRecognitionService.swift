@@ -619,10 +619,10 @@ struct TemporalPatternInsight: Identifiable {
     let evidence: [String]
     let recommendations: [String]
     
-    enum TemporalPatternType {
-        case timeOfDay
-        case dayOfWeek
-        case mealTiming
+    enum TemporalPatternType: String, CaseIterable {
+        case timeOfDay = "Time of Day"
+        case dayOfWeek = "Day of Week"
+        case mealTiming = "Meal Timing"
     }
 }
 

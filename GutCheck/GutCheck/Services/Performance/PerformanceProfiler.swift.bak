@@ -1,0 +1,408 @@
+import Foundation
+import os.log
+import Combine
+import UIKit // For UIApplication.didReceiveMemoryWarningNotification, UIDevice
+
+/// Comprehensive performance profiling service for GutCheck
+/// Monitors critical operations, memory usage, and provides optimization recommendations
+@MainActor
+class PerformanceProfiler: ObservableObject {
+    static let shared = PerformanceProfiler()
+    
+    @Published var currentMetrics = PerformanceMetrics()
+    @Published var performanceHistory: [PerformanceSnapshot] = []
+    @Published var isProfilingEnabled = true
+    @Published var criticalThresholds = PerformanceThresholds()
+    
+    private var performanceTimer: Timer?
+    private var memoryWarningObserver: NSObjectProtocol?
+    private let logger = Logger(subsystem: "com.gutcheck.app", category: "Performance")
+    private var cancellables = Set<AnyCancellable>()
+    
+    struct PerformanceMetrics: Codable {
+        var memoryUsage: MemoryUsage = MemoryUsage()
+        var cpuUsage: Double = 0.0
+        var batteryLevel: Float = 1.0
+        var activeOperations: Int = 0
+        var slowOperations: [SlowOperation] = []
+        var lastUpdateTime = Date()
+    }
+    
+    struct MemoryUsage: Codable {
+        var usedMemory: UInt64 = 0
+        var peakMemory: UInt64 = 0
+        var availableMemory: UInt64 = 0
+        var memoryPressure: MemoryPressure = .normal
+        
+        enum MemoryPressure: String, Codable, CustomStringConvertible {
+            case normal, warning, critical
+            var description: String { rawValue.capitalized }
+        }
+    }
+    
+    struct SlowOperation: Codable {
+        let operationName: String
+        let duration: TimeInterval
+        let timestamp: Date
+        let stackTrace: String?
+        let memoryImpact: UInt64
+    }
+    
+    struct PerformanceSnapshot: Codable, Identifiable {
+        var id: UUID
+        let timestamp: Date
+        let metrics: PerformanceMetrics
+        let context: String
+        let recommendations: [String]
+        
+        init(timestamp: Date, metrics: PerformanceMetrics, context: String, recommendations: [String]) {
+            self.id = UUID()
+            self.timestamp = timestamp
+            self.metrics = metrics
+            self.context = context
+            self.recommendations = recommendations
+        }
+    }
+    
+    struct PerformanceThresholds: Codable {
+        var maxMemoryUsage: UInt64 = 500 * 1024 * 1024 // 500MB
+        var maxOperationDuration: TimeInterval = 5.0 // 5 seconds
+        var maxConcurrentOperations = 10
+        var memoryWarningThreshold: UInt64 = 400 * 1024 * 1024 // 400MB
+    }
+    
+    private init() {
+        setupMemoryWarningObserver()
+        startPeriodicProfiling()
+    }
+    
+    deinit {
+        Task { @MainActor in
+            stopPeriodicProfiling()
+        }
+        if let observer = memoryWarningObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+    }
+    
+    // MARK: - Public Methods
+    
+    func profileOperation<T>(_ operationName: String, operation: () async throws -> T) async throws -> T {
+        let startTime = Date()
+        let startMemory = getCurrentMemoryUsage()
+        
+        currentMetrics.activeOperations += 1
+        
+        do {
+            let result = try await operation()
+            
+            let duration = Date().timeIntervalSince(startTime)
+            let endMemory = getCurrentMemoryUsage()
+            let memoryImpact = endMemory > startMemory ? endMemory - startMemory : 0
+            
+            recordOperationCompletion(
+                operationName: operationName,
+                duration: duration,
+                memoryImpact: memoryImpact,
+                success: true
+            )
+            
+            return result
+            
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            let endMemory = getCurrentMemoryUsage()
+            let memoryImpact = endMemory > startMemory ? endMemory - startMemory : 0
+            
+            recordOperationCompletion(
+                operationName: operationName,
+                duration: duration,
+                memoryImpact: memoryImpact,
+                success: false
+            )
+            
+            throw error
+        }
+    }
+    
+    func profileSyncOperation<T>(_ operationName: String, operation: () throws -> T) throws -> T {
+        let startTime = Date()
+        let startMemory = getCurrentMemoryUsage()
+        
+        currentMetrics.activeOperations += 1
+        
+        do {
+            let result = try operation()
+            
+            let duration = Date().timeIntervalSince(startTime)
+            let endMemory = getCurrentMemoryUsage()
+            let memoryImpact = endMemory > startMemory ? endMemory - startMemory : 0
+            
+            recordOperationCompletion(
+                operationName: operationName,
+                duration: duration,
+                memoryImpact: memoryImpact,
+                success: true
+            )
+            
+            return result
+            
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            let endMemory = getCurrentMemoryUsage()
+            let memoryImpact = endMemory > startMemory ? endMemory - startMemory : 0
+            
+            recordOperationCompletion(
+                operationName: operationName,
+                duration: duration,
+                memoryImpact: memoryImpact,
+                success: false
+            )
+            
+            throw error
+        }
+    }
+    
+    func getCurrentMemoryUsage() -> UInt64 {
+        var info = mach_task_basic_info()
+        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size)/4
+        
+        let kerr: kern_return_t = withUnsafeMutablePointer(to: &info) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: 1) {
+                task_info(mach_task_self_,
+                         task_flavor_t(MACH_TASK_BASIC_INFO),
+                         $0,
+                         &count)
+            }
+        }
+        
+        if kerr == KERN_SUCCESS {
+            return UInt64(info.resident_size)
+        } else {
+            logger.error("Failed to get memory usage: \(kerr)")
+            return 0
+        }
+    }
+    
+    func getAvailableSystemMemory() -> UInt64 {
+        var pagesize: vm_size_t = 0
+        var page_count: vm_size_t = 0
+        var mem_size: UInt64 = 0
+        
+        host_page_size(mach_host_self(), &pagesize)
+        host_page_size(mach_host_self(), &page_count)
+        
+        mem_size = UInt64(page_count) * UInt64(pagesize)
+        return mem_size
+    }
+    
+    func generateRecommendations() -> [String] {
+        var recommendations: [String] = []
+        
+        // Memory-based recommendations
+        if currentMetrics.memoryUsage.usedMemory > criticalThresholds.maxMemoryUsage {
+            recommendations.append("Memory usage is critically high. Consider clearing caches and reducing data retention.")
+        } else if currentMetrics.memoryUsage.usedMemory > criticalThresholds.memoryWarningThreshold {
+            recommendations.append("Memory usage is elevated. Monitor for memory leaks and consider optimization.")
+        }
+        
+        // Operation-based recommendations
+        if currentMetrics.activeOperations > criticalThresholds.maxConcurrentOperations {
+            recommendations.append("Too many concurrent operations. Consider implementing operation queuing.")
+        }
+        
+        // Slow operation recommendations
+        let slowOps = currentMetrics.slowOperations.filter { $0.duration > criticalThresholds.maxOperationDuration }
+        if !slowOps.isEmpty {
+            recommendations.append("\(slowOps.count) operations are taking longer than expected. Consider optimization.")
+        }
+        
+        // Battery-based recommendations
+        if currentMetrics.batteryLevel < 0.2 {
+            recommendations.append("Battery level is low. Consider reducing background processing.")
+        }
+        
+        return recommendations
+    }
+    
+    func clearHistory() {
+        performanceHistory.removeAll()
+        logger.info("Performance history cleared")
+    }
+    
+    func exportPerformanceData() -> Data? {
+        let exportData = PerformanceExportData(
+            metrics: currentMetrics,
+            history: performanceHistory,
+            thresholds: criticalThresholds,
+            exportDate: Date()
+        )
+        
+        do {
+            let data = try JSONEncoder().encode(exportData)
+            logger.info("Performance data exported successfully")
+            return data
+        } catch {
+            logger.error("Failed to export performance data: \(error.localizedDescription)")
+            return nil
+        }
+    }
+    
+    // MARK: - Private Methods
+    
+    private func setupMemoryWarningObserver() {
+        memoryWarningObserver = NotificationCenter.default.addObserver(
+            forName: UIApplication.didReceiveMemoryWarningNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.handleMemoryWarning()
+            }
+        }
+    }
+    
+    private func handleMemoryWarning() {
+        logger.warning("Memory warning received")
+        
+        // Update memory pressure
+        currentMetrics.memoryUsage.memoryPressure = .warning
+        
+        // Post notification for other components
+        NotificationCenter.default.post(name: .performanceMemoryWarning, object: nil)
+        
+        // Generate recommendations
+        let recommendations = generateRecommendations()
+        if !recommendations.isEmpty {
+            let snapshot = PerformanceSnapshot(
+                timestamp: Date(),
+                metrics: currentMetrics,
+                context: "Memory Warning",
+                recommendations: recommendations
+            )
+            performanceHistory.append(snapshot)
+            
+            // Check if we need to post critical condition notification
+            if currentMetrics.memoryUsage.usedMemory > criticalThresholds.maxMemoryUsage {
+                NotificationCenter.default.post(name: .performanceCriticalCondition, object: snapshot)
+            }
+        }
+    }
+    
+    private func startPeriodicProfiling() {
+        performanceTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                self?.updatePerformanceMetrics()
+            }
+        }
+    }
+    
+    private func stopPeriodicProfiling() {
+        performanceTimer?.invalidate()
+        performanceTimer = nil
+    }
+    
+    private func updatePerformanceMetrics() {
+        // Update memory usage
+        let currentMemory = getCurrentMemoryUsage()
+        currentMetrics.memoryUsage.usedMemory = currentMemory
+        
+        if currentMemory > currentMetrics.memoryUsage.peakMemory {
+            currentMetrics.memoryUsage.peakMemory = currentMemory
+        }
+        
+        // Update available memory
+        currentMetrics.memoryUsage.availableMemory = getAvailableSystemMemory()
+        
+        // Update memory pressure
+        if currentMemory > criticalThresholds.maxMemoryUsage {
+            currentMetrics.memoryUsage.memoryPressure = .critical
+        } else if currentMemory > criticalThresholds.memoryWarningThreshold {
+            currentMetrics.memoryUsage.memoryPressure = .warning
+        } else {
+            currentMetrics.memoryUsage.memoryPressure = .normal
+        }
+        
+        // Update battery level
+        currentMetrics.batteryLevel = UIDevice.current.batteryLevel
+        
+        // Update timestamp
+        currentMetrics.lastUpdateTime = Date()
+        
+        // Check for critical conditions
+        checkCriticalConditions()
+    }
+    
+    private func checkCriticalConditions() {
+        let recommendations = generateRecommendations()
+        
+        if !recommendations.isEmpty {
+            let snapshot = PerformanceSnapshot(
+                timestamp: Date(),
+                metrics: currentMetrics,
+                context: "Periodic Check",
+                recommendations: recommendations
+            )
+            
+            performanceHistory.append(snapshot)
+            
+            // Limit history size
+            if performanceHistory.count > 100 {
+                performanceHistory.removeFirst(performanceHistory.count - 100)
+            }
+            
+            // Post critical condition notification if needed
+            if currentMetrics.memoryUsage.memoryPressure == .critical ||
+               currentMetrics.activeOperations > criticalThresholds.maxConcurrentOperations {
+                NotificationCenter.default.post(name: .performanceCriticalCondition, object: snapshot)
+            }
+        }
+    }
+    
+    private func recordOperationCompletion(operationName: String, duration: TimeInterval, memoryImpact: UInt64, success: Bool) {
+        currentMetrics.activeOperations = max(0, currentMetrics.activeOperations - 1)
+        
+        // Record slow operations
+        if duration > criticalThresholds.maxOperationDuration {
+            let slowOp = SlowOperation(
+                operationName: operationName,
+                duration: duration,
+                timestamp: Date(),
+                stackTrace: Thread.callStackSymbols.joined(separator: "\n"),
+                memoryImpact: memoryImpact
+            )
+            
+            currentMetrics.slowOperations.append(slowOp)
+            
+            // Limit slow operations list
+            if currentMetrics.slowOperations.count > 20 {
+                currentMetrics.slowOperations.removeFirst()
+            }
+            
+            logger.warning("Slow operation detected: \(operationName) took \(String(format: "%.2f", duration))s")
+        }
+        
+        // Log operation completion
+        if success {
+            logger.info("Operation completed: \(operationName) in \(String(format: "%.2f", duration))s")
+        } else {
+            logger.error("Operation failed: \(operationName) after \(String(format: "%.2f", duration))s")
+        }
+    }
+}
+
+// MARK: - Supporting Types
+
+struct PerformanceExportData: Codable {
+    let metrics: PerformanceProfiler.PerformanceMetrics
+    let history: [PerformanceProfiler.PerformanceSnapshot]
+    let thresholds: PerformanceProfiler.PerformanceThresholds
+    let exportDate: Date
+}
+
+// MARK: - Notification Names
+
+extension Notification.Name {
+    static let performanceMemoryWarning = Notification.Name("PerformanceMemoryWarning")
+    static let performanceCriticalCondition = Notification.Name("PerformanceCriticalCondition")
+}

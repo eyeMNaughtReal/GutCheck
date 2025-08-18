@@ -287,8 +287,22 @@ struct HealthcareExportView: View {
                 }
             } catch {
                 await MainActor.run {
-                    errorMessage = error.localizedDescription
-                    showingError = true
+                    if let exportError = error as? ExportError {
+                        switch exportError {
+                        case .reauthenticationRequired:
+                            errorMessage = "Re-authentication required. Please sign in again to export your data."
+                            showingError = true
+                        case .userNotAuthenticated:
+                            errorMessage = "You must be signed in to export data."
+                            showingError = true
+                        default:
+                            errorMessage = exportError.errorDescription ?? error.localizedDescription
+                            showingError = true
+                        }
+                    } else {
+                        errorMessage = error.localizedDescription
+                        showingError = true
+                    }
                 }
             }
         }

@@ -18,21 +18,17 @@ struct AppRoot: View {
                                 CalendarView(selectedDate: date)
                             case .mealDetail(let id):
                                 if let id = id {
-                                    // Use the new sheet-based approach instead of navigation
-                                    EmptyView()
-                                        .onAppear {
-                                            router.viewMealDetails(id: id)
-                                        }
+                                    MealDetailView(mealId: id)
+                                        .environmentObject(router)
+                                        .environmentObject(refreshManager)
                                 } else {
                                     Text("Invalid meal")
                                 }
                             case .symptomDetail(let id):
                                 if let id = id {
-                                    // Use the new sheet-based approach instead of navigation
-                                    EmptyView()
-                                        .onAppear {
-                                            router.viewSymptomDetails(id: id)
-                                        }
+                                    SymptomDetailView(symptomId: id)
+                                        .environmentObject(router)
+                                        .environmentObject(refreshManager)
                                 } else {
                                     Text("Invalid symptom")
                                 }
@@ -47,15 +43,71 @@ struct AppRoot: View {
                     Label("Dashboard", systemImage: "house.fill")
                 }
                 
-                NavigationStack {
+                NavigationStack(path: $router.path) {
                     CalendarView(selectedTab: .meals)
+                        .navigationDestination(for: AppDestination.self) { destination in
+                            switch destination {
+                            case .dashboard:
+                                DashboardView()
+                            case .calendar(let date):
+                                CalendarView(selectedDate: date)
+                            case .mealDetail(let id):
+                                if let id = id {
+                                    MealDetailView(mealId: id)
+                                        .environmentObject(router)
+                                        .environmentObject(refreshManager)
+                                } else {
+                                    Text("Invalid meal")
+                                }
+                            case .symptomDetail(let id):
+                                if let id = id {
+                                    SymptomDetailView(symptomId: id)
+                                        .environmentObject(router)
+                                        .environmentObject(refreshManager)
+                                } else {
+                                    Text("Invalid symptom")
+                                }
+                            case .settings:
+                                SettingsView()
+                            case .analytics:
+                                InsightsView()
+                            }
+                        }
                 }
                 .tabItem {
                     Label("Meals", systemImage: "fork.knife")
                 }
                 
-                NavigationStack {
+                NavigationStack(path: $router.path) {
                     CalendarView(selectedTab: .symptoms)
+                        .navigationDestination(for: AppDestination.self) { destination in
+                            switch destination {
+                            case .dashboard:
+                                DashboardView()
+                            case .calendar(let date):
+                                CalendarView(selectedDate: date)
+                            case .mealDetail(let id):
+                                if let id = id {
+                                    MealDetailView(mealId: id)
+                                        .environmentObject(router)
+                                        .environmentObject(refreshManager)
+                                } else {
+                                    Text("Invalid meal")
+                                }
+                            case .symptomDetail(let id):
+                                if let id = id {
+                                    SymptomDetailView(symptomId: id)
+                                        .environmentObject(router)
+                                        .environmentObject(refreshManager)
+                                } else {
+                                    Text("Invalid symptom")
+                                }
+                            case .settings:
+                                SettingsView()
+                            case .analytics:
+                                InsightsView()
+                            }
+                        }
                 }
                 .tabItem {
                     Label("Symptoms", systemImage: "heart.text.square.fill")
@@ -67,15 +119,6 @@ struct AppRoot: View {
                 .tabItem {
                     Label("Insights", systemImage: "chart.bar.fill")
                 }
-                
-                // This is just a placeholder - tapping will open the LogEntryView sheet
-                Color.clear
-                    .tabItem {
-                        Label("Add", systemImage: "plus.circle.fill")
-                    }
-                    .onTapGesture {
-                        router.presentLogEntryView()
-                    }
             }
             
             // Handle the sheet presentations
@@ -121,16 +164,7 @@ struct AppRoot: View {
                 }
             }
         }
-        .sheet(item: $router.symptomDetailSheet) { symptomSheet in
-            SymptomDetailView(symptomId: symptomSheet.symptomId)
-                .environmentObject(router)
-                .environmentObject(refreshManager)
-        }
-        .sheet(item: $router.mealDetailSheet) { mealSheet in
-            MealDetailView(mealId: mealSheet.mealId)
-                .environmentObject(router)
-                .environmentObject(refreshManager)
-        }
+
         .environmentObject(router)
         .environmentObject(refreshManager)
     }

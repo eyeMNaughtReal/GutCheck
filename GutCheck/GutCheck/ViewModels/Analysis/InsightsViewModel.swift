@@ -8,21 +8,55 @@ class InsightsViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var error: String?
     
-    private let aiService = AIAnalysisService.shared
+    private let insightsService = InsightsService.shared
+    private let mealRepository = MealRepository.shared
+    private let symptomRepository = SymptomRepository.shared
+    private let healthKitManager = HealthKitManager.shared
+    private let authService = AuthService()
     
     func loadInsights() async {
         isLoading = true
         error = nil
         
         do {
-            // Load recent insights
-            recentInsights = try await loadRecentInsights()
+            // Get current user ID
+            let userId = getCurrentUserId()
             
-            // Load patterns
-            patterns = try await loadPatterns()
+            // Calculate time range for last 30 days
+            let endDate = Date()
+            let startDate = Calendar.current.date(byAdding: .day, value: -30, to: endDate) ?? endDate
+            let timeRange = DateInterval(start: startDate, end: endDate)
             
-            // Load recommendations
-            recommendations = try await loadRecommendations()
+            // Fetch real data
+            let meals = try await mealRepository.fetchMealsForDateRange(
+                startDate: startDate,
+                endDate: endDate,
+                userId: userId
+            )
+            
+            let symptoms = try await symptomRepository.fetchSymptomsForDateRange(
+                startDate: startDate,
+                endDate: endDate,
+                userId: userId
+            )
+            
+            // Fetch health data if available
+            let healthData = await fetchHealthData(for: timeRange)
+            
+            // Generate real insights using the service
+            await insightsService.generateInsights(
+                timeRange: timeRange,
+                meals: meals,
+                symptoms: symptoms,
+                healthData: healthData
+            )
+            
+            // Get insights from the service
+            recentInsights = insightsService.recentInsights
+            
+            // Convert insights to patterns and recommendations
+            patterns = convertInsightsToPatterns(recentInsights)
+            recommendations = convertInsightsToRecommendations(recentInsights)
             
         } catch {
             self.error = error.localizedDescription
@@ -32,103 +66,67 @@ class InsightsViewModel: ObservableObject {
         isLoading = false
     }
     
-    private func loadRecentInsights() async throws -> [HealthInsight] {
-        // TODO: Replace with real data from AIAnalysisService
-        return [
-            HealthInsight(
-                title: "Dairy Sensitivity Pattern",
-                summary: "Strong correlation between dairy consumption and bloating",
-                detailedDescription: "Analysis shows symptoms typically occur 2-4 hours after consuming dairy products, particularly with high-fat items.",
-                iconName: "pills.fill",
-                confidenceLevel: 85,
-                dateRange: "Last 30 Days",
-                recommendations: [
-                    "Consider lactose-free alternatives",
-                    "Try smaller portions to test tolerance",
-                    "Keep track of different dairy types separately"
-                ]
-            ),
-            HealthInsight(
-                title: "Meal Timing Impact",
-                summary: "Late dinners may affect sleep quality",
-                detailedDescription: "Meals consumed after 8 PM show a correlation with reduced sleep quality and morning discomfort.",
-                iconName: "clock.fill",
-                confidenceLevel: 75,
-                dateRange: "Last 14 Days",
-                recommendations: [
-                    "Try to eat dinner before 7 PM",
-                    "Allow 3 hours between dinner and bedtime",
-                    "Consider lighter evening meals"
-                ]
-            )
-        ]
+    private func fetchHealthData(for timeRange: DateInterval) async -> GutHealthData? {
+        return await withCheckedContinuation { continuation in
+            healthKitManager.fetchGutHealthData(
+                from: timeRange.start,
+                to: timeRange.end
+            ) { healthData in
+                continuation.resume(returning: healthData)
+            }
+        }
     }
     
-    private func loadPatterns() async throws -> [HealthPattern] {
-        // TODO: Replace with real data from AIAnalysisService
-        return [
-            HealthPattern(
-                title: "Morning Symptom Pattern",
-                description: "Symptoms are more frequent in the morning hours",
-                iconName: "sunrise.fill",
-                confidence: 0.85,
-                dateRange: "Last 30 Days",
-                supportingData: [
-                    "70% of symptoms occur between 6-10 AM",
-                    "Often follows large evening meals"
-                ],
-                recommendations: [
-                    "Consider smaller evening meals",
-                    "Try eating dinner earlier"
-                ]
-            ),
-            HealthPattern(
-                title: "Exercise Impact",
-                description: "Moderate exercise appears to reduce symptom frequency",
-                iconName: "figure.walk",
-                confidence: 0.78,
-                dateRange: "Last 60 Days",
-                supportingData: [
-                    "25% fewer symptoms on days with exercise",
-                    "Best results with 30+ minutes of activity"
-                ],
-                recommendations: [
-                    "Aim for daily moderate exercise",
-                    "Try morning walks before meals"
-                ]
+    private func convertInsightsToPatterns(_ insights: [HealthInsight]) -> [HealthPattern] {
+        return insights.compactMap { insight -> HealthPattern? in
+            // Convert insights to patterns based on their content
+            let confidence = Double(insight.confidenceLevel) / 100.0
+            
+            return HealthPattern(
+                title: insight.title,
+                description: insight.summary,
+                iconName: insight.iconName,
+                confidence: confidence,
+                dateRange: insight.dateRange,
+                supportingData: [insight.detailedDescription ?? ""],
+                recommendations: insight.recommendations
             )
-        ]
+        }
     }
     
-    private func loadRecommendations() async throws -> [HealthRecommendation] {
-        // TODO: Replace with real data from AIAnalysisService
-        return [
-            HealthRecommendation(
-                title: "Meal Timing Adjustment",
-                description: "Consider adjusting your dinner schedule to improve digestion and sleep quality.",
-                iconName: "clock.fill",
-                priority: .high,
-                actionItems: [
-                    "Eat dinner before 7 PM",
-                    "Allow 3 hours before bedtime",
-                    "Track evening meal times"
-                ],
-                source: "Pattern Analysis",
-                dateCreated: Date()
-            ),
-            HealthRecommendation(
-                title: "Dairy Alternative Trial",
-                description: "Test lactose-free alternatives to assess if dairy is a trigger.",
-                iconName: "cup.and.saucer.fill",
-                priority: .medium,
-                actionItems: [
-                    "Try lactose-free milk",
-                    "Test dairy alternatives",
-                    "Monitor symptoms"
-                ],
-                source: "Food Sensitivity Analysis",
+    private func convertInsightsToRecommendations(_ insights: [HealthInsight]) -> [HealthRecommendation] {
+        return insights.compactMap { insight -> HealthRecommendation? in
+            // Determine priority based on confidence level
+            let priority: HealthRecommendation.RecommendationPriority
+            if insight.confidenceLevel >= 80 {
+                priority = .high
+            } else if insight.confidenceLevel >= 60 {
+                priority = .medium
+            } else {
+                priority = .low
+            }
+            
+            return HealthRecommendation(
+                title: insight.title,
+                description: insight.summary,
+                iconName: insight.iconName,
+                priority: priority,
+                actionItems: insight.recommendations,
+                source: "AI Analysis",
                 dateCreated: Date()
             )
-        ]
+        }
+    }
+    
+    private func getCurrentUserId() -> String {
+        // Get the current user ID from the authentication service
+        if let currentUser = authService.currentUser {
+            return currentUser.id
+        } else {
+            // Fallback to a default if no user is authenticated
+            // This should rarely happen in a properly authenticated app
+            print("⚠️ InsightsViewModel: No authenticated user found, using default user ID")
+            return "default_user"
+        }
     }
 }

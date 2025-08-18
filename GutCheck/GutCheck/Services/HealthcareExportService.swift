@@ -12,6 +12,7 @@
 import Foundation
 import PDFKit
 import UIKit
+import FirebaseAuth
 
 // MARK: - Export Formats
 
@@ -60,6 +61,24 @@ class HealthcareExportService: ObservableObject {
     
     private init() {}
     
+    // MARK: - Re-authentication for Export
+    
+    /// Verifies user identity before allowing data export
+    private func verifyUserIdentity() async throws {
+        guard let currentUser = Auth.auth().currentUser else {
+            throw ExportError.userNotAuthenticated
+        }
+        
+        // Check if user was recently authenticated (within last 5 minutes)
+        let lastSignInTime = currentUser.metadata.lastSignInDate ?? Date.distantPast
+        let timeSinceLastSignIn = Date().timeIntervalSince(lastSignInTime)
+        
+        // If more than 5 minutes since last sign-in, require re-authentication
+        if timeSinceLastSignIn > 300 { // 5 minutes = 300 seconds
+            throw ExportError.reauthenticationRequired
+        }
+    }
+    
     // MARK: - Main Export Function
     
     func exportHealthData(options: ExportOptions = .default) async throws -> Data {
@@ -75,13 +94,16 @@ class HealthcareExportService: ObservableObject {
             }
         }
         
-        // Collect data based on options
+        // Step 1: Verify user identity before export
+        try await verifyUserIdentity()
+        
+        // Step 2: Collect data based on options
         let exportData = try await collectExportData(options: options)
         
         // Update progress
         await MainActor.run { exportProgress = 0.5 }
         
-        // Generate export based on format
+        // Step 3: Generate export based on format
         let exportResult: Data
         switch options.format {
         case .pdf:
@@ -1072,6 +1094,8 @@ enum ExportError: LocalizedError {
     case noAuthenticatedUser
     case pdfGenerationFailed
     case dataCollectionFailed
+    case userNotAuthenticated
+    case reauthenticationRequired
     
     var errorDescription: String? {
         switch self {
@@ -1081,6 +1105,10 @@ enum ExportError: LocalizedError {
             return "Failed to generate PDF report"
         case .dataCollectionFailed:
             return "Failed to collect export data"
+        case .userNotAuthenticated:
+            return "User not authenticated. Please sign in again."
+        case .reauthenticationRequired:
+            return "Re-authentication required. Please sign in again."
         }
     }
 }

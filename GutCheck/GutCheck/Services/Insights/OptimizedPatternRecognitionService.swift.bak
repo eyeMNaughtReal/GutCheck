@@ -1,0 +1,662 @@
+import Foundation
+import HealthKit
+
+/// Optimized pattern recognition service with performance improvements for large datasets
+/// Features include:
+/// - Lazy evaluation and streaming processing
+/// - Memory-efficient data structures
+/// - Background processing with progress updates
+/// - Intelligent caching and memoization
+@MainActor
+class OptimizedPatternRecognitionService {
+    static let shared = OptimizedPatternRecognitionService()
+    
+    private let performanceProfiler = PerformanceProfiler.shared
+    private var analysisCache: [String: CachedAnalysis] = [:]
+    private let cacheExpirationInterval: TimeInterval = 3600 // 1 hour
+    private let maxCacheSize = 50
+    
+    private init() {}
+    
+    func analyzePatternsOptimized(
+        meals: [Meal],
+        symptoms: [Symptom],
+        healthData: GutHealthData?,
+        timeRange: DateInterval,
+        progressHandler: ((Double) -> Void)? = nil
+    ) async throws -> PatternAnalysisResult {
+        
+        // Check cache first
+        let cacheKey = generateCacheKey(meals: meals, symptoms: symptoms, timeRange: timeRange)
+        if let cached = getCachedAnalysis(for: cacheKey) {
+            return cached.result
+        }
+        
+        // Profile the operation
+        return try await performanceProfiler.profileOperation("Pattern Analysis") {
+            var progress = 0.0
+            let progressIncrement = 1.0 / 4.0 // 4 main analysis steps
+            
+            // Step 1: Food triggers (25%)
+            let foodTriggers = await analyzeFoodTriggersOptimized(meals: meals, symptoms: symptoms, progress: progress)
+            progress += progressIncrement
+            progressHandler?(progress)
+            
+            // Step 2: Temporal patterns (25%)
+            let temporalPatterns = await analyzeTemporalPatternsOptimized(meals: meals, symptoms: symptoms, progress: progress)
+            progress += progressIncrement
+            progressHandler?(progress)
+            
+            // Step 3: Lifestyle correlations (25%)
+            let lifestyleCorrelations = await analyzeLifestyleCorrelationsOptimized(meals: meals, symptoms: symptoms, healthData: healthData)
+            progress += progressIncrement
+            progressHandler?(progress)
+            
+            // Step 4: Nutrition trends (25%)
+            let nutritionTrends = await analyzeNutritionTrendsOptimized(meals: meals)
+            progress += progressIncrement
+            progressHandler?(progress)
+            
+            let result = PatternAnalysisResult(
+                foodTriggers: foodTriggers,
+                temporalPatterns: temporalPatterns,
+                lifestyleCorrelations: lifestyleCorrelations,
+                nutritionTrends: nutritionTrends
+            )
+            
+            // Cache the result
+            cacheAnalysis(result: result, for: cacheKey)
+            
+            return result
+        }
+    }
+    
+    // MARK: - Food Trigger Analysis
+    
+    private func analyzeFoodTriggersOptimized(meals: [Meal], symptoms: [Symptom], progress: Double) async -> [FoodTriggerInsight] {
+        // Create efficient lookup maps
+        let symptomTimeMap = Dictionary(grouping: symptoms) { symptom in
+            Calendar.current.startOfDay(for: symptom.date)
+        }
+        
+        // Process meals in batches for memory efficiency
+        let batchSize = 50
+        let mealBatches = meals.chunked(into: batchSize)
+        
+        var allTriggers: [FoodTriggerInsight] = []
+        
+        for (index, batch) in mealBatches.enumerated() {
+            let batchTriggers = await processMealBatchForTriggers(meals: batch, symptomTimeMap: symptomTimeMap)
+            allTriggers.append(contentsOf: batchTriggers)
+            
+            // Update progress within this step
+            let batchProgress = Double(index + 1) / Double(mealBatches.count)
+            progressHandler?(progress + (batchProgress * 0.25))
+        }
+        
+        // Sort by confidence and limit results
+        return allTriggers
+            .sorted { $0.confidence > $1.confidence }
+            .prefix(20)
+            .map { $0 }
+    }
+    
+    private func processMealBatchForTriggers(meals: [Meal], symptomTimeMap: [Date: [Symptom]]) async -> [FoodTriggerInsight] {
+        var triggers: [FoodTriggerInsight] = []
+        
+        for meal in meals {
+            for foodItem in meal.foodItems {
+                if let trigger = await analyzeFoodItemTriggerOptimized(foodItem: foodItem, symptoms: symptoms, meal: meal) {
+                    triggers.append(trigger)
+                }
+            }
+        }
+        
+        return triggers
+    }
+    
+    private func analyzeFoodItemTriggerOptimized(foodItem: FoodItem, symptoms: [Symptom], meal: Meal) async -> FoodTriggerInsight? {
+        // Early exit if no symptoms
+        if symptoms.isEmpty { return nil }
+        
+        // Calculate correlation efficiently
+        let correlation = calculateSymptomCorrelationOptimized(foodItem: foodItem, symptoms: symptoms)
+        
+        // Only proceed if correlation is significant
+        guard correlation > 0.3 else { return nil }
+        
+        // Lazy filtering for symptoms within time window
+        let relevantSymptoms = symptoms.lazy.filter { symptom in
+            let timeDiff = abs(symptom.date.timeIntervalSince(meal.date))
+            return timeDiff <= 24 * 3600 // 24 hours
+        }
+        
+        let symptomCount = relevantSymptoms.count
+        guard symptomCount >= 2 else { return nil }
+        
+        let confidence = calculateTriggerConfidenceOptimized(
+            correlationScore: correlation,
+            symptomCount: symptomCount,
+            compoundRisk: foodItem.compounds?.count ?? 0
+        )
+        
+        guard confidence > 0.5 else { return nil }
+        
+        let recommendations = generateTriggerRecommendationsOptimized(
+            foodItem: foodItem,
+            symptoms: Array(relevantSymptoms),
+            compounds: foodItem.compounds ?? []
+        )
+        
+        return FoodTriggerInsight(
+            foodItem: foodItem,
+            correlation: correlation,
+            confidence: confidence,
+            symptomCount: symptomCount,
+            recommendations: recommendations,
+            timeWindow: "24 hours"
+        )
+    }
+    
+    // MARK: - Temporal Pattern Analysis
+    
+    private func analyzeTemporalPatternsOptimized(meals: [Meal], symptoms: [Symptom], progress: Double) async -> [TemporalPatternInsight] {
+        // Parallel processing for different pattern types
+        async let timeOfDayPatterns = analyzeTimeOfDayPatternsOptimized(symptoms: symptoms)
+        async let dayOfWeekPatterns = analyzeDayOfWeekPatternsOptimized(symptoms: symptoms)
+        async let mealTimingPatterns = analyzeMealTimingPatternsOptimized(meals: meals, symptoms: symptoms)
+        
+        let allPatterns = await timeOfDayPatterns + dayOfWeekPatterns + mealTimingPatterns
+        
+        return allPatterns
+            .sorted { $0.confidence > $1.confidence }
+            .prefix(15)
+            .map { $0 }
+    }
+    
+    private func analyzeTimeOfDayPatternsOptimized(symptoms: [Symptom]) async -> [TemporalPatternInsight] {
+        // Efficient grouping by hour
+        let hourGroups = Dictionary(grouping: symptoms) { symptom in
+            Calendar.current.component(.hour, from: symptom.date)
+        }
+        
+        var patterns: [TemporalPatternInsight] = []
+        
+        for (hour, hourSymptoms) in hourGroups {
+            let confidence = Double(hourSymptoms.count) / Double(symptoms.count)
+            
+            if confidence > 0.2 { // At least 20% of symptoms in this hour
+                let pattern = TemporalPatternInsight(
+                    type: .timeOfDay,
+                    timeRange: "\(hour):00-\(hour + 1):00",
+                    confidence: confidence,
+                    symptomCount: hourSymptoms.count,
+                    description: "Symptoms frequently occur around \(hour):00"
+                )
+                patterns.append(pattern)
+            }
+        }
+        
+        return patterns
+    }
+    
+    private func analyzeDayOfWeekPatternsOptimized(symptoms: [Symptom]) async -> [TemporalPatternInsight] {
+        let dayGroups = Dictionary(grouping: symptoms) { symptom in
+            Calendar.current.component(.weekday, from: symptom.date)
+        }
+        
+        var patterns: [TemporalPatternInsight] = []
+        
+        for (weekday, daySymptoms) in dayGroups {
+            let confidence = Double(daySymptoms.count) / Double(symptoms.count)
+            
+            if confidence > 0.15 { // At least 15% of symptoms on this day
+                let dayName = Calendar.current.weekdaySymbols[weekday - 1]
+                let pattern = TemporalPatternInsight(
+                    type: .dayOfWeek,
+                    timeRange: dayName,
+                    confidence: confidence,
+                    symptomCount: daySymptoms.count,
+                    description: "Symptoms frequently occur on \(dayName)s"
+                )
+                patterns.append(pattern)
+            }
+        }
+        
+        return patterns
+    }
+    
+    private func analyzeMealTimingPatternsOptimized(meals: [Meal], symptoms: [Symptom]) async -> [TemporalPatternInsight] {
+        // Efficient pairing algorithm
+        let mealSymptomPairs = findMealSymptomPairsOptimized(meals: meals, symptoms: symptoms)
+        
+        var patterns: [TemporalPatternInsight] = []
+        
+        // Group by time intervals
+        let intervalGroups = Dictionary(grouping: mealSymptomPairs) { pair in
+            let timeDiff = pair.symptom.date.timeIntervalSince(pair.meal.date)
+            switch timeDiff {
+            case 0..<3600: return "0-1 hour"
+            case 3600..<7200: return "1-2 hours"
+            case 7200..<14400: return "2-4 hours"
+            case 14400..<28800: return "4-8 hours"
+            default: return "8+ hours"
+            }
+        }
+        
+        for (interval, pairs) in intervalGroups {
+            let confidence = Double(pairs.count) / Double(mealSymptomPairs.count)
+            
+            if confidence > 0.3 { // At least 30% of symptoms in this interval
+                let pattern = TemporalPatternInsight(
+                    type: .mealTiming,
+                    timeRange: interval,
+                    confidence: confidence,
+                    symptomCount: pairs.count,
+                    description: "Symptoms typically occur \(interval) after meals"
+                )
+                patterns.append(pattern)
+            }
+        }
+        
+        return patterns
+    }
+    
+    // MARK: - Lifestyle Correlation Analysis
+    
+    private func analyzeLifestyleCorrelationsOptimized(meals: [Meal], symptoms: [Symptom], healthData: GutHealthData?) async -> [LifestyleCorrelationInsight] {
+        var correlations: [LifestyleCorrelationInsight] = []
+        
+        // Parallel processing for different lifestyle factors
+        if let healthData = healthData {
+            async let exerciseCorrelations = analyzeExerciseCorrelationsOptimized(symptoms: symptoms, stepData: healthData.stepData)
+            async let sleepCorrelations = analyzeSleepCorrelationsOptimized(symptoms: symptoms, sleepData: healthData.sleepData)
+            
+            let exerciseResults = await exerciseCorrelations
+            let sleepResults = await sleepCorrelations
+            
+            correlations.append(contentsOf: exerciseResults)
+            correlations.append(contentsOf: sleepResults)
+        }
+        
+        // Stress correlations (based on symptom patterns)
+        let stressCorrelations = analyzeStressCorrelationsOptimized(symptoms: symptoms)
+        correlations.append(contentsOf: stressCorrelations)
+        
+        return correlations
+            .sorted { $0.confidence > $1.confidence }
+            .prefix(10)
+            .map { $0 }
+    }
+    
+    private func analyzeExerciseCorrelationsOptimized(symptoms: [Symptom], stepData: [HKSample]) -> [LifestyleCorrelationInsight] {
+        // Efficient data processing
+        let stepCounts = stepData.compactMap { sample -> (Date, Int)? in
+            guard let quantitySample = sample as? HKQuantitySample else { return nil }
+            let steps = quantitySample.quantity.doubleValue(for: HKUnit.count())
+            return (quantitySample.startDate, Int(steps))
+        }
+        
+        var correlations: [LifestyleCorrelationInsight] = []
+        
+        // Group symptoms by day and correlate with step counts
+        let symptomDays = Dictionary(grouping: symptoms) { symptom in
+            Calendar.current.startOfDay(for: symptom.date)
+        }
+        
+        for (day, daySymptoms) in symptomDays {
+            if let daySteps = stepCounts.first(where: { Calendar.current.isDate($0.0, inSameDayAs: day) }) {
+                let stepCount = daySteps.1
+                let symptomCount = daySymptoms.count
+                
+                // Simple correlation: fewer symptoms on active days
+                let correlation = stepCount > 5000 ? 0.7 : 0.3
+                
+                if correlation > 0.5 {
+                    let insight = LifestyleCorrelationInsight(
+                        factor: "Physical Activity",
+                        correlation: correlation,
+                        confidence: correlation,
+                        description: "Symptoms are less frequent on days with \(stepCount) steps",
+                        recommendations: ["Aim for 10,000+ steps daily", "Take regular walks"]
+                    )
+                    correlations.append(insight)
+                }
+            }
+        }
+        
+        return correlations
+    }
+    
+    private func analyzeSleepCorrelationsOptimized(symptoms: [Symptom], sleepData: [HKSample]) -> [LifestyleCorrelationInsight] {
+        // Process sleep data efficiently
+        let sleepHours = sleepData.compactMap { sample -> (Date, Double)? in
+            guard let quantitySample = sample as? HKQuantitySample else { return nil }
+            let hours = quantitySample.quantity.doubleValue(for: HKUnit.hour())
+            return (quantitySample.startDate, hours)
+        }
+        
+        var correlations: [LifestyleCorrelationInsight] = []
+        
+        // Correlate sleep with next day's symptoms
+        let symptomDays = Dictionary(grouping: symptoms) { symptom in
+            Calendar.current.startOfDay(for: symptom.date)
+        }
+        
+        for (day, daySymptoms) in symptomDays {
+            let previousDay = Calendar.current.date(byAdding: .day, value: -1, to: day) ?? day
+            
+            if let previousSleep = sleepHours.first(where: { Calendar.current.isDate($0.0, inSameDayAs: previousDay) }) {
+                let sleepHours = previousSleep.1
+                let symptomCount = daySymptoms.count
+                
+                // Correlation: poor sleep leads to more symptoms
+                let correlation = sleepHours < 7.0 ? 0.8 : 0.2
+                
+                if correlation > 0.6 {
+                    let insight = LifestyleCorrelationInsight(
+                        factor: "Sleep Quality",
+                        correlation: correlation,
+                        confidence: correlation,
+                        description: "Symptoms are more frequent after nights with \(String(format: "%.1f", sleepHours)) hours of sleep",
+                        recommendations: ["Aim for 7-9 hours of sleep", "Maintain consistent sleep schedule"]
+                    )
+                    correlations.append(insight)
+                }
+            }
+        }
+        
+        return correlations
+    }
+    
+    private func analyzeStressCorrelationsOptimized(symptoms: [Symptom]) -> [LifestyleCorrelationInsight] {
+        // Analyze symptom patterns that might indicate stress
+        let highUrgencySymptoms = symptoms.filter { $0.urgencyLevel >= 7 }
+        let highPainSymptoms = symptoms.filter { $0.painLevel >= 7 }
+        
+        var correlations: [LifestyleCorrelationInsight] = []
+        
+        if !highUrgencySymptoms.isEmpty {
+            let correlation = Double(highUrgencySymptoms.count) / Double(symptoms.count)
+            
+            if correlation > 0.3 {
+                let insight = LifestyleCorrelationInsight(
+                    factor: "Stress Levels",
+                    correlation: correlation,
+                    confidence: correlation,
+                    description: "High urgency symptoms may indicate elevated stress levels",
+                    recommendations: ["Practice stress management", "Consider meditation or deep breathing"]
+                )
+                correlations.append(insight)
+            }
+        }
+        
+        if !highPainSymptoms.isEmpty {
+            let correlation = Double(highPainSymptoms.count) / Double(symptoms.count)
+            
+            if correlation > 0.3 {
+                let insight = LifestyleCorrelationInsight(
+                    factor: "Stress Response",
+                    correlation: correlation,
+                    confidence: correlation,
+                    description: "High pain symptoms may be stress-related",
+                    recommendations: ["Reduce stress triggers", "Maintain regular exercise routine"]
+                )
+                correlations.append(insight)
+            }
+        }
+        
+        return correlations
+    }
+    
+    // MARK: - Nutrition Trend Analysis
+    
+    private func analyzeNutritionTrendsOptimized(meals: [Meal]) async -> [NutritionTrendInsight] {
+        // Create nutrition data points with sliding windows
+        let nutritionData = meals.compactMap { meal -> NutritionDataPoint? in
+            guard let nutrition = meal.foodItems.first?.nutrition else { return nil }
+            
+            return NutritionDataPoint(
+                date: meal.date,
+                calories: nutrition.calories,
+                protein: nutrition.protein,
+                carbs: nutrition.carbs,
+                fat: nutrition.fat,
+                fiber: nutrition.fiber
+            )
+        }
+        
+        var trends: [NutritionTrendInsight] = []
+        
+        // Analyze different nutrients in parallel
+        async let fiberTrend = analyzeFiberTrendOptimized(nutritionData: nutritionData)
+        async let proteinTrend = analyzeProteinTrendOptimized(nutritionData: nutritionData)
+        async let fatTrend = analyzeFatTrendOptimized(nutritionData: nutritionData)
+        
+        if let fiber = await fiberTrend { trends.append(fiber) }
+        if let protein = await proteinTrend { trends.append(protein) }
+        if let fat = await fatTrend { trends.append(fat) }
+        
+        return trends
+            .sorted { $0.confidence > $1.confidence }
+            .prefix(8)
+            .map { $0 }
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func calculateSymptomCorrelationOptimized(foodItem: FoodItem, symptoms: [Symptom]) -> Double {
+        // Efficient correlation calculation
+        let mealSymptomPairs = findMealSymptomPairsOptimized(meals: [Meal(date: Date(), foodItems: [foodItem])], symptoms: symptoms)
+        
+        let totalPairs = mealSymptomPairs.count
+        guard totalPairs > 0 else { return 0.0 }
+        
+        let positivePairs = mealSymptomPairs.filter { pair in
+            let timeDiff = abs(pair.symptom.date.timeIntervalSince(pair.meal.date))
+            return timeDiff <= 24 * 3600 // 24 hours
+        }.count
+        
+        return Double(positivePairs) / Double(totalPairs)
+    }
+    
+    private func calculateTriggerConfidenceOptimized(correlationScore: Double, symptomCount: Int, compoundRisk: Int) -> Double {
+        let baseConfidence = correlationScore * 0.6
+        let symptomBonus = min(Double(symptomCount) * 0.1, 0.3)
+        let compoundPenalty = Double(compoundRisk) * 0.05
+        
+        return min(max(baseConfidence + symptomBonus - compoundPenalty, 0.0), 1.0)
+    }
+    
+    private func generateTriggerRecommendationsOptimized(foodItem: FoodItem, symptoms: [Symptom], compounds: [FoodCompound]) -> [String] {
+        var recommendations: [String] = []
+        
+        // Basic recommendations
+        recommendations.append("Avoid \(foodItem.name) for 1-2 weeks")
+        recommendations.append("Monitor symptoms after reintroduction")
+        
+        // Compound-specific recommendations
+        if !compounds.isEmpty {
+            let highRiskCompounds = compounds.filter { $0.riskLevel >= 7 }
+            if !highRiskCompounds.isEmpty {
+                recommendations.append("High-risk compounds detected: \(highRiskCompounds.map { $0.name }.joined(separator: ", "))")
+            }
+        }
+        
+        // Symptom-based recommendations
+        let highPainSymptoms = symptoms.filter { $0.painLevel >= 7 }
+        if !highPainSymptoms.isEmpty {
+            recommendations.append("Consider anti-inflammatory alternatives")
+        }
+        
+        return recommendations
+    }
+    
+    private func findMealSymptomPairsOptimized(meals: [Meal], symptoms: [Symptom]) -> [MealSymptomPair] {
+        // Efficient pairing algorithm with time constraints
+        var pairs: [MealSymptomPair] = []
+        
+        for meal in meals {
+            let mealStart = meal.date
+            let mealEnd = Calendar.current.date(byAdding: .hour, value: 24, to: mealStart) ?? mealStart
+            
+            let relevantSymptoms = symptoms.filter { symptom in
+                symptom.date >= mealStart && symptom.date <= mealEnd
+            }
+            
+            for symptom in relevantSymptoms {
+                pairs.append(MealSymptomPair(meal: meal, symptom: symptom))
+            }
+        }
+        
+        return pairs
+    }
+    
+    // MARK: - Caching
+    
+    private func generateCacheKey(meals: [Meal], symptoms: [Symptom], timeRange: DateInterval) -> String {
+        let mealCount = meals.count
+        let symptomCount = symptoms.count
+        let startDate = Int(timeRange.start.timeIntervalSince1970)
+        let endDate = Int(timeRange.end.timeIntervalSince1970)
+        
+        return "\(mealCount)_\(symptomCount)_\(startDate)_\(endDate)"
+    }
+    
+    private func getCachedAnalysis(for key: String) -> CachedAnalysis? {
+        guard let cached = analysisCache[key] else { return nil }
+        
+        // Check expiration
+        if Date().timeIntervalSince(cached.timestamp) > cacheExpirationInterval {
+            analysisCache.removeValue(forKey: key)
+            return nil
+        }
+        
+        return cached
+    }
+    
+    private func cacheAnalysis(result: PatternAnalysisResult, for key: String) {
+        // Implement LRU cache
+        if analysisCache.count >= maxCacheSize {
+            let oldestKey = analysisCache.keys.first
+            if let key = oldestKey {
+                analysisCache.removeValue(forKey: key)
+            }
+        }
+        
+        let cached = CachedAnalysis(
+            result: result,
+            timestamp: Date()
+        )
+        
+        analysisCache[key] = cached
+    }
+}
+
+// MARK: - Supporting Types
+
+struct NutritionDataPoint {
+    let date: Date
+    let calories: Double
+    let protein: Double
+    let carbs: Double
+    let fat: Double
+    let fiber: Double
+}
+
+struct CachedAnalysis {
+    let result: PatternAnalysisResult
+    let timestamp: Date
+}
+
+// MARK: - Extensions
+
+extension Array {
+    func chunked(into size: Int) -> [[Element]] {
+        return stride(from: 0, to: count, by: size).map {
+            Array(self[$0..<Swift.min($0 + size, count)])
+        }
+    }
+}
+
+// MARK: - Nutrition Trend Analysis Extensions
+
+extension OptimizedPatternRecognitionService {
+    private func analyzeFiberTrendOptimized(nutritionData: [NutritionDataPoint]) -> NutritionTrendInsight? {
+        guard nutritionData.count >= 5 else { return nil }
+        
+        let sortedData = nutritionData.sorted { $0.date < $1.date }
+        let recentData = Array(sortedData.suffix(5))
+        
+        let averageFiber = recentData.map { $0.fiber }.reduce(0, +) / Double(recentData.count)
+        let targetFiber = 25.0 // Daily recommended fiber
+        
+        let confidence = min(averageFiber / targetFiber, 1.0)
+        
+        if confidence < 0.6 {
+            return NutritionTrendInsight(
+                nutrient: "Fiber",
+                trend: .decreasing,
+                confidence: confidence,
+                currentValue: averageFiber,
+                targetValue: targetFiber,
+                description: "Fiber intake is below recommended levels",
+                recommendations: ["Increase vegetable consumption", "Add more whole grains", "Include legumes in meals"]
+            )
+        }
+        
+        return nil
+    }
+    
+    private func analyzeProteinTrendOptimized(nutritionData: [NutritionDataPoint]) -> NutritionTrendInsight? {
+        guard nutritionData.count >= 5 else { return nil }
+        
+        let sortedData = nutritionData.sorted { $0.date < $1.date }
+        let recentData = Array(sortedData.suffix(5))
+        
+        let averageProtein = recentData.map { $0.protein }.reduce(0, +) / Double(recentData.count)
+        let targetProtein = 50.0 // Daily recommended protein (g)
+        
+        let confidence = min(averageProtein / targetProtein, 1.0)
+        
+        if confidence < 0.7 {
+            return NutritionTrendInsight(
+                nutrient: "Protein",
+                trend: .decreasing,
+                confidence: confidence,
+                currentValue: averageProtein,
+                targetValue: targetProtein,
+                description: "Protein intake may be insufficient",
+                recommendations: ["Include lean meats", "Add Greek yogurt", "Consider protein supplements"]
+            )
+        }
+        
+        return nil
+    }
+    
+    private func analyzeFatTrendOptimized(nutritionData: [NutritionDataPoint]) -> NutritionTrendInsight? {
+        guard nutritionData.count >= 5 else { return nil }
+        
+        let sortedData = nutritionData.sorted { $0.date < $1.date }
+        let recentData = Array(sortedData.suffix(5))
+        
+        let averageFat = recentData.map { $0.fat }.reduce(0, +) / Double(recentData.count)
+        let targetFat = 65.0 // Daily recommended fat (g)
+        
+        let confidence = min(averageFat / targetFat, 1.0)
+        
+        if confidence > 1.2 {
+            return NutritionTrendInsight(
+                nutrient: "Fat",
+                trend: .increasing,
+                confidence: confidence,
+                currentValue: averageFat,
+                targetValue: targetFat,
+                description: "Fat intake is above recommended levels",
+                recommendations: ["Choose leaner protein sources", "Limit fried foods", "Use cooking spray instead of oil"]
+            )
+        }
+        
+        return nil
+    }
+}

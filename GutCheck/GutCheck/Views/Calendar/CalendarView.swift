@@ -11,6 +11,8 @@ import FirebaseAuth
 import UIKit
 #endif
 
+
+
 // Using shared Tab enum from Core models
 import Foundation // Required for Tab enum
 
@@ -37,13 +39,13 @@ struct CalendarView: View {
                 }
                 .padding(.vertical)
 
-                ScrollView {
+                List {
                     CalendarContentView(
                         selectedTab: selectedTab,
                         viewModel: viewModel
                     )
-                    .padding(.bottom, 80)
                 }
+                .listStyle(.insetGrouped)
             }
             
             // Floating Action Button for logging
@@ -124,9 +126,11 @@ struct CalendarContentView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             if selectedTab == .meals || selectedTab == nil {
-                Section(header: Text("Meals on \(viewModel.formattedDate)")
-                    .font(.headline)
-                    .padding(.horizontal)) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Meals on \(viewModel.formattedDate)")
+                        .font(.headline)
+                        .padding(.horizontal)
+                    
                     if viewModel.isLoadingMeals {
                         ProgressView()
                             .frame(maxWidth: .infinity, minHeight: 100)
@@ -137,6 +141,7 @@ struct CalendarContentView: View {
                     } else {
                         ForEach(viewModel.meals) { meal in
                             MealCalendarRow(meal: meal) {
+                                // Tap to view details
                                 router.viewMealDetails(id: meal.id)
                             }
                             .padding(.horizontal)
@@ -160,7 +165,7 @@ struct CalendarContentView: View {
                     } else {
                         ForEach(viewModel.symptoms) { symptom in
                             SymptomCalendarRow(symptom: symptom) {
-                                // Show symptom detail sheet
+                                // Tap to view details
                                 router.viewSymptomDetails(id: symptom.id)
                             }
                             .padding(.horizontal)
@@ -180,6 +185,8 @@ class CalendarViewModel: ObservableObject {
     @Published var isLoadingMeals = false
     @Published var isLoadingSymptoms = false
     @Published var calendarDays: [CalendarDay] = []
+    
+
     
     // Computed property for formatted date string
     var formattedDate: String {
@@ -294,16 +301,28 @@ class CalendarViewModel: ObservableObject {
         
         calendarDays = days
     }
+    
+
 }
 
 // MARK: - Meal Row
 struct MealCalendarRow: View {
     let meal: Meal
     let onTap: () -> Void
-    @EnvironmentObject var router: AppRouter
+    @State private var isNavigating = false
     
     var body: some View {
-        Button(action: onTap) {
+        Button(action: {
+            guard !isNavigating else { return }
+            isNavigating = true
+            
+            // Debounce the navigation
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                isNavigating = false
+            }
+            
+            onTap()
+        }) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text(meal.type.rawValue.capitalized)
@@ -315,18 +334,10 @@ struct MealCalendarRow: View {
                         .foregroundColor(ColorTheme.secondaryText)
                 }
                 if !meal.foodItems.isEmpty {
-                    HStack(spacing: 4) {
-                        ForEach(Array(meal.foodItems.enumerated()), id: \.offset) { idx, item in
-                            Button(action: {
-                                router.viewMealDetails(id: item.id)
-                            }) {
-                                Text(item.name)
-                                    .font(.caption)
-                                    .foregroundColor(ColorTheme.secondaryText)
-                                    .underline()
-                            }
-                        }
-                    }
+                    Text(foodItemsPreview)
+                        .font(.caption)
+                        .foregroundColor(ColorTheme.secondaryText)
+                        .lineLimit(1)
                 }
             }
             .padding()
@@ -335,6 +346,7 @@ struct MealCalendarRow: View {
             .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
         }
         .buttonStyle(PlainButtonStyle())
+        .disabled(isNavigating)
     }
     
     private var formattedTime: String {
@@ -349,25 +361,26 @@ struct MealCalendarRow: View {
         }
         return preview
     }
-    
-    private var typeColor: Color {
-        switch meal.type {
-        case .breakfast: return .orange
-        case .lunch: return .green
-        case .dinner: return .blue
-        case .snack: return .purple
-        case .drink: return .cyan
-        }
-    }
 }
 
 // MARK: - Symptom Row
 struct SymptomCalendarRow: View {
     let symptom: Symptom
     let onTap: () -> Void
+    @State private var isNavigating = false
     
     var body: some View {
-        Button(action: onTap) {
+        Button(action: {
+            guard !isNavigating else { return }
+            isNavigating = true
+            
+            // Debounce the navigation
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                isNavigating = false
+            }
+            
+            onTap()
+        }) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text("Stool: \(symptom.stoolType.rawValue)")
@@ -392,6 +405,8 @@ struct SymptomCalendarRow: View {
                             .lineLimit(1)
                     }
                 }
+                
+
             }
             .padding()
             .background(ColorTheme.cardBackground)
@@ -399,6 +414,7 @@ struct SymptomCalendarRow: View {
             .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
         }
         .buttonStyle(PlainButtonStyle())
+        .disabled(isNavigating)
     }
     
     private var formattedTime: String {

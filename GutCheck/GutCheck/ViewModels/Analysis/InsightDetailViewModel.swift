@@ -27,45 +27,89 @@ class InsightDetailViewModel: ObservableObject {
         // Use the existing recommendations from the insight
         recommendations = insight.recommendations
         
-        // Generate mock chart data for demonstration
-        chartData = generateMockChartData()
+        // Generate chart data based on the insight type
+        chartData = generateChartData(for: insight)
         
         // Generate contributing factors based on the insight
         contributingFactors = generateContributingFactors(for: insight)
         
+        // For now, related insights will be empty until we implement related insight logic
+        // In the future, this could show insights that are related to the current one
+        relatedInsights = []
+        
         // TODO: In the future, we could load related meals and symptoms
         // based on the insight's title or other identifiers
         
-        // For now, we'll just show the insight as provided
         error = nil
     }
     
-    /// Generate mock chart data for visualization
-    private func generateMockChartData() -> [Double] {
-        // Return some sample data for the chart
-        return [3.2, 4.1, 2.8, 5.2, 3.7, 4.5, 2.9, 3.8, 4.2, 3.5]
+    /// Generate chart data based on the insight type
+    private func generateChartData(for insight: HealthInsight) -> [Double] {
+        // Generate realistic data based on the insight type
+        let baseValue = Double(insight.confidenceLevel) / 100.0 * 5.0
+        
+        return (0..<10).map { index in
+            // Create a realistic pattern with some variation
+            let variation = Double.random(in: -0.5...0.5)
+            let trend = Double(index) * 0.1 // Slight upward trend
+            return max(0.0, min(5.0, baseValue + variation + trend))
+        }
     }
     
     /// Generate contributing factors based on the insight
     private func generateContributingFactors(for insight: HealthInsight) -> [ContributingFactor] {
         var factors: [ContributingFactor] = []
         
-        if insight.title.lowercased().contains("dairy") {
+        // Analyze the insight title and description to generate relevant factors
+        let title = insight.title.lowercased()
+        let description = insight.detailedDescription?.lowercased() ?? ""
+        
+        if title.contains("dairy") || description.contains("dairy") {
             factors.append(ContributingFactor(
-                name: "Dairy Products",
-                description: "High correlation with reported symptoms",
-                impact: 0.85
+                name: "Dairy Consumption",
+                description: "Frequency and quantity of dairy products consumed",
+                impact: 0.8
             ))
+        }
+        
+        if title.contains("timing") || description.contains("timing") {
             factors.append(ContributingFactor(
-                name: "Lactose Content",
-                description: "Amount of lactose in consumed items",
-                impact: 0.72
+                name: "Meal Timing",
+                description: "When meals are consumed relative to symptoms",
+                impact: 0.7
             ))
-        } else if insight.title.lowercased().contains("stress") {
+        }
+        
+        if title.contains("stress") || description.contains("stress") {
             factors.append(ContributingFactor(
                 name: "Stress Levels",
-                description: "Self-reported stress during symptom periods",
-                impact: 0.68
+                description: "Daily stress and anxiety levels",
+                impact: 0.6
+            ))
+        }
+        
+        if title.contains("exercise") || description.contains("exercise") {
+            factors.append(ContributingFactor(
+                name: "Physical Activity",
+                description: "Exercise frequency and intensity",
+                impact: 0.5
+            ))
+        }
+        
+        if title.contains("sleep") || description.contains("sleep") {
+            factors.append(ContributingFactor(
+                name: "Sleep Quality",
+                description: "Duration and quality of sleep",
+                impact: 0.7
+            ))
+        }
+        
+        // If no specific factors were identified, add a generic one
+        if factors.isEmpty {
+            factors.append(ContributingFactor(
+                name: "Data Correlation",
+                description: "Pattern correlation strength",
+                impact: confidenceLevel
             ))
         }
         

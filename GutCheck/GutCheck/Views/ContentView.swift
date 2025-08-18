@@ -40,14 +40,7 @@ struct ContentView: View {
                 .sheet(item: $router.activeSheet) { sheet in
                     sheetView(for: sheet)
                 }
-                .sheet(item: $router.symptomDetailSheet) { symptomSheet in
-                    SymptomDetailView(symptomId: symptomSheet.symptomId)
-                        .environmentObject(router)
-                }
-                .sheet(item: $router.mealDetailSheet) { mealSheet in
-                    MealDetailView(mealId: mealSheet.mealId)
-                        .environmentObject(router)
-                }
+
             }
 
             CustomTabBar(selectedTab: $router.selectedTab) { action in

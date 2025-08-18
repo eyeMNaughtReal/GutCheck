@@ -37,10 +37,10 @@ final class DashboardDataStore: ObservableObject {
     @Published var todaysHealthScore: Int = 7
     
     /// Personalized health focus recommendation for the selected day
-    @Published var todaysFocus: String = "Stay hydrated and eat fiber-rich foods like berries, chia seeds, and whole grains"
+    @Published var todaysFocus: String = ""
     
     /// Smart avoidance tip based on recent symptom patterns
-    @Published var avoidanceTip: String = "Avoid spicy foods (like hot sauce, chili peppers) today - they've triggered symptoms twice this week"
+    @Published var avoidanceTip: String = ""
     
     /// Currently selected date for dashboard data display
     @Published var selectedDate: Date = Date()
@@ -50,6 +50,9 @@ final class DashboardDataStore: ObservableObject {
     /// Combine cancellables for proper memory management
     private var cancellables = Set<AnyCancellable>()
     
+    /// Authentication service for getting current user ID
+    private var authService: AuthService?
+    
     // MARK: - Initialization
     
     /// Initialize the dashboard data store
@@ -58,7 +61,10 @@ final class DashboardDataStore: ObservableObject {
         if preview {
             loadPreviewData()
         } else {
-            load()
+            Task { @MainActor in
+                authService = AuthService()
+                load()
+            }
         }
     }
     
@@ -77,7 +83,7 @@ final class DashboardDataStore: ObservableObject {
         todaysSymptoms = []
         
         // Load data for the selected date
-        loadMockData()
+        load()
         
         // Recalculate health score and insights for the new date
         todaysHealthScore = calculateHealthScore()
@@ -94,60 +100,68 @@ final class DashboardDataStore: ObservableObject {
     /// - Meal frequency: +1 point for 2+ meals
     /// - Final score clamped to 1-10 range
     private func calculateHealthScore() -> Int {
-        // Base score starts at 7 (neutral)
-        var score = 7
+        var score = 7 // Base neutral score
         
-        // Adjust based on symptoms
+        // Bonus for no symptoms
         if todaysSymptoms.isEmpty {
-            score += 2 // No symptoms today
+            score += 2
         } else {
-            // Reduce score based on symptom severity
+            // Penalty based on symptom severity
             let totalSeverity = todaysSymptoms.reduce(0) { total, symptom in
-                total + (symptom.painLevel.rawValue + symptom.urgencyLevel.rawValue)
+                total + symptom.painLevel.rawValue + symptom.urgencyLevel.rawValue
             }
-            score -= min(totalSeverity, 4) // Max reduction of 4 points
+            let averageSeverity = totalSeverity / max(todaysSymptoms.count, 1)
+            
+            if averageSeverity >= 8 {
+                score -= 4
+            } else if averageSeverity >= 6 {
+                score -= 3
+            } else if averageSeverity >= 4 {
+                score -= 2
+            } else {
+                score -= 1
+            }
         }
         
-        // Adjust based on meals
+        // Bonus for regular meals
         if todaysMeals.count >= 2 {
-            score += 1 // Good meal frequency
+            score += 1
         }
         
-        // Ensure score stays within 1-10 range
+        // Clamp score to 1-10 range
         return max(1, min(10, score))
     }
     
-    /// Generate personalized insights based on current data
-    /// Creates actionable focus tips and avoidance warnings based on:
-    /// - Current symptom patterns (pain, urgency, frequency)
-    /// - Recent symptom history and correlations
-    /// - Known food triggers and patterns
+    /// Generate insights based on current data
     private func generateInsights() {
-        // Generate today's focus based on symptoms
-        if todaysSymptoms.isEmpty {
-            todaysFocus = "Great day! Keep up your healthy habits"
+        // Generate focus message based on current data
+        if todaysSymptoms.isEmpty && todaysMeals.count >= 2 {
+            todaysFocus = "Great day! You're eating regularly and feeling well. Keep up the healthy habits."
+        } else if todaysSymptoms.isEmpty {
+            todaysFocus = "You're feeling good today. Consider adding a meal if you haven't eaten recently."
         } else {
-            let hasPain = todaysSymptoms.contains { $0.painLevel != .none }
-            let hasUrgency = todaysSymptoms.contains { $0.urgencyLevel != .none }
-            
-            if hasPain && hasUrgency {
-                todaysFocus = "Focus on gentle foods and stress management. Try oatmeal, bananas, and chamomile tea."
-            } else if hasPain {
-                todaysFocus = "Try anti-inflammatory foods like ginger tea, turmeric in smoothies, and omega-3 rich salmon."
-            } else if hasUrgency {
-                todaysFocus = "Add fiber gradually: try berries, chia seeds, or a small apple with breakfast."
-            } else {
-                todaysFocus = "Monitor your food triggers and stay hydrated. Aim for 8 glasses of water today."
-            }
+            todaysFocus = "Focus on gentle foods and staying hydrated. Listen to your body's signals."
         }
         
-        // Generate avoidance tip based on recent patterns
-        if todaysSymptoms.count >= 2 {
-            avoidanceTip = "Skip spicy foods (like hot sauce, chili) and dairy (milk, cheese, yogurt) today - they've triggered symptoms recently."
-        } else if todaysSymptoms.count == 1 {
-            avoidanceTip = "Avoid processed foods and focus on whole foods like grilled chicken, steamed vegetables, and brown rice."
+        // Generate avoidance tip based on symptoms
+        if !todaysSymptoms.isEmpty {
+            let highPainSymptoms = todaysSymptoms.filter { $0.painLevel.rawValue >= 7 }
+            if !highPainSymptoms.isEmpty {
+                avoidanceTip = "You're experiencing high pain levels. Avoid spicy, fatty, or hard-to-digest foods today."
+            } else {
+                avoidanceTip = "Monitor your symptoms and avoid any foods that seem to make them worse."
+            }
         } else {
-            avoidanceTip = "You're doing great! Keep avoiding your known triggers and maintain your healthy routine."
+            avoidanceTip = "No specific triggers detected today. Continue with your usual diet."
+        }
+        
+        // Generate trigger alerts if needed
+        triggerAlerts = []
+        if todaysSymptoms.count >= 3 {
+            triggerAlerts.append("Multiple symptoms today - consider reviewing recent meals")
+        }
+        if todaysSymptoms.contains(where: { $0.painLevel.rawValue >= 8 }) {
+            triggerAlerts.append("High pain level detected - consider consulting healthcare provider")
         }
     }
     
@@ -186,16 +200,12 @@ final class DashboardDataStore: ObservableObject {
         self.avoidanceTip = "Skip dairy products (milk, cheese, ice cream) - they've caused bloating 3 times this week"
     }
     
-    // MARK: - Private Load Logic (Replace this with real data fetch later)
+    // MARK: - Private Load Logic
     
     private func load() {
         // Only load if not in preview mode
         guard todaysMeals.isEmpty && todaysSymptoms.isEmpty else { return }
-        // Temporary mock data — replace with Firebase/CoreData
-        loadMockData()
-    }
-    
-    private func loadMockData() {
+        
         // Load real data from repositories
         print("📱 Dashboard: Loading symptoms for date: \(selectedDate)")
         Task {
@@ -204,16 +214,23 @@ final class DashboardDataStore: ObservableObject {
                 let symptoms = try await SymptomRepository.shared.getSymptoms(for: selectedDate)
                 print("📊 Dashboard: Loaded \(symptoms.count) symptoms")
                 
-                // Load today's meals (we'll need to get this from the auth service)
-                let meals: [Meal] = []
-                // TODO: Get meals when we have access to user ID
-                // let meals = try await MealRepository.shared.fetchMealsForDate(selectedDate, userId: userId)
-                print("📊 Dashboard: Loaded \(meals.count) meals")
+                // Load today's meals using the current user ID
+                if let currentUser = await authService?.currentUser {
+                    let userMeals = try await MealRepository.shared.fetchMealsForDate(
+                        selectedDate,
+                        userId: currentUser.id
+                    )
+                    print("📊 Dashboard: Loaded \(userMeals.count) meals for user \(currentUser.id)")
+                    await MainActor.run { [weak self] in
+                        self?.todaysMeals = userMeals
+                    }
+                } else {
+                    print("⚠️ Dashboard: No authenticated user found, skipping meal loading")
+                }
                 
                 await MainActor.run { [weak self] in
                     guard let self = self else { return }
                     self.todaysSymptoms = symptoms
-                    self.todaysMeals = meals
                     print("📊 Dashboard: Updated UI with \(self.todaysSymptoms.count) symptoms and \(self.todaysMeals.count) meals")
                     
                     // Calculate health score based on actual data
@@ -234,6 +251,8 @@ final class DashboardDataStore: ObservableObject {
                     self.todaysMeals = []
                     self.triggerAlerts = []
                     self.insightMessage = nil
+                    self.todaysFocus = "Unable to load data. Please try again."
+                    self.avoidanceTip = "Check your connection and try refreshing."
                 }
             }
         }

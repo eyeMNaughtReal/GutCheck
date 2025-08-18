@@ -27,26 +27,7 @@ enum SheetDestination: Identifiable {
     }
 }
 
-// Detail sheet presentations
-struct SymptomDetailSheet: Identifiable {
-    let id: String
-    let symptomId: String
-    
-    init(symptomId: String) {
-        self.id = symptomId
-        self.symptomId = symptomId
-    }
-}
 
-struct MealDetailSheet: Identifiable {
-    let id: String
-    let mealId: String
-    
-    init(mealId: String) {
-        self.id = mealId
-        self.mealId = mealId
-    }
-}
 
 @MainActor
 class AppRouter: ObservableObject {
@@ -54,23 +35,29 @@ class AppRouter: ObservableObject {
     
     @Published var path = NavigationPath()
     @Published var activeSheet: SheetDestination?
-    @Published var symptomDetailSheet: SymptomDetailSheet?
-    @Published var mealDetailSheet: MealDetailSheet?
     @Published var selectedTab: Tab = .dashboard
+    @Published private var isNavigating = false
     
     // Navigation methods
     func navigateTo(_ destination: AppDestination) {
         print("🧭 AppRouter: Navigating to \(destination)")
         print("🧭 AppRouter: Current path before navigation: \(path)")
         
-        // Prevent duplicate navigation to the same destination
-        if !path.isEmpty {
-            // We can't easily check the last destination with NavigationPath, so we'll just proceed
-            // The duplicate prevention will be handled by SwiftUI's navigation system
+        // Prevent duplicate navigation while one is in progress
+        guard !isNavigating else {
+            print("🧭 AppRouter: Navigation already in progress, skipping \(destination)")
+            return
         }
+        
+        isNavigating = true
         
         path.append(destination)
         print("🧭 AppRouter: Path now contains \(path.count) destinations: \(path)")
+        
+        // Reset navigation flag after a short delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            self.isNavigating = false
+        }
     }
     
     func navigateBack() {
@@ -120,14 +107,14 @@ class AppRouter: ObservableObject {
     
     func viewMealDetails(id: String) {
         print("🧭 AppRouter: viewMealDetails called with ID: \(id)")
-        mealDetailSheet = MealDetailSheet(mealId: id)
-        print("🧭 AppRouter: mealDetailSheet set to: \(mealDetailSheet?.mealId ?? "nil")")
+        navigateTo(.mealDetail(id))
+        print("🧭 AppRouter: Navigating to meal detail: \(id)")
     }
     
     func viewSymptomDetails(id: String) {
         print("🧭 AppRouter: viewSymptomDetails called with ID: \(id)")
-        symptomDetailSheet = SymptomDetailSheet(symptomId: id)
-        print("🧭 AppRouter: symptomDetailSheet set to: \(symptomDetailSheet?.symptomId ?? "nil")")
+        navigateTo(.symptomDetail(id))
+        print("🧭 AppRouter: Navigating to symptom detail: \(id)")
     }
     
     func showProfile() {

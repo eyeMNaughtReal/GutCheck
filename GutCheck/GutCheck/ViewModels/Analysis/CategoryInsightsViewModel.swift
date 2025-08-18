@@ -7,97 +7,102 @@ class CategoryInsightsViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var error: String?
     
-    private let aiService = AIAnalysisService.shared
+    private let insightsService = InsightsService.shared
+    private let mealRepository = MealRepository.shared
+    private let symptomRepository = SymptomRepository.shared
+    private let authService = AuthService()
     
     func loadInsights(for category: InsightCategory) async {
         isLoading = true
         error = nil
         
-        // TODO: Replace with real data from AIAnalysisService
-        switch category {
-        case .foodTriggers:
-            activeInsights = [
-                HealthInsight(
-                    title: "Dairy Sensitivity",
-                    summary: "High correlation with digestive symptoms",
-                    detailedDescription: "Dairy products show a strong correlation with bloating and discomfort, particularly when consumed in larger quantities.",
-                    iconName: "exclamationmark.triangle.fill",
-                    confidenceLevel: 85,
-                    dateRange: "Last 30 Days",
-                    recommendations: [
-                        "Consider lactose-free alternatives",
-                        "Test different dairy products separately",
-                        "Monitor portion sizes"
-                    ]
-                )
-            ]
+        do {
+            // Get current user ID
+            let userId = getCurrentUserId()
             
-            historicalInsights = [
-                HealthInsight(
-                    title: "Gluten Sensitivity",
-                    summary: "Previous correlation found, now resolved",
-                    detailedDescription: "Historical data showed potential gluten sensitivity, but recent logs show improved tolerance.",
-                    iconName: "checkmark.circle.fill",
-                    confidenceLevel: 70,
-                    dateRange: "3 Months Ago",
-                    recommendations: [
-                        "Continue current approach",
-                        "Monitor any changes"
-                    ]
-                )
-            ]
+            // Calculate time range for last 30 days
+            let endDate = Date()
+            let startDate = Calendar.current.date(byAdding: .day, value: -30, to: endDate) ?? endDate
+            let timeRange = DateInterval(start: startDate, end: endDate)
             
-        case .patterns:
-            activeInsights = [
-                HealthInsight(
-                    title: "Morning Symptom Pattern",
-                    summary: "Symptoms more frequent in early hours",
-                    detailedDescription: "Analysis shows increased symptom frequency between 6-9 AM, often following large evening meals.",
-                    iconName: "sunrise.fill",
-                    confidenceLevel: 80,
-                    dateRange: "Last 14 Days",
-                    recommendations: [
-                        "Consider lighter evening meals",
-                        "Allow more time between dinner and sleep"
-                    ]
-                )
-            ]
+            // Fetch real data
+            let meals = try await mealRepository.fetchMealsForDateRange(
+                startDate: startDate,
+                endDate: endDate,
+                userId: userId
+            )
             
-        case .trends:
-            activeInsights = [
-                HealthInsight(
-                    title: "Improving Sleep Quality",
-                    summary: "Better sleep with meal timing changes",
-                    detailedDescription: "Sleep quality has improved since implementing earlier dinner times.",
-                    iconName: "bed.double.fill",
-                    confidenceLevel: 75,
-                    dateRange: "Last 30 Days",
-                    recommendations: [
-                        "Maintain current dinner schedule",
-                        "Continue monitoring sleep patterns"
-                    ]
-                )
-            ]
+            let symptoms = try await symptomRepository.fetchSymptomsForDateRange(
+                startDate: startDate,
+                endDate: endDate,
+                userId: userId
+            )
             
-        case .recommendations:
-            activeInsights = [
-                HealthInsight(
-                    title: "Dietary Modifications",
-                    summary: "Suggested changes based on patterns",
-                    detailedDescription: "Based on recent patterns, several dietary modifications could help reduce symptoms.",
-                    iconName: "list.bullet.clipboard.fill",
-                    confidenceLevel: 90,
-                    dateRange: "Current",
-                    recommendations: [
-                        "Increase fiber intake gradually",
-                        "Space meals more evenly",
-                        "Stay hydrated throughout the day"
-                    ]
-                )
-            ]
+            // Generate real insights using the service
+            await insightsService.generateInsights(
+                timeRange: timeRange,
+                meals: meals,
+                symptoms: symptoms,
+                healthData: nil
+            )
+            
+            // Get insights from the service
+            let allInsights = insightsService.recentInsights
+            
+            // Filter insights based on category
+            switch category {
+            case .foodTriggers:
+                activeInsights = allInsights.filter { insight in
+                    insight.title.lowercased().contains("trigger") ||
+                    insight.title.lowercased().contains("food") ||
+                    insight.title.lowercased().contains("sensitivity") ||
+                    insight.title.lowercased().contains("allergy")
+                }
+                
+            case .patterns:
+                activeInsights = allInsights.filter { insight in
+                    insight.title.lowercased().contains("pattern") ||
+                    insight.title.lowercased().contains("timing") ||
+                    insight.title.lowercased().contains("correlation")
+                }
+                
+            case .trends:
+                activeInsights = allInsights.filter { insight in
+                    insight.title.lowercased().contains("trend") ||
+                    insight.title.lowercased().contains("improvement") ||
+                    insight.title.lowercased().contains("change")
+                }
+                
+            case .recommendations:
+                activeInsights = allInsights.filter { insight in
+                    insight.title.lowercased().contains("recommendation") ||
+                    insight.title.lowercased().contains("suggestion") ||
+                    insight.title.lowercased().contains("advice")
+                }
+            }
+            
+            // For now, historical insights will be empty until we implement historical data
+            // In the future, this could show insights from previous time periods
+            historicalInsights = []
+            
+        } catch {
+            self.error = error.localizedDescription
+            print("❌ Error loading category insights: \(error)")
         }
         
         isLoading = false
+    }
+    
+    private func getCurrentUserId() -> String {
+        // Get the current user ID from the authentication service
+        if let currentUser = authService.currentUser {
+            return currentUser.id
+        } else {
+            // Fallback to a default if no user is authenticated
+            // This should rarely happen in a properly authenticated app
+            print("⚠️ CategoryInsightsViewModel: No authenticated user found, using default user ID")
+            return "default_user"
+        }
     }
 }
 

@@ -1,0 +1,426 @@
+import Foundation
+import Combine
+
+/// Optimized insights service with performance monitoring and optimization
+/// Features include:
+/// - Performance profiling for all operations
+/// - Intelligent caching and data management
+/// - Background processing with progress updates
+/// - Memory-efficient data handling
+@MainActor
+class OptimizedInsightsService: ObservableObject {
+    static let shared = OptimizedInsightsService()
+    
+    @Published var recentInsights: [HealthInsight] = []
+    @Published var isLoading = false
+    @Published var error: String?
+    @Published var progress: Double = 0.0
+    @Published var lastAnalysisTime: Date?
+    @Published var analysisDuration: TimeInterval = 0.0
+    
+    private let performanceProfiler = PerformanceProfiler.shared
+    private let patternService = PatternRecognitionService.shared
+    private let mealRepository = MealRepository.shared
+    private let symptomRepository = SymptomRepository.shared
+    private let healthKitManager = HealthKitManager.shared
+    
+    private var cancellables = Set<AnyCancellable>()
+    private var analysisCache: [String: CachedInsight] = [:]
+    private let cacheExpirationInterval: TimeInterval = 1800 // 30 minutes
+    private let maxCacheSize = 20
+    
+    private init() {
+        setupPerformanceMonitoring()
+    }
+    
+    // MARK: - Main Methods
+    
+    func generateInsightsOptimized(
+        timeRange: DateInterval,
+        progressHandler: ((Double) -> Void)? = nil
+    ) async {
+        isLoading = true
+        error = nil
+        progress = 0.0
+        
+        let startTime = Date()
+        
+        do {
+            // Check cache first
+            let cacheKey = generateCacheKey(for: timeRange)
+            if let cached = getCachedInsights(for: cacheKey) {
+                recentInsights = cached.insights
+                lastAnalysisTime = cached.timestamp
+                analysisDuration = 0.0
+                isLoading = false
+                return
+            }
+            
+            // Profile the entire operation
+            let insights = try await performanceProfiler.profileOperation("Insights Generation") {
+                try await generateInsightsFromData(
+                    timeRange: timeRange,
+                    progressHandler: progressHandler
+                )
+            }
+            
+            // Update published properties
+            recentInsights = insights
+            lastAnalysisTime = Date()
+            analysisDuration = Date().timeIntervalSince(startTime)
+            error = nil
+            
+            // Cache the results
+            cacheInsights(insights: insights, for: cacheKey)
+            
+        } catch {
+            self.error = error.localizedDescription
+            print("❌ Error generating insights: \(error)")
+        }
+        
+        isLoading = false
+        progress = 1.0
+    }
+    
+    func generateRecentInsightsOptimized() async {
+        let endDate = Date()
+        let startDate = Calendar.current.date(byAdding: .day, value: -30, to: endDate) ?? endDate
+        let timeRange = DateInterval(start: startDate, end: endDate)
+        
+        await generateInsightsOptimized(timeRange: timeRange)
+    }
+    
+    func generateInsightsForDateOptimized(_ date: Date) async {
+        let startDate = Calendar.current.startOfDay(for: date)
+        let endDate = Calendar.current.date(byAdding: .day, value: 1, to: startDate) ?? startDate
+        let timeRange = DateInterval(start: startDate, end: endDate)
+        
+        await generateInsightsOptimized(timeRange: timeRange)
+    }
+    
+    func clearCache() {
+        analysisCache.removeAll()
+        print("🧹 Insights cache cleared")
+    }
+    
+    func getCacheStats() -> CacheStats {
+        let totalInsights = analysisCache.values.reduce(0) { $0 + $1.insights.count }
+        let oldestTimestamp = analysisCache.values.map { $0.timestamp }.min() ?? Date()
+        let cacheAge = Date().timeIntervalSince(oldestTimestamp)
+        
+        return CacheStats(
+            cacheSize: analysisCache.count,
+            totalInsights: totalInsights,
+            oldestEntry: cacheAge,
+            maxSize: maxCacheSize
+        )
+    }
+    
+    // MARK: - Private Methods
+    
+    private func setupPerformanceMonitoring() {
+        // Monitor performance profiler for critical conditions
+        NotificationCenter.default.publisher(for: .performanceCriticalCondition)
+            .sink { [weak self] notification in
+                if let snapshot = notification.object as? PerformanceProfiler.PerformanceSnapshot {
+                    self?.handleCriticalCondition(snapshot)
+                }
+            }
+            .store(in: &cancellables)
+        
+        // Monitor memory warnings
+        NotificationCenter.default.publisher(for: .performanceMemoryWarning)
+            .sink { [weak self] _ in
+                self?.handleMemoryWarning()
+            }
+            .store(in: &cancellables)
+    }
+    
+    private func generateInsightsFromData(
+        timeRange: DateInterval,
+        progressHandler: ((Double) -> Void)?
+    ) async throws -> [HealthInsight] {
+        
+        // Step 1: Fetch data in parallel (20% of progress)
+        async let mealsTask = fetchMealsOptimized(for: timeRange)
+        async let symptomsTask = fetchSymptomsOptimized(for: timeRange)
+        async let healthDataTask = fetchHealthDataOptimized(for: timeRange)
+        
+        let meals = try await mealsTask
+        let symptoms = try await symptomsTask
+        let healthData = await healthDataTask
+        
+        await updateProgress(0.2, handler: progressHandler)
+        
+        // Step 2: Generate patterns using optimized service (60% of progress)
+        let patternResult = try await patternService.analyzePatterns(
+            meals: meals,
+            symptoms: symptoms,
+            healthData: healthData,
+            timeRange: timeRange
+        )
+        
+        await updateProgress(0.8, handler: progressHandler)
+        
+        // Step 3: Convert patterns to insights (20% of progress)
+        let insights = try await convertPatternsToInsightsOptimized(patternResult)
+        
+        await updateProgress(1.0, handler: progressHandler)
+        
+        return insights
+    }
+    
+    private func fetchMealsOptimized(for timeRange: DateInterval) async throws -> [Meal] {
+        return try await performanceProfiler.profileOperation("Fetch Meals") {
+            let userId = getCurrentUserId()
+            return try await mealRepository.fetchMealsForDateRange(
+                startDate: timeRange.start,
+                endDate: timeRange.end,
+                userId: userId
+            )
+        }
+    }
+    
+    private func fetchSymptomsOptimized(for timeRange: DateInterval) async throws -> [Symptom] {
+        return try await performanceProfiler.profileOperation("Fetch Symptoms") {
+            let userId = getCurrentUserId()
+            return try await symptomRepository.fetchSymptomsForDateRange(
+                startDate: timeRange.start,
+                endDate: timeRange.end,
+                userId: userId
+            )
+        }
+    }
+    
+    private func fetchHealthDataOptimized(for timeRange: DateInterval) async -> GutHealthData? {
+        do {
+            return try await performanceProfiler.profileOperation("Fetch Health Data") {
+                return await withCheckedContinuation { continuation in
+                    healthKitManager.fetchGutHealthData(
+                        from: timeRange.start,
+                        to: timeRange.end
+                    ) { healthData in
+                        continuation.resume(returning: healthData)
+                    }
+                }
+            }
+        } catch {
+            print("❌ Error fetching health data: \(error)")
+            return nil
+        }
+    }
+    
+    private func convertPatternsToInsightsOptimized(_ patternResult: PatternAnalysisResult) async throws -> [HealthInsight] {
+        return try await performanceProfiler.profileOperation("Convert Patterns to Insights") {
+            var insights: [HealthInsight] = []
+            
+            // Convert food triggers
+            for trigger in patternResult.foodTriggers.prefix(10) {
+                let insight = HealthInsight(
+                    title: "Food Trigger: \(trigger.foodName)",
+                    summary: generateFoodTriggerDescriptionOptimized(trigger),
+                    detailedDescription: "Confidence: \(Int(trigger.confidence * 100))%",
+                    iconName: "exclamationmark.triangle.fill",
+                    confidenceLevel: Int(trigger.confidence * 100),
+                    dateRange: "Last 30 Days",
+                    recommendations: trigger.recommendations
+                )
+                insights.append(insight)
+            }
+            
+            // Convert temporal patterns
+            for pattern in patternResult.temporalPatterns.prefix(8) {
+                let insight = HealthInsight(
+                    title: "Temporal Pattern: \(pattern.type)",
+                    summary: generateTemporalPatternDescriptionOptimized(pattern),
+                    detailedDescription: "Confidence: \(Int(pattern.confidence * 100))%",
+                    iconName: "clock.fill",
+                    confidenceLevel: Int(pattern.confidence * 100),
+                    dateRange: "Last 30 Days",
+                    recommendations: ["Monitor timing patterns", "Consider schedule adjustments"]
+                )
+                insights.append(insight)
+            }
+            
+            // Convert lifestyle correlations
+            for correlation in patternResult.lifestyleCorrelations.prefix(6) {
+                let insight = HealthInsight(
+                    title: "Lifestyle Impact: \(correlation.factor)",
+                    summary: generateLifestyleCorrelationDescriptionOptimized(correlation),
+                    detailedDescription: "Correlation: \(Int(correlation.confidence * 100))%",
+                    iconName: getLifestyleIcon(for: correlation.factor),
+                    confidenceLevel: Int(correlation.confidence * 100),
+                    dateRange: "Last 30 Days",
+                    recommendations: correlation.recommendations
+                )
+                insights.append(insight)
+            }
+            
+            // Convert nutrition trends
+            for trend in patternResult.nutritionTrends.prefix(4) {
+                let insight = HealthInsight(
+                    title: "Nutrition Trend: \(trend.type)",
+                    summary: generateNutritionTrendDescriptionOptimized(trend),
+                    detailedDescription: "Current: \(String(format: "%.1f", trend.currentValue)), Target: \(String(format: "%.1f", trend.targetValue))",
+                    iconName: "chart.bar.fill",
+                    confidenceLevel: Int(trend.confidence * 100),
+                    dateRange: "Last 30 Days",
+                    recommendations: trend.recommendations
+                )
+                insights.append(insight)
+            }
+            
+            // Limit total insights for performance
+            return Array(insights.prefix(20))
+        }
+    }
+    
+    // MARK: - Description Generators
+    
+    private func generateFoodTriggerDescriptionOptimized(_ trigger: FoodTriggerInsight) -> String {
+        let confidence = Int(trigger.confidence * 100)
+        let symptomCount = trigger.symptomCount
+        let timeWindow = trigger.timeWindow
+        
+        return "\(trigger.foodName) shows \(confidence)% correlation with symptoms (\(symptomCount) occurrences within \(timeWindow))"
+    }
+    
+    private func generateTemporalPatternDescriptionOptimized(_ pattern: TemporalPatternInsight) -> String {
+        let confidence = Int(pattern.confidence * 100)
+        let symptomCount = pattern.evidence.count
+        
+        return "\(pattern.type) pattern detected with \(confidence)% confidence (\(symptomCount) symptoms)"
+    }
+    
+    private func generateLifestyleCorrelationDescriptionOptimized(_ correlation: LifestyleCorrelationInsight) -> String {
+        let correlationPercent = Int(correlation.confidence * 100)
+        let confidence = Int(correlation.confidence * 100)
+        
+        return "\(correlation.factor) shows \(correlationPercent)% correlation with symptoms (confidence: \(confidence)%)"
+    }
+    
+    private func generateNutritionTrendDescriptionOptimized(_ trend: NutritionTrendInsight) -> String {
+        let current = String(format: "%.1f", trend.currentValue)
+        let target = String(format: "%.1f", trend.targetValue)
+        let trendDirection = trend.currentValue > trend.targetValue ? "above" : "below"
+        
+        return "\(trend.type) intake is \(trendDirection) target levels (current: \(current), target: \(target))"
+    }
+    
+    private func getLifestyleIcon(for factor: String) -> String {
+        switch factor.lowercased() {
+        case let f where f.contains("exercise") || f.contains("activity"):
+            return "figure.walk"
+        case let f where f.contains("sleep"):
+            return "bed.double.fill"
+        case let f where f.contains("stress"):
+            return "brain.head.profile"
+        default:
+            return "heart.fill"
+        }
+    }
+    
+    private func formatDateRange(_ timeRange: DateInterval) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return "\(formatter.string(from: timeRange.start)) - \(formatter.string(from: timeRange.end))"
+    }
+    
+    // MARK: - Caching
+    
+    private func generateCacheKey(for timeRange: DateInterval) -> String {
+        let startDate = Int(timeRange.start.timeIntervalSince1970)
+        let endDate = Int(timeRange.end.timeIntervalSince1970)
+        return "insights_\(startDate)_\(endDate)"
+    }
+    
+    private func getCachedInsights(for key: String) -> CachedInsight? {
+        guard let cached = analysisCache[key] else { return nil }
+        
+        // Check expiration
+        if Date().timeIntervalSince(cached.timestamp) > cacheExpirationInterval {
+            analysisCache.removeValue(forKey: key)
+            return nil
+        }
+        
+        return cached
+    }
+    
+    private func cacheInsights(insights: [HealthInsight], for key: String) {
+        // Implement LRU cache
+        if analysisCache.count >= maxCacheSize {
+            let oldestKey = analysisCache.keys.first
+            if let key = oldestKey {
+                analysisCache.removeValue(forKey: key)
+            }
+        }
+        
+        let cached = CachedInsight(
+            insights: insights,
+            timestamp: Date()
+        )
+        
+        analysisCache[key] = cached
+    }
+    
+    // MARK: - Performance Management
+    
+    private func getCurrentUserId() -> String {
+        // This should be implemented based on your authentication system
+        // For now, return a default value - you'll need to update this
+        return "default_user"
+    }
+    
+    private func updateProgress(_ value: Double, handler: ((Double) -> Void)?) async {
+        await MainActor.run {
+            self.progress = value
+            handler?(value)
+        }
+    }
+    
+    private func handleMemoryWarning() {
+        print("⚠️ Memory warning received - clearing insights cache")
+        clearCache()
+    }
+    
+    private func handleCriticalCondition(_ snapshot: PerformanceProfiler.PerformanceSnapshot) {
+        print("🚨 Critical performance condition detected - clearing cache and reducing workload")
+        clearCache()
+        
+        // Reduce the number of insights generated
+        if recentInsights.count > 10 {
+            recentInsights = Array(recentInsights.prefix(10))
+        }
+    }
+}
+
+// MARK: - Supporting Types
+
+struct CachedInsight {
+    let insights: [HealthInsight]
+    let timestamp: Date
+}
+
+struct CacheStats {
+    let cacheSize: Int
+    let totalInsights: Int
+    let oldestEntry: TimeInterval
+    let maxSize: Int
+}
+
+enum InsightsError: LocalizedError {
+    case dataFetchFailed
+    case patternAnalysisFailed
+    case conversionFailed
+    
+    var errorDescription: String? {
+        switch self {
+        case .dataFetchFailed:
+            return "Failed to fetch data for insights generation"
+        case .patternAnalysisFailed:
+            return "Failed to analyze patterns in the data"
+        case .conversionFailed:
+            return "Failed to convert patterns to insights"
+        }
+    }
+}
