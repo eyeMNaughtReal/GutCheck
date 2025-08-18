@@ -9,7 +9,7 @@ protocol AuthenticationProtocol: ObservableObject {
     var currentUser: User? { get }
     
     func signIn(email: String, password: String) async throws
-    func signUp(email: String, password: String, firstName: String, lastName: String) async throws
+    func signUp(email: String, password: String, firstName: String, lastName: String, privacyPolicyAccepted: Bool) async throws
     func sendPasswordReset(email: String) async throws
     func verifyPhoneNumber(_ phoneNumber: String) async throws
     func signInWithPhone(verificationCode: String) async throws

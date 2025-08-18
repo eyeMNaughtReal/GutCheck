@@ -1,0 +1,323 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================================================
+    // GLOBAL RULES & HELPER FUNCTIONS
+    // ============================================================================
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user is accessing their own data
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Helper function to check if user is accessing data they created
+    function isCreator(createdBy) {
+      return isAuthenticated() && request.auth.uid == createdBy;
+    }
+    
+    // Helper function to check if data is public (non-sensitive)
+    function isPublicData(data) {
+      return data.privacyLevel == 'public' || !('privacyLevel' in data);
+    }
+    
+    // Helper function to check if user has accepted privacy policy
+    function hasAcceptedPrivacyPolicy(data) {
+      return data.privacyPolicyAccepted == true && 
+             ('privacyPolicyVersion' in data) &&
+             data.privacyPolicyVersion != null;
+    }
+    
+    // Helper function to validate required fields
+    function hasRequiredFields(data, requiredFields) {
+      return requiredFields.hasAll(data.keys());
+    }
+    
+    // ============================================================================
+    // USER PROFILES & AUTHENTICATION
+    // ============================================================================
+    
+    match /users/{userId} {
+      // Users can only read/write their own profile
+      allow read, write: if isOwner(userId);
+      
+      // Validate user profile data structure including privacy policy
+      allow create: if isOwner(userId) && 
+        hasRequiredFields(resource.data, ['email', 'firstName', 'lastName', 'signInMethod', 'createdAt', 'updatedAt', 'privacyPolicyAccepted', 'privacyPolicyVersion']) &&
+        hasAcceptedPrivacyPolicy(resource.data);
+      
+      allow update: if isOwner(userId) && 
+        hasRequiredFields(resource.data, ['email', 'firstName', 'lastName', 'signInMethod', 'createdAt', 'updatedAt', 'privacyPolicyAccepted', 'privacyPolicyVersion']) &&
+        hasAcceptedPrivacyPolicy(resource.data);
+    }
+    
+    // ============================================================================
+    // MEAL DATA SECURITY
+    // ============================================================================
+    
+    match /meals/{mealId} {
+      // Users can read their own meals
+      allow read: if isCreator(resource.data.createdBy);
+      
+      // Users can read public meals (for insights and patterns)
+      allow read: if isAuthenticated() && isPublicData(resource.data);
+      
+      // Users can create meals (must include createdBy field)
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.createdBy &&
+        hasRequiredFields(request.resource.data, ['name', 'date', 'type', 'source', 'foodItems', 'createdBy']);
+      
+      // Users can update their own meals
+      allow update: if isCreator(resource.data.createdBy) &&
+        request.auth.uid == request.resource.data.createdBy;
+      
+      // Users can delete their own meals
+      allow delete: if isCreator(resource.data.createdBy);
+      
+      // Prevent users from modifying createdBy field
+      allow update: if isCreator(resource.data.createdBy) &&
+        request.auth.uid == request.resource.data.createdBy &&
+        request.resource.data.createdBy == resource.data.createdBy;
+    }
+    
+    // ============================================================================
+    // SYMPTOM DATA SECURITY
+    // ============================================================================
+    
+    match /symptoms/{symptomId} {
+      // Users can read their own symptoms
+      allow read: if isCreator(resource.data.createdBy);
+      
+      // Users can read public symptoms (for insights and patterns)
+      allow read: if isAuthenticated() && isPublicData(resource.data);
+      
+      // Users can create symptoms (must include createdBy field)
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.createdBy &&
+        hasRequiredFields(request.resource.data, ['date', 'stoolType', 'painLevel', 'urgencyLevel', 'createdBy']);
+      
+      // Users can update their own symptoms
+      allow update: if isCreator(resource.data.createdBy) &&
+        request.auth.uid == request.resource.data.createdBy;
+      
+      // Users can delete their own symptoms
+      allow delete: if isCreator(resource.data.createdBy);
+      
+      // Prevent users from modifying createdBy field
+      allow update: if isCreator(resource.data.createdBy) &&
+        request.auth.uid == request.resource.data.createdBy &&
+        request.resource.data.createdBy == resource.data.createdBy;
+    }
+    
+    // ============================================================================
+    // MEAL TEMPLATES SECURITY
+    // ============================================================================
+    
+    match /mealTemplates/{templateId} {
+      // Users can read their own templates
+      allow read: if isCreator(resource.data.createdBy);
+      
+      // Users can read public templates (for community sharing)
+      allow read: if isAuthenticated() && isPublicData(resource.data);
+      
+      // Users can create templates (must include createdBy field)
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.createdBy &&
+        hasRequiredFields(request.resource.data, ['name', 'foodItems', 'createdBy']);
+      
+      // Users can update their own templates
+      allow update: if isCreator(resource.data.createdBy) &&
+        request.auth.uid == request.resource.data.createdBy;
+      
+      // Users can delete their own templates
+      allow delete: if isCreator(resource.data.createdBy);
+    }
+    
+    // ============================================================================
+    // INSIGHTS & PATTERNS SECURITY
+    // ============================================================================
+    
+    match /insights/{insightId} {
+      // Users can read their own insights
+      allow read: if isCreator(resource.data.createdBy);
+      
+      // Users can read public insights (for community learning)
+      allow read: if isAuthenticated() && isPublicData(resource.data);
+      
+      // Users can create insights (must include createdBy field)
+      allow create: if isAuthenticated() && 
+        request.auth.uid == request.resource.data.createdBy &&
+        hasRequiredFields(request.resource.data, ['type', 'title', 'description', 'createdBy']);
+      
+      // Users can update their own insights
+      allow update: if isCreator(resource.data.createdBy) &&
+        request.auth.uid == request.resource.data.createdBy;
+      
+      // Users can delete their own insights
+      allow delete: if isCreator(resource.data.createdBy);
+    }
+    
+    // ============================================================================
+    // REMINDER SETTINGS SECURITY
+    // ============================================================================
+    
+    match /reminderSettings/{userId} {
+      // Users can only access their own reminder settings
+      allow read, write: if isOwner(userId);
+      
+      // Validate reminder settings data structure
+      allow create: if isOwner(userId) && 
+        hasRequiredFields(request.resource.data, ['userId', 'enabled', 'createdAt']);
+      
+      allow update: if isOwner(userId) && 
+        hasRequiredFields(request.resource.data, ['userId', 'enabled', 'updatedAt']);
+    }
+    
+    // ============================================================================
+    // USER PREFERENCES & SETTINGS SECURITY
+    // ============================================================================
+    
+    match /userPreferences/{userId} {
+      // Users can only access their own preferences
+      allow read, write: if isOwner(userId);
+      
+      // Validate preferences data structure
+      allow create: if isOwner(userId) && 
+        hasRequiredFields(request.resource.data, ['userId', 'createdAt']);
+      
+      allow update: if isOwner(userId) && 
+        hasRequiredFields(request.resource.data, ['userId', 'updatedAt']);
+    }
+    
+    // ============================================================================
+    // ANALYTICS & USAGE DATA SECURITY
+    // ============================================================================
+    
+    match /analytics/{userId} {
+      // Users can only access their own analytics
+      allow read, write: if isOwner(userId);
+      
+      // Validate analytics data structure
+      allow create: if isOwner(userId) && 
+        hasRequiredFields(request.resource.data, ['userId', 'createdAt']);
+      
+      allow update: if isOwner(userId) && 
+        hasRequiredFields(request.resource.data, ['userId', 'updatedAt']);
+    }
+    
+    // ============================================================================
+    // PUBLIC DATA COLLECTIONS (READ-ONLY FOR ALL AUTHENTICATED USERS)
+    // ============================================================================
+    
+    // Public food database (read-only for all authenticated users)
+    match /publicFoods/{foodId} {
+      allow read: if isAuthenticated();
+      // Only admins can write to public food database
+      allow write: if false; // TODO: Add admin role check when implemented
+    }
+    
+    // Public nutrition database (read-only for all authenticated users)
+    match /publicNutrition/{nutritionId} {
+      allow read: if isAuthenticated();
+      // Only admins can write to public nutrition database
+      allow write: if false; // TODO: Add admin role check when implemented
+    }
+    
+    // ============================================================================
+    // ADMIN-ONLY COLLECTIONS
+    // ============================================================================
+    
+    // System configuration (admin only)
+    match /systemConfig/{configId} {
+      allow read, write: if false; // TODO: Add admin role check when implemented
+    }
+    
+    // App analytics (admin only)
+    match /appAnalytics/{analyticsId} {
+      allow read, write: if false; // TODO: Add admin role check when implemented
+    }
+    
+    // ============================================================================
+    // SUBCOLLECTIONS SECURITY
+    // ============================================================================
+    
+    // Food items within meals
+    match /meals/{mealId}/foodItems/{foodItemId} {
+      // Users can access food items within their own meals
+      allow read, write: if isAuthenticated() && 
+        exists(/databases/$(database)/documents/meals/$(mealId)) &&
+        isCreator(get(/databases/$(database)/documents/meals/$(mealId)).data.createdBy);
+    }
+    
+    // Meal history within users
+    match /users/{userId}/mealHistory/{mealId} {
+      // Users can only access their own meal history
+      allow read, write: if isOwner(userId);
+    }
+    
+    // Symptom history within users
+    match /users/{userId}/symptomHistory/{symptomId} {
+      // Users can only access their own symptom history
+      allow read, write: if isOwner(userId);
+    }
+    
+    // ============================================================================
+    // DATA DELETION REQUESTS SECURITY
+    // ============================================================================
+    
+    match /dataDeletionRequests/{requestId} {
+      // Users can read their own deletion requests
+      allow read: if isAuthenticated() && 
+        (resource.data.userId == request.auth.uid || 
+         isAdmin(request.auth.uid));
+      
+      // Users can create deletion requests for themselves
+      allow create: if isAuthenticated() &&
+        request.auth.uid == request.resource.data.userId &&
+        hasRequiredFields(request.resource.data, ['userId', 'userEmail', 'userName', 'requestDate', 'status']) &&
+        request.resource.data.status == 'pending';
+      
+      // Only admins can update deletion request status
+      allow update: if isAuthenticated() && isAdmin(request.auth.uid) &&
+        hasRequiredFields(request.resource.data, ['userId', 'userEmail', 'userName', 'requestDate', 'status']);
+      
+      // Only admins can delete deletion requests
+      allow delete: if isAuthenticated() && isAdmin(request.auth.uid);
+    }
+    
+    // ============================================================================
+    // ADMIN HELPER FUNCTIONS
+    // ============================================================================
+    
+    // Helper function to check if user is admin
+    function isAdmin(userId) {
+      // This would typically check against a users collection with admin role
+      // For now, we'll use a simple check - you can enhance this based on your admin system
+      return userId == 'admin' || userId == 'markconley'; // Replace with actual admin IDs
+    }
+    
+    // ============================================================================
+    // RATE LIMITING & ABUSE PREVENTION
+    // ============================================================================
+    
+    // Prevent excessive writes to the same document
+    match /{document=**} {
+      allow write: if request.time > resource.data.lastWriteTime + duration.value(1, 's');
+    }
+    
+    // ============================================================================
+    // DEFAULT DENY RULE
+    // ============================================================================
+    
+    // Deny all other access by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

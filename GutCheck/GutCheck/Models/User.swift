@@ -21,6 +21,11 @@ struct User: Codable, Identifiable, Hashable, Equatable {
     // Profile image
     var profileImageURL: String?
     
+    // Privacy Policy Tracking
+    var privacyPolicyAccepted: Bool
+    var privacyPolicyAcceptedDate: Date?
+    var privacyPolicyVersion: String
+    
     // Health data (optional) - using raw values for Codable compliance
     var dateOfBirth: Date?
     var biologicalSexRawValue: Int? // Store HKBiologicalSex as raw value
@@ -108,7 +113,7 @@ struct User: Codable, Identifiable, Hashable, Equatable {
     // MARK: - Initializers
     
     // Firebase timestamp conversion initializer
-    init(id: String, email: String, firstName: String, lastName: String, signInMethod: SignInMethod, createdAt: Timestamp, updatedAt: Timestamp) {
+    init(id: String, email: String, firstName: String, lastName: String, signInMethod: SignInMethod, createdAt: Timestamp, updatedAt: Timestamp, privacyPolicyAccepted: Bool = false, privacyPolicyAcceptedDate: Date? = nil, privacyPolicyVersion: String = "1.0") {
         self.id = id
         self.email = email
         self.firstName = firstName
@@ -116,10 +121,13 @@ struct User: Codable, Identifiable, Hashable, Equatable {
         self.signInMethod = signInMethod
         self.createdAt = createdAt.dateValue()
         self.updatedAt = updatedAt.dateValue()
+        self.privacyPolicyAccepted = privacyPolicyAccepted
+        self.privacyPolicyAcceptedDate = privacyPolicyAcceptedDate
+        self.privacyPolicyVersion = privacyPolicyVersion
     }
     
     // Standard initializer
-    init(id: String, email: String, firstName: String, lastName: String, signInMethod: SignInMethod = .email, createdAt: Date = Date(), updatedAt: Date = Date()) {
+    init(id: String, email: String, firstName: String, lastName: String, signInMethod: SignInMethod = .email, createdAt: Date = Date(), updatedAt: Date = Date(), privacyPolicyAccepted: Bool = false, privacyPolicyAcceptedDate: Date? = nil, privacyPolicyVersion: String = "1.0") {
         self.id = id
         self.email = email
         self.firstName = firstName
@@ -127,6 +135,9 @@ struct User: Codable, Identifiable, Hashable, Equatable {
         self.signInMethod = signInMethod
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.privacyPolicyAccepted = privacyPolicyAccepted
+        self.privacyPolicyAcceptedDate = privacyPolicyAcceptedDate
+        self.privacyPolicyVersion = privacyPolicyVersion
     }
     
     // MARK: - Firestore Conversion
@@ -138,8 +149,15 @@ struct User: Codable, Identifiable, Hashable, Equatable {
             "firstName": firstName,
             "lastName": lastName,
             "signInMethod": signInMethod.rawValue,
+            "privacyPolicyAccepted": privacyPolicyAccepted,
+            "privacyPolicyVersion": privacyPolicyVersion,
             "updatedAt": FieldValue.serverTimestamp()
         ]
+        
+        // Add privacy policy acceptance date if available
+        if let privacyPolicyAcceptedDate = privacyPolicyAcceptedDate {
+            data["privacyPolicyAcceptedDate"] = Timestamp(date: privacyPolicyAcceptedDate)
+        }
         
         // Add optional health data
         if let dateOfBirth = dateOfBirth {

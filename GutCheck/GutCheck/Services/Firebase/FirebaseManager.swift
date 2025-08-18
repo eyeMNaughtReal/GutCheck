@@ -20,6 +20,7 @@ class FirebaseManager {
         static let reminderSettings = "reminderSettings"
         static let test = "test"
         static let foodItems = "foodItems"
+        static let dataDeletionRequests = "dataDeletionRequests"
     }
     
     // MARK: - Storage Paths
@@ -99,6 +100,19 @@ class FirebaseManager {
     // Food Items Subcollection
     func mealFoodItemsCollection(_ userId: String, mealId: String) -> CollectionReference {
         return userMealDocument(userId, mealId: mealId).collection(CollectionName.foodItems)
+    }
+    
+    // Data Deletion Requests Collection
+    func dataDeletionRequestsCollection() -> CollectionReference {
+        return db.collection(CollectionName.dataDeletionRequests)
+    }
+    
+    func dataDeletionRequestDocument(_ requestId: String) -> DocumentReference {
+        return dataDeletionRequestsCollection().document(requestId)
+    }
+    
+    func userDataDeletionRequestsQuery(_ userId: String) -> Query {
+        return dataDeletionRequestsCollection().whereField("userId", isEqualTo: userId)
     }
     
     // Storage Path Helpers

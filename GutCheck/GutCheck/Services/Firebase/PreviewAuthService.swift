@@ -23,7 +23,7 @@ class PreviewAuthService: AuthenticationProtocol {
         // Preview implementation - no-op
     }
     
-    func signUp(email: String, password: String, firstName: String, lastName: String) async throws {
+    func signUp(email: String, password: String, firstName: String, lastName: String, privacyPolicyAccepted: Bool) async throws {
         // Preview implementation - no-op
     }
     

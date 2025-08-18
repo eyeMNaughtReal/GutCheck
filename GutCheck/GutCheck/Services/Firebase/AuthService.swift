@@ -68,7 +68,7 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
         }
     }
     
-    func signUp(email: String, password: String, firstName: String, lastName: String) async throws {
+    func signUp(email: String, password: String, firstName: String, lastName: String, privacyPolicyAccepted: Bool = true) async throws {
         isLoading = true
         errorMessage = nil
         
@@ -85,7 +85,8 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
                 email: email,
                 firstName: firstName,
                 lastName: lastName,
-                signInMethod: .email
+                signInMethod: .email,
+                privacyPolicyAccepted: privacyPolicyAccepted
             )
             currentUser = newUser
             
@@ -169,40 +170,10 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
         }
     }
     
-    func register(email: String, password: String, firstName: String, lastName: String) async throws {
-        isLoading = true
-        errorMessage = nil
-        
-        defer { isLoading = false }
-        
-        do {
-            let result = try await auth.createUser(withEmail: email, password: password)
-            
-            let newUser = User(
-                id: result.user.uid,
-                email: email,
-                firstName: firstName,
-                lastName: lastName,
-                createdAt: Date()
-            )
-            
-            try await FirebaseManager.shared.userDocument(result.user.uid).setData([
-                "email": email,
-                "firstName": firstName,
-                "lastName": lastName,
-                "createdAt": Timestamp(date: Date())
-            ])
-            
-            authUser = result.user
-            currentUser = newUser
-            isAuthenticated = true
-        } catch {
-            errorMessage = error.localizedDescription
-            throw error
-        }
-    }
+    // MARK: - Re-authentication Methods
     
-    func deleteAccount() async throws {
+    /// Re-authenticates the current user with the provided credential
+    func reauthenticateUser(with credential: AuthCredential) async throws {
         guard let currentFirebaseUser = authUser else {
             throw AuthError.noUser
         }
@@ -213,19 +184,89 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
         defer { isLoading = false }
         
         do {
-            // Delete user data from Firestore first
+            try await currentFirebaseUser.reauthenticate(with: credential)
+            print("🔐 AuthService: User re-authenticated successfully")
+        } catch {
+            errorMessage = handleAuthError(error)
+            throw error
+        }
+    }
+    
+    /// Re-authenticates user with email and password
+    func reauthenticateWithEmail(email: String, password: String) async throws {
+        let credential = EmailAuthProvider.credential(withEmail: email, password: password)
+        try await reauthenticateUser(with: credential)
+    }
+    
+    /// Re-authenticates user with phone verification
+    func reauthenticateWithPhone(phoneNumber: String, verificationCode: String) async throws {
+        guard let verificationId = verificationId else {
+            throw AuthError.noVerificationID
+        }
+        
+        let credential = PhoneAuthProvider.provider().credential(
+            withVerificationID: verificationId,
+            verificationCode: verificationCode
+        )
+        try await reauthenticateUser(with: credential)
+    }
+    
+    // MARK: - Enhanced Account Deletion
+    
+    /// Deletes the user account after re-authentication
+    func deleteAccount(credential: AuthCredential) async throws {
+        guard let currentFirebaseUser = authUser else {
+            throw AuthError.noUser
+        }
+        
+        isLoading = true
+        errorMessage = nil
+        
+        defer { isLoading = false }
+        
+        do {
+            // Step 1: Re-authenticate before deletion
+            print("🔐 AuthService: Re-authenticating user before account deletion")
+            try await currentFirebaseUser.reauthenticate(with: credential)
+            
+            // Step 2: Delete user data from Firestore
+            print("🗑️ AuthService: Deleting user data from Firestore")
             try await deleteUserData(userId: currentFirebaseUser.uid)
             
-            // Delete the auth account
+            // Step 3: Delete the Firebase Auth account
+            print("🗑️ AuthService: Deleting Firebase Auth account")
             try await currentFirebaseUser.delete()
             
+            // Step 4: Clear local state
             authUser = nil
             currentUser = nil
             isAuthenticated = false
+            
+            print("✅ AuthService: Account deleted successfully")
         } catch {
             errorMessage = error.localizedDescription
+            print("❌ AuthService: Failed to delete account: \(error)")
             throw error
         }
+    }
+    
+    /// Convenience method for deleting account with email/password
+    func deleteAccountWithEmail(email: String, password: String) async throws {
+        let credential = EmailAuthProvider.credential(withEmail: email, password: password)
+        try await deleteAccount(credential: credential)
+    }
+    
+    /// Convenience method for deleting account with phone verification
+    func deleteAccountWithPhone(phoneNumber: String, verificationCode: String) async throws {
+        guard let verificationId = verificationId else {
+            throw AuthError.noVerificationID
+        }
+        
+        let credential = PhoneAuthProvider.provider().credential(
+            withVerificationID: verificationId,
+            verificationCode: verificationCode
+        )
+        try await deleteAccount(credential: credential)
     }
     
     // MARK: - Phone Sign In
@@ -302,13 +343,14 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
     }
     
     @discardableResult
-    func createUserProfile(userId: String, email: String, firstName: String, lastName: String, signInMethod: SignInMethod) async throws -> User {
+    func createUserProfile(userId: String, email: String, firstName: String, lastName: String, signInMethod: SignInMethod, privacyPolicyAccepted: Bool = true) async throws -> User {
         let userData: [String: Any] = [
             "id": userId,
             "email": email,
             "firstName": firstName,
             "lastName": lastName,
             "signInMethod": signInMethod.rawValue,
+            "privacyPolicyAccepted": privacyPolicyAccepted,
             "createdAt": FieldValue.serverTimestamp(),
             "updatedAt": FieldValue.serverTimestamp()
         ]
@@ -321,7 +363,8 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
             email: email,
             firstName: firstName,
             lastName: lastName,
-            signInMethod: signInMethod
+            signInMethod: signInMethod,
+            privacyPolicyAccepted: privacyPolicyAccepted
         )
     }
     
@@ -345,6 +388,11 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
             throw NSError(domain: "UserParsingError", code: 0, userInfo: [NSLocalizedDescriptionKey: "Failed to parse user data"])
         }
         
+        // Parse privacy policy fields with defaults
+        let privacyPolicyAccepted = data["privacyPolicyAccepted"] as? Bool ?? false
+        let privacyPolicyVersion = data["privacyPolicyVersion"] as? String ?? "1.0"
+        let privacyPolicyAcceptedDate = (data["privacyPolicyAcceptedDate"] as? Timestamp)?.dateValue()
+        
         var user = User(
             id: id,
             email: email,
@@ -352,7 +400,10 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
             lastName: lastName,
             signInMethod: signInMethod,
             createdAt: createdAtTimestamp,
-            updatedAt: updatedAtTimestamp
+            updatedAt: updatedAtTimestamp,
+            privacyPolicyAccepted: privacyPolicyAccepted,
+            privacyPolicyAcceptedDate: privacyPolicyAcceptedDate,
+            privacyPolicyVersion: privacyPolicyVersion
         )
         
         // Parse optional health data

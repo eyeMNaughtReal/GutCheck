@@ -47,6 +47,48 @@ struct SettingsView: View {
                             Text("Privacy Policy")
                         }
                     }
+                    
+                    NavigationLink(destination: DataDeletionRequestView()) {
+                        HStack {
+                            Image(systemName: "trash.circle")
+                                .foregroundColor(.orange)
+                            Text("Request Data Deletion")
+                            Spacer()
+                            Text("GDPR Right")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    
+                    HStack {
+                        Image(systemName: "checkmark.shield")
+                            .foregroundColor(.blue)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Privacy Policy Accepted")
+                                .font(.subheadline)
+                            Text("Version 1.0 - August 18, 2025")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                    }
+                    .padding(.vertical, 4)
+                }
+                
+                Section("Account Management") {
+                    NavigationLink(destination: DeleteAccountView()) {
+                        HStack {
+                            Image(systemName: "trash")
+                                .foregroundColor(.red)
+                            Text("Delete Account")
+                            Spacer()
+                            Text("Permanent")
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+                    }
                 }
             }
             .navigationTitle("Settings")
