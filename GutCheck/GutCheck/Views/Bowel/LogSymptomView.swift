@@ -279,6 +279,7 @@ struct LogSymptomView: View {
     @StateObject private var coordinator = LogSymptomViewModel()
     @State private var showProfileSheet = false
     @State private var infoTypeToShow: SymptomInfoType? = nil
+    @State private var showingDatePicker = false
 
     var body: some View {
         NavigationStack {
@@ -321,6 +322,9 @@ struct LogSymptomView: View {
             .navigationBarTitleDisplayMode(.large)
             .sheet(item: $infoTypeToShow) { infoType in
                 SymptomInfoViews(infoType: infoType)
+            }
+            .sheet(isPresented: $showingDatePicker) {
+                datePickerSheet
             }
             .alert("Symptom Saved", isPresented: $coordinator.showingSuccessAlert) {
                 Button("OK") { 
@@ -367,13 +371,24 @@ struct SectionHeader: View {
                 .font(.title3)
                 .fontWeight(.semibold)
                 .foregroundColor(ColorTheme.primaryText)
-            DatePicker(
-                "",
-                selection: $coordinator.symptomDate,
-                displayedComponents: [.date, .hourAndMinute]
-            )
-            .datePickerStyle(.compact)
-            .accentColor(ColorTheme.primary)
+            Button(action: {
+                showingDatePicker = true
+            }) {
+                HStack {
+                    Image(systemName: "calendar")
+                        .foregroundColor(ColorTheme.primary)
+                    Text(coordinator.symptomDate.formattedDateTime)
+                        .foregroundColor(ColorTheme.primaryText)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(ColorTheme.surface)
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(ColorTheme.border, lineWidth: 1)
+                )
+            }
         }
         .padding()
         .background(ColorTheme.surface)
@@ -478,6 +493,19 @@ struct SectionHeader: View {
         .padding()
         .background(ColorTheme.surface)
         .cornerRadius(12)
+    }
+
+    private var datePickerSheet: some View {
+        DatePicker(
+            "Select Date and Time",
+            selection: $coordinator.symptomDate,
+            displayedComponents: [.date, .hourAndMinute]
+        )
+        .datePickerStyle(.graphical)
+        .accentColor(ColorTheme.primary)
+        .padding()
+        .background(ColorTheme.surface)
+        .cornerRadius(16)
     }
 }
 

@@ -348,6 +348,9 @@ struct RecentItemsView: View {
 struct MealTemplatesView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingMealBuilder = false
+    @State private var templates: [MealTemplate] = []
+    @State private var isLoading = true
+    @State private var error: String?
     
     var body: some View {
         NavigationStack {
@@ -395,26 +398,60 @@ struct MealTemplatesView: View {
                         }
                         .padding(.horizontal)
                         
-                        // Placeholder for when no templates exist
-                        VStack(spacing: 16) {
-                            Image(systemName: "square.on.square")
-                                .font(.system(size: 48))
-                                .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
-                            
-                            Text("No Meal Templates")
-                                .font(.headline)
-                                .foregroundColor(ColorTheme.primaryText)
-                            
-                            Text("Save frequently used meals as templates for quick access")
-                                .font(.subheadline)
-                                .foregroundColor(ColorTheme.secondaryText)
-                                .multilineTextAlignment(.center)
+                        if isLoading {
+                            ProgressView("Loading templates...")
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                        } else if let error = error {
+                            VStack(spacing: 16) {
+                                Image(systemName: "exclamationmark.triangle")
+                                    .font(.system(size: 48))
+                                    .foregroundColor(ColorTheme.error)
+                                
+                                Text("Error Loading Templates")
+                                    .font(.headline)
+                                    .foregroundColor(ColorTheme.primaryText)
+                                
+                                Text(error)
+                                    .font(.subheadline)
+                                    .foregroundColor(ColorTheme.secondaryText)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(ColorTheme.surface)
+                            .cornerRadius(12)
+                            .padding(.horizontal)
+                        } else if templates.isEmpty {
+                            // Placeholder for when no templates exist
+                            VStack(spacing: 16) {
+                                Image(systemName: "square.on.square")
+                                    .font(.system(size: 48))
+                                    .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
+                                
+                                Text("No Meal Templates")
+                                    .font(.headline)
+                                    .foregroundColor(ColorTheme.primaryText)
+                                
+                                Text("Save frequently used meals as templates for quick access")
+                                    .font(.subheadline)
+                                    .foregroundColor(ColorTheme.secondaryText)
+                                    .multilineTextAlignment(.center)
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(ColorTheme.surface)
+                            .cornerRadius(12)
+                            .padding(.horizontal)
+                        } else {
+                            // Display actual templates
+                            LazyVStack(spacing: 12) {
+                                ForEach(templates) { template in
+                                    TemplateCard(template: template)
+                                }
+                            }
+                            .padding(.horizontal)
                         }
-                        .padding()
-                        .frame(maxWidth: .infinity)
-                        .background(ColorTheme.surface)
-                        .cornerRadius(12)
-                        .padding(.horizontal)
                     }
                 }
                 .padding(.vertical)
@@ -433,6 +470,28 @@ struct MealTemplatesView: View {
             MealBuilderView()
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
+        }
+        .task {
+            await loadTemplates()
+        }
+    }
+    
+    private func loadTemplates() async {
+        isLoading = true
+        error = nil
+        
+        do {
+            guard let userId = AuthService().currentUser?.id else {
+                error = "Please sign in to view your templates"
+                isLoading = false
+                return
+            }
+            
+            templates = try await MealTemplateRepository.shared.fetchTemplates(for: userId)
+            isLoading = false
+        } catch {
+            self.error = "Failed to load templates: \(error.localizedDescription)"
+            isLoading = false
         }
     }
 }
@@ -478,6 +537,125 @@ class RecentItemsViewModel: ObservableObject {
     func addToMeal(_ foodItem: FoodItem) {
         // Add to unified meal builder service
         MealBuilderService.shared.addFoodItem(foodItem)
+    }
+}
+
+// MARK: - Template Card View
+
+struct TemplateCard: View {
+    let template: MealTemplate
+    @State private var showingMealBuilder = false
+    @State private var showingDeleteAlert = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Template header
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(template.name)
+                        .font(.headline)
+                        .foregroundColor(ColorTheme.primaryText)
+                    
+                    HStack(spacing: 8) {
+                        Text(template.type.rawValue.capitalized)
+                            .font(.caption)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(ColorTheme.primary.opacity(0.1))
+                            .foregroundColor(ColorTheme.primary)
+                            .cornerRadius(8)
+                        
+                        if template.usageCount > 0 {
+                            Text("Used \(template.usageCount) times")
+                                .font(.caption)
+                                .foregroundColor(ColorTheme.secondaryText)
+                        }
+                    }
+                }
+                
+                Spacer()
+                
+                Menu {
+                    Button("Use Template") {
+                        showingMealBuilder = true
+                    }
+                    
+                    Button("Delete Template", role: .destructive) {
+                        showingDeleteAlert = true
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                        .font(.title3)
+                        .foregroundColor(ColorTheme.secondaryText)
+                }
+            }
+            
+            // Food items preview
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(template.foodItems.prefix(3)) { item in
+                    HStack {
+                        Image(systemName: "circle.fill")
+                            .font(.system(size: 4))
+                            .foregroundColor(ColorTheme.secondaryText)
+                        
+                        Text(item.name)
+                            .font(.subheadline)
+                            .foregroundColor(ColorTheme.primaryText)
+                        
+                        Spacer()
+                    }
+                }
+                
+                if template.foodItems.count > 3 {
+                    Text("+ \(template.foodItems.count - 3) more items")
+                        .font(.caption)
+                        .foregroundColor(ColorTheme.secondaryText)
+                }
+            }
+            
+            // Notes if available
+            if let notes = template.notes, !notes.isEmpty {
+                Text(notes)
+                    .font(.caption)
+                    .foregroundColor(ColorTheme.secondaryText)
+                    .padding(.top, 4)
+            }
+        }
+        .padding()
+        .background(ColorTheme.surface)
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(ColorTheme.border.opacity(0.3), lineWidth: 1)
+        )
+        .sheet(isPresented: $showingMealBuilder) {
+            MealBuilderView()
+                .onAppear {
+                    // Load the template into the meal builder
+                    MealBuilderService.shared.loadTemplate(template)
+                }
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+        }
+        .alert("Delete Template", isPresented: $showingDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                Task {
+                    await deleteTemplate()
+                }
+            }
+        } message: {
+            Text("Are you sure you want to delete '\(template.name)'? This action cannot be undone.")
+        }
+    }
+    
+    private func deleteTemplate() async {
+        do {
+            try await MealTemplateRepository.shared.delete(id: template.id)
+            // Refresh the templates list (this would need to be handled by the parent view)
+        } catch {
+            print("Error deleting template: \(error)")
+        }
     }
 }
 

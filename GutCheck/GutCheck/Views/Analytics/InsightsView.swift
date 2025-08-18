@@ -64,7 +64,7 @@ struct InsightsView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
                     ForEach(viewModel.recentInsights) { insight in
-                        InsightCard(insight: insight)
+                        AnalyticsInsightCard(insight: insight)
                             .frame(width: 280, height: 160)
                     }
                 }
@@ -116,7 +116,7 @@ struct InsightsView: View {
 
 // MARK: - Supporting Views
 
-private struct InsightCard: View {
+private struct AnalyticsInsightCard: View {
     let insight: HealthInsight
     
     var body: some View {

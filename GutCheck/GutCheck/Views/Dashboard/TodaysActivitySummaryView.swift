@@ -66,29 +66,33 @@ struct TodaysActivitySummaryView: View {
                 }
             }
             
-            // Summary counts (always visible) - Fixed alignment
-            HStack(spacing: 16) {
-                HStack(spacing: 4) {
+            // Summary counts (always visible) - Stacked vertically to avoid wrapping
+            VStack(spacing: 8) {
+                HStack(spacing: 8) {
                     Image(systemName: "fork.knife")
                         .foregroundColor(ColorTheme.accent)
-                    Text("\(mealsCount) Meals")
+                        .frame(width: 20)
+                    Text("\(mealsCount) \(mealsCount == 1 ? "Meal" : "Meals")")
                         .foregroundColor(ColorTheme.accent)
+                    Spacer()
                 }
                 
-                HStack(spacing: 4) {
+                HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle")
                         .foregroundColor(ColorTheme.warning)
-                    Text("\(symptomsCount) Symptoms")
+                        .frame(width: 20)
+                    Text("\(symptomsCount) \(symptomsCount == 1 ? "Symptom" : "Symptoms")")
                         .foregroundColor(ColorTheme.warning)
+                    Spacer()
                 }
                 
-                Spacer()
-                
-                HStack(spacing: 4) {
+                HStack(spacing: 8) {
                     Image(systemName: "pills")
                         .foregroundColor(ColorTheme.primary)
-                    Text("\(medicationsCount) Medications")
+                        .frame(width: 20)
+                    Text("\(medicationsCount) \(medicationsCount == 1 ? "Medication" : "Medications")")
                         .foregroundColor(ColorTheme.primary)
+                    Spacer()
                 }
             }
             .font(.subheadline)

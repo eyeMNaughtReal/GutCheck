@@ -26,10 +26,14 @@ class MealBuilderService: ObservableObject {
     @Published var shouldNavigateToBuilder: Bool = false
     @Published var shouldDismissModal: Bool = false
     
-    private let mealRepository: MealRepository
+    // MARK: - Dependencies
     
-    private init(mealRepository: MealRepository = MealRepository.shared) {
-        self.mealRepository = mealRepository
+    private let mealRepository = MealRepository.shared
+    private let templateRepository = MealTemplateRepository.shared
+    private let authService = AuthService()
+    
+    private init() {
+        // Properties are already initialized above
     }
     
     // MARK: - Core Food Item Operations
@@ -134,6 +138,71 @@ class MealBuilderService: ObservableObject {
         return meal
     }
     
+    /// Saves the current meal as a reusable template
+    func saveAsTemplate() async throws -> MealTemplate {
+        guard let userId = authService.currentUser?.id else {
+            throw RepositoryError.invalidData("Cannot save empty meal as template")
+        }
+        
+        guard !currentMeal.isEmpty else {
+            throw RepositoryError.invalidData("Cannot save empty meal as template")
+        }
+        
+        // Generate template name if empty
+        let templateName = mealName.isEmpty ? generateDefaultTemplateName() : mealName
+        
+        let template = MealTemplate(
+            name: templateName,
+            type: mealType,
+            foodItems: currentMeal,
+            notes: notes.isEmpty ? nil : notes,
+            tags: extractTags(),
+            createdBy: userId
+        )
+        
+        Swift.print("💾 MealBuilderService: Saving template '\(template.name)' with \(template.foodItems.count) items")
+        
+        try await templateRepository.save(template)
+        
+        // Clear after successful save
+        clearMeal()
+        
+        return template
+    }
+    
+    /// Loads a meal template into the builder
+    func loadTemplate(_ template: MealTemplate) {
+        clearMeal()
+        
+        mealName = template.name
+        mealType = template.type
+        notes = template.notes ?? ""
+        
+        // Add all food items from the template
+        for item in template.foodItems {
+            addFoodItem(item)
+        }
+        
+        Swift.print("📋 MealBuilderService: Loaded template '\(template.name)' with \(template.foodItems.count) items")
+    }
+    
+    /// Creates a meal from a template
+    func createMealFromTemplate(_ template: MealTemplate, date: Date = Date()) async throws -> Meal {
+        let meal = template.createMeal(date: date)
+        
+        Swift.print("🍽️ MealBuilderService: Creating meal from template '\(template.name)'")
+        
+        try await mealRepository.save(meal)
+        
+        // Increment template usage
+        try await templateRepository.incrementUsage(for: template.id)
+        
+        // Trigger dashboard refresh
+        DataSyncManager.shared.triggerRefreshAfterSave(operation: "Template meal creation", dataType: .meals)
+        
+        return meal
+    }
+    
     // MARK: - Computed Properties
     
     var totalNutrition: NutritionInfo {
@@ -178,6 +247,12 @@ class MealBuilderService: ObservableObject {
     
     private func generateDefaultMealName() -> String {
         return "\(mealType.rawValue.capitalized) \(formattedDateTime)"
+    }
+    
+    private func generateDefaultTemplateName() -> String {
+        let itemNames = currentMeal.map { $0.name }.prefix(3)
+        let itemsText = itemNames.joined(separator: " + ")
+        return "\(mealType.rawValue.capitalized): \(itemsText)"
     }
     
     private func extractTags() -> [String] {

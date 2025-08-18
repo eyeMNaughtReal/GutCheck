@@ -98,6 +98,12 @@ struct FoodItem: Identifiable, Codable, Hashable, Equatable {
         return dict
     }
     
+    // MARK: - FirestoreModel Conformance
+    
+    func toFirestoreData() -> [String: Any] {
+        return toDictionary()
+    }
+    
     static func fromDictionary(_ dict: [String: Any]) throws -> FoodItem {
         guard let id = dict["id"] as? String,
               let name = dict["name"] as? String,

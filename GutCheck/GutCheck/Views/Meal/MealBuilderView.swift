@@ -17,6 +17,8 @@ struct MealBuilderView: View {
     @State private var showingDiscard = false
     @State private var showingFoodOptions = false
     @State private var editingFoodItem: FoodItem?
+    @State private var showingTemplateSave = false
+    @State private var showingTemplateSaved = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -33,7 +35,7 @@ struct MealBuilderView: View {
                             .stroke(ColorTheme.border, lineWidth: 1)
                     )
                 
-                HStack(spacing: 12) {
+                VStack(spacing: 12) {
                     // Meal type picker
                     HStack {
                         Image(systemName: "fork.knife")
@@ -196,6 +198,24 @@ struct MealBuilderView: View {
                     }
                     .disabled(mealService.currentMeal.isEmpty)
                     .opacity(mealService.currentMeal.isEmpty ? 0.6 : 1)
+                    
+                    // Save as Template button (only show when meal name is provided)
+                    if !mealService.mealName.isEmpty && !mealService.currentMeal.isEmpty {
+                        Button(action: {
+                            showingTemplateSave = true
+                        }) {
+                            HStack {
+                                Image(systemName: "square.on.square")
+                                    .font(.title3)
+                                Text("Save as Template")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(ColorTheme.primary)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                        }
+                    }
                 }
             }
             .padding()
@@ -212,9 +232,28 @@ struct MealBuilderView: View {
         }
         .sheet(isPresented: $showingFoodOptions) {
             MealLoggingOptionsView()
-                .environmentObject(router)
-                .presentationDetents([.medium, .large])
+                .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
+        }
+        .alert("Save as Template", isPresented: $showingTemplateSave) {
+            Button("Save Template") {
+                Task {
+                    do {
+                        _ = try await mealService.saveAsTemplate()
+                        showingTemplateSaved = true
+                    } catch {
+                        print("Error saving template: \(error)")
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Save '\(mealService.mealName)' as a reusable meal template?")
+        }
+        .alert("Template Saved", isPresented: $showingTemplateSaved) {
+            Button("OK") { }
+        } message: {
+            Text("'\(mealService.mealName)' has been saved as a reusable template!")
         }
         .sheet(item: $editingFoodItem) { foodItem in
             UnifiedFoodDetailView(
