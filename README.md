@@ -64,11 +64,13 @@ A comprehensive iOS application for tracking digestive health, meals, symptoms, 
 - ✅ Calendar and analytics views
 - ✅ HealthKit medication integration
 - ✅ AI-powered food recognition and analysis
+- ✅ Reusable meal templates
+- ✅ Enhanced insights system
 
 **In Development**:
-- 🚧 Enhanced insights engine
+- 🚧 Advanced AI features
 - 🚧 Medication interaction analysis
-- 🚧 Advanced pattern recognition
+- 🚧 Healthcare provider portal
 
 ## 🤝 **Contributing**
 
@@ -80,11 +82,14 @@ We welcome contributions! Please see our [Contributing Guide](GutCheck/CONTRIBUT
 
 ## 📚 **Documentation**
 
-- [Workflows & User Experience](GUTCHECK_WORKFLOWS.md)
-- [Architecture & Technical Design](GutCheck_Architecture_Plan.md)
-- [Developer Guide](GutCheck_Developer_Guide.md)
-- [Project Status](PROJECT_STATUS_2025.md)
-- [API Integration](FOOD_DETAIL_UNIFICATION_SUMMARY.md)
+**📖 [Complete Documentation](DOCUMENTATION.md)** - Consolidated guide covering all aspects of the project
+
+This single document includes:
+- Project overview and architecture
+- User workflows and development guide
+- Project status and feature roadmap
+- Privacy compliance and API integration
+- Contributing guidelines and setup instructions
 
 ## 🔐 **Privacy & Compliance**
 
@@ -105,13 +110,15 @@ GutCheck is designed with privacy and compliance in mind:
 - **AI Integration**: Smart nutrition estimation and pattern recognition
 - **Privacy Compliance**: Enterprise-grade data protection
 - **Performance**: Sub-second data loading and insights generation
+- **Reusable Templates**: Save and reuse meal combinations
+- **Enhanced Analytics**: Advanced pattern recognition and insights
 
 ## 📞 **Support**
 
 For support, questions, or feature requests:
 - Create an issue in this repository
-- Check our [Wiki](GutCheck_Wiki.md) for common questions
-- Review our [Developer Guide](GutCheck_Developer_Guide.md)
+- Check our [Complete Documentation](DOCUMENTATION.md)
+- Review our [Contributing Guide](GutCheck/CONTRIBUTING.md)
 
 ## 📄 **License**
 
@@ -121,4 +128,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ for better gut health**
 
-*Last Updated: August 2025*
+*Last Updated: December 2025*

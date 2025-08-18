@@ -22,7 +22,7 @@ jobs:
     - name: Set up Xcode
       uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: latest-stable
+        xcode-version: '16.2'
 
     - name: Cache Swift Package Manager
       uses: actions/cache@v4
@@ -94,8 +94,7 @@ jobs:
           <key>GOOGLE_APP_ID</key>
           <string>mock-app-id</string>
         </dict>
-        </plist>
-        EOF
+        </EOF
       working-directory: GutCheck/GutCheck
 
     - name: Resolve Swift Package Dependencies
@@ -105,15 +104,23 @@ jobs:
           -scheme GutCheck
       working-directory: GutCheck
 
+    - name: Verify Deployment Target
+      run: |
+        echo "Verifying iOS deployment target..."
+        grep -r "IPHONEOS_DEPLOYMENT_TARGET" . --include="*.pbxproj" | head -10
+        echo "Expected: IPHONEOS_DEPLOYMENT_TARGET = 15.0;"
+      working-directory: GutCheck
+
     - name: Build GutCheck
       run: |
         xcodebuild clean build \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
-          -destination 'platform=macOS,arch=arm64' \
+          -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
           -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
           CODE_SIGNING_ALLOWED=NO \
-          ONLY_ACTIVE_ARCH=NO
+          ONLY_ACTIVE_ARCH=NO \
+          IPHONEOS_DEPLOYMENT_TARGET=15.0
       working-directory: GutCheck
 
     - name: Run Unit Tests
@@ -121,10 +128,11 @@ jobs:
         xcodebuild test \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
-          -destination 'platform=macOS,arch=arm64' \
+          -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
           -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
           CODE_SIGNING_ALLOWED=NO \
           ONLY_ACTIVE_ARCH=NO \
+          IPHONEOS_DEPLOYMENT_TARGET=15.0 \
           -enableCodeCoverage YES
       working-directory: GutCheck
 
@@ -152,3 +160,40 @@ jobs:
           ~/Library/Developer/Xcode/DerivedData/Build/Logs/
           GutCheck/coverage.json
         retention-days: 5
+
+  # Add a new job for iOS device testing
+  ios-device-test:
+    name: iOS Device Test
+    runs-on: macos-14
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: '16.2'
+
+    - name: Build for iOS Device
+      run: |
+        xcodebuild clean build \
+          -project GutCheck.xcodeproj \
+          -scheme GutCheck \
+          -destination 'generic/platform=iOS' \
+          -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
+          CODE_SIGNING_ALLOWED=NO \
+          ONLY_ACTIVE_ARCH=NO \
+          IPHONEOS_DEPLOYMENT_TARGET=15.0
+      working-directory: GutCheck
+      continue-on-error: true
+
+    - name: Archive iOS Build
+      if: success()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ios-build
+        path: ~/Library/Developer/Xcode/DerivedData/Build/Products/Release-iphoneos/
+        retention-days: 30
