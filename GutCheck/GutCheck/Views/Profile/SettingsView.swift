@@ -77,6 +77,20 @@ struct SettingsView: View {
                     .padding(.vertical, 4)
                 }
                 
+                Section("Data & Storage") {
+                    NavigationLink(destination: LocalStorageSettingsView()) {
+                        HStack {
+                            Image(systemName: "internaldrive")
+                                .foregroundColor(.blue)
+                            Text("Local Storage")
+                            Spacer()
+                            Text("Core Data")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                
                 Section("Account Management") {
                     NavigationLink(destination: DeleteAccountView()) {
                         HStack {

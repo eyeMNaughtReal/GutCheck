@@ -148,7 +148,7 @@ struct DataDeletionRequestView: View {
         }
         
         do {
-            try await deletionService.createDeletionRequest(
+            _ = try await deletionService.createDeletionRequest(
                 userId: currentUser.id,
                 userEmail: currentUser.email,
                 userName: currentUser.fullName,

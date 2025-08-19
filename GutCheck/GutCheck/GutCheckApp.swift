@@ -13,6 +13,8 @@ import FirebaseFirestore
 struct GutCheckApp: App {
     @StateObject private var authService = AuthService()
     @StateObject private var settingsVM = SettingsViewModel()
+    @StateObject private var coreDataStack = CoreDataStack.shared
+    @StateObject private var dataSyncService = DataSyncService.shared
     @Environment(\.scenePhase) private var scenePhase
     
     init() {
@@ -57,6 +59,8 @@ struct GutCheckApp: App {
                         .environmentObject(authService)
                         .environmentObject(settingsVM)
                         .environmentObject(TimeoutManager.shared)
+                        .environmentObject(coreDataStack)
+                        .environmentObject(dataSyncService)
                 } else {
                     AuthenticationView(authService: authService)
                 }
