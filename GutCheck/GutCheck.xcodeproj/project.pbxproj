@@ -14,6 +14,15 @@
 		6DF1632C2F4CD52B002C0671 /* firestore 2.rules in Resources */ = {isa = PBXBuildFile; fileRef = 6DF1632B2F4CD52B002C0671 /* firestore 2.rules */; };
 		6DF1632E2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF1632D2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift */; };
 		6DF163302F4CD6F6002C0671 /* FIREBASE_SETUP_GUIDE.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DF1632F2F4CD6F6002C0671 /* FIREBASE_SETUP_GUIDE.md */; };
+		6DF163342F4CDB1B002C0671 /* APPLE_DESIGN_STANDARDS_REVIEW.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DF163332F4CDB1B002C0671 /* APPLE_DESIGN_STANDARDS_REVIEW.md */; };
+		6DF163362F4CDBF1002C0671 /* ACCESSIBILITY_IMPLEMENTATION_CHECKLIST.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DF163352F4CDBF1002C0671 /* ACCESSIBILITY_IMPLEMENTATION_CHECKLIST.md */; };
+		6DF163382F4CDD59002C0671 /* PHASE_0_DISCOVERY_REPORT.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DF163372F4CDD59002C0671 /* PHASE_0_DISCOVERY_REPORT.md */; };
+		6DF1633A2F4CDE20002C0671 /* PHASE_0_SUMMARY.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DF163392F4CDE20002C0671 /* PHASE_0_SUMMARY.md */; };
+		6DF1633C2F4CDE70002C0671 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF1633B2F4CDE70002C0671 /* HapticManager.swift */; };
+		6DF1633E2F4CDEA1002C0671 /* AccessibilityHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF1633D2F4CDEA1002C0671 /* AccessibilityHelpers.swift */; };
+		6DF163402F4CDEC6002C0671 /* AccessibilityIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF1633F2F4CDEC6002C0671 /* AccessibilityIdentifiers.swift */; };
+		6DF163422F4CDEEE002C0671 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF163412F4CDEEE002C0671 /* Typography.swift */; };
+		6DF163442F4CDF29002C0671 /* PHASE_1_SUMMARY.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DF163432F4CDF29002C0671 /* PHASE_1_SUMMARY.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -40,6 +49,15 @@
 		6DF1632B2F4CD52B002C0671 /* firestore 2.rules */ = {isa = PBXFileReference; lastKnownFileType = text; path = "firestore 2.rules"; sourceTree = "<group>"; };
 		6DF1632D2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnoseFirebaseSetup.swift; sourceTree = "<group>"; };
 		6DF1632F2F4CD6F6002C0671 /* FIREBASE_SETUP_GUIDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FIREBASE_SETUP_GUIDE.md; sourceTree = "<group>"; };
+		6DF163332F4CDB1B002C0671 /* APPLE_DESIGN_STANDARDS_REVIEW.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = APPLE_DESIGN_STANDARDS_REVIEW.md; sourceTree = "<group>"; };
+		6DF163352F4CDBF1002C0671 /* ACCESSIBILITY_IMPLEMENTATION_CHECKLIST.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ACCESSIBILITY_IMPLEMENTATION_CHECKLIST.md; sourceTree = "<group>"; };
+		6DF163372F4CDD59002C0671 /* PHASE_0_DISCOVERY_REPORT.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PHASE_0_DISCOVERY_REPORT.md; sourceTree = "<group>"; };
+		6DF163392F4CDE20002C0671 /* PHASE_0_SUMMARY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PHASE_0_SUMMARY.md; sourceTree = "<group>"; };
+		6DF1633B2F4CDE70002C0671 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
+		6DF1633D2F4CDEA1002C0671 /* AccessibilityHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityHelpers.swift; sourceTree = "<group>"; };
+		6DF1633F2F4CDEC6002C0671 /* AccessibilityIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityIdentifiers.swift; sourceTree = "<group>"; };
+		6DF163412F4CDEEE002C0671 /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
+		6DF163432F4CDF29002C0671 /* PHASE_1_SUMMARY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PHASE_1_SUMMARY.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -112,6 +130,15 @@
 				6DF1632B2F4CD52B002C0671 /* firestore 2.rules */,
 				6DF1632D2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift */,
 				6DF1632F2F4CD6F6002C0671 /* FIREBASE_SETUP_GUIDE.md */,
+				6DF163332F4CDB1B002C0671 /* APPLE_DESIGN_STANDARDS_REVIEW.md */,
+				6DF163352F4CDBF1002C0671 /* ACCESSIBILITY_IMPLEMENTATION_CHECKLIST.md */,
+				6DF163372F4CDD59002C0671 /* PHASE_0_DISCOVERY_REPORT.md */,
+				6DF163392F4CDE20002C0671 /* PHASE_0_SUMMARY.md */,
+				6DF1633B2F4CDE70002C0671 /* HapticManager.swift */,
+				6DF1633D2F4CDEA1002C0671 /* AccessibilityHelpers.swift */,
+				6DF1633F2F4CDEC6002C0671 /* AccessibilityIdentifiers.swift */,
+				6DF163412F4CDEEE002C0671 /* Typography.swift */,
+				6DF163432F4CDF29002C0671 /* PHASE_1_SUMMARY.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -208,7 +235,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1640;
-				LastUpgradeCheck = 1640;
+				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					6DEADBEC2E1F312300CAF395 = {
 						CreatedOnToolsVersion = 16.4;
@@ -252,8 +279,13 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6DF163362F4CDBF1002C0671 /* ACCESSIBILITY_IMPLEMENTATION_CHECKLIST.md in Resources */,
+				6DF163442F4CDF29002C0671 /* PHASE_1_SUMMARY.md in Resources */,
+				6DF163342F4CDB1B002C0671 /* APPLE_DESIGN_STANDARDS_REVIEW.md in Resources */,
+				6DF1633A2F4CDE20002C0671 /* PHASE_0_SUMMARY.md in Resources */,
 				6DF1632C2F4CD52B002C0671 /* firestore 2.rules in Resources */,
 				6DF163302F4CD6F6002C0671 /* FIREBASE_SETUP_GUIDE.md in Resources */,
+				6DF163382F4CDD59002C0671 /* PHASE_0_DISCOVERY_REPORT.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -279,6 +311,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				6DF1632E2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift in Sources */,
+				6DF163422F4CDEEE002C0671 /* Typography.swift in Sources */,
+				6DF1633C2F4CDE70002C0671 /* HapticManager.swift in Sources */,
+				6DF1633E2F4CDEA1002C0671 /* AccessibilityHelpers.swift in Sources */,
+				6DF163402F4CDEC6002C0671 /* AccessibilityIdentifiers.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -371,6 +407,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -428,6 +465,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
