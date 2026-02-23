@@ -77,7 +77,7 @@ class FoodSearchViewModel: ObservableObject {
         }
     }
     
-    private func createEnhancedFoodItem(from nfood: NutritionixFood) -> FoodItem {
+    private func createEnhancedFoodItem(from nfood: FoodSearchResult) -> FoodItem {
         // Extract serving information
         let servingQty = nfood.servingQty ?? 1.0
         let servingUnit = nfood.servingUnit ?? "serving"
@@ -218,18 +218,24 @@ class FoodSearchViewModel: ObservableObject {
         
         print("🔍 Enhancing food item '\(foodItem.name)' with detailed nutrition data...")
         
+        // Try to search for the food item again to get more details
         do {
-            // Get detailed nutrition data including ingredients
-            let (_, detailedNutrition) = try await NutritionixService.shared.getDetailedNutritionInfo(for: foodItem.name)
+            let openFoodFactsService = OpenFoodFactsService.shared
+            let products = try await openFoodFactsService.searchFoods(query: foodItem.name, pageSize: 1)
+            
+            guard let firstProduct = products.first else {
+                print("🔍 No products found for '\(foodItem.name)'")
+                return foodItem
+            }
             
             // Create enhanced copy with ingredients
             var enhancedItem = foodItem
             
-            if let ingredientsString = detailedNutrition["ingredients"] {
-                enhancedItem.ingredients = parseIngredients(from: ingredientsString)
+            if let ingredientsText = firstProduct.ingredientsText, !ingredientsText.isEmpty {
+                enhancedItem.ingredients = parseIngredients(from: ingredientsText)
                 print("🔍 Enhanced with \(enhancedItem.ingredients.count) ingredients: \(enhancedItem.ingredients)")
             } else {
-                print("🔍 No ingredients found in detailed nutrition data")
+                print("🔍 No ingredients found in OpenFoodFacts data")
             }
             
             return enhancedItem

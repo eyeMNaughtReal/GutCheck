@@ -21,7 +21,7 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
     let loadingState = LoadingStateManager()
     
     private let auth = Auth.auth()
-    private let firestore = Firestore.firestore()
+    private lazy var firestore = Firestore.firestore()
     
     // Auth state listener handle
     private var authStateListenerHandle: AuthStateDidChangeListenerHandle?

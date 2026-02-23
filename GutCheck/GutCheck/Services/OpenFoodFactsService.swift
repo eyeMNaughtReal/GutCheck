@@ -78,8 +78,8 @@ class OpenFoodFactsService {
         }
     }
     
-    // Convert OpenFoodFacts product to app's NutritionixFood format for consistency
-    func convertToNutritionixFood(_ product: OpenFoodFactsProduct) -> NutritionixFood {
+    // Convert OpenFoodFacts product to app's FoodSearchResult format
+    func convertToFoodSearchResult(_ product: OpenFoodFactsProduct) -> FoodSearchResult {
         let nutriments = product.nutriments
         
         // Parse serving size (OpenFoodFacts uses various formats)
@@ -130,7 +130,7 @@ class OpenFoodFactsService {
         let vitaminB12 = nutriments?.vitaminB12100g.map { $0 * multiplier }
         let folate = nutriments?.folates100g.map { $0 * multiplier }
         
-        return NutritionixFood(
+        return FoodSearchResult(
             id: product.id,
             name: productNameSafe,
             brand: brandName,

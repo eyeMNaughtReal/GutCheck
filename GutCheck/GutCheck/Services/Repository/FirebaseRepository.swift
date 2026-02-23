@@ -67,7 +67,7 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
     typealias Model = T
     
     let collectionName: String
-    let firestore = Firestore.firestore()
+    lazy var firestore = Firestore.firestore()
     private let networkMonitor = NWPathMonitor()
     private let monitorQueue = DispatchQueue(label: "NetworkMonitor")
     private var isNetworkAvailable = true

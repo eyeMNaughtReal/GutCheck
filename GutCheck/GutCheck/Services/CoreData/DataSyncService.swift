@@ -17,7 +17,7 @@ class DataSyncService: ObservableObject {
     
     private let localStorage = CoreDataStorageService.shared
     private let coreDataStack = CoreDataStack.shared
-    private let firestore = Firestore.firestore()
+    private lazy var firestore = Firestore.firestore()
     
     @Published var isSyncing = false
     @Published var lastSyncDate: Date?

@@ -11,6 +11,9 @@
 		6DEADC2B2E1F365E00CAF395 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 6DEADC2A2E1F365E00CAF395 /* FirebaseAuth */; };
 		6DEADC2D2E1F365E00CAF395 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 6DEADC2C2E1F365E00CAF395 /* FirebaseFirestore */; };
 		6DEADC2F2E1F365E00CAF395 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 6DEADC2E2E1F365E00CAF395 /* FirebaseStorage */; };
+		6DF1632C2F4CD52B002C0671 /* firestore 2.rules in Resources */ = {isa = PBXBuildFile; fileRef = 6DF1632B2F4CD52B002C0671 /* firestore 2.rules */; };
+		6DF1632E2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF1632D2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift */; };
+		6DF163302F4CD6F6002C0671 /* FIREBASE_SETUP_GUIDE.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DF1632F2F4CD6F6002C0671 /* FIREBASE_SETUP_GUIDE.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,6 +37,9 @@
 		6DEADBED2E1F312300CAF395 /* GutCheck.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GutCheck.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6DEADBFA2E1F312500CAF395 /* GutCheckTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GutCheckTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6DEADC042E1F312500CAF395 /* GutCheckUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GutCheckUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		6DF1632B2F4CD52B002C0671 /* firestore 2.rules */ = {isa = PBXFileReference; lastKnownFileType = text; path = "firestore 2.rules"; sourceTree = "<group>"; };
+		6DF1632D2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnoseFirebaseSetup.swift; sourceTree = "<group>"; };
+		6DF1632F2F4CD6F6002C0671 /* FIREBASE_SETUP_GUIDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FIREBASE_SETUP_GUIDE.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -103,6 +109,9 @@
 				6DEADBFD2E1F312500CAF395 /* GutCheckTests */,
 				6DEADC072E1F312500CAF395 /* GutCheckUITests */,
 				6DEADBEE2E1F312300CAF395 /* Products */,
+				6DF1632B2F4CD52B002C0671 /* firestore 2.rules */,
+				6DF1632D2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift */,
+				6DF1632F2F4CD6F6002C0671 /* FIREBASE_SETUP_GUIDE.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -243,6 +252,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6DF1632C2F4CD52B002C0671 /* firestore 2.rules in Resources */,
+				6DF163302F4CD6F6002C0671 /* FIREBASE_SETUP_GUIDE.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -267,6 +278,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6DF1632E2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
