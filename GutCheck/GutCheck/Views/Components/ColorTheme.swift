@@ -8,44 +8,105 @@
 import SwiftUI
 
 struct ColorTheme {
-    // Primary colors from README
-    static let primary = Color(hex: "7D5BA6")        // Plum
-    static let accent = Color(hex: "A1E3D8")         // Mint Green
-    static let mint = Color(hex: "A1E3D8")           // Mint Green (alias for accent)
-    static let background = Color(hex: "FFFDF6")     // Ivory
-    static let text = Color(hex: "2D1B4E")           // Dark Plum
-    static let secondary = Color(hex: "FFD6A5")      // Pale Orange
+    // MARK: - Adaptive Primary Colors
+    // These colors automatically adjust for light/dark mode
     
-    // Additional UI colors
-    static let success = Color.green
-    static let error = Color.red
-    static let warning = Color.orange
-    static let disabled = Color.gray.opacity(0.6)
+    /// Primary brand color - Calming teal that works in both modes
+    /// Light: Rich teal for trust and health
+    /// Dark: Softer teal for reduced eye strain
+    static let primary = Color("PrimaryColor", bundle: nil)
     
-    // Background variations
-    static let cardBackground = Color.white
-    static let surface = Color.white.opacity(0.95)
-    static let shadowColor = Color.black.opacity(0.1)
+    /// Accent color - Complementary color for highlights and CTAs
+    /// Light: Warm coral for energy and action
+    /// Dark: Softer coral for contrast
+    static let accent = Color("AccentColor", bundle: nil)
     
-    // Border and outline colors
-    static let border = Color.gray.opacity(0.3)
+    /// Secondary accent - Supporting color for variety
+    /// Light: Soft purple for wellness
+    /// Dark: Muted purple
+    static let secondary = Color("SecondaryColor", bundle: nil)
+    
+    // MARK: - Background Colors (Adaptive)
+    
+    /// Main background - Adapts to system appearance
+    static let background = Color("BackgroundColor", bundle: nil)
+    
+    /// Card background - Elevated surfaces
+    static let cardBackground = Color("CardBackground", bundle: nil)
+    
+    /// Surface color - For subtle elevation differences
+    static let surface = Color("SurfaceColor", bundle: nil)
+    
+    // MARK: - Text Colors (Adaptive)
+    
+    /// Primary text - High contrast, readable in both modes
+    static let primaryText = Color("PrimaryText", bundle: nil)
+    
+    /// Secondary text - Slightly muted for hierarchy
+    static let secondaryText = Color("SecondaryText", bundle: nil)
+    
+    /// Tertiary text - Even more muted for supporting info
+    static let tertiaryText = Color("TertiaryText", bundle: nil)
+    
+    /// Light text - For use on dark backgrounds
+    static let lightText = Color.white
+    
+    // MARK: - Semantic Colors
+    // Health-specific meanings with accessibility in mind
+    
+    /// Success color - Positive health indicators (good scores, achievements)
+    /// Uses green but carefully chosen shades for color-blind accessibility
+    static let success = Color("SuccessColor", bundle: nil)
+    
+    /// Warning color - Caution indicators (moderate symptoms, attention needed)
+    /// Amber/orange that works in both modes
+    static let warning = Color("WarningColor", bundle: nil)
+    
+    /// Error/Alert color - Critical health concerns, errors
+    /// Red that maintains readability and isn't too alarming
+    static let error = Color("ErrorColor", bundle: nil)
+    
+    /// Info color - Informational messages, tips
+    static let info = Color("InfoColor", bundle: nil)
+    
+    // MARK: - Interactive Elements
+    
+    /// Border color for inputs and dividers
+    static let border = Color("BorderColor", bundle: nil)
+    
+    /// Active/focused border
     static let activeBorder = primary
     
-    // Button colors
+    /// Disabled state
+    static let disabled = Color("DisabledColor", bundle: nil)
+    
+    /// Shadow color
+    static let shadowColor = Color.black.opacity(0.1)
+    
+    // MARK: - Feature-Specific Colors
+    
+    /// Meal logging indicator
+    static let mealLogging = primary
+    
+    /// Bowel tracking indicator  
+    static let bowelTracking = secondary
+    
+    /// Symptom tracking indicator
+    static let symptomTracking = Color("SymptomColor", bundle: nil)
+    
+    // MARK: - Button Colors (using semantic colors)
+    
     static let buttonPrimary = primary
     static let buttonSecondary = secondary
     
-    // Text variations
-    static let primaryText = text
-    static let secondaryText = Color.gray
-    static let lightText = Color.white
+    // MARK: - Input Colors
     
-    // Input and form colors
-    static let inputBackground = Color(hex: "F5F5F5") // Light gray for input backgrounds
+    static let inputBackground = Color("InputBackground", bundle: nil)
     
-    // Calendar and logging colors
-    static let mealLogging = accent          // For meal tracking dots
-    static let bowelTracking = secondary     // For bowel movement tracking dots
+    // MARK: - Legacy Support (for backward compatibility)
+    
+    static let mint = accent  // Alias
+    static let text = primaryText  // Alias
 }
 
 // Extension to create Color from hex string

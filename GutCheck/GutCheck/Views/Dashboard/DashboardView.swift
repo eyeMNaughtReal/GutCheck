@@ -42,90 +42,105 @@ struct DashboardView: View {
     @EnvironmentObject private var refreshManager: RefreshManager
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                // User greeting and welcome message
-                GreetingHeaderView()
-                
-                // Week selector for browsing historical data without navigation
-                // Users can tap different dates to see insights for those specific days
-                WeekSelector(selectedDate: $dashboardStore.selectedDate) { selectedDate in
-                    // When a date is selected, refresh the dashboard data
-                    dashboardStore.selectedDate = selectedDate
-                    dashboardStore.loadDataForSelectedDate()
-                    recentActivityViewModel.loadRecentActivity(for: selectedDate, authService: authService)
-                }
-                
-                // Combined Today's Summary and Activity
-                // Shows meals and symptoms logged for the selected date
-                TodaysActivitySummaryView(
-                    viewModel: recentActivityViewModel,
-                    selectedDate: dashboardStore.selectedDate
-                )
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(spacing: 24) {
+                    // User greeting and welcome message
+                    GreetingHeaderView()
+                        .padding(.top, 8)
+                    
+                    // Week selector with refined design
+                    WeekSelector(selectedDate: $dashboardStore.selectedDate) { selectedDate in
+                        dashboardStore.selectedDate = selectedDate
+                        dashboardStore.loadDataForSelectedDate()
+                        recentActivityViewModel.loadRecentActivity(for: selectedDate, authService: authService)
+                    }
+                    .padding(.horizontal, -4)
+                    
+                    // Combined Today's Summary and Activity with enhanced card
+                    TodaysActivitySummaryView(
+                        viewModel: recentActivityViewModel,
+                        selectedDate: dashboardStore.selectedDate
+                    )
 
-                // Dashboard Insights - NEW FEATURE (December 2025)
-                // Provides users with actionable health information:
-                // 1. Health Score: 1-10 rating based on symptoms and meals
-                // 2. Today's Focus: Personalized health recommendations
-                // 3. Avoidance Tip: Pattern-based food trigger warnings
-                DashboardInsightsView(
-                    healthScore: dashboardStore.todaysHealthScore,
-                    todaysFocus: dashboardStore.todaysFocus,
-                    avoidanceTip: dashboardStore.avoidanceTip
-                )
-
-                // Legacy insight message (deprecated - replaced by DashboardInsightsView)
-                if let insight = dashboardStore.insightMessage {
-                    InsightsCardView(message: insight)
-                }
-                
-                // Trigger alerts for immediate health warnings
-                if !dashboardStore.triggerAlerts.isEmpty {
-                    TriggerAlertBanner(alerts: dashboardStore.triggerAlerts)
-                }
-                
-                // Quick action buttons for immediate logging
-                // These provide fast access to core app functionality
-                HStack(spacing: 20) {
-                    Button(action: {
-                        router.startMealLogging()
-                    }) {
-                        VStack {
-                            Image(systemName: "fork.knife")
-                                .font(.title)
-                            Text("Log Meal")
-                                .font(.caption)
+                    // Dashboard Insights - Redesigned for visual hierarchy
+                    VStack(spacing: 16) {
+                        // Insights Grid - Side by side for better use of space
+                        HStack(spacing: 16) {
+                            // Today's Focus Card
+                            DashboardInsightCard(
+                                icon: "target",
+                                iconColor: .blue,
+                                title: "Today's Focus",
+                                content: dashboardStore.todaysFocus
+                            )
+                            
+                            // Avoidance Tip Card
+                            DashboardInsightCard(
+                                icon: "exclamationmark.shield",
+                                iconColor: .orange,
+                                title: "Watch Out",
+                                content: dashboardStore.avoidanceTip
+                            )
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue.opacity(0.1))
-                        .cornerRadius(10)
                     }
                     
-                    Button(action: {
-                        router.startSymptomLogging()
-                    }) {
-                        VStack {
-                            Image(systemName: "heart.text.square")
-                                .font(.title)
-                            Text("Log Symptom")
-                                .font(.caption)
+                    // Trigger alerts with better styling
+                    if !dashboardStore.triggerAlerts.isEmpty {
+                        VStack(spacing: 12) {
+                            ForEach(dashboardStore.triggerAlerts, id: \.self) { alert in
+                                TriggerAlertCard(alert: alert)
+                            }
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.purple.opacity(0.1))
-                        .cornerRadius(10)
                     }
                 }
-                .padding(.top, 10)
-                
-                // Spacer for tab bar
-                Spacer(minLength: 80)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 20)
             }
-            .padding(.horizontal)
-            .padding(.top)
+            .background(ColorTheme.background)
+            
+            // Action Buttons - Side by side at bottom
+            HStack(spacing: 16) {
+                Button(action: {
+                    router.startMealLogging()
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "fork.knife")
+                            .font(.system(size: 18, weight: .semibold))
+                        Text("Log Meal")
+                            .font(.system(size: 15, weight: .semibold))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .foregroundColor(.white)
+                    .background(Color.blue)
+                    .cornerRadius(12)
+                }
+                
+                Button(action: {
+                    router.startSymptomLogging()
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "heart.text.square")
+                            .font(.system(size: 18, weight: .semibold))
+                        Text("Log Symptom")
+                            .font(.system(size: 15, weight: .semibold))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .foregroundColor(.white)
+                    .background(Color.purple)
+                    .cornerRadius(12)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background(ColorTheme.cardBackground)
+            .shadow(color: ColorTheme.shadowColor.opacity(0.1), radius: 8, x: 0, y: -2)
         }
         .navigationTitle("Dashboard")
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 ProfileAvatarButton(user: authService.currentUser) {
@@ -145,8 +160,6 @@ struct DashboardView: View {
             loadDataIfAuthenticated()
         }
         .onChange(of: dashboardStore.selectedDate) { _, _ in
-            // When user selects a different date, refresh dashboard data for that date
-            // This enables historical browsing without leaving the dashboard
             dashboardStore.loadDataForSelectedDate()
         }
         .onChange(of: refreshManager.refreshToken) { _, _ in
@@ -170,16 +183,208 @@ struct DashboardView: View {
     }
 }
 
-// MARK: - Dashboard Insights View
+// MARK: - Modern Dashboard Components
 
-/// Dashboard insights component that displays three key health metrics:
-/// 1. Health Score: Visual 1-10 rating with color-coded bar
-/// 2. Today's Focus: Actionable health recommendation
-/// 3. Avoidance Tip: Pattern-based food trigger warning
-///
-/// This view automatically updates based on the selected date and provides
-/// users with immediate, actionable health information without requiring
-/// navigation to other screens.
+/// Health Score Card - Large prominent display of overall health
+struct HealthScoreCard: View {
+    let score: Int
+    
+    private var scoreColor: Color {
+        switch score {
+        case 1...3: return .red
+        case 4...6: return .orange
+        case 7...8: return Color(red: 0.8, green: 0.8, blue: 0.2) // Yellow
+        case 9...10: return .green
+        default: return .gray
+        }
+    }
+    
+    private var scoreLabel: String {
+        switch score {
+        case 1...3: return "Needs Attention"
+        case 4...6: return "Could Be Better"
+        case 7...8: return "Doing Well"
+        case 9...10: return "Excellent!"
+        default: return "Unknown"
+        }
+    }
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Health Score")
+                        .font(.headline)
+                        .foregroundColor(ColorTheme.secondaryText)
+                    
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        Text("\(score)")
+                            .font(.system(size: 52, weight: .bold, design: .rounded))
+                            .foregroundColor(scoreColor)
+                        
+                        Text("/10")
+                            .font(.title)
+                            .foregroundColor(ColorTheme.secondaryText)
+                    }
+                    
+                    Text(scoreLabel)
+                        .font(.subheadline)
+                        .foregroundColor(scoreColor)
+                        .fontWeight(.medium)
+                }
+                
+                Spacer()
+                
+                // Circular progress indicator
+                ZStack {
+                    Circle()
+                        .stroke(ColorTheme.border.opacity(0.3), lineWidth: 8)
+                        .frame(width: 80, height: 80)
+                    
+                    Circle()
+                        .trim(from: 0, to: CGFloat(score) / 10.0)
+                        .stroke(scoreColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        .frame(width: 80, height: 80)
+                        .rotationEffect(.degrees(-90))
+                        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: score)
+                    
+                    Image(systemName: score >= 7 ? "checkmark.circle.fill" : "heart.fill")
+                        .font(.system(size: 28))
+                        .foregroundColor(scoreColor)
+                }
+            }
+            
+            // Progress bar alternative
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    Rectangle()
+                        .fill(ColorTheme.border.opacity(0.3))
+                        .frame(height: 6)
+                        .cornerRadius(3)
+                    
+                    Rectangle()
+                        .fill(scoreColor)
+                        .frame(width: geometry.size.width * CGFloat(score) / 10.0, height: 6)
+                        .cornerRadius(3)
+                        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: score)
+                }
+            }
+            .frame(height: 6)
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(ColorTheme.cardBackground)
+                .shadow(color: ColorTheme.shadowColor.opacity(0.1), radius: 8, x: 0, y: 2)
+        )
+    }
+}
+
+/// Dashboard Insight Card - Compact card for Focus and Avoidance tips
+struct DashboardInsightCard: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let content: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(iconColor)
+                    .frame(width: 32, height: 32)
+                    .background(iconColor.opacity(0.15))
+                    .cornerRadius(8)
+                
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(ColorTheme.primaryText)
+            }
+            
+            Text(content)
+                .font(.caption)
+                .foregroundColor(ColorTheme.secondaryText)
+                .lineLimit(4)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(ColorTheme.cardBackground)
+                .shadow(color: ColorTheme.shadowColor.opacity(0.08), radius: 6, x: 0, y: 2)
+        )
+    }
+}
+
+/// Floating Action Button - Modern circular button with label
+struct FloatingActionButton: View {
+    let icon: String
+    let label: String
+    let color: Color
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.white)
+                
+                Text(label)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.white)
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 14)
+            .background(
+                Capsule()
+                    .fill(color)
+                    .shadow(color: color.opacity(0.4), radius: 8, x: 0, y: 4)
+            )
+        }
+    }
+}
+
+/// Trigger Alert Card - Warning card for health triggers
+struct TriggerAlertCard: View {
+    let alert: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.title3)
+                .foregroundColor(.orange)
+            
+            Text(alert)
+                .font(.subheadline)
+                .foregroundColor(ColorTheme.primaryText)
+                .multilineTextAlignment(.leading)
+            
+            Spacer()
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.orange.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                )
+        )
+    }
+}
+
+// MARK: - Legacy Dashboard Insights View (Deprecated)
+
+/// Dashboard insights component that displays three key health metrics
+/// 
+/// ⚠️ DEPRECATED: This view has been replaced by individual modern components
+/// (HealthScoreCard, InsightCard) for better visual hierarchy and flexibility.
+/// Keeping for backward compatibility but should be removed in next major version.
 struct DashboardInsightsView: View {
     // MARK: - Properties
     

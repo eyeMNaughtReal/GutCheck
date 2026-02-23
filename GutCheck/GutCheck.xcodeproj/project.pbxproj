@@ -23,6 +23,7 @@
 		6DF163402F4CDEC6002C0671 /* AccessibilityIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF1633F2F4CDEC6002C0671 /* AccessibilityIdentifiers.swift */; };
 		6DF163422F4CDEEE002C0671 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF163412F4CDEEE002C0671 /* Typography.swift */; };
 		6DF163442F4CDF29002C0671 /* PHASE_1_SUMMARY.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DF163432F4CDF29002C0671 /* PHASE_1_SUMMARY.md */; };
+		6DF163482F4CE393002C0671 /* DASHBOARD_UI_POLISH.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DF163472F4CE393002C0671 /* DASHBOARD_UI_POLISH.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -58,6 +59,7 @@
 		6DF1633F2F4CDEC6002C0671 /* AccessibilityIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityIdentifiers.swift; sourceTree = "<group>"; };
 		6DF163412F4CDEEE002C0671 /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
 		6DF163432F4CDF29002C0671 /* PHASE_1_SUMMARY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PHASE_1_SUMMARY.md; sourceTree = "<group>"; };
+		6DF163472F4CE393002C0671 /* DASHBOARD_UI_POLISH.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = DASHBOARD_UI_POLISH.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -139,6 +141,7 @@
 				6DF1633F2F4CDEC6002C0671 /* AccessibilityIdentifiers.swift */,
 				6DF163412F4CDEEE002C0671 /* Typography.swift */,
 				6DF163432F4CDF29002C0671 /* PHASE_1_SUMMARY.md */,
+				6DF163472F4CE393002C0671 /* DASHBOARD_UI_POLISH.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -282,6 +285,7 @@
 				6DF163362F4CDBF1002C0671 /* ACCESSIBILITY_IMPLEMENTATION_CHECKLIST.md in Resources */,
 				6DF163442F4CDF29002C0671 /* PHASE_1_SUMMARY.md in Resources */,
 				6DF163342F4CDB1B002C0671 /* APPLE_DESIGN_STANDARDS_REVIEW.md in Resources */,
+				6DF163482F4CE393002C0671 /* DASHBOARD_UI_POLISH.md in Resources */,
 				6DF1633A2F4CDE20002C0671 /* PHASE_0_SUMMARY.md in Resources */,
 				6DF1632C2F4CD52B002C0671 /* firestore 2.rules in Resources */,
 				6DF163302F4CD6F6002C0671 /* FIREBASE_SETUP_GUIDE.md in Resources */,
