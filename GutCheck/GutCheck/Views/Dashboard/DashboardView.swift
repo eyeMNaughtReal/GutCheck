@@ -11,6 +11,7 @@
 //  - Real-time data updates via RefreshManager
 //
 //  Created by Mark Conley on 7/12/25.
+//  Updated with Phase 2 Accessibility - February 23, 2026
 //
 
 import SwiftUI
@@ -74,6 +75,9 @@ struct DashboardView: View {
                                 title: "Today's Focus",
                                 content: dashboardStore.todaysFocus
                             )
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("Today's Focus: \(dashboardStore.todaysFocus)")
+                            .accessibilityIdentifier(AccessibilityIdentifiers.Dashboard.todaysFocusCard)
                             
                             // Avoidance Tip Card
                             DashboardInsightCard(
@@ -82,6 +86,9 @@ struct DashboardView: View {
                                 title: "Watch Out",
                                 content: dashboardStore.avoidanceTip
                             )
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("Watch Out: \(dashboardStore.avoidanceTip)")
+                            .accessibilityIdentifier(AccessibilityIdentifiers.Dashboard.avoidanceTipCard)
                         }
                     }
                     
@@ -103,13 +110,15 @@ struct DashboardView: View {
             // Action Buttons - Side by side at bottom
             HStack(spacing: 16) {
                 Button(action: {
+                    HapticManager.shared.medium()
                     router.startMealLogging()
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "fork.knife")
                             .font(.system(size: 18, weight: .semibold))
+                            .accessibleDecorative()
                         Text("Log Meal")
-                            .font(.system(size: 15, weight: .semibold))
+                            .typography(Typography.button)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -117,15 +126,22 @@ struct DashboardView: View {
                     .background(Color.blue)
                     .cornerRadius(12)
                 }
+                .accessibleButton(
+                    label: "Log Meal",
+                    hint: "Tap to log a new meal"
+                )
+                .accessibilityIdentifier(AccessibilityIdentifiers.Dashboard.logMealButton)
                 
                 Button(action: {
+                    HapticManager.shared.medium()
                     router.startSymptomLogging()
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "heart.text.square")
                             .font(.system(size: 18, weight: .semibold))
+                            .accessibleDecorative()
                         Text("Log Symptom")
-                            .font(.system(size: 15, weight: .semibold))
+                            .typography(Typography.button)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -133,6 +149,11 @@ struct DashboardView: View {
                     .background(Color.purple)
                     .cornerRadius(12)
                 }
+                .accessibleButton(
+                    label: "Log Symptom",
+                    hint: "Tap to log symptoms"
+                )
+                .accessibilityIdentifier(AccessibilityIdentifiers.Dashboard.logSymptomButton)
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
@@ -214,7 +235,7 @@ struct HealthScoreCard: View {
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Health Score")
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .foregroundColor(ColorTheme.secondaryText)
                     
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
@@ -223,12 +244,12 @@ struct HealthScoreCard: View {
                             .foregroundColor(scoreColor)
                         
                         Text("/10")
-                            .font(.title)
+                            .typography(Typography.title)
                             .foregroundColor(ColorTheme.secondaryText)
                     }
                     
                     Text(scoreLabel)
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .foregroundColor(scoreColor)
                         .fontWeight(.medium)
                 }
@@ -252,6 +273,7 @@ struct HealthScoreCard: View {
                         .font(.system(size: 28))
                         .foregroundColor(scoreColor)
                 }
+                .accessibleDecorative()
             }
             
             // Progress bar alternative
@@ -270,6 +292,7 @@ struct HealthScoreCard: View {
                 }
             }
             .frame(height: 6)
+            .accessibleDecorative()
         }
         .padding(20)
         .background(
@@ -277,6 +300,9 @@ struct HealthScoreCard: View {
                 .fill(ColorTheme.cardBackground)
                 .shadow(color: ColorTheme.shadowColor.opacity(0.1), radius: 8, x: 0, y: 2)
         )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Health Score: \(score) out of 10, \(scoreLabel)")
+        .accessibilityIdentifier(AccessibilityIdentifiers.Dashboard.healthScoreCard)
     }
 }
 
@@ -296,15 +322,16 @@ struct DashboardInsightCard: View {
                     .frame(width: 32, height: 32)
                     .background(iconColor.opacity(0.15))
                     .cornerRadius(8)
+                    .accessibleDecorative()
                 
                 Text(title)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .fontWeight(.semibold)
                     .foregroundColor(ColorTheme.primaryText)
             }
             
             Text(content)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundColor(ColorTheme.secondaryText)
                 .lineLimit(4)
                 .multilineTextAlignment(.leading)
@@ -328,14 +355,18 @@ struct FloatingActionButton: View {
     let action: () -> Void
     
     var body: some View {
-        Button(action: action) {
+        Button(action: {
+            HapticManager.shared.medium()
+            action()
+        }) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(.white)
+                    .accessibleDecorative()
                 
                 Text(label)
-                    .font(.system(size: 15, weight: .semibold))
+                    .typography(Typography.button)
                     .foregroundColor(.white)
             }
             .padding(.horizontal, 20)
@@ -346,6 +377,10 @@ struct FloatingActionButton: View {
                     .shadow(color: color.opacity(0.4), radius: 8, x: 0, y: 4)
             )
         }
+        .accessibleButton(
+            label: label,
+            hint: "Tap to \(label.lowercased())"
+        )
     }
 }
 

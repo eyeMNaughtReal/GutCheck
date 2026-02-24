@@ -3,6 +3,7 @@
 //  GutCheck
 //
 //  Created by Mark Conley on 7/12/25.
+//  Updated with Phase 2 Accessibility - February 23, 2026
 //
 
 import SwiftUI
@@ -51,6 +52,7 @@ struct CalendarView: View {
             // Floating Action Button for logging
             if selectedTab == .meals || selectedTab == .symptoms {
                 Button(action: {
+                    HapticManager.shared.medium()
                     if selectedTab == .meals {
                         router.startMealLogging()
                     } else if selectedTab == .symptoms {
@@ -60,9 +62,10 @@ struct CalendarView: View {
                     HStack(spacing: 8) {
                         Image(systemName: selectedTab == .meals ? "plus.circle.fill" : "plus.circle.fill")
                             .font(.system(size: 20))
+                            .accessibleDecorative()
                         
                         Text("Log \(selectedTab == .meals ? "Meal" : "Symptom")")
-                            .fontWeight(.semibold)
+                            .typography(Typography.button)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
@@ -71,6 +74,11 @@ struct CalendarView: View {
                     .cornerRadius(24)
                     .shadow(color: ColorTheme.shadowColor.opacity(0.3), radius: 5, x: 0, y: 2)
                 }
+                .accessibleButton(
+                    label: "Log \(selectedTab == .meals ? "Meal" : "Symptom")",
+                    hint: selectedTab == .meals ? "Tap to log a new meal" : "Tap to log new symptoms"
+                )
+                .accessibilityIdentifier(AccessibilityIdentifiers.Calendar.floatingActionButton)
                 .padding(.trailing, 16)
                 .padding(.bottom, 100) // Position above the tab bar
             }
@@ -128,23 +136,29 @@ struct CalendarContentView: View {
             if selectedTab == .meals || selectedTab == nil {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Meals on \(viewModel.formattedDate)")
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .padding(.horizontal)
+                        .accessibleHeader("Meals on \(viewModel.formattedDate)")
                     
                     if viewModel.isLoadingMeals {
                         ProgressView()
                             .frame(maxWidth: .infinity, minHeight: 100)
+                            .accessibilityLabel("Loading meals")
                     } else if viewModel.meals.isEmpty {
                         Text("No meals logged for this date")
+                            .typography(Typography.body)
                             .foregroundColor(ColorTheme.secondaryText)
                             .frame(maxWidth: .infinity, minHeight: 60)
+                            .accessibilityLabel("No meals logged for \(viewModel.formattedDate)")
+                            .accessibilityIdentifier(AccessibilityIdentifiers.Calendar.emptyState)
                     } else {
-                        ForEach(viewModel.meals) { meal in
+                        ForEach(Array(viewModel.meals.enumerated()), id: \.element.id) { index, meal in
                             MealCalendarRow(meal: meal) {
-                                // Tap to view details
+                                HapticManager.shared.light()
                                 router.viewMealDetails(id: meal.id)
                             }
                             .padding(.horizontal)
+                            .accessibilityIdentifier(AccessibilityIdentifiers.Calendar.mealItem(index))
                         }
                     }
                 }
@@ -152,23 +166,29 @@ struct CalendarContentView: View {
             if selectedTab == .symptoms || selectedTab == nil {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Symptoms on \(viewModel.formattedDate)")
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .padding(.horizontal)
+                        .accessibleHeader("Symptoms on \(viewModel.formattedDate)")
                     
                     if viewModel.isLoadingSymptoms {
                         ProgressView()
                             .frame(maxWidth: .infinity, minHeight: 100)
+                            .accessibilityLabel("Loading symptoms")
                     } else if viewModel.symptoms.isEmpty {
                         Text("No symptoms logged for this date")
+                            .typography(Typography.body)
                             .foregroundColor(ColorTheme.secondaryText)
                             .frame(maxWidth: .infinity, minHeight: 60)
+                            .accessibilityLabel("No symptoms logged for \(viewModel.formattedDate)")
+                            .accessibilityIdentifier(AccessibilityIdentifiers.Calendar.emptyState)
                     } else {
-                        ForEach(viewModel.symptoms) { symptom in
+                        ForEach(Array(viewModel.symptoms.enumerated()), id: \.element.id) { index, symptom in
                             SymptomCalendarRow(symptom: symptom) {
-                                // Tap to view details
+                                HapticManager.shared.light()
                                 router.viewSymptomDetails(id: symptom.id)
                             }
                             .padding(.horizontal)
+                            .accessibilityIdentifier(AccessibilityIdentifiers.Calendar.symptomItem(index))
                         }
                     }
                 }
