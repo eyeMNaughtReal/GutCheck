@@ -45,10 +45,9 @@ class LocalProfileImageStrategy: ProfileImageStrategy {
         
         await MainActor.run {
             delegate?.strategyDidUpdateProgress(1.0)
+            print("📢 LocalProfileImageStrategy: Local image saved, posting refresh notification")
+            NotificationCenter.default.post(name: .profileImageUpdated, object: nil)
         }
-        
-        print("📢 LocalProfileImageStrategy: Local image saved, posting refresh notification")
-        NotificationCenter.default.post(name: .profileImageUpdated, object: nil)
         
         return localImagePath
     }
