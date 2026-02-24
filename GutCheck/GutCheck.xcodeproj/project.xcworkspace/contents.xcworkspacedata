@@ -4,4 +4,16 @@
    <FileRef
       location = "self:">
    </FileRef>
+   <FileRef
+      location = "group:generate_color_assets.sh">
+   </FileRef>
+   <FileRef
+      location = "group:COLOR_ASSETS_SETUP.md">
+   </FileRef>
+   <FileRef
+      location = "group:generate_color_assets.py">
+   </FileRef>
+   <FileRef
+      location = "group:QUICK_COLOR_FIX.md">
+   </FileRef>
 </Workspace>

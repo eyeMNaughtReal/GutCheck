@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6D260A922F4CFF370070459D /* PHASE_2_PROGRESS.md in Resources */ = {isa = PBXBuildFile; fileRef = 6D260A912F4CFF370070459D /* PHASE_2_PROGRESS.md */; };
+		6D260A942F4D22CF0070459D /* COLOR_ASSET_FIX.md in Resources */ = {isa = PBXBuildFile; fileRef = 6D260A932F4D22CF0070459D /* COLOR_ASSET_FIX.md */; };
 		6DEADC292E1F365E00CAF395 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 6DEADC282E1F365E00CAF395 /* FirebaseAnalytics */; };
 		6DEADC2B2E1F365E00CAF395 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 6DEADC2A2E1F365E00CAF395 /* FirebaseAuth */; };
 		6DEADC2D2E1F365E00CAF395 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 6DEADC2C2E1F365E00CAF395 /* FirebaseFirestore */; };
@@ -44,6 +46,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		6D260A912F4CFF370070459D /* PHASE_2_PROGRESS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PHASE_2_PROGRESS.md; sourceTree = "<group>"; };
+		6D260A932F4D22CF0070459D /* COLOR_ASSET_FIX.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = COLOR_ASSET_FIX.md; sourceTree = "<group>"; };
 		6DEADBED2E1F312300CAF395 /* GutCheck.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GutCheck.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6DEADBFA2E1F312500CAF395 /* GutCheckTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GutCheckTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6DEADC042E1F312500CAF395 /* GutCheckUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GutCheckUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -142,6 +146,8 @@
 				6DF163412F4CDEEE002C0671 /* Typography.swift */,
 				6DF163432F4CDF29002C0671 /* PHASE_1_SUMMARY.md */,
 				6DF163472F4CE393002C0671 /* DASHBOARD_UI_POLISH.md */,
+				6D260A912F4CFF370070459D /* PHASE_2_PROGRESS.md */,
+				6D260A932F4D22CF0070459D /* COLOR_ASSET_FIX.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -282,10 +288,12 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6D260A922F4CFF370070459D /* PHASE_2_PROGRESS.md in Resources */,
 				6DF163362F4CDBF1002C0671 /* ACCESSIBILITY_IMPLEMENTATION_CHECKLIST.md in Resources */,
 				6DF163442F4CDF29002C0671 /* PHASE_1_SUMMARY.md in Resources */,
 				6DF163342F4CDB1B002C0671 /* APPLE_DESIGN_STANDARDS_REVIEW.md in Resources */,
 				6DF163482F4CE393002C0671 /* DASHBOARD_UI_POLISH.md in Resources */,
+				6D260A942F4D22CF0070459D /* COLOR_ASSET_FIX.md in Resources */,
 				6DF1633A2F4CDE20002C0671 /* PHASE_0_SUMMARY.md in Resources */,
 				6DF1632C2F4CD52B002C0671 /* firestore 2.rules in Resources */,
 				6DF163302F4CD6F6002C0671 /* FIREBASE_SETUP_GUIDE.md in Resources */,
@@ -481,6 +489,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = GutCheck/GutCheckDebug.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YDBLTKHK3M;
@@ -489,6 +498,11 @@
 				INFOPLIST_FILE = GutCheck/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = GutCheck;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_NSCameraUsageDescription = "GutCheck uses your camera to scan food barcodes for accurate nutrition data and estimate portion sizes using advanced scanning technology.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "GutCheck uses your health data to provide personalized nutrition insights and help identify food triggers that may affect your digestive health.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "GutCheck saves your meal nutrition and symptom data to the Health app to help you track patterns and share with healthcare providers.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "GutCheck can optionally use your location to suggest nearby restaurants and provide contextual meal logging when dining out.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "GutCheck can save meal photos to your photo library to help you visually track your food intake and portion sizes.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -502,6 +516,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.MarkConley.GutCheck;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -521,6 +536,11 @@
 				INFOPLIST_FILE = GutCheck/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = GutCheck;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.healthcare-fitness";
+				INFOPLIST_KEY_NSCameraUsageDescription = "GutCheck uses your camera to scan food barcodes for accurate nutrition data and estimate portion sizes using advanced scanning technology.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "GutCheck uses your health data to provide personalized nutrition insights and help identify food triggers that may affect your digestive health.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "GutCheck saves your meal nutrition and symptom data to the Health app to help you track patterns and share with healthcare providers.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "GutCheck can optionally use your location to suggest nearby restaurants and provide contextual meal logging when dining out.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "GutCheck can save meal photos to your photo library to help you visually track your food intake and portion sizes.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

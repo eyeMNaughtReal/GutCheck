@@ -4,6 +4,7 @@
 //
 //  Refactored symptom logging view using modular ViewModels and components
 //  Updated for professional medical application design
+//  Updated with Phase 2 Accessibility - February 23, 2026
 //
 
 import SwiftUI
@@ -25,17 +26,18 @@ struct BristolScaleSelectionView: View {
         VStack(alignment: .leading, spacing: 16) {
             // ...existing code...
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 8)], spacing: 8) {
-                ForEach(bristolInfo, id: \ .type) { info in
+                ForEach(Array(bristolInfo.enumerated()), id: \.element.type) { index, info in
                     Button(action: {
+                        HapticManager.shared.bristolScaleSelected()
                         selectedStoolType = info.type
                     }) {
                         VStack(spacing: 4) {
                             Text("\(info.type.rawValue)")
-                                .font(.title2)
+                                .typography(Typography.title2)
                                 .fontWeight(.bold)
                                 .foregroundColor(selectedStoolType == info.type ? .white : bristolTextColor(for: info.type))
                             Text(info.summary)
-                                .font(.caption)
+                                .typography(Typography.caption)
                                 .foregroundColor(selectedStoolType == info.type ? .white.opacity(0.9) : ColorTheme.secondaryText)
                                 .multilineTextAlignment(.center)
                                 .lineLimit(1)
@@ -59,7 +61,16 @@ struct BristolScaleSelectionView: View {
                                 .stroke(selectedStoolType == info.type ? bristolColor(for: info.type) : ColorTheme.border.opacity(0.3), lineWidth: selectedStoolType == info.type ? 2 : 1)
                         )
                     }
-                    .accessibilityLabel("Type \(info.type.rawValue): \(info.summary), \(info.description)")
+                    .accessibleSelectable(
+                        label: AccessibilityText.bristolScale(
+                            type: info.type.rawValue,
+                            summary: "\(info.summary), \(info.description)",
+                            isSelected: selectedStoolType == info.type
+                        ),
+                        isSelected: selectedStoolType == info.type
+                    )
+                    .accessibilityHint("Tap to select this Bristol type")
+                    .accessibilityIdentifier(AccessibilityIdentifiers.SymptomLogger.bristolType(info.type.rawValue))
                 }
             }
         }
@@ -106,11 +117,12 @@ struct PainLevelSliderView: View {
                 HStack(spacing: 0) {
                     ForEach(0..<labels.count, id: \ .self) { i in
                         Button(action: {
+                            HapticManager.shared.selection()
                             selectedPainLevel = i
                         }) {
                             VStack(spacing: 4) {
                                 Text("\(i)")
-                                    .font(.title2)
+                                    .typography(Typography.title2)
                                     .fontWeight(.semibold)
                                     .foregroundColor(selectedPainLevel == i ? .white : painColor(for: i))
                                     .frame(width: 40, height: 40)
@@ -123,13 +135,23 @@ struct PainLevelSliderView: View {
                                             .stroke(painColor(for: i), lineWidth: selectedPainLevel == i ? 2 : 1)
                                     )
                                 Text(labels[i])
-                                    .font(.caption2)
+                                    .typography(Typography.caption2)
                                     .fontWeight(.medium)
                                     .foregroundColor(selectedPainLevel == i ? ColorTheme.primaryText : ColorTheme.secondaryText)
                             }
                         }
                         .frame(maxWidth: .infinity)
                         .buttonStyle(PlainButtonStyle())
+                        .accessibleSelectable(
+                            label: AccessibilityText.painLevel(
+                                level: i,
+                                description: "\(labels[i]): \(descriptions[i])",
+                                isSelected: selectedPainLevel == i
+                            ),
+                            isSelected: selectedPainLevel == i
+                        )
+                        .accessibilityHint("Tap to select pain level \(i)")
+                        .accessibilityIdentifier(AccessibilityIdentifiers.SymptomLogger.painLevel(i))
                     }
                 }
                 if selectedPainLevel < descriptions.count {
@@ -179,6 +201,7 @@ struct UrgencyLevelSelectionView: View {
             HStack(spacing: 8) {
                 ForEach(urgencyLevels, id: \.0) { (level, label) in
                     Button(action: {
+                        HapticManager.shared.selection()
                         selectedUrgencyLevel = level
                     }) {
                         VStack(spacing: 8) {
@@ -193,7 +216,7 @@ struct UrgencyLevelSelectionView: View {
                                 )
                             
                             Text(label)
-                                .font(.caption)
+                                .typography(Typography.caption)
                                 .fontWeight(.medium)
                                 .foregroundColor(selectedUrgencyLevel == level ? ColorTheme.primaryText : ColorTheme.secondaryText)
                         }
@@ -205,6 +228,12 @@ struct UrgencyLevelSelectionView: View {
                         )
                     }
                     .buttonStyle(PlainButtonStyle())
+                    .accessibleSelectable(
+                        label: "Urgency level: \(label)",
+                        isSelected: selectedUrgencyLevel == level
+                    )
+                    .accessibilityHint("Tap to select \(label) urgency")
+                    .accessibilityIdentifier(AccessibilityIdentifiers.SymptomLogger.urgencyLevel(label))
                 }
             }
         }
@@ -235,13 +264,14 @@ struct TagSelectionView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Tags")
-                .font(.title3)
+                .typography(Typography.title3)
                 .fontWeight(.semibold)
                 .foregroundColor(ColorTheme.primaryText)
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 80), spacing: 8)], spacing: 8) {
                 ForEach(allTags, id: \.self) { tag in
                     Button(action: {
+                        HapticManager.shared.selection()
                         if selectedTags.contains(tag) {
                             selectedTags.remove(tag)
                         } else {
@@ -249,7 +279,7 @@ struct TagSelectionView: View {
                         }
                     }) {
                         Text(tag.capitalized)
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .fontWeight(.medium)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
@@ -264,6 +294,12 @@ struct TagSelectionView: View {
                             )
                     }
                     .buttonStyle(PlainButtonStyle())
+                    .accessibleSelectable(
+                        label: tag.capitalized,
+                        isSelected: selectedTags.contains(tag)
+                    )
+                    .accessibilityHint("Tap to toggle \(tag) tag")
+                    .accessibilityIdentifier(AccessibilityIdentifiers.SymptomLogger.tag(tag))
                 }
             }
         }
@@ -292,12 +328,14 @@ struct LogSymptomView: View {
                     SectionHeader(title: "Bristol Stool Scale") {
                         infoTypeToShow = .bristol
                     }
+                    .accessibilityIdentifier(AccessibilityIdentifiers.SymptomLogger.bristolScaleSection)
                     BristolScaleSelectionView(selectedStoolType: $coordinator.selectedStoolType)
 
                     // Pain Level
                     SectionHeader(title: "Pain Level") {
                         infoTypeToShow = .pain
                     }
+                    .accessibilityIdentifier(AccessibilityIdentifiers.SymptomLogger.painLevelSection)
                     PainLevelSliderView(selectedPainLevel: $coordinator.selectedPainLevel)
 
                     // Urgency Level
@@ -308,6 +346,7 @@ struct LogSymptomView: View {
 
                     // Tag selection
                     TagSelectionView(selectedTags: $coordinator.selectedTags)
+                        .accessibilityIdentifier(AccessibilityIdentifiers.SymptomLogger.tagsSection)
 
                     // Notes
                     notesSection
@@ -347,15 +386,22 @@ struct SectionHeader: View {
     var body: some View {
         HStack(spacing: 8) {
             Text(title)
-                .font(.title3)
+                .typography(Typography.title3)
                 .fontWeight(.semibold)
                 .foregroundColor(ColorTheme.primaryText)
-            Button(action: onInfo) {
+                .accessibleHeader(title)
+            Button(action: {
+                HapticManager.shared.light()
+                onInfo()
+            }) {
                 Image(systemName: "info.circle")
                     .font(.title3)
                     .foregroundColor(ColorTheme.primary)
             }
-            .accessibilityLabel("Info about " + title)
+            .accessibleButton(
+                label: "Information about \(title)",
+                hint: "Tap to learn more about \(title)"
+            )
             Spacer()
         }
         .padding(.bottom, 2)
@@ -368,16 +414,19 @@ struct SectionHeader: View {
     private var symptomTimeSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Symptom Time")
-                .font(.title3)
+                .typography(Typography.title3)
                 .fontWeight(.semibold)
                 .foregroundColor(ColorTheme.primaryText)
             Button(action: {
+                HapticManager.shared.light()
                 showingDatePicker = true
             }) {
                 HStack {
                     Image(systemName: "calendar")
                         .foregroundColor(ColorTheme.primary)
+                        .accessibleDecorative()
                     Text(coordinator.symptomDate.formattedDateTime)
+                        .typography(Typography.body)
                         .foregroundColor(ColorTheme.primaryText)
                 }
                 .frame(maxWidth: .infinity)
@@ -389,6 +438,11 @@ struct SectionHeader: View {
                         .stroke(ColorTheme.border, lineWidth: 1)
                 )
             }
+            .accessibleButton(
+                label: "Symptom date and time: \(coordinator.symptomDate.formattedDateTime)",
+                hint: "Tap to change when this symptom occurred"
+            )
+            .accessibilityIdentifier(AccessibilityIdentifiers.SymptomLogger.dateTimeButton)
         }
         .padding()
         .background(ColorTheme.surface)
@@ -398,11 +452,12 @@ struct SectionHeader: View {
     private var notesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Notes")
-                .font(.title3)
+                .typography(Typography.title3)
                 .fontWeight(.semibold)
                 .foregroundColor(ColorTheme.primaryText)
             
             TextEditor(text: $coordinator.notes)
+                .typography(Typography.body)
                 .frame(minHeight: 100)
                 .padding(12)
                 .background(ColorTheme.cardBackground)
@@ -411,6 +466,9 @@ struct SectionHeader: View {
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(ColorTheme.border.opacity(0.3), lineWidth: 1)
                 )
+                .accessibleFormField(label: "Notes")
+                .accessibilityHint("Add any additional details about your symptoms")
+                .accessibilityIdentifier(AccessibilityIdentifiers.SymptomLogger.notesField)
         }
         .padding()
         .background(ColorTheme.surface)
@@ -421,20 +479,24 @@ struct SectionHeader: View {
         VStack(spacing: 12) {
             // Save button
             Button(action: {
+                HapticManager.shared.dataSaved()
                 coordinator.saveSymptom()
+                AccessibilityAnnouncement.announce("Symptom saved successfully")
             }) {
                 HStack(spacing: 8) {
                     if coordinator.isSaving {
                         ProgressView()
                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                             .scaleEffect(0.9)
+                            .accessibleDecorative()
                     } else {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.title3)
+                            .accessibleDecorative()
                     }
                     
                     Text(coordinator.isSaving ? "Saving..." : "Save Symptom")
-                        .font(.headline)
+                        .typography(Typography.button)
                         .fontWeight(.semibold)
                 }
                 .foregroundColor(.white)
@@ -446,14 +508,23 @@ struct SectionHeader: View {
                 )
             }
             .disabled(!coordinator.isFormValid || coordinator.isSaving)
+            .accessibleButton(
+                label: coordinator.isSaving ? "Saving symptom" : "Save Symptom",
+                hint: coordinator.isFormValid 
+                    ? "Tap to save your symptom log"
+                    : "Complete Bristol Scale selection to enable saving"
+            )
+            .accessibilityIdentifier(AccessibilityIdentifiers.SymptomLogger.saveButton)
             
             HStack(spacing: 12) {
                 // Clear button
                 Button(action: {
+                    HapticManager.shared.light()
                     coordinator.resetForm()
+                    AccessibilityAnnouncement.announce("Form cleared")
                 }) {
                     Text("Clear")
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(ColorTheme.secondaryText)
                         .frame(maxWidth: .infinity)
@@ -468,13 +539,21 @@ struct SectionHeader: View {
                         )
                 }
                 .disabled(!coordinator.hasChanges)
+                .accessibleButton(
+                    label: "Clear",
+                    hint: coordinator.hasChanges 
+                        ? "Clear all entered symptom information"
+                        : "No changes to clear"
+                )
                 
                 // Remind me later button
                 Button(action: {
+                    HapticManager.shared.light()
                     coordinator.remindMeLater()
+                    AccessibilityAnnouncement.announce("Reminder set")
                 }) {
                     Text("Remind Later")
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(ColorTheme.primary)
                         .frame(maxWidth: .infinity)
@@ -488,6 +567,10 @@ struct SectionHeader: View {
                                 .stroke(ColorTheme.primary.opacity(0.3), lineWidth: 1)
                         )
                 }
+                .accessibleButton(
+                    label: "Remind me later",
+                    hint: "Set a reminder to log symptoms later"
+                )
             }
         }
         .padding()
@@ -496,16 +579,52 @@ struct SectionHeader: View {
     }
 
     private var datePickerSheet: some View {
-        DatePicker(
-            "Select Date and Time",
-            selection: $coordinator.symptomDate,
-            displayedComponents: [.date, .hourAndMinute]
-        )
-        .datePickerStyle(.graphical)
-        .accentColor(ColorTheme.primary)
-        .padding()
-        .background(ColorTheme.surface)
-        .cornerRadius(16)
+        NavigationStack {
+            VStack {
+                DatePicker(
+                    "Select Date and Time",
+                    selection: $coordinator.symptomDate,
+                    displayedComponents: [.date, .hourAndMinute]
+                )
+                .datePickerStyle(.graphical)
+                .accentColor(ColorTheme.primary)
+                .padding()
+                .accessibleFormField(
+                    label: "Symptom date and time",
+                    value: coordinator.symptomDate.formatted(date: .abbreviated, time: .shortened)
+                )
+                .accessibilityHint("Choose when this symptom occurred")
+                
+                Spacer()
+                
+                Button("Done") {
+                    HapticManager.shared.light()
+                    AccessibilityAnnouncement.announce("Date and time updated")
+                    showingDatePicker = false
+                }
+                .buttonStyle(.borderedProminent)
+                .padding()
+                .accessibleButton(
+                    label: "Done",
+                    hint: "Confirm the selected date and time"
+                )
+            }
+            .background(ColorTheme.surface)
+            .navigationTitle("Symptom Time")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        HapticManager.shared.light()
+                        showingDatePicker = false
+                    }
+                    .accessibleButton(
+                        label: "Cancel",
+                        hint: "Discard changes and close"
+                    )
+                }
+            }
+        }
     }
 }
 

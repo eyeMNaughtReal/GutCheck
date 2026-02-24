@@ -14,39 +14,39 @@ struct ColorTheme {
     /// Primary brand color - Calming teal that works in both modes
     /// Light: Rich teal for trust and health
     /// Dark: Softer teal for reduced eye strain
-    static let primary = Color("PrimaryColor", bundle: nil)
+    static let primary = Color("GutCheckPrimary", bundle: nil)
     
     /// Accent color - Complementary color for highlights and CTAs
     /// Light: Warm coral for energy and action
     /// Dark: Softer coral for contrast
-    static let accent = Color("AccentColor", bundle: nil)
+    static let accent = Color("GutCheckAccent", bundle: nil)
     
     /// Secondary accent - Supporting color for variety
     /// Light: Soft purple for wellness
     /// Dark: Muted purple
-    static let secondary = Color("SecondaryColor", bundle: nil)
+    static let secondary = Color("GutCheckSecondary", bundle: nil)
     
     // MARK: - Background Colors (Adaptive)
     
     /// Main background - Adapts to system appearance
-    static let background = Color("BackgroundColor", bundle: nil)
+    static let background = Color("GutCheckBackground", bundle: nil)
     
     /// Card background - Elevated surfaces
-    static let cardBackground = Color("CardBackground", bundle: nil)
+    static let cardBackground = Color("GutCheckCardBackground", bundle: nil)
     
     /// Surface color - For subtle elevation differences
-    static let surface = Color("SurfaceColor", bundle: nil)
+    static let surface = Color("GutCheckSurface", bundle: nil)
     
     // MARK: - Text Colors (Adaptive)
     
     /// Primary text - High contrast, readable in both modes
-    static let primaryText = Color("PrimaryText", bundle: nil)
+    static let primaryText = Color("GutCheckPrimaryText", bundle: nil)
     
     /// Secondary text - Slightly muted for hierarchy
-    static let secondaryText = Color("SecondaryText", bundle: nil)
+    static let secondaryText = Color("GutCheckSecondaryText", bundle: nil)
     
     /// Tertiary text - Even more muted for supporting info
-    static let tertiaryText = Color("TertiaryText", bundle: nil)
+    static let tertiaryText = Color("GutCheckTertiaryText", bundle: nil)
     
     /// Light text - For use on dark backgrounds
     static let lightText = Color.white
@@ -56,29 +56,29 @@ struct ColorTheme {
     
     /// Success color - Positive health indicators (good scores, achievements)
     /// Uses green but carefully chosen shades for color-blind accessibility
-    static let success = Color("SuccessColor", bundle: nil)
+    static let success = Color("GutCheckSuccess", bundle: nil)
     
     /// Warning color - Caution indicators (moderate symptoms, attention needed)
     /// Amber/orange that works in both modes
-    static let warning = Color("WarningColor", bundle: nil)
+    static let warning = Color("GutCheckWarning", bundle: nil)
     
     /// Error/Alert color - Critical health concerns, errors
     /// Red that maintains readability and isn't too alarming
-    static let error = Color("ErrorColor", bundle: nil)
+    static let error = Color("GutCheckError", bundle: nil)
     
     /// Info color - Informational messages, tips
-    static let info = Color("InfoColor", bundle: nil)
+    static let info = Color("GutCheckInfo", bundle: nil)
     
     // MARK: - Interactive Elements
     
     /// Border color for inputs and dividers
-    static let border = Color("BorderColor", bundle: nil)
+    static let border = Color("GutCheckBorder", bundle: nil)
     
     /// Active/focused border
     static let activeBorder = primary
     
     /// Disabled state
-    static let disabled = Color("DisabledColor", bundle: nil)
+    static let disabled = Color("GutCheckDisabled", bundle: nil)
     
     /// Shadow color
     static let shadowColor = Color.black.opacity(0.1)
@@ -92,7 +92,7 @@ struct ColorTheme {
     static let bowelTracking = secondary
     
     /// Symptom tracking indicator
-    static let symptomTracking = Color("SymptomColor", bundle: nil)
+    static let symptomTracking = Color("GutCheckSymptom", bundle: nil)
     
     // MARK: - Button Colors (using semantic colors)
     
@@ -101,7 +101,7 @@ struct ColorTheme {
     
     // MARK: - Input Colors
     
-    static let inputBackground = Color("InputBackground", bundle: nil)
+    static let inputBackground = Color("GutCheckInputBackground", bundle: nil)
     
     // MARK: - Legacy Support (for backward compatibility)
     

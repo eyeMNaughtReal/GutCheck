@@ -3,6 +3,7 @@
 //  GutCheck
 //
 //  Created on 7/14/25.
+//  Updated with Phase 2 Accessibility - February 23, 2026
 //
 
 import SwiftUI
@@ -26,7 +27,7 @@ struct MealBuilderView: View {
             VStack(spacing: 16) {
                 // Meal name field
                 TextField("Meal name", text: $mealService.mealName)
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .padding()
                     .background(ColorTheme.surface)
                     .cornerRadius(12)
@@ -34,12 +35,16 @@ struct MealBuilderView: View {
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(ColorTheme.border, lineWidth: 1)
                     )
+                    .accessibleFormField(label: "Meal name")
+                    .accessibilityHint("Enter a descriptive name for this meal, like Breakfast or Chicken Salad")
+                    .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.mealNameField)
                 
                 VStack(spacing: 12) {
                     // Meal type picker
                     HStack {
                         Image(systemName: "fork.knife")
                             .foregroundColor(ColorTheme.primary)
+                            .accessibleDecorative()
                         
                         Picker("Type", selection: $mealService.mealType) {
                             ForEach(MealType.allCases, id: \.self) { type in
@@ -47,6 +52,15 @@ struct MealBuilderView: View {
                             }
                         }
                         .pickerStyle(.menu)
+                        .accessibleFormField(
+                            label: "Meal type",
+                            value: mealService.mealType.rawValue.capitalized
+                        )
+                        .accessibilityHint("Select the type of meal: breakfast, lunch, dinner, or snack")
+                        .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.mealTypePicker)
+                        .onChange(of: mealService.mealType) { _, _ in
+                            HapticManager.shared.selection()
+                        }
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -59,12 +73,15 @@ struct MealBuilderView: View {
                     
                     // Date/time button
                     Button(action: {
+                        HapticManager.shared.light()
                         showingDatePicker = true
                     }) {
                         HStack {
                             Image(systemName: "calendar")
                                 .foregroundColor(ColorTheme.primary)
+                                .accessibleDecorative()
                             Text(mealService.formattedDateTime)
+                                .typography(Typography.body)
                                 .foregroundColor(ColorTheme.primaryText)
                         }
                         .frame(maxWidth: .infinity)
@@ -76,6 +93,11 @@ struct MealBuilderView: View {
                                 .stroke(ColorTheme.border, lineWidth: 1)
                         )
                     }
+                    .accessibleButton(
+                        label: "Date and time: \(mealService.formattedDateTime)",
+                        hint: "Tap to change the date and time of this meal"
+                    )
+                    .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.dateTimeButton)
                 }
             }
             .padding()
@@ -93,36 +115,45 @@ struct MealBuilderView: View {
                     NutritionSummaryCard(nutrition: mealService.totalNutrition)
                         .padding(.horizontal)
                         .padding(.top)
+                        .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.nutritionSummary)
                     
                     // Food items
                     if mealService.currentMeal.isEmpty {
                         emptyStateView
                             .padding()
+                            .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.emptyState)
                     } else {
-                        ForEach(mealService.currentMeal) { item in
+                        ForEach(Array(mealService.currentMeal.enumerated()), id: \.element.id) { index, item in
                             UnifiedFoodItemRow(
                                 item: item,
                                 style: .mealBuilder,
                                 actions: FoodItemActions(
                                     onTap: {
+                                        HapticManager.shared.light()
                                         editingFoodItem = item
                                     },
                                     onDelete: {
+                                        HapticManager.shared.warning()
                                         mealService.removeFoodItem(item)
+                                        
+                                        // Announce deletion to VoiceOver
+                                        AccessibilityAnnouncement.announce("\(item.name) removed from meal")
                                     }
                                 )
                             )
                             .padding(.horizontal)
+                            .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.foodItem(index))
                         }
                     }
                     
                     // Notes field
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Notes")
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundColor(ColorTheme.secondaryText)
                         
                         TextEditor(text: $mealService.notes)
+                            .typography(Typography.body)
                             .frame(minHeight: 100)
                             .padding(8)
                             .background(ColorTheme.surface)
@@ -131,6 +162,9 @@ struct MealBuilderView: View {
                                 RoundedRectangle(cornerRadius: 12)
                                     .stroke(ColorTheme.border, lineWidth: 1)
                             )
+                            .accessibleFormField(label: "Notes")
+                            .accessibilityHint("Add any additional notes about this meal, like how you felt or special ingredients")
+                            .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.notesField)
                     }
                     .padding(.horizontal)
                     
@@ -143,11 +177,13 @@ struct MealBuilderView: View {
             VStack(spacing: 12) {
                 // Add food button
                 Button(action: {
+                    HapticManager.shared.medium()
                     showingFoodOptions = true
                 }) {
                     HStack {
                         Image(systemName: "plus.circle.fill")
                         Text("Add Food Item")
+                            .typography(Typography.button)
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -155,10 +191,16 @@ struct MealBuilderView: View {
                     .foregroundColor(.white)
                     .cornerRadius(12)
                 }
+                .accessibleButton(
+                    label: "Add Food Item",
+                    hint: "Tap to search for and add food items to your meal"
+                )
+                .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.addFoodButton)
                 
                 HStack(spacing: 12) {
                     // Cancel button
                     Button(action: {
+                        HapticManager.shared.light()
                         if !mealService.currentMeal.isEmpty {
                             showingDiscard = true
                         } else {
@@ -166,6 +208,7 @@ struct MealBuilderView: View {
                         }
                     }) {
                         Text("Cancel")
+                            .typography(Typography.button)
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(ColorTheme.surface)
@@ -176,20 +219,34 @@ struct MealBuilderView: View {
                                     .stroke(ColorTheme.border, lineWidth: 1)
                             )
                     }
+                    .accessibleButton(
+                        label: "Cancel",
+                        hint: mealService.currentMeal.isEmpty 
+                            ? "Discard this meal and return to the previous screen"
+                            : "Confirm discarding this meal before returning"
+                    )
+                    .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.cancelButton)
                     
                     // Save button
                     Button(action: {
                         Task {
                             do {
+                                HapticManager.shared.success()
                                 _ = try await mealService.saveMeal()
                                 showingConfirmation = true
+                                
+                                // Announce to VoiceOver
+                                AccessibilityAnnouncement.announce("Meal saved successfully")
                             } catch {
+                                HapticManager.shared.error()
                                 // TODO: Show error alert
                                 Swift.print("❌ Failed to save meal: \(error)")
+                                AccessibilityAnnouncement.announce("Failed to save meal")
                             }
                         }
                     }) {
                         Text("Save Meal")
+                            .typography(Typography.button)
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(ColorTheme.accent)
@@ -198,16 +255,25 @@ struct MealBuilderView: View {
                     }
                     .disabled(mealService.currentMeal.isEmpty)
                     .opacity(mealService.currentMeal.isEmpty ? 0.6 : 1)
+                    .accessibleButton(
+                        label: "Save Meal",
+                        hint: mealService.currentMeal.isEmpty 
+                            ? "Add food items before saving"
+                            : "Save this meal to your food diary"
+                    )
+                    .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.saveButton)
                     
                     // Save as Template button (only show when meal name is provided)
                     if !mealService.mealName.isEmpty && !mealService.currentMeal.isEmpty {
                         Button(action: {
+                            HapticManager.shared.medium()
                             showingTemplateSave = true
                         }) {
                             HStack {
                                 Image(systemName: "square.on.square")
                                     .font(.title3)
                                 Text("Save as Template")
+                                    .typography(Typography.button)
                             }
                             .frame(maxWidth: .infinity)
                             .padding()
@@ -215,6 +281,11 @@ struct MealBuilderView: View {
                             .foregroundColor(.white)
                             .cornerRadius(12)
                         }
+                        .accessibleButton(
+                            label: "Save as Template",
+                            hint: "Save this meal as a reusable template for future use"
+                        )
+                        .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.saveTemplateButton)
                     }
                 }
             }
@@ -289,13 +360,14 @@ struct MealBuilderView: View {
             Image(systemName: "fork.knife")
                 .font(.system(size: 48))
                 .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
+                .accessibleDecorative()
             
             Text("No food items yet")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundColor(ColorTheme.secondaryText)
             
             Text("Tap \"Add Food Item\" to start building your meal")
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundColor(ColorTheme.secondaryText.opacity(0.8))
                 .multilineTextAlignment(.center)
         }
@@ -303,6 +375,10 @@ struct MealBuilderView: View {
         .frame(maxWidth: .infinity)
         .background(ColorTheme.surface)
         .cornerRadius(12)
+        .accessibleGroup(
+            label: "No food items yet. Tap Add Food Item button to start building your meal",
+            hint: nil
+        )
     }
 }
 
@@ -314,13 +390,13 @@ struct NutritionSummaryCard: View {
             // Header
             HStack {
                 Text("Nutrition Summary")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundColor(ColorTheme.primaryText)
                 
                 Spacer()
                 
                 Text("\(Int(nutrition.calories ?? 0)) calories")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundColor(ColorTheme.primary)
             }
             
@@ -337,6 +413,15 @@ struct NutritionSummaryCard: View {
         .background(ColorTheme.cardBackground)
         .cornerRadius(12)
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
+        .accessibleGroup(
+            label: AccessibilityText.nutritionSummary(
+                calories: Int(nutrition.calories ?? 0),
+                protein: nutrition.protein ?? 0,
+                carbs: nutrition.carbs ?? 0,
+                fat: nutrition.fat ?? 0
+            ),
+            hint: "Total nutrition information for all food items in this meal"
+        )
     }
 }
 
@@ -349,14 +434,16 @@ struct NutrientLabel: View {
     var body: some View {
         VStack(spacing: 4) {
             Text(name)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundColor(ColorTheme.secondaryText)
             
             Text("\(String(format: "%.1f", value ?? 0)) \(unit)")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundColor(color)
         }
         .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(name): \(String(format: "%.1f", value ?? 0)) \(unit)")
     }
 }
 
@@ -370,22 +457,38 @@ struct DateTimePickerView: View {
                 DatePicker("Select date and time", selection: $date, displayedComponents: [.date, .hourAndMinute])
                     .datePickerStyle(.graphical)
                     .padding()
+                    .accessibleFormField(
+                        label: "Date and time",
+                        value: date.formatted(date: .abbreviated, time: .shortened)
+                    )
+                    .accessibilityHint("Choose the date and time when you ate this meal")
                 
                 Spacer()
                 
                 Button("Done") {
+                    HapticManager.shared.light()
+                    AccessibilityAnnouncement.announce("Date and time updated")
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
                 .padding()
+                .accessibleButton(
+                    label: "Done",
+                    hint: "Confirm the selected date and time"
+                )
             }
             .navigationTitle("Select Date & Time")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
+                        HapticManager.shared.light()
                         dismiss()
                     }
+                    .accessibleButton(
+                        label: "Cancel",
+                        hint: "Discard changes and close"
+                    )
                 }
             }
         }
