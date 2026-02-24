@@ -37,6 +37,19 @@ struct SettingsView: View {
                     }
                     .accessibilityLabel("Units: \(settingsVM.unitOfMeasure.displayName)")
                     .accessibilityHint("Tap to change measurement units")
+
+                    NavigationLink(destination: AppearanceSelectionView()) {
+                        HStack {
+                            Text("Appearance")
+                                .typography(Typography.body)
+                            Spacer()
+                            Text(settingsVM.colorScheme.displayName)
+                                .typography(Typography.body)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .accessibilityLabel("Appearance: \(settingsVM.colorScheme.displayName)")
+                    .accessibilityHint("Tap to change app appearance")
                 }
                 
                 Section("Healthcare") {
@@ -199,5 +212,36 @@ struct UnitSelectionView: View {
             }
         }
         .navigationTitle("Units")
+    }
+}
+
+struct AppearanceSelectionView: View {
+    @EnvironmentObject var settingsVM: SettingsViewModel
+    var body: some View {
+        List {
+            ForEach(AppColorScheme.allCases, id: \ .self) { scheme in
+                HStack {
+                    Text(scheme.displayName)
+                        .typography(Typography.body)
+                    Spacer()
+                    if scheme == settingsVM.colorScheme {
+                        Image(systemName: "checkmark")
+                            .foregroundColor(.accentColor)
+                            .accessibleDecorative()
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    HapticManager.shared.selection()
+                    settingsVM.colorScheme = scheme
+                }
+                .accessibleSelectable(
+                    label: scheme.displayName,
+                    isSelected: scheme == settingsVM.colorScheme
+                )
+                .accessibilityHint("Tap to select \(scheme.displayName)")
+            }
+        }
+        .navigationTitle("Appearance")
     }
 }

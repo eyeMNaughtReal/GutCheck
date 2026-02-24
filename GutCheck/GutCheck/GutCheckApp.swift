@@ -117,7 +117,7 @@ struct GutCheckApp: App {
                     break
                 }
             }
-            .preferredColorScheme(.light)
+            .preferredColorScheme(settingsVM.preferredColorScheme)
         }
     }
 }
