@@ -19,6 +19,19 @@ enum UnitSystem: String, CaseIterable {
     }
 }
 
+// MARK: - App Color Scheme
+enum AppColorScheme: String, CaseIterable {
+    case system, light, dark
+
+    var displayName: String {
+        switch self {
+        case .system: return "System"
+        case .light: return "Light"
+        case .dark: return "Dark"
+        }
+    }
+}
+
 // MARK: - App Language
 enum AppLanguage: String, CaseIterable {
     case english, spanish, french
