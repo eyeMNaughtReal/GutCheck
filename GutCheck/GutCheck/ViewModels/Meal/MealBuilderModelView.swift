@@ -163,7 +163,12 @@ class MealBuilderViewModel: ObservableObject {
                 
                 // Save to repository (using the new repository pattern)
                 try await mealRepository.save(meal)
-                
+
+                // Write nutrition data to HealthKit (respects user preference)
+                if UserDefaults.standard.bool(forKey: "healthKitWriteMeals") {
+                    await HealthKitAsyncWrapper.shared.writeMealWithLogging(meal)
+                }
+
                 // Update UI
                 await MainActor.run {
                     self.isSaving = false

@@ -113,6 +113,7 @@ struct GutCheckApp: App {
                     TimeoutManager.shared.applicationDidEnterBackground()
                 case .active:
                     TimeoutManager.shared.applicationWillEnterForeground()
+                    Task { await HealthKitSyncManager.shared.syncIfNeeded() }
                 default:
                     break
                 }

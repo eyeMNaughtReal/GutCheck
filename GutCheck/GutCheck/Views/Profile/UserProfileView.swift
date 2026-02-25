@@ -220,25 +220,15 @@ struct ProfileInfoSection: View {
 
 struct ProfileActionSection: View {
     @Binding var showSettings: Bool
-    @Binding var showHealthData: Bool
-    @Binding var showReminder: Bool
     let authService: AuthService
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         VStack(spacing: 12) {
             Button(action: { showSettings = true }) {
                 ProfileActionRow(icon: "gearshape", title: "Settings")
             }
 
-            Button(action: { showHealthData = true }) {
-                ProfileActionRow(icon: "heart", title: "Health Data Integration")
-            }
-            
-            Button(action: { showReminder = true }) {
-                ProfileActionRow(icon: "bell.badge", title: "Reminders")
-            }
-            
             Button(action: signOut) {
                 ProfileActionRow(icon: "arrow.right.square", title: "Sign Out", textColor: ColorTheme.error)
             }
@@ -267,8 +257,6 @@ struct UserProfileView: View {
     @State private var profileImage: UIImage? = nil
     @State private var showImagePicker = false
     @State private var showSettings = false
-    @State private var showHealthData = false
-    @State private var showReminder = false
     @EnvironmentObject var settingsVM: SettingsViewModel
 
     var body: some View {
@@ -282,8 +270,6 @@ struct UserProfileView: View {
                     
                     ProfileActionSection(
                         showSettings: $showSettings,
-                        showHealthData: $showHealthData, 
-                        showReminder: $showReminder,
                         authService: authService
                     )
                     
@@ -304,14 +290,7 @@ struct UserProfileView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView()
                     .environmentObject(settingsVM)
-            }
-            .sheet(isPresented: $showHealthData) {
-                HealthDataIntegrationView()
-                    .environmentObject(settingsVM)
                     .environmentObject(authService)
-            }
-            .sheet(isPresented: $showReminder) {
-                UserRemindersView()
             }
         }
     }

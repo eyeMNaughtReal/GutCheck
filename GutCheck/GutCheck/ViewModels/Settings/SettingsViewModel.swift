@@ -5,6 +5,11 @@ class SettingsViewModel: ObservableObject {
     @AppStorage("unitOfMeasure") var unitRaw: String = UnitSystem.metric.rawValue
     @AppStorage("appColorScheme") var colorSchemeRaw: String = AppColorScheme.system.rawValue
 
+    // HealthKit write preferences
+    @AppStorage("healthKitSyncEnabled") var healthKitSyncEnabled: Bool = true
+    @AppStorage("healthKitWriteMeals") var healthKitWriteMeals: Bool = true
+    @AppStorage("healthKitWriteSymptoms") var healthKitWriteSymptoms: Bool = true
+
     var language: AppLanguage {
         get { AppLanguage(rawValue: languageRaw) ?? .english }
         set { languageRaw = newValue.rawValue }

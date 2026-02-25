@@ -5,6 +5,7 @@ final class HealthKitViewModel: ObservableObject {
     @Published var healthData: UserHealthData?
     @Published var isAuthorized = false
     @Published var showPermissionError = false
+    @AppStorage("lastHealthKitSyncTimestamp") private var lastSyncTimestamp: Double = 0
     
     // Inject settings and auth service for unit preferences and profile updates
     private var settingsViewModel: SettingsViewModel
@@ -32,6 +33,7 @@ final class HealthKitViewModel: ObservableObject {
         if granted {
             await fetchHealthData()
             isAuthorized = true
+            HealthKitSyncManager.shared.markAuthorized()
         } else {
             showPermissionError = true
         }
@@ -39,6 +41,9 @@ final class HealthKitViewModel: ObservableObject {
 
     func fetchHealthData() async {
         healthData = await HealthKitAsyncWrapper.shared.fetchUserHealthDataWithLogging()
+        if healthData != nil {
+            lastSyncTimestamp = Date().timeIntervalSince1970
+        }
     }
     
     // Update user profile with health data

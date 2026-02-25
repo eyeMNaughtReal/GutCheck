@@ -5,8 +5,12 @@ import HealthKit
 struct UserHealthData {
     var dateOfBirth: Date?
     var biologicalSex: HKBiologicalSex?
-    var weight: Double? // in kg
-    var height: Double? // in meters
+    var weight: Double?                  // kg
+    var height: Double?                  // meters
+    var bloodPressureSystolic: Double?   // mmHg
+    var bloodPressureDiastolic: Double?  // mmHg
+    var bloodGlucose: Double?            // mg/dL
+    var heartRate: Double?               // bpm
 }
 
 final class HealthKitManager {
@@ -105,6 +109,31 @@ final class HealthKitManager {
             group.enter()
             fetchLatestQuantity(for: .height) { quantity in
                 healthData.height = quantity?.doubleValue(for: .meter())
+                group.leave()
+            }
+
+            group.enter()
+            fetchLatestQuantity(for: .bloodPressureSystolic) { quantity in
+                healthData.bloodPressureSystolic = quantity?.doubleValue(for: .millimeterOfMercury())
+                group.leave()
+            }
+
+            group.enter()
+            fetchLatestQuantity(for: .bloodPressureDiastolic) { quantity in
+                healthData.bloodPressureDiastolic = quantity?.doubleValue(for: .millimeterOfMercury())
+                group.leave()
+            }
+
+            group.enter()
+            fetchLatestQuantity(for: .bloodGlucose) { quantity in
+                let mgPerDL = HKUnit.gramUnit(with: .milli).unitDivided(by: HKUnit.literUnit(with: .deci))
+                healthData.bloodGlucose = quantity?.doubleValue(for: mgPerDL)
+                group.leave()
+            }
+
+            group.enter()
+            fetchLatestQuantity(for: .heartRate) { quantity in
+                healthData.heartRate = quantity?.doubleValue(for: .count().unitDivided(by: .minute()))
                 group.leave()
             }
 

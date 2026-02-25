@@ -160,6 +160,7 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
     
     // MARK: - HealthKit Integration
     private func writeToHealthKit(_ symptom: Symptom) async {
+        guard UserDefaults.standard.bool(forKey: "healthKitWriteSymptoms") else { return }
         await HealthKitAsyncWrapper.shared.writeSymptomWithLogging(symptom)
     }
     
