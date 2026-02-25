@@ -7,7 +7,19 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var settingsVM: SettingsViewModel
+    @EnvironmentObject var authService: AuthService
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("lastHealthKitSyncTimestamp") private var lastHealthKitSyncTimestamp: Double = 0
+    @State private var showAppleHealth = false
+
+    private var appleHealthStatusText: String {
+        guard lastHealthKitSyncTimestamp > 0 else { return "Not Connected" }
+        let date = Date(timeIntervalSince1970: lastHealthKitSyncTimestamp)
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return "Synced \(formatter.localizedString(for: date, relativeTo: Date()))"
+    }
+
     var body: some View {
         NavigationStack {
             List {
@@ -52,7 +64,38 @@ struct SettingsView: View {
                     .accessibilityHint("Tap to change app appearance")
                 }
                 
+                Section("Notifications") {
+                    NavigationLink(destination: UserRemindersView()) {
+                        HStack {
+                            Image(systemName: "bell.badge")
+                                .foregroundColor(.orange)
+                                .accessibleDecorative()
+                            Text("Reminders")
+                                .typography(Typography.body)
+                        }
+                    }
+                    .accessibilityLabel("Reminders")
+                    .accessibilityHint("Tap to manage notification reminders")
+                }
+
                 Section("Healthcare") {
+                    Button(action: { showAppleHealth = true }) {
+                        HStack {
+                            Image(systemName: "heart.fill")
+                                .foregroundColor(.red)
+                                .accessibleDecorative()
+                            Text("Apple Health")
+                                .typography(Typography.body)
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Text(appleHealthStatusText)
+                                .typography(Typography.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .accessibilityLabel("Apple Health: \(appleHealthStatusText)")
+                    .accessibilityHint("Tap to manage Apple Health sync")
+
                     NavigationLink(destination: HealthcareExportView()) {
                         HStack {
                             Image(systemName: "heart.text.square")
@@ -75,25 +118,34 @@ struct SettingsView: View {
                         HStack {
                             Image(systemName: "lock.shield")
                                 .foregroundColor(.green)
+                                .accessibleDecorative()
                             Text("Privacy Policy")
+                                .typography(Typography.body)
                         }
                     }
-                    
+                    .accessibilityLabel("Privacy Policy")
+                    .accessibilityHint("Tap to read the privacy policy")
+
                     NavigationLink(destination: DataDeletionRequestView()) {
                         HStack {
                             Image(systemName: "trash.circle")
                                 .foregroundColor(.orange)
+                                .accessibleDecorative()
                             Text("Request Data Deletion")
+                                .typography(Typography.body)
                             Spacer()
                             Text("GDPR Right")
-                                .font(.caption)
+                                .typography(Typography.caption)
                                 .foregroundColor(.secondary)
                         }
                     }
-                    
+                    .accessibilityLabel("Request Data Deletion")
+                    .accessibilityHint("Tap to submit a GDPR data deletion request")
+
                     HStack {
                         Image(systemName: "checkmark.shield")
                             .foregroundColor(.blue)
+                            .accessibleDecorative()
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Privacy Policy Accepted")
                                 .font(.subheadline)
@@ -104,8 +156,11 @@ struct SettingsView: View {
                         Spacer()
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(.green)
+                            .accessibleDecorative()
                     }
                     .padding(.vertical, 4)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Privacy Policy accepted, Version 1.0, August 18, 2025")
                 }
                 
                 Section("Data & Storage") {
@@ -148,6 +203,11 @@ struct SettingsView: View {
                         hint: "Close settings"
                     )
                 }
+            }
+            .sheet(isPresented: $showAppleHealth) {
+                HealthDataIntegrationView()
+                    .environmentObject(settingsVM)
+                    .environmentObject(authService)
             }
         }
     }

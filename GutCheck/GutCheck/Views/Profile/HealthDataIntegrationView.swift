@@ -6,44 +6,76 @@ struct HealthDataIntegrationView: View {
     @EnvironmentObject var authService: AuthService
     @StateObject private var healthKitVM = HealthKitViewModel()
     @Environment(\.dismiss) private var dismiss
+
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Health Data")) {
-                    if let _ = healthKitVM.healthData {
-                        Text("Age: \(healthKitVM.formattedAge())")
-                        Text("Sex: \(healthKitVM.formattedBiologicalSex())")
-                        Text("Height: \(healthKitVM.formattedHeight())")
-                        Text("Weight: \(healthKitVM.formattedWeight())")
+                // MARK: - Connection status
+                Section(header: Text("Apple Health")) {
+                    if healthKitVM.healthData != nil {
+                        Label("Connected", systemImage: "checkmark.circle.fill")
+                            .foregroundColor(.green)
                     } else {
-                        Button("Enable HealthKit Access") {
+                        Button {
                             Task {
                                 await healthKitVM.requestHealthKitAccess()
-                                // After getting health data, update the user profile
                                 if healthKitVM.healthData != nil {
                                     await healthKitVM.updateUserProfileWithHealthData()
                                 }
                             }
+                        } label: {
+                            Label("Enable Apple Health Access", systemImage: "heart.circle")
                         }
                     }
                 }
-                
+
+                // MARK: - Read preferences (only shown once connected)
                 if healthKitVM.healthData != nil {
-                    Section(header: Text("Profile Sync")) {
-                        Button("Update Profile with Health Data") {
-                            Task {
-                                await healthKitVM.updateUserProfileWithHealthData()
-                            }
-                        }
-                        .foregroundColor(.blue)
-                        
-                        Text("This will update your profile with the latest health information from Apple Health.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                    Section(
+                        header: Text("Sync from Apple Health"),
+                        footer: Text("When enabled, GutCheck reads your latest health metrics each time the app opens.")
+                    ) {
+                        Toggle("Sync health data on launch", isOn: $settingsVM.healthKitSyncEnabled)
                     }
+
+                    // MARK: - Health data snapshot
+                    Section(header: Text("Current Health Data")) {
+                        HealthDataRow(label: "Age", value: healthKitVM.formattedAge())
+                        HealthDataRow(label: "Biological Sex", value: healthKitVM.formattedBiologicalSex())
+                        HealthDataRow(label: "Height", value: healthKitVM.formattedHeight())
+                        HealthDataRow(label: "Weight", value: healthKitVM.formattedWeight())
+
+                        if let systolic = healthKitVM.healthData?.bloodPressureSystolic,
+                           let diastolic = healthKitVM.healthData?.bloodPressureDiastolic {
+                            HealthDataRow(label: "Blood Pressure",
+                                         value: "\(Int(systolic))/\(Int(diastolic)) mmHg")
+                        }
+                        if let glucose = healthKitVM.healthData?.bloodGlucose {
+                            HealthDataRow(label: "Blood Glucose",
+                                         value: String(format: "%.1f mg/dL", glucose))
+                        }
+                        if let hr = healthKitVM.healthData?.heartRate {
+                            HealthDataRow(label: "Heart Rate",
+                                         value: "\(Int(hr)) BPM")
+                        }
+
+                        Button("Refresh Health Data") {
+                            Task { await healthKitVM.fetchHealthData() }
+                        }
+                        .foregroundColor(.accentColor)
+                    }
+                }
+
+                // MARK: - Write preferences
+                Section(
+                    header: Text("Write to Apple Health"),
+                    footer: Text("Choose which GutCheck data is shared with the Apple Health app.")
+                ) {
+                    Toggle("Save meals to Apple Health", isOn: $settingsVM.healthKitWriteMeals)
+                    Toggle("Save symptoms to Apple Health", isOn: $settingsVM.healthKitWriteSymptoms)
                 }
             }
-            .navigationTitle("Health Data")
+            .navigationTitle("Apple Health")
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Close") { dismiss() }
@@ -53,12 +85,26 @@ struct HealthDataIntegrationView: View {
                 Button("OK", role: .cancel) {}
             }
             .onAppear {
-                // Update the HealthKitViewModel with environment dependencies
                 healthKitVM.updateDependencies(settingsViewModel: settingsVM, authService: authService)
-                Task {
-                    await healthKitVM.fetchHealthData()
-                }
+                Task { await healthKitVM.fetchHealthData() }
             }
         }
+    }
+}
+
+// MARK: - Helper row
+private struct HealthDataRow: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        HStack {
+            Text(label)
+            Spacer()
+            Text(value)
+                .foregroundColor(.secondary)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 }
