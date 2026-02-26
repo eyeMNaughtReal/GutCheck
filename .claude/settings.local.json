@@ -4,7 +4,11 @@
       "WebFetch(domain:github.com)",
       "Bash(xcodebuild:*)",
       "Bash(gh auth:*)",
-      "Bash(gh issue list:*)"
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(xargs ls:*)"
     ],
     "deny": []
   }
