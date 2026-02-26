@@ -131,10 +131,9 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
         Task {
             do {
                 // Use repository instead of direct Firestore calls
-                print("💾 LogSymptom: Saving symptom with ID: \(symptom.id), date: \(symptom.date), user: \(symptom.createdBy)")
-                print("🔒 LogSymptom: Symptom privacy level: \(symptom.privacyLevel)")
-                print("🔒 LogSymptom: Requires local storage: \(symptom.requiresLocalStorage)")
-                print("🔒 LogSymptom: Allows cloud sync: \(symptom.allowsCloudSync)")
+                #if DEBUG
+                print("💾 LogSymptom: Saving symptom — privacy: \(symptom.privacyLevel), requiresLocal: \(symptom.requiresLocalStorage), allowsCloud: \(symptom.allowsCloudSync)")
+                #endif
                 try await symptomRepository.save(symptom)
                 print("✅ LogSymptom: Successfully saved symptom")
                 

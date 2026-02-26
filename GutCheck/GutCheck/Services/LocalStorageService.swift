@@ -69,7 +69,9 @@ class LocalStorageService {
         // Create a 256-bit key (32 bytes) from the hash
         encryptionKey = SymmetricKey(data: hash)
         
-        print("🔑 Generated encryption key from device ID: \(deviceId)")
+        #if DEBUG
+        print("🔑 Generated encryption key from device ID")
+        #endif
     }
     
     /// Regenerate encryption key (useful for recovery from key corruption)

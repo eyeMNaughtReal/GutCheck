@@ -296,11 +296,13 @@ service cloud.firestore {
     // ADMIN HELPER FUNCTIONS
     // ============================================================================
     
-    // Helper function to check if user is admin
+    // Helper function to check if user is admin.
+    // Admin status is stored in the /admins/{userId} collection in Firestore.
+    // To grant admin access, create a document at /admins/{firebaseUID} in the
+    // Firebase Console (no specific fields required — existence of the document
+    // is sufficient). Never hardcode UIDs in rules.
     function isAdmin(userId) {
-      // This would typically check against a users collection with admin role
-      // For now, we'll use a simple check - you can enhance this based on your admin system
-      return userId == 'admin' || userId == 'markconley'; // Replace with actual admin IDs
+      return exists(/databases/$(database)/documents/admins/$(userId));
     }
     
     // ============================================================================

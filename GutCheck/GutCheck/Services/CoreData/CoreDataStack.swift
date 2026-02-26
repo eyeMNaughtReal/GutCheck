@@ -10,6 +10,7 @@
 import Foundation
 import CoreData
 import CryptoKit
+import Security
 
 @MainActor
 class CoreDataStack: ObservableObject {
@@ -61,12 +62,52 @@ class CoreDataStack: ObservableObject {
     }
     
     // MARK: - Encryption
-    
-    private func getEncryptionKey() -> Data? {
-        // In a production app, you would use Keychain or other secure storage
-        // For now, we'll use a simple approach - in production, implement proper key management
-        let keyString = "GutCheckSecureKey2025"
-        return keyString.data(using: .utf8)
+    //
+    // Core Data encryption key management via iOS Keychain.
+    // The key is generated once (random 256-bit), stored in the Keychain, and
+    // retrieved on subsequent launches. Never hardcode the key in source.
+    //
+    // NOTE: NSPersistentStoreEncryptionKeyOption is not currently wired up
+    // because Core Data's SQLite backend relies on file-system Data Protection
+    // (NSFileProtectionComplete) which iOS enforces automatically when the
+    // device is locked. This method is provided for future use if explicit
+    // at-rest encryption is required.
+
+    private static let keychainService  = "com.gutcheck.coredata"
+    private static let keychainAccount  = "CoreDataEncryptionKey"
+
+    func getEncryptionKey() -> Data? {
+        // 1. Try to load existing key from Keychain
+        let query: [String: Any] = [
+            kSecClass as String:            kSecClassGenericPassword,
+            kSecAttrService as String:      CoreDataStack.keychainService,
+            kSecAttrAccount as String:      CoreDataStack.keychainAccount,
+            kSecReturnData as String:       true,
+            kSecMatchLimit as String:       kSecMatchLimitOne
+        ]
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        if status == errSecSuccess, let data = result as? Data {
+            return data
+        }
+
+        // 2. Key not found — generate a new random 256-bit key and store it
+        var newKeyBytes = [UInt8](repeating: 0, count: 32)
+        guard SecRandomCopyBytes(kSecRandomDefault, newKeyBytes.count, &newKeyBytes) == errSecSuccess else {
+            return nil
+        }
+        let newKeyData = Data(newKeyBytes)
+
+        let addQuery: [String: Any] = [
+            kSecClass as String:            kSecClassGenericPassword,
+            kSecAttrService as String:      CoreDataStack.keychainService,
+            kSecAttrAccount as String:      CoreDataStack.keychainAccount,
+            kSecValueData as String:        newKeyData,
+            kSecAttrAccessible as String:   kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        ]
+        SecItemAdd(addQuery as CFDictionary, nil)
+        return newKeyData
     }
     
     // MARK: - Save Operations
