@@ -61,11 +61,11 @@ struct HealthDataIntegrationView: View {
                     header: Text("Data GutCheck Reads"),
                     footer: Text("GutCheck reads these metrics from Apple Health to keep your profile up to date.")
                 ) {
-                    HealthTypeRow(icon: "scalemass",       color: .blue,   label: "Weight")
-                    HealthTypeRow(icon: "ruler",           color: .blue,   label: "Height")
-                    HealthTypeRow(icon: "heart.fill",      color: .red,    label: "Blood Pressure")
-                    HealthTypeRow(icon: "drop.fill",       color: .red,    label: "Blood Glucose")
-                    HealthTypeRow(icon: "waveform.path.ecg", color: .pink, label: "Heart Rate")
+                    HealthTypeRow(icon: "scalemass",         color: .blue,   label: "Weight")
+                    HealthTypeRow(icon: "ruler",             color: .blue,   label: "Height")
+                    HealthTypeRow(icon: "heart.fill",        color: .red,    label: "Blood Pressure")
+                    HealthTypeRow(icon: "drop.fill",         color: .red,    label: "Blood Glucose")
+                    HealthTypeRow(icon: "waveform.path.ecg", color: .pink,   label: "Heart Rate")
                 }
 
                 // MARK: - Sync toggle (read)
@@ -106,30 +106,110 @@ struct HealthDataIntegrationView: View {
                     }
                 }
 
-                // MARK: - What GutCheck writes
+                // MARK: - What GutCheck writes — Meals
                 Section(
                     header: Text("Data GutCheck Writes"),
-                    footer: Text("Choose which GutCheck data is shared back to Apple Health.")
+                    footer: writesFooter
                 ) {
+                    // ── Meals header row ──────────────────────────────────────────
                     HStack {
-                        HealthTypeRow(icon: "fork.knife",    color: .orange, label: "Meals")
+                        HealthTypeRow(icon: "fork.knife", color: .orange, label: "Meals")
                         Spacer()
                         Toggle("", isOn: $settingsVM.healthKitWriteMeals)
                             .labelsHidden()
                     }
-                    Text("Dietary energy, carbs, protein, fat, fiber, sodium")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
 
+                    WritePermissionRow(
+                        name: "Dietary Energy (Calories)",
+                        status: healthKitVM.mealWriteStatuses[.dietaryEnergyConsumed]
+                    )
+                    WritePermissionRow(
+                        name: "Carbohydrates",
+                        status: healthKitVM.mealWriteStatuses[.dietaryCarbohydrates]
+                    )
+                    WritePermissionRow(
+                        name: "Protein",
+                        status: healthKitVM.mealWriteStatuses[.dietaryProtein]
+                    )
+                    WritePermissionRow(
+                        name: "Total Fat",
+                        status: healthKitVM.mealWriteStatuses[.dietaryFatTotal]
+                    )
+                    WritePermissionRow(
+                        name: "Dietary Fiber",
+                        status: healthKitVM.mealWriteStatuses[.dietaryFiber]
+                    )
+                    WritePermissionRow(
+                        name: "Dietary Sugar",
+                        status: healthKitVM.mealWriteStatuses[.dietarySugar]
+                    )
+                    WritePermissionRow(
+                        name: "Sodium",
+                        status: healthKitVM.mealWriteStatuses[.dietarySodium]
+                    )
+
+                    Divider()
+                        .listRowInsets(EdgeInsets())
+
+                    // ── Symptoms header row ───────────────────────────────────────
                     HStack {
                         HealthTypeRow(icon: "cross.case.fill", color: .purple, label: "Symptoms")
                         Spacer()
                         Toggle("", isOn: $settingsVM.healthKitWriteSymptoms)
                             .labelsHidden()
                     }
-                    Text("Bowel movements logged in GutCheck")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+
+                    WritePermissionRow(
+                        name: "Abdominal Cramps",
+                        status: healthKitVM.symptomWriteStatuses[.abdominalCramps]
+                    )
+                    WritePermissionRow(
+                        name: "Diarrhea",
+                        status: healthKitVM.symptomWriteStatuses[.diarrhea]
+                    )
+                    WritePermissionRow(
+                        name: "Constipation",
+                        status: healthKitVM.symptomWriteStatuses[.constipation]
+                    )
+                    WritePermissionRow(
+                        name: "Bloating",
+                        status: healthKitVM.symptomWriteStatuses[.bloating]
+                    )
+                    WritePermissionRow(
+                        name: "Nausea",
+                        status: healthKitVM.symptomWriteStatuses[.nausea]
+                    )
+                }
+
+                // MARK: - Permission action button
+                if healthKitVM.hasWriteIssues {
+                    Section {
+                        if healthKitVM.hasUndeterminedWrites {
+                            // Some types have never been requested — re-request will show a prompt
+                            Button {
+                                Task { await healthKitVM.requestHealthKitAccess() }
+                            } label: {
+                                HStack {
+                                    Image(systemName: "arrow.clockwise.circle.fill")
+                                    Text("Request Write Permissions")
+                                }
+                            }
+                            .foregroundColor(.accentColor)
+                        }
+
+                        if healthKitVM.hasDeniedWrites {
+                            // Denied types require the user to go to the Health app manually
+                            Button {
+                                openHealthApp()
+                            } label: {
+                                HStack {
+                                    Image(systemName: "arrow.up.forward.app.fill")
+                                    Text("Enable in Health App Settings")
+                                }
+                            }
+                            .foregroundColor(.orange)
+                        }
+                    }
                 }
             }
             .navigationTitle("Apple Health")
@@ -147,7 +227,22 @@ struct HealthDataIntegrationView: View {
             .onAppear {
                 healthKitVM.updateDependencies(settingsViewModel: settingsVM, authService: authService)
                 Task { await healthKitVM.fetchHealthData() }
+                healthKitVM.refreshWriteStatuses()
             }
+        }
+    }
+
+    // MARK: - Footer helper
+
+    @ViewBuilder
+    private var writesFooter: some View {
+        if healthKitVM.hasDeniedWrites {
+            Text("Some write permissions are denied. Go to Health App → Privacy → Apps → GutCheck to re-enable them.")
+                .foregroundColor(.orange)
+        } else if healthKitVM.hasUndeterminedWrites {
+            Text("Tap \"Request Write Permissions\" below to grant write access for types not yet authorized.")
+        } else {
+            Text("Choose which GutCheck data is shared back to Apple Health.")
         }
     }
 
@@ -200,7 +295,7 @@ struct HealthKitPermissionsGuideView: View {
                         iconColor: .accentColor,
                         iconBackground: .white,
                         step: "Select GutCheck",
-                        detail: "Find GutCheck in the list to enable or disable individual data types."
+                        detail: "Find GutCheck in the list. Tap \"Data from GutCheck\" to control write permissions for each data type."
                     )
                 }
 
@@ -269,6 +364,42 @@ private struct GuideStepRow: View {
         .padding(.vertical, 4)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(step). \(detail)")
+    }
+}
+
+// MARK: - Write Permission Row (indented, with status badge)
+
+private struct WritePermissionRow: View {
+    let name: String
+    let status: HKAuthorizationStatus?
+
+    private var statusConfig: (icon: String, color: Color, label: String) {
+        switch status {
+        case .sharingAuthorized:
+            return ("checkmark.circle.fill", .green, "Authorized")
+        case .sharingDenied:
+            return ("xmark.circle.fill",     .red,   "Denied")
+        default:
+            return ("circle",                .secondary, "Not set")
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 8) {
+            // Indent to align under parent category name
+            Color.clear.frame(width: 32, height: 1)
+
+            Text(name)
+                .font(.subheadline)
+                .foregroundColor(.primary)
+
+            Spacer()
+
+            Image(systemName: statusConfig.icon)
+                .foregroundColor(statusConfig.color)
+                .font(.system(size: 15))
+                .accessibilityLabel(statusConfig.label)
+        }
     }
 }
 

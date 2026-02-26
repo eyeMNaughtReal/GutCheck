@@ -73,13 +73,32 @@ final class HealthKitManager {
             HKObjectType.quantityType(forIdentifier: .dietaryCalcium),
             HKObjectType.quantityType(forIdentifier: .dietaryIron),
             HKObjectType.quantityType(forIdentifier: .dietaryWater),
-            // Symptoms - using abdominal cramps as closest match for digestive symptoms
-            HKObjectType.categoryType(forIdentifier: .abdominalCramps)
+            // Digestive symptoms
+            HKObjectType.categoryType(forIdentifier: .abdominalCramps),
+            HKObjectType.categoryType(forIdentifier: .bloating),
+            HKObjectType.categoryType(forIdentifier: .diarrhea),
+            HKObjectType.categoryType(forIdentifier: .constipation),
+            HKObjectType.categoryType(forIdentifier: .nausea)
         ].compactMap { $0 })
 
         healthStore.requestAuthorization(toShare: writeTypes, read: readTypes) { success, error in
             completion(success, error)
         }
+    }
+
+    // MARK: - Write Authorization Status
+
+    /// Returns the current HealthKit write authorization status for a quantity type.
+    /// .sharingAuthorized = granted, .sharingDenied = denied/not yet shown, .notDetermined = never requested
+    func writeAuthorizationStatus(for quantityTypeID: HKQuantityTypeIdentifier) -> HKAuthorizationStatus {
+        guard let type = HKQuantityType.quantityType(forIdentifier: quantityTypeID) else { return .notDetermined }
+        return healthStore.authorizationStatus(for: type)
+    }
+
+    /// Returns the current HealthKit write authorization status for a category type.
+    func writeAuthorizationStatus(for categoryTypeID: HKCategoryTypeIdentifier) -> HKAuthorizationStatus {
+        guard let type = HKCategoryType.categoryType(forIdentifier: categoryTypeID) else { return .notDetermined }
+        return healthStore.authorizationStatus(for: type)
     }
 
     // MARK: - Fetch User Health Profile
@@ -266,43 +285,83 @@ final class HealthKitManager {
         }
     }
     
-    /// Write symptom data to HealthKit
+    /// Write symptom data to HealthKit.
+    /// Maps GutCheck symptom properties to the most relevant HK category types,
+    /// only including types that have been authorized.
     func writeSymptomToHealthKit(_ symptom: Symptom, completion: @escaping (Bool, Error?) -> Void) {
-        guard let categoryType = HKCategoryType.categoryType(forIdentifier: .abdominalCramps) else {
-            completion(false, HealthKitError.invalidData)
-            return
+        var samples: [HKCategorySample] = []
+        let start = symptom.date
+        let end   = symptom.date
+        let meta: [String: Any] = [
+            HKMetadataKeyExternalUUID: symptom.id,
+            "stoolType":    symptom.stoolType.rawValue,
+            "urgencyLevel": symptom.urgencyLevel.rawValue,
+            "notes":        symptom.notes ?? ""
+        ]
+
+        // Helper: convert PainLevel → HKCategoryValueSeverity
+        func painSeverity(_ level: PainLevel) -> Int {
+            switch level {
+            case .none:     return HKCategoryValueSeverity.notPresent.rawValue
+            case .mild:     return HKCategoryValueSeverity.mild.rawValue
+            case .moderate: return HKCategoryValueSeverity.moderate.rawValue
+            case .severe:   return HKCategoryValueSeverity.severe.rawValue
+            }
         }
-        
-        // Map symptom severity to HealthKit values
-        let severity: Int
-        switch symptom.painLevel {
-        case .none:
-            severity = HKCategoryValueSeverity.notPresent.rawValue
-        case .mild:
-            severity = HKCategoryValueSeverity.mild.rawValue
-        case .moderate:
-            severity = HKCategoryValueSeverity.moderate.rawValue
-        case .severe:
-            severity = HKCategoryValueSeverity.severe.rawValue
+
+        // Helper: convert UrgencyLevel → HKCategoryValueSeverity
+        func urgencySeverity(_ level: UrgencyLevel) -> Int {
+            switch level {
+            case .none:     return HKCategoryValueSeverity.mild.rawValue
+            case .mild:     return HKCategoryValueSeverity.mild.rawValue
+            case .moderate: return HKCategoryValueSeverity.moderate.rawValue
+            case .urgent:   return HKCategoryValueSeverity.severe.rawValue
+            }
         }
-        
-        let symptomSample = HKCategorySample(
-            type: categoryType,
-            value: severity,
-            start: symptom.date,
-            end: symptom.date,
-            metadata: [
-                HKMetadataKeyExternalUUID: symptom.id,
-                "stoolType": symptom.stoolType.rawValue,
-                "urgencyLevel": symptom.urgencyLevel.rawValue,
-                "notes": symptom.notes ?? ""
-            ]
-        )
-        
-        healthStore.save(symptomSample) { success, error in
+
+        // Abdominal cramps — written whenever there is any pain
+        if symptom.painLevel != .none,
+           let type = HKCategoryType.categoryType(forIdentifier: .abdominalCramps),
+           healthStore.authorizationStatus(for: type) == .sharingAuthorized {
+            samples.append(HKCategorySample(type: type,
+                                            value: painSeverity(symptom.painLevel),
+                                            start: start, end: end, metadata: meta))
+        }
+
+        // Bristol scale type 1–2 → constipation
+        if (symptom.stoolType == .type1 || symptom.stoolType == .type2),
+           let type = HKCategoryType.categoryType(forIdentifier: .constipation),
+           healthStore.authorizationStatus(for: type) == .sharingAuthorized {
+            let severity = symptom.painLevel != .none ? painSeverity(symptom.painLevel) : HKCategoryValueSeverity.mild.rawValue
+            samples.append(HKCategorySample(type: type,
+                                            value: severity,
+                                            start: start, end: end, metadata: meta))
+        }
+
+        // Bristol scale type 5–7 → diarrhea
+        if (symptom.stoolType == .type5 || symptom.stoolType == .type6 || symptom.stoolType == .type7),
+           let type = HKCategoryType.categoryType(forIdentifier: .diarrhea),
+           healthStore.authorizationStatus(for: type) == .sharingAuthorized {
+            samples.append(HKCategorySample(type: type,
+                                            value: urgencySeverity(symptom.urgencyLevel),
+                                            start: start, end: end, metadata: meta))
+        }
+
+        // Fallback: if no authorized type matched, try abdominal cramps regardless
+        if samples.isEmpty {
+            guard let fallbackType = HKCategoryType.categoryType(forIdentifier: .abdominalCramps) else {
+                completion(false, HealthKitError.invalidData)
+                return
+            }
+            samples.append(HKCategorySample(type: fallbackType,
+                                            value: painSeverity(symptom.painLevel),
+                                            start: start, end: end, metadata: meta))
+        }
+
+        healthStore.save(samples) { success, error in
             DispatchQueue.main.async {
                 if success {
-                    print("✅ HealthKit: Successfully wrote symptom data")
+                    print("✅ HealthKit: Successfully wrote \(samples.count) symptom sample(s)")
                 } else {
                     print("❌ HealthKit: Failed to write symptom data: \(error?.localizedDescription ?? "Unknown error")")
                 }

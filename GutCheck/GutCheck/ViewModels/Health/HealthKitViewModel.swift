@@ -1,4 +1,5 @@
 import SwiftUI
+import HealthKit
 
 @MainActor
 final class HealthKitViewModel: ObservableObject {
@@ -6,6 +7,29 @@ final class HealthKitViewModel: ObservableObject {
     @Published var isAuthorized = false
     @Published var showPermissionError = false
     @AppStorage("lastHealthKitSyncTimestamp") private var lastSyncTimestamp: Double = 0
+
+    // MARK: - Write authorization statuses (keyed by identifier rawValue for Codable-free storage)
+    @Published var mealWriteStatuses:    [HKQuantityTypeIdentifier:  HKAuthorizationStatus] = [:]
+    @Published var symptomWriteStatuses: [HKCategoryTypeIdentifier:  HKAuthorizationStatus] = [:]
+
+    /// True if any write type is not yet authorized (not determined or denied).
+    var hasWriteIssues: Bool {
+        let mealOK    = mealWriteStatuses.values.allSatisfy { $0 == .sharingAuthorized }
+        let symptomOK = symptomWriteStatuses.values.allSatisfy { $0 == .sharingAuthorized }
+        return !mealOK || !symptomOK
+    }
+
+    /// True if any write type is explicitly denied (user must go to Health app to fix).
+    var hasDeniedWrites: Bool {
+        mealWriteStatuses.values.contains { $0 == .sharingDenied } ||
+        symptomWriteStatuses.values.contains { $0 == .sharingDenied }
+    }
+
+    /// True if any write type has never been requested (.notDetermined).
+    var hasUndeterminedWrites: Bool {
+        mealWriteStatuses.values.contains { $0 == .notDetermined } ||
+        symptomWriteStatuses.values.contains { $0 == .notDetermined }
+    }
     
     // Inject settings and auth service for unit preferences and profile updates
     private var settingsViewModel: SettingsViewModel
@@ -37,12 +61,46 @@ final class HealthKitViewModel: ObservableObject {
         } else {
             showPermissionError = true
         }
+        // Always refresh write statuses after any authorization attempt
+        refreshWriteStatuses()
     }
 
     func fetchHealthData() async {
         healthData = await HealthKitAsyncWrapper.shared.fetchUserHealthDataWithLogging()
         if healthData != nil {
             lastSyncTimestamp = Date().timeIntervalSince1970
+        }
+    }
+
+    // MARK: - Write Authorization Status
+
+    /// Reads the current authorization status for every write type from HealthKit.
+    /// Call this on appear and after any authorization request.
+    func refreshWriteStatuses() {
+        let manager = HealthKitManager.shared
+
+        let mealTypes: [HKQuantityTypeIdentifier] = [
+            .dietaryEnergyConsumed,
+            .dietaryCarbohydrates,
+            .dietaryProtein,
+            .dietaryFatTotal,
+            .dietaryFiber,
+            .dietarySugar,
+            .dietarySodium
+        ]
+        for id in mealTypes {
+            mealWriteStatuses[id] = manager.writeAuthorizationStatus(for: id)
+        }
+
+        let symptomTypes: [HKCategoryTypeIdentifier] = [
+            .abdominalCramps,
+            .diarrhea,
+            .constipation,
+            .bloating,
+            .nausea
+        ]
+        for id in symptomTypes {
+            symptomWriteStatuses[id] = manager.writeAuthorizationStatus(for: id)
         }
     }
     
