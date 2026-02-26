@@ -23,6 +23,7 @@ struct CalendarView: View {
     @EnvironmentObject var refreshManager: RefreshManager
     @StateObject private var viewModel = CalendarViewModel()
     @State private var isShowingActionMenu = false
+    @State private var showNutritionDetail = false
 
     let selectedTab: Tab?
     let selectedDate: Date?
@@ -43,14 +44,150 @@ struct CalendarView: View {
             .background(Color(.systemBackground))
             
             // Content List
+            // Each meal/symptom card is its own List row so .swipeActions aligns correctly.
             List {
-                CalendarContentView(
-                    selectedTab: selectedTab,
-                    viewModel: viewModel
-                )
+                if selectedTab == .meals || selectedTab == nil {
+                    // ── Meals static header (nutrition card + log button + title) ──
+                    CalendarMealsSectionHeader(viewModel: viewModel) {
+                        showNutritionDetail = true
+                    }
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+
+                    // ── Individual meal rows (one List row each → swipeActions align) ──
+                    if viewModel.isLoadingMeals {
+                        ProgressView()
+                            .frame(maxWidth: .infinity, minHeight: 100)
+                            .accessibilityLabel("Loading meals")
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                    } else if viewModel.meals.isEmpty {
+                        EmptyStateCard(
+                            icon: "fork.knife",
+                            title: "No meals logged",
+                            message: "Tap Log Meal above to get started"
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
+                        .listRowInsets(EdgeInsets())
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                    } else {
+                        ForEach(Array(viewModel.meals.enumerated()), id: \.element.id) { index, meal in
+                            MealCalendarRow(meal: meal) {
+                                HapticManager.shared.light()
+                                router.viewMealDetails(id: meal.id)
+                            }
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.secondarySystemGroupedBackground))
+                            )
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 4)
+                            .accessibilityIdentifier(AccessibilityIdentifiers.Calendar.mealItem(index))
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    HapticManager.shared.warning()
+                                    Task { await viewModel.deleteMeal(meal.id) }
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                                Button {
+                                    HapticManager.shared.light()
+                                    router.editMeal(id: meal.id)
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+                                .tint(.blue)
+                            }
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                        }
+                        // Bottom breathing room after last meal card
+                        Color.clear.frame(height: 16)
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                    }
+                }
+
+                if selectedTab == .symptoms || selectedTab == nil {
+                    // ── Symptoms static header ──
+                    CalendarSymptomsSectionHeader()
+                        .listRowInsets(EdgeInsets())
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+
+                    // ── Individual symptom rows ──
+                    if viewModel.isLoadingSymptoms {
+                        ProgressView()
+                            .frame(maxWidth: .infinity, minHeight: 100)
+                            .accessibilityLabel("Loading symptoms")
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                    } else if viewModel.symptoms.isEmpty {
+                        EmptyStateCard(
+                            icon: "heart.text.square",
+                            title: "No symptoms logged",
+                            message: "Tap the + button to log a symptom"
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
+                        .listRowInsets(EdgeInsets())
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                    } else {
+                        ForEach(Array(viewModel.symptoms.enumerated()), id: \.element.id) { index, symptom in
+                            SymptomCalendarRow(symptom: symptom) {
+                                HapticManager.shared.light()
+                                router.viewSymptomDetails(id: symptom.id)
+                            }
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.secondarySystemGroupedBackground))
+                            )
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 4)
+                            .accessibilityIdentifier(AccessibilityIdentifiers.Calendar.symptomItem(index))
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    HapticManager.shared.warning()
+                                    Task { await viewModel.deleteSymptom(symptom.id) }
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                                Button {
+                                    HapticManager.shared.light()
+                                    router.editSymptom(id: symptom.id)
+                                } label: {
+                                    Label("Edit", systemImage: "pencil")
+                                }
+                                .tint(.blue)
+                            }
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                        }
+                        Color.clear.frame(height: 16)
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                    }
+                }
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
+            .sheet(isPresented: $showNutritionDetail) {
+                DailyNutritionDetailView(
+                    nutrition: viewModel.dailyNutrition,
+                    details: viewModel.dailyNutritionDetails,
+                    date: viewModel.selectedDate
+                )
+            }
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle(title)
@@ -113,184 +250,69 @@ struct CalendarView: View {
     }
 }
 
-// Extracted subview to help compiler
-struct CalendarContentView: View {
-    let selectedTab: Tab?
+// MARK: - Meals Section Header
+// Static header for the meals section: DailyNutritionCard + Log Meal button + section title.
+// Kept as a separate view to reduce compiler complexity in CalendarView.
+struct CalendarMealsSectionHeader: View {
     @ObservedObject var viewModel: CalendarViewModel
     @EnvironmentObject var router: AppRouter
-    @State private var showNutritionDetail = false
+    let onNutritionTap: () -> Void
 
     var body: some View {
-        Group {
-            if selectedTab == .meals || selectedTab == nil {
-                // Meals Section
-                VStack(alignment: .leading, spacing: 0) {
-
-                    // Daily Nutrition Summary Card
-                    DailyNutritionCard(
-                        nutrition: viewModel.dailyNutrition,
-                        mealCount: viewModel.meals.count
-                    ) {
-                        showNutritionDetail = true
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-                    .padding(.bottom, 8)
-
-                    // Log Meal inline button
-                    Button {
-                        HapticManager.shared.medium()
-                        router.startMealLogging()
-                    } label: {
-                        HStack {
-                            Image(systemName: "plus.circle.fill")
-                            Text("Log Meal")
-                                .fontWeight(.semibold)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 13)
-                        .background(Color.accentColor)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 12)
-                    .accessibleButton(label: "Log Meal", hint: "Tap to log a new meal")
-
-                    // Section Header
-                    Text("Meals")
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 8)
-                        .padding(.bottom, 12)
-
-                    if viewModel.isLoadingMeals {
-                        ProgressView()
-                            .frame(maxWidth: .infinity, minHeight: 100)
-                            .accessibilityLabel("Loading meals")
-                    } else if viewModel.meals.isEmpty {
-                        EmptyStateCard(
-                            icon: "fork.knife",
-                            title: "No meals logged",
-                            message: "Tap Log Meal above to get started"
-                        )
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
-                    } else {
-                        VStack(spacing: 8) {
-                            ForEach(Array(viewModel.meals.enumerated()), id: \.element.id) { index, meal in
-                                MealCalendarRow(meal: meal) {
-                                    HapticManager.shared.light()
-                                    router.viewMealDetails(id: meal.id)
-                                }
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color(.secondarySystemGroupedBackground))
-                                )
-                                .accessibilityIdentifier(AccessibilityIdentifiers.Calendar.mealItem(index))
-                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                    Button(role: .destructive) {
-                                        HapticManager.shared.warning()
-                                        Task {
-                                            await viewModel.deleteMeal(meal.id)
-                                        }
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
-                                    }
-                                    
-                                    Button {
-                                        HapticManager.shared.light()
-                                        router.editMeal(id: meal.id)
-                                    } label: {
-                                        Label("Edit", systemImage: "pencil")
-                                    }
-                                    .tint(.blue)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
-                    }
-                }
-                .listRowInsets(EdgeInsets())
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
-            }
-            
-            if selectedTab == .symptoms || selectedTab == nil {
-                // Symptoms Section
-                VStack(alignment: .leading, spacing: 0) {
-                    // Section Header
-                    Text("Symptoms")
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                        .padding(.horizontal, 20)
-                        .padding(.top, 20)
-                        .padding(.bottom, 12)
-                    
-                    if viewModel.isLoadingSymptoms {
-                        ProgressView()
-                            .frame(maxWidth: .infinity, minHeight: 100)
-                            .accessibilityLabel("Loading symptoms")
-                    } else if viewModel.symptoms.isEmpty {
-                        EmptyStateCard(
-                            icon: "heart.text.square",
-                            title: "No symptoms logged",
-                            message: "Tap the + button to log a symptom"
-                        )
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
-                    } else {
-                        VStack(spacing: 8) {
-                            ForEach(Array(viewModel.symptoms.enumerated()), id: \.element.id) { index, symptom in
-                                SymptomCalendarRow(symptom: symptom) {
-                                    HapticManager.shared.light()
-                                    router.viewSymptomDetails(id: symptom.id)
-                                }
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color(.secondarySystemGroupedBackground))
-                                )
-                                .accessibilityIdentifier(AccessibilityIdentifiers.Calendar.symptomItem(index))
-                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                    Button(role: .destructive) {
-                                        HapticManager.shared.warning()
-                                        Task {
-                                            await viewModel.deleteSymptom(symptom.id)
-                                        }
-                                    } label: {
-                                        Label("Delete", systemImage: "trash")
-                                    }
-                                    
-                                    Button {
-                                        HapticManager.shared.light()
-                                        router.editSymptom(id: symptom.id)
-                                    } label: {
-                                        Label("Edit", systemImage: "pencil")
-                                    }
-                                    .tint(.blue)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
-                    }
-                }
-                .listRowInsets(EdgeInsets())
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
-            }
-        }
-        .sheet(isPresented: $showNutritionDetail) {
-            DailyNutritionDetailView(
+        VStack(alignment: .leading, spacing: 0) {
+            // Daily Nutrition Summary Card
+            DailyNutritionCard(
                 nutrition: viewModel.dailyNutrition,
-                details: viewModel.dailyNutritionDetails,
-                date: viewModel.selectedDate
+                mealCount: viewModel.meals.count,
+                onTap: onNutritionTap
             )
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 8)
+
+            // Log Meal inline button
+            Button {
+                HapticManager.shared.medium()
+                router.startMealLogging()
+            } label: {
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Log Meal")
+                        .fontWeight(.semibold)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 13)
+                .background(Color.accentColor)
+                .foregroundColor(.white)
+                .cornerRadius(12)
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 12)
+            .accessibleButton(label: "Log Meal", hint: "Tap to log a new meal")
+
+            // Section header label
+            Text("Meals")
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 12)
         }
+    }
+}
+
+// MARK: - Symptoms Section Header
+struct CalendarSymptomsSectionHeader: View {
+    var body: some View {
+        Text("Symptoms")
+            .font(.title3)
+            .fontWeight(.semibold)
+            .foregroundColor(.primary)
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
+            .padding(.bottom, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
