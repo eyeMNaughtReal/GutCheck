@@ -112,9 +112,13 @@ final class HealthKitManager {
 
             if let biologicalSex = try? healthStore.biologicalSex().biologicalSex {
                 healthData.biologicalSex = biologicalSex
-                print("HealthKit: Retrieved biological sex: \(biologicalSex)")
+                #if DEBUG
+                print("HealthKit: Retrieved biological sex")
+                #endif
             } else {
+                #if DEBUG
                 print("HealthKit: No biological sex data available")
+                #endif
             }
 
             let group = DispatchGroup()
@@ -275,16 +279,18 @@ final class HealthKitManager {
         
         healthStore.save(samples) { success, error in
             DispatchQueue.main.async {
+                #if DEBUG
                 if success {
-                    print("✅ HealthKit: Successfully wrote meal data for \(meal.name)")
+                    print("✅ HealthKit: Successfully wrote meal data")
                 } else {
                     print("❌ HealthKit: Failed to write meal data: \(error?.localizedDescription ?? "Unknown error")")
                 }
+                #endif
                 completion(success, error)
             }
         }
     }
-    
+
     /// Write symptom data to HealthKit.
     /// Maps GutCheck symptom properties to the most relevant HK category types,
     /// only including types that have been authorized.
@@ -360,11 +366,13 @@ final class HealthKitManager {
 
         healthStore.save(samples) { success, error in
             DispatchQueue.main.async {
+                #if DEBUG
                 if success {
                     print("✅ HealthKit: Successfully wrote \(samples.count) symptom sample(s)")
                 } else {
                     print("❌ HealthKit: Failed to write symptom data: \(error?.localizedDescription ?? "Unknown error")")
                 }
+                #endif
                 completion(success, error)
             }
         }

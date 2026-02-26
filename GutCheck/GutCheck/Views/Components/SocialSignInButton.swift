@@ -165,20 +165,17 @@ struct AppleSignInButtonView: UIViewRepresentable {
             print("🍎 [SocialSignInButton] Apple Sign-In succeeded")
             NSLog("🍎 [SocialSignInButton] Apple Sign-In succeeded")
             
-            // Examine the authorization details
+            // Examine the authorization details (DEBUG only — user identifiers are PII)
+            #if DEBUG
             if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
-                let userID = appleIDCredential.user
-                print("🍎 [SocialSignInButton] Apple user identifier: \(userID)")
-                NSLog("🍎 [SocialSignInButton] Apple user identifier: \(userID)")
-                
+                print("🍎 [SocialSignInButton] Apple user identifier received (length: \(appleIDCredential.user.count))")
                 if let identityToken = appleIDCredential.identityToken {
                     print("🍎 [SocialSignInButton] Identity token present, length: \(identityToken.count)")
-                    NSLog("🍎 [SocialSignInButton] Identity token present, length: \(identityToken.count)")
                 } else {
                     print("🍎 [SocialSignInButton] ⚠️ No identity token in credential!")
-                    NSLog("🍎 [SocialSignInButton] ⚠️ No identity token in credential!")
                 }
             }
+            #endif
             
             parent.onCompletion(.success(authorization))
         }
