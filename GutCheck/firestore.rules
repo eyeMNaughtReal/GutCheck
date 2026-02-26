@@ -35,8 +35,9 @@ service cloud.firestore {
     }
     
     // Helper function to validate required fields
+    // Checks that the document contains ALL of the required fields
     function hasRequiredFields(data, requiredFields) {
-      return requiredFields.hasAll(data.keys());
+      return data.keys().hasAll(requiredFields);
     }
     
     // ============================================================================
@@ -305,12 +306,11 @@ service cloud.firestore {
     // ============================================================================
     // RATE LIMITING & ABUSE PREVENTION
     // ============================================================================
-    
-    // Prevent excessive writes to the same document
-    match /{document=**} {
-      allow write: if request.time > resource.data.lastWriteTime + duration.value(1, 's');
-    }
-    
+
+    // NOTE: Per-document rate limiting removed — accessing resource.data on new
+    // documents (where resource == null) causes a rules error that denies the write.
+    // Rate limiting should be enforced at the application layer instead.
+
     // ============================================================================
     // DEFAULT DENY RULE
     // ============================================================================
