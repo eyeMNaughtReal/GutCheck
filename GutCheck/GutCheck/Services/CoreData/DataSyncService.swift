@@ -10,6 +10,7 @@
 import Foundation
 import CoreData
 import FirebaseFirestore
+import FirebaseAuth
 
 @MainActor
 class DataSyncService: ObservableObject {
@@ -200,48 +201,50 @@ class DataSyncService: ObservableObject {
     }
     
     // MARK: - Download Remote Changes
-    
+
     private func downloadRemoteChanges() async throws {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            throw SyncError.notAuthenticated
+        }
+
         // Download meals from Firestore
-        try await downloadMealsFromFirestore()
-        
+        try await downloadMealsFromFirestore(userId: userId)
+
         // Download symptoms from Firestore
-        try await downloadSymptomsFromFirestore()
-        
+        try await downloadSymptomsFromFirestore(userId: userId)
+
         // Download reminder settings from Firestore
-        try await downloadReminderSettingsFromFirestore()
+        try await downloadReminderSettingsFromFirestore(userId: userId)
     }
-    
-    private func downloadMealsFromFirestore() async throws {
-        // This would integrate with your existing MealRepository
-        // For now, we'll implement a basic download
-        let snapshot = try await firestore.collection("meals").getDocuments()
-        
+
+    private func downloadMealsFromFirestore(userId: String) async throws {
+        let snapshot = try await firestore.collection("meals")
+            .whereField("createdBy", isEqualTo: userId)
+            .getDocuments()
+
         for document in snapshot.documents {
             _ = document.data()
             // Convert Firestore data to Meal and save locally
-            // This would need to be implemented based on your existing data structure
         }
     }
-    
-    private func downloadSymptomsFromFirestore() async throws {
-        // Similar implementation for symptoms
-        let snapshot = try await firestore.collection("symptoms").getDocuments()
-        
+
+    private func downloadSymptomsFromFirestore(userId: String) async throws {
+        let snapshot = try await firestore.collection("symptoms")
+            .whereField("createdBy", isEqualTo: userId)
+            .getDocuments()
+
         for document in snapshot.documents {
             _ = document.data()
             // Convert Firestore data to Symptom and save locally
         }
     }
-    
-    private func downloadReminderSettingsFromFirestore() async throws {
-        // Similar implementation for reminder settings
-        let snapshot = try await firestore.collection("reminderSettings").getDocuments()
-        
-        for document in snapshot.documents {
-            _ = document.data()
-            // Convert Firestore data to ReminderSettings and save locally
-        }
+
+    private func downloadReminderSettingsFromFirestore(userId: String) async throws {
+        // Document ID is the user's UID, matching the Firestore security rule: match /reminderSettings/{userId}
+        let document = try await firestore.collection("reminderSettings").document(userId).getDocument()
+        guard document.exists else { return }
+        _ = document.data()
+        // Convert Firestore data to ReminderSettings and save locally
     }
     
     // MARK: - Firestore Upload Methods
@@ -258,7 +261,8 @@ class DataSyncService: ObservableObject {
     
     private func uploadReminderSettingsToFirestore(_ settings: ReminderSettings) async throws {
         let settingsData = settings.toFirestoreData()
-        try await firestore.collection("reminderSettings").document(settings.id).setData(settingsData)
+        // Document ID is the user's UID, matching the Firestore security rule: match /reminderSettings/{userId}
+        try await firestore.collection("reminderSettings").document(settings.createdBy).setData(settingsData)
     }
     
     // MARK: - Conflict Resolution
@@ -312,6 +316,19 @@ class DataSyncService: ObservableObject {
             return .lastSynced(date: lastSync)
         } else {
             return .neverSynced
+        }
+    }
+}
+
+// MARK: - Sync Error Enum
+
+enum SyncError: LocalizedError {
+    case notAuthenticated
+
+    var errorDescription: String? {
+        switch self {
+        case .notAuthenticated:
+            return "Cannot sync: no authenticated user."
         }
     }
 }
