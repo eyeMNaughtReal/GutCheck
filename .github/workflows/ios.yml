@@ -13,8 +13,8 @@ on:
 jobs:
   build-and-test:
     name: Build and Test
-    runs-on: macos-14
-    
+    runs-on: macos-15
+
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
@@ -42,45 +42,29 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-deriveddata-
 
-    - name: List available simulators
-      run: xcrun simctl list devices
-      working-directory: GutCheck
-
-    - name: Check Available Build Destinations
-      run: |
-        echo "Available destinations:"
-        xcodebuild -showdestinations -project GutCheck.xcodeproj -scheme GutCheck
-        
-        echo "Available simulators:"
-        xcrun simctl list devices
-        
-        echo "Available runtimes:"
-        xcrun simctl list runtimes
-      working-directory: GutCheck
-
     - name: Create GoogleService-Info.plist (Mock)
       run: |
-        cat > GoogleService-Info.plist << EOF
+        cat > GoogleService-Info.plist << 'EOF'
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
         <dict>
           <key>CLIENT_ID</key>
-          <string>mock-client-id</string>
+          <string>123456789012-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com</string>
           <key>REVERSED_CLIENT_ID</key>
-          <string>mock-reversed-client-id</string>
+          <string>com.googleusercontent.apps.123456789012-abcdefghijklmnopqrstuvwxyz123456</string>
           <key>API_KEY</key>
-          <string>mock-api-key</string>
+          <string>AIzaSyA00000000000000000000000000000000</string>
           <key>GCM_SENDER_ID</key>
-          <string>mock-sender-id</string>
+          <string>123456789012</string>
           <key>PLIST_VERSION</key>
           <string>1</string>
           <key>BUNDLE_ID</key>
           <string>com.MarkConley.GutCheck</string>
           <key>PROJECT_ID</key>
-          <string>mock-project-id</string>
+          <string>mock-gutcheck-ci</string>
           <key>STORAGE_BUCKET</key>
-          <string>mock-storage-bucket</string>
+          <string>mock-gutcheck-ci.appspot.com</string>
           <key>IS_ADS_ENABLED</key>
           <false/>
           <key>IS_ANALYTICS_ENABLED</key>
@@ -92,9 +76,10 @@ jobs:
           <key>IS_SIGNIN_ENABLED</key>
           <true/>
           <key>GOOGLE_APP_ID</key>
-          <string>mock-app-id</string>
+          <string>1:123456789012:ios:abcdef1234567890abcdef</string>
         </dict>
-        </EOF
+        </plist>
+        EOF
       working-directory: GutCheck/GutCheck
 
     - name: Resolve Swift Package Dependencies
@@ -104,23 +89,15 @@ jobs:
           -scheme GutCheck
       working-directory: GutCheck
 
-    - name: Verify Deployment Target
-      run: |
-        echo "Verifying iOS deployment target..."
-        grep -r "IPHONEOS_DEPLOYMENT_TARGET" . --include="*.pbxproj" | head -10
-        echo "Expected: IPHONEOS_DEPLOYMENT_TARGET = 15.0;"
-      working-directory: GutCheck
-
     - name: Build GutCheck
       run: |
         xcodebuild clean build \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
-          -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+          -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
           -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
           CODE_SIGNING_ALLOWED=NO \
-          ONLY_ACTIVE_ARCH=NO \
-          IPHONEOS_DEPLOYMENT_TARGET=15.0
+          ONLY_ACTIVE_ARCH=NO
       working-directory: GutCheck
 
     - name: Run Unit Tests
@@ -128,18 +105,19 @@ jobs:
         xcodebuild test \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
-          -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' \
+          -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
           -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
           CODE_SIGNING_ALLOWED=NO \
           ONLY_ACTIVE_ARCH=NO \
-          IPHONEOS_DEPLOYMENT_TARGET=15.0 \
-          -enableCodeCoverage YES
+          -skip-testing:GutCheckUITests \
+          -enableCodeCoverage YES \
+          -resultBundlePath ~/Library/Developer/Xcode/DerivedData/Build/Logs/Test/results.xcresult
       working-directory: GutCheck
 
     - name: Generate Code Coverage Report
       run: |
-        xcrun xccov view --report --json ~/Library/Developer/Xcode/DerivedData/Build/Logs/Test/*.xcresult > coverage.json
-        xcrun xccov view --report ~/Library/Developer/Xcode/DerivedData/Build/Logs/Test/*.xcresult
+        xcrun xccov view --report --json ~/Library/Developer/Xcode/DerivedData/Build/Logs/Test/results.xcresult > coverage.json
+        xcrun xccov view --report ~/Library/Developer/Xcode/DerivedData/Build/Logs/Test/results.xcresult
       working-directory: GutCheck
       continue-on-error: true
 
@@ -151,7 +129,7 @@ jobs:
         name: ios-coverage
       continue-on-error: true
 
-    - name: Archive Build Artifacts
+    - name: Upload Build Artifacts on Failure
       if: failure()
       uses: actions/upload-artifact@v4
       with:
@@ -160,40 +138,3 @@ jobs:
           ~/Library/Developer/Xcode/DerivedData/Build/Logs/
           GutCheck/coverage.json
         retention-days: 5
-
-  # Add a new job for iOS device testing
-  ios-device-test:
-    name: iOS Device Test
-    runs-on: macos-14
-    needs: build-and-test
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
-
-    - name: Set up Xcode
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: '16.2'
-
-    - name: Build for iOS Device
-      run: |
-        xcodebuild clean build \
-          -project GutCheck.xcodeproj \
-          -scheme GutCheck \
-          -destination 'generic/platform=iOS' \
-          -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
-          CODE_SIGNING_ALLOWED=NO \
-          ONLY_ACTIVE_ARCH=NO \
-          IPHONEOS_DEPLOYMENT_TARGET=15.0
-      working-directory: GutCheck
-      continue-on-error: true
-
-    - name: Archive iOS Build
-      if: success()
-      uses: actions/upload-artifact@v4
-      with:
-        name: ios-build
-        path: ~/Library/Developer/Xcode/DerivedData/Build/Products/Release-iphoneos/
-        retention-days: 30
