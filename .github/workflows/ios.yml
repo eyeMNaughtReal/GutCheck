@@ -90,25 +90,53 @@ jobs:
       working-directory: GutCheck
 
     - name: Prepare iOS Simulator
+      working-directory: GutCheck
       run: |
-        # Initialise CoreSimulator so it picks up the Xcode 16.2 runtimes
+        # Step 1: Initialise CoreSimulator under the active Xcode 16.2 toolchain
         xcrun simctl list runtimes
 
-        # Find the UDID of the most recent available iPhone simulator
-        UDID=$(xcrun simctl list devices available | \
-          grep -E "^ +iPhone" | \
-          tail -1 | \
-          grep -oE '[0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}')
+        # Step 2: Check whether an iOS Simulator runtime is ACTUALLY installed.
+        # simctl device records can exist in the database even when the runtime
+        # files themselves are missing, causing a false-positive UDID match.
+        IOS_RUNTIME=$(xcrun simctl list runtimes 2>&1 | \
+          grep -E "^iOS [0-9]" | grep -v "unavailable" | head -1)
 
-        # If no simulator runtime is present, download the iOS platform
-        if [ -z "$UDID" ]; then
-          echo "No iPhone simulator found — downloading iOS platform (this may take a few minutes)"
+        if [ -z "$IOS_RUNTIME" ]; then
+          echo "No installed iOS Simulator runtime found — downloading iOS platform (may take several minutes)"
           xcodebuild -downloadPlatform iOS
+          xcrun simctl list runtimes
+        fi
+
+        # Step 3: Ask xcodebuild itself which destinations it can use.
+        # This is more reliable than xcrun simctl, which can list device UDIDs
+        # even when the corresponding runtime files are not installed.
+        UDID=$(xcodebuild -showdestinations \
+          -project GutCheck.xcodeproj \
+          -scheme GutCheck 2>&1 | \
+          grep "platform:iOS Simulator" | \
+          grep -i "name:iPhone" | \
+          tail -1 | \
+          grep -oE 'id:[0-9A-Fa-f-]+' | \
+          sed 's/id://')
+
+        # Step 4: Fall back to simctl only if xcodebuild found nothing
+        if [ -z "$UDID" ]; then
           UDID=$(xcrun simctl list devices available | \
             grep -E "^ +iPhone" | \
             tail -1 | \
             grep -oE '[0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}')
         fi
+
+        # Step 5: Fail loudly with full diagnostics if still no simulator found
+        if [ -z "$UDID" ]; then
+          echo "ERROR: No iPhone simulator found even after runtime download" >&2
+          xcrun simctl list runtimes
+          xcrun simctl list devices available
+          exit 1
+        fi
+
+        # Step 6: Boot the simulator so xcodebuild can attach to it immediately
+        xcrun simctl boot "$UDID" 2>/dev/null || true
 
         echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
         echo "Using simulator UDID: $UDID"
