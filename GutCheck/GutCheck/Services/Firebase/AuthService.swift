@@ -427,27 +427,60 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
     }
     
     private func deleteUserData(userId: String) async throws {
-        let batch = firestore.batch()
-        
-        // Delete user document
-        let userRef = FirebaseManager.shared.userDocument(userId)
-        batch.deleteDocument(userRef)
-        
-        // Delete user's meals
-        let mealsQuery = FirebaseManager.shared.queryMealsByUser(userId)
-        let mealsSnapshot = try await mealsQuery.getDocuments()
-        for document in mealsSnapshot.documents {
-            batch.deleteDocument(document.reference)
+        // Step 1: Clear local encrypted files first while we still know who the user is.
+        try await LocalStorageService.shared.clearAllPrivateData()
+
+        // Step 2: Collect every Firestore document reference that belongs to this user.
+        var documentsToDelete: [DocumentReference] = []
+
+        // Top-level user document
+        documentsToDelete.append(FirebaseManager.shared.userDocument(userId))
+
+        // Documents whose ID is the userId (single-document-per-user collections)
+        let userKeyedCollections = ["reminderSettings", "userPreferences", "analytics"]
+        for collection in userKeyedCollections {
+            documentsToDelete.append(firestore.collection(collection).document(userId))
         }
-        
-        // Delete user's symptoms
-        let symptomsQuery = FirebaseManager.shared.querySymptomsByUser(userId)
-        let symptomsSnapshot = try await symptomsQuery.getDocuments()
-        for document in symptomsSnapshot.documents {
-            batch.deleteDocument(document.reference)
+
+        // Collections queried by the createdBy field
+        let createdByQueries: [(Query, String)] = [
+            (FirebaseManager.shared.queryMealsByUser(userId),     "meals"),
+            (FirebaseManager.shared.querySymptomsByUser(userId),  "symptoms"),
+            (firestore.collection("insights").whereField("createdBy", isEqualTo: userId),      "insights"),
+            (firestore.collection("mealTemplates").whereField("createdBy", isEqualTo: userId), "mealTemplates")
+        ]
+        for (query, _) in createdByQueries {
+            let snapshot = try await query.getDocuments()
+            documentsToDelete.append(contentsOf: snapshot.documents.map { $0.reference })
         }
-        
-        try await batch.commit()
+
+        // Subcollections nested under /users/{userId}
+        let userSubcollections = ["mealHistory", "symptomHistory"]
+        for subcollection in userSubcollections {
+            let snapshot = try await firestore
+                .collection("users")
+                .document(userId)
+                .collection(subcollection)
+                .getDocuments()
+            documentsToDelete.append(contentsOf: snapshot.documents.map { $0.reference })
+        }
+
+        // Step 3: Commit in batches of 500 (Firestore hard limit per batch).
+        let batchSize = 500
+        var index = 0
+        while index < documentsToDelete.count {
+            let batch = firestore.batch()
+            let end = min(index + batchSize, documentsToDelete.count)
+            for ref in documentsToDelete[index ..< end] {
+                batch.deleteDocument(ref)
+            }
+            try await batch.commit()
+            index += batchSize
+        }
+
+        #if DEBUG
+        print("🗑️ AuthService: Deleted \(documentsToDelete.count) Firestore documents for user \(userId)")
+        #endif
     }
     
     private func handleAuthError(_ error: Error) -> String {

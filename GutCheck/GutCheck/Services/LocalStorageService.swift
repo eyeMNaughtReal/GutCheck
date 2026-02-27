@@ -12,17 +12,21 @@
 import Foundation
 import CryptoKit
 import Security
-import UIKit // Added for UIDevice
 
 /// Service for encrypted local storage of private user data
 /// All private data is encrypted with CryptoKit and stored locally on the device
 /// This ensures sensitive information never leaves the user's control
 class LocalStorageService {
     static let shared = LocalStorageService()
-    
+
+    // MARK: - Keychain Constants
+
+    private static let keychainService = "com.gutcheck.localstorage"
+    private static let keychainAccount = "LocalStorageEncryptionKey"
+
     // MARK: - Private Properties
-    
-    /// Encryption key derived from device-specific information
+
+    /// Encryption key loaded from (or persisted to) the iOS Keychain
     private var encryptionKey: SymmetricKey?
     
     /// File manager for document directory access
@@ -42,7 +46,7 @@ class LocalStorageService {
     
     private init() {
         setupPrivateDataDirectory()
-        generateEncryptionKey()
+        loadOrCreateEncryptionKey()
     }
     
     // MARK: - Setup Methods
@@ -54,30 +58,54 @@ class LocalStorageService {
         }
     }
     
-    /// Generate encryption key from device-specific information
-    /// This ensures data can only be decrypted on the same device
-    private func generateEncryptionKey() {
-        // Use device identifier and user-specific salt for key generation
-        let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
-        let salt = "GutCheckPrivateData2025" // In production, this should be user-specific
-        
-        // Create a deterministic but properly sized key using SHA256
-        let combinedString = deviceId + salt
-        let keyData = Data(combinedString.utf8)
-        let hash = SHA256.hash(data: keyData)
-        
-        // Create a 256-bit key (32 bytes) from the hash
-        encryptionKey = SymmetricKey(data: hash)
-        
-        #if DEBUG
-        print("🔑 Generated encryption key from device ID")
-        #endif
+    /// Load the encryption key from the Keychain, or generate and store a new one on first launch.
+    /// The key is a random 256-bit value stored with `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`,
+    /// which ties it to this device and survives app reinstalls (until the device is wiped).
+    private func loadOrCreateEncryptionKey() {
+        let query: [String: Any] = [
+            kSecClass as String:       kSecClassGenericPassword,
+            kSecAttrService as String: LocalStorageService.keychainService,
+            kSecAttrAccount as String: LocalStorageService.keychainAccount,
+            kSecReturnData as String:  true,
+            kSecMatchLimit as String:  kSecMatchLimitOne
+        ]
+
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        if status == errSecSuccess, let keyData = result as? Data {
+            encryptionKey = SymmetricKey(data: keyData)
+            return
+        }
+
+        // Key not found — generate a fresh random 256-bit key and persist it.
+        var newKeyBytes = [UInt8](repeating: 0, count: 32)
+        guard SecRandomCopyBytes(kSecRandomDefault, newKeyBytes.count, &newKeyBytes) == errSecSuccess else {
+            return
+        }
+        let newKeyData = Data(newKeyBytes)
+
+        let addQuery: [String: Any] = [
+            kSecClass as String:       kSecClassGenericPassword,
+            kSecAttrService as String: LocalStorageService.keychainService,
+            kSecAttrAccount as String: LocalStorageService.keychainAccount,
+            kSecValueData as String:   newKeyData,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        ]
+        SecItemAdd(addQuery as CFDictionary, nil)
+        encryptionKey = SymmetricKey(data: newKeyData)
     }
-    
-    /// Regenerate encryption key (useful for recovery from key corruption)
-    private func regenerateEncryptionKey() {
-        print("🔄 Regenerating encryption key...")
-        generateEncryptionKey()
+
+    /// Delete the Keychain key and generate a fresh one. All previously encrypted
+    /// files become permanently unreadable — always call clearAllPrivateData() first.
+    private func resetKeychainKey() {
+        let deleteQuery: [String: Any] = [
+            kSecClass as String:       kSecClassGenericPassword,
+            kSecAttrService as String: LocalStorageService.keychainService,
+            kSecAttrAccount as String: LocalStorageService.keychainAccount
+        ]
+        SecItemDelete(deleteQuery as CFDictionary)
+        loadOrCreateEncryptionKey()
     }
     
     // MARK: - Public Methods
@@ -95,28 +123,38 @@ class LocalStorageService {
         do {
             // Encode the data
             let data = try JSONEncoder().encode(item)
+            #if DEBUG
             print("🔒 Encoding data for storage: \(type)/\(id), size: \(data.count) bytes")
-            
+            #endif
+
             // Encrypt the data
             let encryptedData = try encrypt(data, using: encryptionKey)
+            #if DEBUG
             print("🔒 Data encrypted successfully: \(encryptedData.count) bytes")
-            
+            #endif
+
             // Create file path
             let fileName = "\(type)_\(id).encrypted"
             let fileURL = privateDataDirectory.appendingPathComponent(fileName)
-            
+
             // Write encrypted data to file
             try encryptedData.write(to: fileURL)
-            
+
+            #if DEBUG
             print("🔒 Stored private data: \(type)/\(id) (encrypted)")
+            #endif
         } catch let error as LocalStorageError {
+            #if DEBUG
             print("❌ LocalStorage error: \(error)")
+            #endif
             throw error
         } catch {
+            #if DEBUG
             print("❌ Unexpected error during encryption/storage: \(error)")
             if let cryptoError = error as? CryptoKitError {
                 print("🔐 CryptoKit error code: \(cryptoError)")
             }
+            #endif
             throw LocalStorageError.encryptionFailed
         }
     }
@@ -140,31 +178,43 @@ class LocalStorageService {
             
             // Check if file exists
             guard fileManager.fileExists(atPath: fileURL.path) else {
+                #if DEBUG
                 print("🔍 File not found: \(fileName)")
+                #endif
                 return nil
             }
-            
+
             // Read encrypted data
             let encryptedData = try Data(contentsOf: fileURL)
+            #if DEBUG
             print("🔓 Reading encrypted data: \(fileName), size: \(encryptedData.count) bytes")
-            
+            #endif
+
             // Decrypt the data
             let decryptedData = try decrypt(encryptedData, using: encryptionKey)
+            #if DEBUG
             print("🔓 Data decrypted successfully: \(decryptedData.count) bytes")
-            
+            #endif
+
             // Decode the data
             let item = try JSONDecoder().decode(itemType, from: decryptedData)
-            
+
+            #if DEBUG
             print("🔓 Retrieved private data: \(type)/\(id) (decrypted)")
+            #endif
             return item
         } catch let error as LocalStorageError {
+            #if DEBUG
             print("❌ LocalStorage error during retrieval: \(error)")
+            #endif
             throw error
         } catch {
+            #if DEBUG
             print("❌ Unexpected error during decryption/retrieval: \(error)")
             if let cryptoError = error as? CryptoKitError {
                 print("🔐 CryptoKit error code: \(cryptoError)")
             }
+            #endif
             throw LocalStorageError.decryptionFailed
         }
     }
@@ -180,7 +230,9 @@ class LocalStorageService {
         
         if fileManager.fileExists(atPath: fileURL.path) {
             try fileManager.removeItem(at: fileURL)
+            #if DEBUG
             print("🗑️ Deleted private data: \(type)/\(id)")
+            #endif
         }
     }
     
@@ -196,7 +248,9 @@ class LocalStorageService {
             }
             return Array(Set(types)) // Remove duplicates
         } catch {
+            #if DEBUG
             print("❌ Error listing private data types: \(error)")
+            #endif
             return []
         }
     }
@@ -214,10 +268,14 @@ class LocalStorageService {
                 }
                 return nil
             }
+            #if DEBUG
             print("🔍 Found \(typeFiles.count) files for type: \(type)")
+            #endif
             return typeFiles
         } catch {
+            #if DEBUG
             print("❌ Error listing private data files for type \(type): \(error)")
+            #endif
             return []
         }
     }
@@ -229,21 +287,25 @@ class LocalStorageService {
         for file in files {
             try fileManager.removeItem(at: file)
         }
-        
+
+        #if DEBUG
         print("🗑️ Cleared all private data")
+        #endif
     }
     
-    /// Reset encryption and clear all data (recovery from corruption)
+    /// Reset encryption and clear all data (recovery from corruption).
+    /// Deletes the Keychain key and all encrypted files, then generates a fresh key.
     func resetEncryptionAndClearData() async throws {
-        print("🔄 Resetting encryption and clearing all data...")
-        
-        // Clear all existing data
+        // Clear all existing encrypted files first — the old key is still
+        // available at this point so decryption would still be possible if needed.
         try await clearAllPrivateData()
-        
-        // Regenerate encryption key
-        regenerateEncryptionKey()
-        
+
+        // Remove old Keychain key and generate a new random one.
+        resetKeychainKey()
+
+        #if DEBUG
         print("✅ Encryption reset and data cleared")
+        #endif
     }
     
     // MARK: - Encryption Methods

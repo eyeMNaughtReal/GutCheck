@@ -13,6 +13,7 @@ import Foundation
 import PDFKit
 import UIKit
 import FirebaseAuth
+import LocalAuthentication
 
 // MARK: - Export Formats
 
@@ -63,19 +64,31 @@ class HealthcareExportService: ObservableObject {
     
     // MARK: - Re-authentication for Export
     
-    /// Verifies user identity before allowing data export
+    /// Verifies user identity before allowing data export using biometric/passcode authentication.
+    /// Falls back to device passcode when Face ID / Touch ID is unavailable.
     private func verifyUserIdentity() async throws {
-        guard let currentUser = Auth.auth().currentUser else {
+        guard Auth.auth().currentUser != nil else {
             throw ExportError.userNotAuthenticated
         }
-        
-        // Check if user was recently authenticated (within last 5 minutes)
-        let lastSignInTime = currentUser.metadata.lastSignInDate ?? Date.distantPast
-        let timeSinceLastSignIn = Date().timeIntervalSince(lastSignInTime)
-        
-        // If more than 5 minutes since last sign-in, require re-authentication
-        if timeSinceLastSignIn > 300 { // 5 minutes = 300 seconds
-            throw ExportError.reauthenticationRequired
+
+        let context = LAContext()
+        var policyError: NSError?
+
+        guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &policyError) else {
+            throw ExportError.biometricAuthUnavailable
+        }
+
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            context.evaluatePolicy(
+                .deviceOwnerAuthentication,
+                localizedReason: "Authenticate to export your health data"
+            ) { success, error in
+                if success {
+                    continuation.resume()
+                } else {
+                    continuation.resume(throwing: ExportError.biometricAuthFailed)
+                }
+            }
         }
     }
     
@@ -212,39 +225,47 @@ class HealthcareExportService: ObservableObject {
         return pdfData
     }
     
+    /// Escapes a single CSV field per RFC 4180:
+    /// wraps the value in double-quotes and escapes any embedded double-quotes by doubling them.
+    /// This prevents CSV injection and handles values that contain commas, quotes, or newlines.
+    private func csvEscape(_ field: String) -> String {
+        let escaped = field.replacingOccurrences(of: "\"", with: "\"\"")
+        return "\"\(escaped)\""
+    }
+
     private func generateCSVReport(data: HealthcareExportData, options: ExportOptions) async throws -> Data {
         var csvContent = "Date,Type,Details,Notes\n"
-        
+
         // Add meals
         if options.includeMealData {
             for meal in data.meals {
                 let date = DateFormatter.exportDateFormatter.string(from: meal.date)
                 let details = meal.foodItems.map { $0.name }.joined(separator: "; ")
                 let notes = meal.notes ?? ""
-                csvContent += "\(date),Meal,\(details),\(notes)\n"
+                csvContent += "\(csvEscape(date)),Meal,\(csvEscape(details)),\(csvEscape(notes))\n"
             }
         }
-        
+
         // Add symptoms
         if options.includeSymptomData {
             for symptom in data.symptoms {
                 let date = DateFormatter.exportDateFormatter.string(from: symptom.date)
                 let details = "\(symptom.stoolType.rawValue) - Pain: \(symptom.painLevel.rawValue)"
                 let notes = symptom.notes ?? ""
-                csvContent += "\(date),Symptom,\(details),\(notes)\n"
+                csvContent += "\(csvEscape(date)),Symptom,\(csvEscape(details)),\(csvEscape(notes))\n"
             }
         }
-        
+
         // Add medications
         if options.includeMedicationData {
             for medication in data.medications {
                 let date = DateFormatter.exportDateFormatter.string(from: medication.startDate)
                 let details = "\(medication.name) - \(medication.dosage)"
                 let notes = medication.notes ?? ""
-                csvContent += "\(date),Medication,\(details),\(notes)\n"
+                csvContent += "\(csvEscape(date)),Medication,\(csvEscape(details)),\(csvEscape(notes))\n"
             }
         }
-        
+
         return csvContent.data(using: .utf8) ?? Data()
     }
     
@@ -1096,7 +1117,9 @@ enum ExportError: LocalizedError {
     case dataCollectionFailed
     case userNotAuthenticated
     case reauthenticationRequired
-    
+    case biometricAuthUnavailable
+    case biometricAuthFailed
+
     var errorDescription: String? {
         switch self {
         case .noAuthenticatedUser:
@@ -1109,6 +1132,10 @@ enum ExportError: LocalizedError {
             return "User not authenticated. Please sign in again."
         case .reauthenticationRequired:
             return "Re-authentication required. Please sign in again."
+        case .biometricAuthUnavailable:
+            return "Biometric authentication is not available on this device. Please set up Face ID, Touch ID, or a device passcode."
+        case .biometricAuthFailed:
+            return "Authentication failed. Please try again to export your health data."
         }
     }
 }

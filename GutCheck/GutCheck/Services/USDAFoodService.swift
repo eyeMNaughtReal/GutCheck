@@ -18,19 +18,26 @@ class USDAFoodService {
 
     func searchFoods(query: String, pageSize: Int = 25) async throws -> [USDAFood] {
         let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
-        let urlString = "\(baseURL)/foods/search?query=\(encodedQuery)&pageSize=\(pageSize)&api_key=\(apiKey)"
+        let urlString = "\(baseURL)/foods/search?query=\(encodedQuery)&pageSize=\(pageSize)"
 
         guard let url = URL(string: urlString) else {
             throw USDAFoodError.invalidURL
         }
 
+        var request = URLRequest(url: url)
+        request.setValue(apiKey, forHTTPHeaderField: "X-Api-Key")
+
+        #if DEBUG
         print("🥗 USDA: Searching for '\(query)'")
+        #endif
 
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let (data, response) = try await URLSession.shared.data(for: request)
 
             if let httpResponse = response as? HTTPURLResponse {
+                #if DEBUG
                 print("🥗 USDA HTTP Status: \(httpResponse.statusCode)")
+                #endif
                 switch httpResponse.statusCode {
                 case 200: break
                 case 403: throw USDAFoodError.invalidAPIKey
@@ -39,16 +46,22 @@ class USDAFoodService {
             }
 
             let searchResponse = try JSONDecoder().decode(USDASearchResponse.self, from: data)
+            #if DEBUG
             print("🥗 USDA: Found \(searchResponse.foods.count) foods")
+            #endif
             return searchResponse.foods
 
         } catch let decodingError as DecodingError {
+            #if DEBUG
             print("🥗 USDA JSON decoding error: \(decodingError)")
+            #endif
             throw USDAFoodError.decodingError(decodingError)
         } catch let usdaError as USDAFoodError {
             throw usdaError
         } catch {
+            #if DEBUG
             print("🥗 USDA search error: \(error)")
+            #endif
             throw USDAFoodError.networkError(error)
         }
     }

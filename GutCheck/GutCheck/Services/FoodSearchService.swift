@@ -23,7 +23,9 @@ class FoodSearchService: ObservableObject, HasLoadingState {
             try await performSearch(query: query)
             loadingState.clearError()
         } catch {
+            #if DEBUG
             print("❌ FoodSearchService: Search failed with error: \(error)")
+            #endif
             loadingState.setError(error.localizedDescription)
         }
 
@@ -31,7 +33,9 @@ class FoodSearchService: ObservableObject, HasLoadingState {
     }
 
     private func performSearch(query: String) async throws {
+        #if DEBUG
         print("🔍 FoodSearchService: Starting parallel search for '\(query)'")
+        #endif
 
         // Launch both searches concurrently
         async let usdaResults = fetchUSDAResults(query: query)
@@ -39,7 +43,9 @@ class FoodSearchService: ObservableObject, HasLoadingState {
 
         let (usda, off) = await (usdaResults, offResults)
 
+        #if DEBUG
         print("🔍 USDA returned: \(usda.count) | OpenFoodFacts returned: \(off.count)")
+        #endif
 
         // USDA first so its results take priority during deduplication
         let combined = usda + off
@@ -60,7 +66,9 @@ class FoodSearchService: ObservableObject, HasLoadingState {
             calculateNutritionCompletenessScore($0) > calculateNutritionCompletenessScore($1)
         }
 
+        #if DEBUG
         print("🔍 Search complete. Final results count: \(results.count)")
+        #endif
     }
 
     // MARK: - Per-source fetch helpers (soft-fail)
@@ -70,7 +78,9 @@ class FoodSearchService: ObservableObject, HasLoadingState {
             let foods = try await usdaFoodService.searchFoods(query: query)
             return foods.map { usdaFoodService.convertToFoodSearchResult($0) }
         } catch {
+            #if DEBUG
             print("🔍 USDA search failed (continuing with OpenFoodFacts): \(error.localizedDescription)")
+            #endif
             return []
         }
     }
@@ -80,7 +90,9 @@ class FoodSearchService: ObservableObject, HasLoadingState {
             let products = try await openFoodFactsService.searchFoods(query: query, pageSize: 30)
             return products.map { openFoodFactsService.convertToFoodSearchResult($0) }
         } catch {
+            #if DEBUG
             print("🔍 OpenFoodFacts search failed: \(error.localizedDescription)")
+            #endif
             return []
         }
     }
