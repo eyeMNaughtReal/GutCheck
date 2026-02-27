@@ -5,6 +5,7 @@ struct SymptomDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var router: AppRouter
     @EnvironmentObject var refreshManager: RefreshManager
+    @State private var showingEditSheet = false
 
     // New initializer that takes a symptom ID
     init(symptomId: String) {
@@ -107,6 +108,21 @@ struct SymptomDetailView: View {
             if shouldDismiss {
                 dismiss()
             }
+        }
+        .sheet(isPresented: $showingEditSheet) {
+            SymptomEditView(
+                symptom: viewModel.entity,
+                onSave: { updatedSymptom in
+                    viewModel.updateSymptom(updatedSymptom)
+                    Task {
+                        _ = await viewModel.saveSymptom()
+                    }
+                },
+                onComplete: {
+                    refreshManager.triggerRefresh()
+                    showingEditSheet = false
+                }
+            )
         }
     }
 
@@ -380,40 +396,17 @@ struct SymptomDetailView: View {
     // MARK: - Toolbar
 
     private var trailingToolbarContent: some View {
-        HStack {
-            if viewModel.isEditing {
-                saveButton
-            } else {
-                editMenu
-            }
-        }
+        editMenu
     }
 
     private var leadingToolbarContent: some View {
-        Group {
-            if viewModel.isEditing {
-                Button("Cancel") {
-                    viewModel.isEditing = false
-                }
-            }
-        }
-    }
-
-    private var saveButton: some View {
-        Button("Save") {
-            Task {
-                if await viewModel.saveSymptom() {
-                    refreshManager.triggerRefresh()
-                }
-            }
-        }
-        .disabled(viewModel.isSaving)
+        EmptyView()
     }
 
     private var editMenu: some View {
         Menu {
             Button {
-                viewModel.isEditing = true
+                showingEditSheet = true
             } label: {
                 Label("Edit", systemImage: "pencil")
             }
