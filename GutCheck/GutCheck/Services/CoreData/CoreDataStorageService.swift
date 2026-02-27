@@ -337,8 +337,17 @@ class CoreDataStorageService: ObservableObject {
             localSettings.syncStatus = syncStatus
             localSettings.lastModified = Date()
         }
-        
-        coreDataStack.save()
+
+        guard let context = entity.managedObjectContext else { return }
+        context.perform {
+            if context.hasChanges {
+                do {
+                    try context.save()
+                } catch {
+                    print("Error saving sync status: \(error)")
+                }
+            }
+        }
     }
     
     func getUnsyncedData() async throws -> (meals: [LocalMeal], symptoms: [LocalSymptom], settings: [LocalReminderSettings]) {

@@ -71,6 +71,7 @@ struct GutCheckApp: App {
     @StateObject private var authService = AuthService()
     @StateObject private var settingsVM = SettingsViewModel()
     @StateObject private var coreDataStack = CoreDataStack.shared
+    @StateObject private var localStorage = CoreDataStorageService.shared
     @StateObject private var dataSyncService = DataSyncService.shared
     @Environment(\.scenePhase) private var scenePhase
     
@@ -94,6 +95,7 @@ struct GutCheckApp: App {
                         .environmentObject(settingsVM)
                         .environmentObject(TimeoutManager.shared)
                         .environmentObject(coreDataStack)
+                        .environmentObject(localStorage)
                         .environmentObject(dataSyncService)
                 } else {
                     AuthenticationView(authService: authService)

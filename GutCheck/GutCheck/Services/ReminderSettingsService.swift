@@ -205,24 +205,21 @@ class ReminderSettingsRepository {
     private init() {}
     
     func fetch(forUser userId: String) async throws -> ReminderSettings {
-        let document = try await db.collection(collectionPath)
-            .whereField("createdBy", isEqualTo: userId)
-            .limit(to: 1)
-            .getDocuments()
-        
-        guard let doc = document.documents.first else {
+        let doc = try await db.collection(collectionPath).document(userId).getDocument()
+
+        guard doc.exists else {
             throw RepositoryError.documentNotFound("No reminder settings found for user")
         }
-        
+
         return try ReminderSettings(from: doc)
     }
-    
+
     func save(_ settings: ReminderSettings) async throws {
         let data = settings.toFirestoreData()
-        try await db.collection(collectionPath).document(settings.id).setData(data)
+        try await db.collection(collectionPath).document(settings.createdBy).setData(data)
     }
-    
+
     func delete(_ settings: ReminderSettings) async throws {
-        try await db.collection(collectionPath).document(settings.id).delete()
+        try await db.collection(collectionPath).document(settings.createdBy).delete()
     }
 }

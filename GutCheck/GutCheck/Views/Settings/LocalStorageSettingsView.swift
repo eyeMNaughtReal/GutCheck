@@ -95,7 +95,7 @@ struct LocalStorageSettingsView: View {
                     }
                 }) {
                     HStack {
-                        Image(systemName: "broom")
+                        Image(systemName: "clock.arrow.circlepath")
                             .foregroundColor(.orange)
                         Text("Clean Up Old Data")
                     }
