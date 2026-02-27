@@ -218,25 +218,84 @@ struct UnifiedFoodDetailView: View {
             Text("Nutrition Facts")
                 .font(.headline)
                 .foregroundColor(ColorTheme.primaryText)
-            
-            // TEMPORARILY SIMPLIFIED - Replace NutritionSummaryCard to test for freeze
-            VStack(spacing: 8) {
-                Text("\(Int(foodItem.nutrition.calories ?? 0)) calories")
-                    .font(.headline)
-                    .foregroundColor(ColorTheme.primary)
-                
-                HStack(spacing: 16) {
-                    Text("Protein: \(String(format: "%.1f", foodItem.nutrition.protein ?? 0))g")
-                    Text("Carbs: \(String(format: "%.1f", foodItem.nutrition.carbs ?? 0))g")
-                    Text("Fat: \(String(format: "%.1f", foodItem.nutrition.fat ?? 0))g")
+
+            VStack(spacing: 0) {
+                // Macronutrients
+                nutritionGroupLabel("Macronutrients")
+                NutritionDetailRow(label: "Calories",      value: foodItem.nutrition.calories.map { Double($0) }, unit: "kcal", color: .orange)
+                NutritionDetailRow(label: "Protein",       value: foodItem.nutrition.protein,   unit: "g",    color: .blue)
+                NutritionDetailRow(label: "Carbohydrates", value: foodItem.nutrition.carbs,     unit: "g",    color: .green)
+                NutritionDetailRow(label: "Total Fat",     value: foodItem.nutrition.fat,       unit: "g",    color: .red)
+                NutritionDetailRow(label: "Fiber",         value: foodItem.nutrition.fiber,     unit: "g",    color: .orange)
+                NutritionDetailRow(label: "Sugar",         value: foodItem.nutrition.sugar,     unit: "g",    color: .pink)
+                NutritionDetailRow(label: "Sodium",        value: foodItem.nutrition.sodium,    unit: "mg",   color: .yellow)
+
+                if !parsedFats.isEmpty {
+                    Divider().padding(.vertical, 8)
+                    nutritionGroupLabel("Fats")
+                    ForEach(parsedFats, id: \.0) { key, value in
+                        NutritionDetailRow(label: key, value: value,
+                                           unit: key == "Cholesterol" ? "mg" : "g", color: .red)
+                    }
                 }
-                .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+
+                if !parsedMinerals.isEmpty {
+                    Divider().padding(.vertical, 8)
+                    nutritionGroupLabel("Minerals")
+                    ForEach(parsedMinerals, id: \.0) { key, value in
+                        NutritionDetailRow(label: key, value: value, unit: "mg", color: .teal)
+                    }
+                }
+
+                if !parsedVitamins.isEmpty {
+                    Divider().padding(.vertical, 8)
+                    nutritionGroupLabel("Vitamins")
+                    ForEach(parsedVitamins, id: \.0) { key, value in
+                        NutritionDetailRow(label: key, value: value, unit: "mg", color: .purple)
+                    }
+                }
             }
             .padding()
             .background(ColorTheme.cardBackground)
             .cornerRadius(12)
+            .shadow(color: ColorTheme.shadowColor, radius: 2, x: 0, y: 1)
         }
+    }
+
+    @ViewBuilder
+    private func nutritionGroupLabel(_ title: String) -> some View {
+        Text(title)
+            .font(.caption)
+            .fontWeight(.semibold)
+            .foregroundColor(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.bottom, 4)
+    }
+
+    /// Parses a `nutritionDetails` string value (e.g. "15.0g", "100mg") into a Double.
+    private func parsedDetails(keys: [String]) -> [(String, Double)] {
+        keys.compactMap { key in
+            guard let str = foodItem.nutritionDetails[key] else { return nil }
+            let numStr = str.filter { $0.isNumber || $0 == "." }
+            guard let val = Double(numStr), val > 0 else { return nil }
+            return (key, val)
+        }
+    }
+
+    private var parsedFats: [(String, Double)] {
+        parsedDetails(keys: ["Saturated Fat", "Trans Fat", "Polyunsaturated Fat",
+                              "Monounsaturated Fat", "Cholesterol"])
+    }
+
+    private var parsedMinerals: [(String, Double)] {
+        parsedDetails(keys: ["Potassium", "Calcium", "Iron", "Magnesium", "Phosphorus",
+                              "Zinc", "Copper", "Manganese", "Selenium"])
+    }
+
+    private var parsedVitamins: [(String, Double)] {
+        parsedDetails(keys: ["Vitamin A", "Vitamin C", "Vitamin D", "Vitamin E", "Vitamin K",
+                              "Thiamin", "Riboflavin", "Niacin", "Vitamin B6", "Folate",
+                              "Vitamin B12", "Biotin", "Pantothenic Acid"])
     }
     
     private var unifiedNutritionCompact: some View {

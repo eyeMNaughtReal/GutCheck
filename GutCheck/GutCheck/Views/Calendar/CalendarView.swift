@@ -185,7 +185,8 @@ struct CalendarView: View {
                 DailyNutritionDetailView(
                     nutrition: viewModel.dailyNutrition,
                     details: viewModel.dailyNutritionDetails,
-                    date: viewModel.selectedDate
+                    date: viewModel.selectedDate,
+                    meals: viewModel.meals
                 )
             }
         }
@@ -997,6 +998,7 @@ struct DailyNutritionDetailView: View {
     let nutrition: NutritionInfo
     let details: [String: Double]
     let date: Date
+    let meals: [Meal]
     @Environment(\.dismiss) private var dismiss
 
     // Known mineral keys stored in nutritionDetails
@@ -1007,6 +1009,33 @@ struct DailyNutritionDetailView: View {
                                "Vitamin B12", "Biotin", "Pantothenic Acid"]
     private let fatKeys = ["Saturated Fat", "Trans Fat", "Polyunsaturated Fat", "Monounsaturated Fat",
                            "Cholesterol"]
+
+    // Snake_case / alternate-casing aliases from external food data sources (OpenFoodFacts, USDA, etc.)
+    // These duplicate data already shown in Macronutrients or the sections above, so we suppress them
+    // from the catch-all "Other Nutrients" section.
+    private let suppressedAliases: Set<String> = [
+        // Macronutrient duplicates
+        "calories", "energy", "energy_kcal",
+        "protein",
+        "carbohydrates", "carbs", "total_carbohydrate", "total_carbohydrates",
+        "fat", "total_fat",
+        "fiber", "dietary_fiber", "total_dietary_fiber",
+        "sugar", "sugars", "total_sugars",
+        "sodium",
+        // Fat duplicates
+        "saturated_fat", "saturated_fatty_acids",
+        "trans_fat", "trans_fatty_acids",
+        "polyunsaturated_fat", "polyunsaturated_fatty_acids",
+        "monounsaturated_fat", "monounsaturated_fatty_acids",
+        "cholesterol",
+        // Mineral duplicates
+        "potassium", "calcium", "iron", "magnesium",
+        "phosphorus", "zinc", "copper", "manganese", "selenium",
+        // Vitamin duplicates
+        "vitamin_a", "vitamin_c", "vitamin_d", "vitamin_e", "vitamin_k",
+        "thiamin", "riboflavin", "niacin", "vitamin_b6", "folate",
+        "vitamin_b12", "biotin", "pantothenic_acid"
+    ]
 
     private var dateTitle: String {
         let cal = Calendar.current
@@ -1073,12 +1102,41 @@ struct DailyNutritionDetailView: View {
                 }
 
                 // MARK: Other tracked nutrients (anything not in above lists)
-                let knownKeys = Set(mineralKeys + vitaminKeys + fatKeys)
+                let knownKeys = Set(mineralKeys + vitaminKeys + fatKeys).union(suppressedAliases)
                 let otherData = details.filter { !knownKeys.contains($0.key) }.sorted { $0.key < $1.key }
                 if !otherData.isEmpty {
                     Section(header: Text("Other Nutrients")) {
                         ForEach(otherData, id: \.key) { key, value in
                             NutritionDetailRow(label: key, value: value, unit: "", color: .gray)
+                        }
+                    }
+                }
+
+                // MARK: Per-meal breakdown
+                if !meals.isEmpty {
+                    ForEach(meals.sorted { $0.date < $1.date }) { meal in
+                        let mealCalories = meal.foodItems.reduce(0) { $0 + ($1.nutrition.calories ?? 0) }
+                        Section(header:
+                            HStack {
+                                Text(meal.type.rawValue.capitalized)
+                                    .textCase(nil)
+                                Spacer()
+                                Text("\(mealCalories) kcal")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .monospacedDigit()
+                                    .textCase(nil)
+                            }
+                        ) {
+                            if meal.foodItems.isEmpty {
+                                Text("No food items logged")
+                                    .foregroundColor(.secondary)
+                                    .font(.subheadline)
+                            } else {
+                                ForEach(meal.foodItems) { item in
+                                    NutritionDetailFoodRow(item: item)
+                                }
+                            }
                         }
                     }
                 }
@@ -1102,7 +1160,7 @@ struct DailyNutritionDetailView: View {
     }
 }
 
-private struct NutritionDetailRow: View {
+struct NutritionDetailRow: View {
     let label: String
     let value: Double?
     let unit: String
@@ -1130,6 +1188,79 @@ private struct NutritionDetailRow: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(formattedValue)")
+    }
+}
+
+// MARK: - Nutrition Detail Food Row (expandable row used inside DailyNutritionDetailView)
+
+private struct NutritionDetailFoodRow: View {
+    let item: FoodItem
+    @State private var isExpanded = false
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $isExpanded) {
+            VStack(spacing: 0) {
+                // Core nutrition
+                NutritionDetailRow(label: "Calories",       value: item.nutrition.calories.map { Double($0) }, unit: "kcal", color: .orange)
+                NutritionDetailRow(label: "Protein",        value: item.nutrition.protein,  unit: "g",    color: .blue)
+                NutritionDetailRow(label: "Carbohydrates",  value: item.nutrition.carbs,    unit: "g",    color: .green)
+                NutritionDetailRow(label: "Total Fat",      value: item.nutrition.fat,      unit: "g",    color: .red)
+                NutritionDetailRow(label: "Fiber",          value: item.nutrition.fiber,    unit: "g",    color: .orange)
+                NutritionDetailRow(label: "Sugar",          value: item.nutrition.sugar,    unit: "g",    color: .pink)
+                NutritionDetailRow(label: "Sodium",         value: item.nutrition.sodium,   unit: "mg",   color: .yellow)
+
+                // Allergens
+                if !item.allergens.isEmpty {
+                    HStack(alignment: .top, spacing: 8) {
+                        Text("Allergens")
+                            .font(.subheadline)
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Text(item.allergens.joined(separator: ", "))
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    .padding(.top, 6)
+                }
+
+                // Ingredients
+                if !item.ingredients.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Ingredients")
+                            .font(.subheadline)
+                            .foregroundColor(.primary)
+                        Text(item.ingredients.joined(separator: ", "))
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 6)
+                }
+            }
+            .padding(.top, 4)
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(item.name)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.primary)
+                    Text(item.quantity)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                if let cal = item.nutrition.calories {
+                    Text("\(cal) kcal")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .monospacedDigit()
+                }
+            }
+        }
+        .accessibilityLabel("\(item.name), \(item.quantity), \(item.nutrition.calories.map { "\($0) calories" } ?? "")")
     }
 }
 
