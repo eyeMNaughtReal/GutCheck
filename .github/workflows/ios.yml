@@ -54,7 +54,7 @@ jobs:
           <key>REVERSED_CLIENT_ID</key>
           <string>com.googleusercontent.apps.123456789012-abcdefghijklmnopqrstuvwxyz123456</string>
           <key>API_KEY</key>
-          <string>AIzaSyA00000000000000000000000000000000</string>
+          <string>MOCK-API-KEY-NOT-REAL-DO-NOT-USE</string>
           <key>GCM_SENDER_ID</key>
           <string>123456789012</string>
           <key>PLIST_VERSION</key>
