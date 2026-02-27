@@ -40,36 +40,42 @@ struct MealBuilderView: View {
                     .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.mealNameField)
                 
                 VStack(spacing: 12) {
-                    // Meal type picker
-                    HStack {
-                        Image(systemName: "fork.knife")
-                            .foregroundColor(ColorTheme.primary)
-                            .accessibleDecorative()
-                        
-                        Picker("Type", selection: $mealService.mealType) {
+                    // Meal type pills
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
                             ForEach(MealType.allCases, id: \.self) { type in
-                                Text(type.rawValue.capitalized).tag(type)
+                                let isSelected = mealService.mealType == type
+                                Button(action: {
+                                    mealService.mealType = type
+                                    HapticManager.shared.selection()
+                                }) {
+                                    Text(type.rawValue.capitalized)
+                                        .typography(Typography.subheadline)
+                                        .padding(.horizontal, 16)
+                                        .padding(.vertical, 8)
+                                        .background(isSelected ? ColorTheme.primary : ColorTheme.surface)
+                                        .foregroundColor(isSelected ? .white : ColorTheme.primaryText)
+                                        .cornerRadius(20)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 20)
+                                                .stroke(isSelected ? Color.clear : ColorTheme.border, lineWidth: 1)
+                                        )
+                                }
+                                .accessibilityLabel(type.rawValue.capitalized)
+                                .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+                                .accessibilityHint("Select \(type.rawValue.capitalized) as the meal type")
                             }
                         }
-                        .pickerStyle(.menu)
-                        .accessibleFormField(
-                            label: "Meal type",
-                            value: mealService.mealType.rawValue.capitalized
-                        )
-                        .accessibilityHint("Select the type of meal: breakfast, lunch, dinner, or snack")
-                        .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.mealTypePicker)
-                        .onChange(of: mealService.mealType) { _, _ in
-                            HapticManager.shared.selection()
-                        }
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
                     .background(ColorTheme.surface)
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(ColorTheme.border, lineWidth: 1)
                     )
+                    .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.mealTypePicker)
                     
                     // Date/time button
                     Button(action: {
@@ -302,9 +308,15 @@ struct MealBuilderView: View {
             DateTimePickerView(date: $mealService.mealDate)
         }
         .sheet(isPresented: $showingFoodOptions) {
-            MealLoggingOptionsView()
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
+            NavigationStack {
+                FoodSearchView { foodItem in
+                    MealBuilderService.shared.addFoodItem(foodItem)
+                    showingFoodOptions = false
+                }
+                .environmentObject(router)
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
         }
         .alert("Save as Template", isPresented: $showingTemplateSave) {
             Button("Save Template") {
