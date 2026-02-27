@@ -1,10 +1,13 @@
 import SwiftUI
 import UserNotifications
+import EventKit
 
 struct UserRemindersView: View {
     @StateObject private var reminderService = ReminderSettingsService.shared
+    @StateObject private var remindersKit = RemindersKitService.shared
     @State private var localSettings = ReminderSettings()
     @State private var showingSaveConfirmation = false
+    @State private var showingRemindersPermissionDeniedAlert = false
     
     var body: some View {
         ScrollView {
@@ -49,6 +52,9 @@ struct UserRemindersView: View {
                     }
                 }
                 
+                // ── Apple Reminders Sync ──────────────────────────────────────
+                appleRemindersSyncSection
+
                 Button(action: saveReminders) {
                     HStack(spacing: 8) {
                         if reminderService.isLoading {
@@ -77,19 +83,82 @@ struct UserRemindersView: View {
         .navigationTitle("Reminders")
         .onAppear {
             loadReminderSettings()
+            remindersKit.refreshAuthorizationStatus()
         }
         .alert("Reminders Saved", isPresented: $showingSaveConfirmation) {
             Button("OK") { }
         } message: {
             Text("Your reminder settings have been saved and notifications scheduled.")
         }
+        .alert("Reminders Access Denied", isPresented: $showingRemindersPermissionDeniedAlert) {
+            Button("Open Settings") { PermissionManager.shared.openAppSettings() }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Please enable Reminders access in Settings → Privacy & Security → Reminders.")
+        }
         .alert("Error", isPresented: .constant(reminderService.errorMessage != nil)) {
-            Button("OK") { 
+            Button("OK") {
                 reminderService.errorMessage = nil
             }
         } message: {
             if let errorMessage = reminderService.errorMessage {
                 Text(errorMessage)
+            }
+        }
+    }
+
+    // MARK: - Apple Reminders Sync Section
+
+    @ViewBuilder
+    private var appleRemindersSyncSection: some View {
+        ReminderSection(title: "Apple Reminders", color: ColorTheme.primary) {
+            HStack(spacing: 12) {
+                Image(systemName: "checklist")
+                    .font(.title3)
+                    .foregroundColor(ColorTheme.primary)
+                    .frame(width: 28)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Sync with Apple Reminders")
+                        .font(.body)
+                        .foregroundColor(ColorTheme.primaryText)
+                    Text("Add reminders to your Apple Reminders app")
+                        .font(.caption)
+                        .foregroundColor(ColorTheme.secondaryText)
+                }
+
+                Spacer()
+
+                if remindersKit.isAuthorized {
+                    Toggle("", isOn: Binding(
+                        get: { remindersKit.isEnabled },
+                        set: { newValue in
+                            remindersKit.isEnabled = newValue
+                            if !newValue {
+                                Task { await remindersKit.removeAllGutCheckReminders() }
+                            }
+                        }
+                    ))
+                    .toggleStyle(SwitchToggleStyle(tint: ColorTheme.primary))
+                    .labelsHidden()
+                } else {
+                    Button("Connect") {
+                        Task { await connectAppleReminders() }
+                    }
+                    .font(.subheadline.weight(.medium))
+                    .foregroundColor(ColorTheme.primary)
+                }
+            }
+
+            if remindersKit.isEnabled && remindersKit.isAuthorized {
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(ColorTheme.success)
+                        .font(.subheadline)
+                    Text("Your reminders will appear in the \"GutCheck\" list in Apple Reminders.")
+                        .font(.caption)
+                        .foregroundColor(ColorTheme.secondaryText)
+                }
             }
         }
     }
@@ -109,6 +178,18 @@ struct UserRemindersView: View {
             if reminderService.errorMessage == nil {
                 showingSaveConfirmation = true
             }
+        }
+    }
+
+    private func connectAppleReminders() async {
+        let granted = await remindersKit.requestAccess()
+        if granted {
+            remindersKit.isEnabled = true
+            if let settings = reminderService.reminderSettings {
+                await remindersKit.syncReminders(from: settings)
+            }
+        } else {
+            showingRemindersPermissionDeniedAlert = true
         }
     }
 }
