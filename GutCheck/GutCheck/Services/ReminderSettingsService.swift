@@ -41,7 +41,9 @@ class ReminderSettingsService: ObservableObject {
             syncToLocalStorage(settings)
             
         } catch {
+            #if DEBUG
             print("❌ ReminderSettingsService: Error loading settings: \(error)")
+            #endif
             errorMessage = error.localizedDescription
             
             // If no settings found, create default settings
@@ -72,14 +74,21 @@ class ReminderSettingsService: ObservableObject {
             
             // Sync to local storage
             syncToLocalStorage(updatedSettings)
-            
-            // Schedule notifications
+
+            // Schedule local push notifications
             await scheduleNotifications(for: updatedSettings)
-            
+
+            // Sync to Apple Reminders app (opt-in, no-op if not enabled/authorized)
+            await RemindersKitService.shared.syncReminders(from: updatedSettings)
+
+            #if DEBUG
             print("✅ ReminderSettingsService: Successfully saved reminder settings")
+            #endif
             
         } catch {
+            #if DEBUG
             print("❌ ReminderSettingsService: Error saving settings: \(error)")
+            #endif
             errorMessage = error.localizedDescription
         }
         
@@ -121,7 +130,9 @@ class ReminderSettingsService: ObservableObject {
         
         // Check permission through centralized system
         if !permissionManager.notificationStatus.isGranted {
+            #if DEBUG
             print("⚠️ ReminderSettingsService: Notification permission not granted")
+            #endif
             // Don't request here - should be handled by proper UI flow
             return
         }
@@ -141,45 +152,57 @@ class ReminderSettingsService: ObservableObject {
             
             do {
                 try await center.add(request)
+                #if DEBUG
                 print("✅ ReminderSettingsService: Scheduled meal reminder")
+                #endif
             } catch {
+                #if DEBUG
                 print("❌ ReminderSettingsService: Error scheduling meal reminder: \(error)")
+                #endif
             }
         }
-        
+
         // Schedule symptom reminders
         if settings.symptomReminderEnabled {
             let content = UNMutableNotificationContent()
             content.title = "Symptom Reminder"
             content.body = "Don't forget to log your symptoms!"
             content.sound = .default
-            
+
             let trigger = calendarTrigger(for: settings.symptomReminderTime)
             let request = UNNotificationRequest(identifier: "symptomReminder", content: content, trigger: trigger)
-            
+
             do {
                 try await center.add(request)
+                #if DEBUG
                 print("✅ ReminderSettingsService: Scheduled symptom reminder")
+                #endif
             } catch {
+                #if DEBUG
                 print("❌ ReminderSettingsService: Error scheduling symptom reminder: \(error)")
+                #endif
             }
         }
-        
+
         // Schedule weekly insight reminders
         if settings.weeklyInsightEnabled {
             let content = UNMutableNotificationContent()
             content.title = "Weekly Insight"
             content.body = "Check your AI-powered weekly health insights!"
             content.sound = .default
-            
+
             let trigger = calendarTrigger(for: settings.weeklyInsightTime, weekday: 2) // Monday
             let request = UNNotificationRequest(identifier: "weeklyInsight", content: content, trigger: trigger)
-            
+
             do {
                 try await center.add(request)
+                #if DEBUG
                 print("✅ ReminderSettingsService: Scheduled weekly insight reminder")
+                #endif
             } catch {
+                #if DEBUG
                 print("❌ ReminderSettingsService: Error scheduling weekly insight reminder: \(error)")
+                #endif
             }
         }
     }
