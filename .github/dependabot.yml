@@ -1,0 +1,28 @@
+version: 2
+
+updates:
+  # Swift Package Manager — Firebase SDK and other Swift dependencies
+  - package-ecosystem: "swift"
+    directory: "/GutCheck"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "America/Chicago"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "swift"
+
+  # GitHub Actions — keep workflow action versions up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "America/Chicago"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
