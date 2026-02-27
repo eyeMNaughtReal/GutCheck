@@ -25,7 +25,7 @@ jobs:
         xcode-version: '16.2'
 
     - name: Cache Swift Package Manager
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           ~/Library/Caches/org.swift.swiftpm/
@@ -35,7 +35,7 @@ jobs:
           ${{ runner.os }}-spm-
 
     - name: Cache DerivedData
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/Library/Developer/Xcode/DerivedData
         key: ${{ runner.os }}-deriveddata-${{ hashFiles('GutCheck/GutCheck.xcodeproj/project.pbxproj') }}
