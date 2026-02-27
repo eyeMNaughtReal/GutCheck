@@ -24,7 +24,9 @@
       "Bash(git ls-tree:*)",
       "Bash(ls:*)",
       "Bash(find:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(git -C /Users/markconley/Documents/GutCheck log --oneline -15)",
+      "Bash(git check-ignore:*)"
     ],
     "deny": []
   }
