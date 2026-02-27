@@ -89,12 +89,36 @@ jobs:
           -scheme GutCheck
       working-directory: GutCheck
 
+    - name: Prepare iOS Simulator
+      run: |
+        # Initialise CoreSimulator so it picks up the Xcode 16.2 runtimes
+        xcrun simctl list runtimes
+
+        # Find the UDID of the most recent available iPhone simulator
+        UDID=$(xcrun simctl list devices available | \
+          grep -E "^ +iPhone" | \
+          tail -1 | \
+          grep -oE '[0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}')
+
+        # If no simulator runtime is present, download the iOS platform
+        if [ -z "$UDID" ]; then
+          echo "No iPhone simulator found — downloading iOS platform (this may take a few minutes)"
+          xcodebuild -downloadPlatform iOS
+          UDID=$(xcrun simctl list devices available | \
+            grep -E "^ +iPhone" | \
+            tail -1 | \
+            grep -oE '[0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}')
+        fi
+
+        echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
+        echo "Using simulator UDID: $UDID"
+
     - name: Build GutCheck
       run: |
         xcodebuild clean build \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
-          -destination 'generic/platform=iOS Simulator' \
+          -destination "id=${{ env.SIMULATOR_UDID }}" \
           -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
           CODE_SIGNING_ALLOWED=NO \
           ONLY_ACTIVE_ARCH=NO
@@ -105,7 +129,7 @@ jobs:
         xcodebuild test \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
-          -destination 'generic/platform=iOS Simulator' \
+          -destination "id=${{ env.SIMULATOR_UDID }}" \
           -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
           CODE_SIGNING_ALLOWED=NO \
           ONLY_ACTIVE_ARCH=NO \
