@@ -116,7 +116,7 @@ struct CalendarView: View {
 
                 if selectedTab == .symptoms || selectedTab == nil {
                     // ── Symptoms static header ──
-                    CalendarSymptomsSectionHeader()
+                    CalendarSymptomsSectionHeader(viewModel: viewModel)
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
@@ -133,7 +133,7 @@ struct CalendarView: View {
                         EmptyStateCard(
                             icon: "heart.text.square",
                             title: "No symptoms logged",
-                            message: "Tap the + button to log a symptom"
+                            message: "Tap Log Symptom above to get started"
                         )
                         .padding(.horizontal, 16)
                         .padding(.bottom, 16)
@@ -199,22 +199,6 @@ struct CalendarView: View {
                 }
             }
             
-            // Symptom tab keeps its toolbar + button; meals tab uses inline Log Meal button
-            if selectedTab == .symptoms {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        HapticManager.shared.medium()
-                        router.startSymptomLogging()
-                    } label: {
-                        Image(systemName: "plus")
-                    }
-                    .accessibleButton(
-                        label: "Add Symptom",
-                        hint: "Tap to log a new symptom"
-                    )
-                    .accessibilityIdentifier(AccessibilityIdentifiers.Calendar.floatingActionButton)
-                }
-            }
         }
         .onAppear {
             print("📱 CalendarView: onAppear")
@@ -303,16 +287,50 @@ struct CalendarMealsSectionHeader: View {
 }
 
 // MARK: - Symptoms Section Header
+// Static header for the symptoms section: DailySymptomCard + Log Symptom button + section title.
+// Kept as a separate view to reduce compiler complexity in CalendarView.
 struct CalendarSymptomsSectionHeader: View {
+    @ObservedObject var viewModel: CalendarViewModel
+    @EnvironmentObject var router: AppRouter
+
     var body: some View {
-        Text("Symptoms")
-            .font(.title3)
-            .fontWeight(.semibold)
-            .foregroundColor(.primary)
-            .padding(.horizontal, 20)
-            .padding(.top, 20)
+        VStack(alignment: .leading, spacing: 0) {
+            // Daily Symptom Summary Card
+            DailySymptomCard(symptoms: viewModel.symptoms)
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+
+            // Log Symptom inline button
+            Button {
+                HapticManager.shared.medium()
+                router.startSymptomLogging()
+            } label: {
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Log Symptom")
+                        .fontWeight(.semibold)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 13)
+                .background(Color.accentColor)
+                .foregroundColor(.white)
+                .cornerRadius(12)
+            }
+            .padding(.horizontal, 16)
             .padding(.bottom, 12)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibleButton(label: "Log Symptom", hint: "Tap to log a new symptom")
+            .accessibilityIdentifier(AccessibilityIdentifiers.Calendar.floatingActionButton)
+
+            // Section header label
+            Text("Symptoms")
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundColor(.primary)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 12)
+        }
     }
 }
 
@@ -858,6 +876,118 @@ private struct MacroPill: View {
         .padding(.vertical, 4)
         .background(color.opacity(0.12))
         .cornerRadius(8)
+    }
+}
+
+// MARK: - Daily Symptom Card
+
+struct DailySymptomCard: View {
+    let symptoms: [Symptom]
+
+    private var maxPain: PainLevel {
+        symptoms.map(\.painLevel).max(by: { $0.rawValue < $1.rawValue }) ?? .none
+    }
+    private var maxUrgency: UrgencyLevel {
+        symptoms.map(\.urgencyLevel).max(by: { $0.rawValue < $1.rawValue }) ?? .none
+    }
+    private var mostCommonStoolType: StoolType? {
+        guard !symptoms.isEmpty else { return nil }
+        let counts = Dictionary(grouping: symptoms, by: \.stoolType).mapValues(\.count)
+        return counts.max(by: { $0.value < $1.value })?.key
+    }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("Daily Summary")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                Spacer()
+            }
+
+            if symptoms.isEmpty {
+                Text("Log a symptom to see your daily summary.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                // Symptom count — prominent
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text("\(symptoms.count)")
+                        .font(.system(size: 36, weight: .bold, design: .rounded))
+                        .foregroundColor(.primary)
+                    Text("symptom\(symptoms.count == 1 ? "" : "s")")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                }
+
+                // Stat pills
+                HStack(spacing: 8) {
+                    SymptomStatPill(label: "Pain",    value: maxPain.displayName,    color: maxPain.pillColor)
+                    SymptomStatPill(label: "Urgency", value: maxUrgency.displayName, color: maxUrgency.pillColor)
+                    if let stoolType = mostCommonStoolType {
+                        SymptomStatPill(label: "Type", value: "\(stoolType.rawValue)", color: .accentColor)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .shadow(color: .black.opacity(0.06), radius: 3, x: 0, y: 1)
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(symptoms.isEmpty
+            ? "Daily symptom summary — no symptoms logged"
+            : "Daily symptom summary: \(symptoms.count) symptom\(symptoms.count == 1 ? "" : "s"). Highest pain: \(maxPain.displayName). Highest urgency: \(maxUrgency.displayName)."
+        )
+    }
+}
+
+private struct SymptomStatPill: View {
+    let label: String
+    let value: String
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Text(label)
+                .font(.caption2)
+                .fontWeight(.semibold)
+                .foregroundColor(color)
+            Text(value)
+                .font(.caption)
+                .foregroundColor(.primary)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(color.opacity(0.12))
+        .cornerRadius(8)
+    }
+}
+
+private extension PainLevel {
+    var pillColor: Color {
+        switch self {
+        case .none:     return .secondary
+        case .mild:     return .green
+        case .moderate: return .orange
+        case .severe:   return .red
+        }
+    }
+}
+
+private extension UrgencyLevel {
+    var pillColor: Color {
+        switch self {
+        case .none:     return .secondary
+        case .mild:     return .yellow
+        case .moderate: return .orange
+        case .urgent:   return .red
+        }
     }
 }
 
