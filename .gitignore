@@ -1,6 +1,9 @@
 # GutCheck secrets
 GutCheck/GutCheck/Secrets.swift
 
+# Claude Code local configuration (contains local paths and automation permissions)
+.claude/
+
 # Xcode
 build/
 DerivedData/
@@ -17,7 +20,6 @@ xcuserdata/
 # Swift Package Manager
 Packages/
 Package.pins
-Package.resolved
 .swiftpm/
 
 # Firebase config

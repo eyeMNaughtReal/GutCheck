@@ -46,8 +46,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         let db = Firestore.firestore()
         let settings = FirestoreSettings()
         
-        // Use modern cache settings instead of deprecated properties
-        settings.cacheSettings = PersistentCacheSettings(sizeBytes: NSNumber(value: FirestoreCacheSizeUnlimited))
+        // Use modern cache settings instead of deprecated properties.
+        // Cap at 100 MB to prevent unbounded local disk growth.
+        settings.cacheSettings = PersistentCacheSettings(sizeBytes: NSNumber(value: 100 * 1024 * 1024))
         
         // Set a reasonable timeout
         settings.dispatchQueue = DispatchQueue.global(qos: .userInitiated)

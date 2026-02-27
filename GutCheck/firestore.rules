@@ -22,9 +22,11 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == createdBy;
     }
     
-    // Helper function to check if data is public (non-sensitive)
+    // Helper function to check if data is public (non-sensitive).
+    // Requires privacyLevel to be explicitly set to 'public'; a missing field
+    // does NOT default to public — it is treated as private.
     function isPublicData(data) {
-      return data.privacyLevel == 'public' || !('privacyLevel' in data);
+      return 'privacyLevel' in data && data.privacyLevel == 'public';
     }
     
     // Helper function to check if user has accepted privacy policy
@@ -38,6 +40,15 @@ service cloud.firestore {
     // Checks that the document contains ALL of the required fields
     function hasRequiredFields(data, requiredFields) {
       return data.keys().hasAll(requiredFields);
+    }
+
+    // Helper function to check if user is admin.
+    // Admin status is stored in the /admins/{userId} collection in Firestore.
+    // To grant admin access, create a document at /admins/{firebaseUID} in the
+    // Firebase Console (no specific fields required — existence of the document
+    // is sufficient). Never hardcode UIDs in rules.
+    function isAdmin(userId) {
+      return exists(/databases/$(database)/documents/admins/$(userId));
     }
     
     // ============================================================================
@@ -74,17 +85,13 @@ service cloud.firestore {
         request.auth.uid == request.resource.data.createdBy &&
         hasRequiredFields(request.resource.data, ['name', 'date', 'type', 'source', 'foodItems', 'createdBy']);
       
-      // Users can update their own meals
-      allow update: if isCreator(resource.data.createdBy) &&
-        request.auth.uid == request.resource.data.createdBy;
-      
-      // Users can delete their own meals
-      allow delete: if isCreator(resource.data.createdBy);
-      
-      // Prevent users from modifying createdBy field
+      // Users can update their own meals; createdBy field cannot be changed
       allow update: if isCreator(resource.data.createdBy) &&
         request.auth.uid == request.resource.data.createdBy &&
         request.resource.data.createdBy == resource.data.createdBy;
+
+      // Users can delete their own meals
+      allow delete: if isCreator(resource.data.createdBy);
     }
     
     // ============================================================================
@@ -103,17 +110,13 @@ service cloud.firestore {
         request.auth.uid == request.resource.data.createdBy &&
         hasRequiredFields(request.resource.data, ['date', 'stoolType', 'painLevel', 'urgencyLevel', 'createdBy']);
       
-      // Users can update their own symptoms
-      allow update: if isCreator(resource.data.createdBy) &&
-        request.auth.uid == request.resource.data.createdBy;
-      
-      // Users can delete their own symptoms
-      allow delete: if isCreator(resource.data.createdBy);
-      
-      // Prevent users from modifying createdBy field
+      // Users can update their own symptoms; createdBy field cannot be changed
       allow update: if isCreator(resource.data.createdBy) &&
         request.auth.uid == request.resource.data.createdBy &&
         request.resource.data.createdBy == resource.data.createdBy;
+
+      // Users can delete their own symptoms
+      allow delete: if isCreator(resource.data.createdBy);
     }
     
     // ============================================================================
@@ -290,19 +293,6 @@ service cloud.firestore {
       
       // Only admins can delete deletion requests
       allow delete: if isAuthenticated() && isAdmin(request.auth.uid);
-    }
-    
-    // ============================================================================
-    // ADMIN HELPER FUNCTIONS
-    // ============================================================================
-    
-    // Helper function to check if user is admin.
-    // Admin status is stored in the /admins/{userId} collection in Firestore.
-    // To grant admin access, create a document at /admins/{firebaseUID} in the
-    // Firebase Console (no specific fields required — existence of the document
-    // is sufficient). Never hardcode UIDs in rules.
-    function isAdmin(userId) {
-      return exists(/databases/$(database)/documents/admins/$(userId));
     }
     
     // ============================================================================
