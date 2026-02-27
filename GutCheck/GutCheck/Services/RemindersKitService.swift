@@ -206,8 +206,14 @@ final class RemindersKitService: ObservableObject {
         reminder.notes = notes
         reminder.calendar = calendar
 
-        // Due-date components (hour + minute only — no specific day so it repeats)
-        var components = Calendar.current.dateComponents([.hour, .minute], from: time)
+        // EKReminder.dueDateComponents requires at minimum year, month, and day in
+        // addition to hour/minute — otherwise EventKit throws NSInvalidArgumentException.
+        // We use today's date as the anchor; the recurrence rule handles repeating.
+        let cal = Calendar.current
+        let timeComponents = cal.dateComponents([.hour, .minute], from: time)
+        var components = cal.dateComponents([.year, .month, .day], from: Date())
+        components.hour = timeComponents.hour
+        components.minute = timeComponents.minute
         components.second = 0
         reminder.dueDateComponents = components
 
