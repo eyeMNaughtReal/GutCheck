@@ -30,6 +30,8 @@ struct ContentView: View {
                         DashboardView()
                     case .meals, .symptoms:
                         CalendarView(selectedTab: router.selectedTab)
+                    case .medications:
+                        MedicationsView()
                     case .insights:
                         InsightsView()
                     }

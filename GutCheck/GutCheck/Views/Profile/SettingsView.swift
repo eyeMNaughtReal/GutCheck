@@ -78,6 +78,24 @@ struct SettingsView: View {
                     .accessibilityHint("Tap to manage notification reminders")
                 }
 
+                Section("Medications") {
+                    NavigationLink(destination: MedicationListView()) {
+                        HStack {
+                            Image(systemName: "pills.fill")
+                                .foregroundColor(.purple)
+                                .accessibleDecorative()
+                            Text("My Medications")
+                                .typography(Typography.body)
+                            Spacer()
+                            Text("Manage your list")
+                                .typography(Typography.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .accessibilityLabel("My Medications")
+                    .accessibilityHint("Tap to add or edit your medications")
+                }
+
                 Section("Healthcare") {
                     Button(action: { showAppleHealth = true }) {
                         HStack {
