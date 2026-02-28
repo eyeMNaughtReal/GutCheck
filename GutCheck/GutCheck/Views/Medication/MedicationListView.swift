@@ -170,7 +170,7 @@ private struct MedicationRowView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     Text("·")
-                        .foregroundColor(.tertiary)
+                        .foregroundStyle(.tertiary)
                 }
                 Text(medication.dosage.frequency.displayName)
                     .font(.subheadline)
@@ -181,10 +181,10 @@ private struct MedicationRowView: View {
             HStack(spacing: 4) {
                 Image(systemName: sourceIcon)
                     .font(.caption2)
-                    .foregroundColor(.tertiary)
+                    .foregroundStyle(.tertiary)
                 Text(dateLabel)
                     .font(.caption)
-                    .foregroundColor(.tertiary)
+                    .foregroundStyle(.tertiary)
             }
         }
         .padding(.vertical, 4)
