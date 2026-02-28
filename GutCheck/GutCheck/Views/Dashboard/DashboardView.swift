@@ -38,9 +38,11 @@ struct DashboardView: View {
     
     /// View model for recent activity display
     @StateObject private var recentActivityViewModel = RecentActivityViewModel()
-    
+
     /// Manager for coordinating data refresh across the app
     @EnvironmentObject private var refreshManager: RefreshManager
+
+    @State private var showingLogMedication = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -154,6 +156,28 @@ struct DashboardView: View {
                     hint: "Tap to log symptoms"
                 )
                 .accessibilityIdentifier(AccessibilityIdentifiers.Dashboard.logSymptomButton)
+
+                Button(action: {
+                    HapticManager.shared.medium()
+                    showingLogMedication = true
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "pills.fill")
+                            .font(.system(size: 18, weight: .semibold))
+                            .accessibleDecorative()
+                        Text("Log Meds")
+                            .typography(Typography.button)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .foregroundColor(.white)
+                    .background(Color(red: 0.5, green: 0.2, blue: 0.7))
+                    .cornerRadius(12)
+                }
+                .accessibleButton(
+                    label: "Log Meds",
+                    hint: "Tap to log a medication dose"
+                )
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
@@ -186,6 +210,9 @@ struct DashboardView: View {
         .onChange(of: refreshManager.refreshToken) { _, _ in
             print("📱 DashboardView: Refresh triggered by RefreshManager")
             loadDataIfAuthenticated()
+        }
+        .sheet(isPresented: $showingLogMedication) {
+            LogMedicationDoseView { }
         }
     }
     
