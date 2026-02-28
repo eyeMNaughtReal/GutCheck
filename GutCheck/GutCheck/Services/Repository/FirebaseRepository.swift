@@ -561,17 +561,179 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
     }
 }
 
+class MedicationRepository: BaseFirebaseRepository<MedicationRecord> {
+    static let shared = MedicationRepository()
+
+    private init() {
+        super.init(collectionName: "medications")
+    }
+
+    /// Fetch only active medications (isActive == true), deduped and sorted by startDate ascending.
+    func fetchActiveMedications(userId: String) async throws -> [MedicationRecord] {
+        var all: [MedicationRecord] = []
+
+        // Local encrypted storage (privacyLevel == .private)
+        do {
+            let local = try await UnifiedDataService.shared.query(MedicationRecord.self) { _ in
+                firestore.collection(collectionName)
+            }
+            all.append(contentsOf: local)
+        } catch {
+            print("⚠️ MedicationRepository: local query failed: \(error)")
+        }
+
+        // Firestore (public medications, if any)
+        do {
+            let remote = try await queryFirestoreOnly { query in
+                query
+                    .whereField("createdBy", isEqualTo: userId)
+                    .whereField("isActive", isEqualTo: true)
+                    .order(by: "startDate", descending: false)
+            }
+            all.append(contentsOf: remote)
+        } catch {
+            print("⚠️ MedicationRepository: Firestore query failed: \(error)")
+        }
+
+        return deduplicated(all.filter { $0.isActive }, sortedBy: { $0.startDate < $1.startDate })
+    }
+
+    /// Fetch all medications, deduped and sorted by startDate descending.
+    func fetchAllMedications(userId: String) async throws -> [MedicationRecord] {
+        var all: [MedicationRecord] = []
+
+        do {
+            let local = try await UnifiedDataService.shared.query(MedicationRecord.self) { _ in
+                firestore.collection(collectionName)
+            }
+            all.append(contentsOf: local)
+        } catch {
+            print("⚠️ MedicationRepository: local query failed: \(error)")
+        }
+
+        do {
+            let remote = try await queryFirestoreOnly { query in
+                query
+                    .whereField("createdBy", isEqualTo: userId)
+                    .order(by: "startDate", descending: true)
+            }
+            all.append(contentsOf: remote)
+        } catch {
+            print("⚠️ MedicationRepository: Firestore query failed: \(error)")
+        }
+
+        return deduplicated(all, sortedBy: { $0.startDate > $1.startDate })
+    }
+
+    // MARK: - Helpers
+
+    private func deduplicated(_ items: [MedicationRecord],
+                              sortedBy comparator: (MedicationRecord, MedicationRecord) -> Bool)
+        -> [MedicationRecord]
+    {
+        var seen = Set<String>()
+        var result: [MedicationRecord] = []
+        for item in items.sorted(by: comparator) {
+            if seen.insert(item.id).inserted {
+                result.append(item)
+            }
+        }
+        return result
+    }
+}
+
+class MedicationDoseRepository: BaseFirebaseRepository<MedicationDoseLog> {
+    static let shared = MedicationDoseRepository()
+
+    private init() {
+        super.init(collectionName: "medicationDoses")
+    }
+
+    /// All doses taken on a given calendar day, sorted chronologically.
+    func fetchDosesForDate(_ date: Date, userId: String) async throws -> [MedicationDoseLog] {
+        let calendar = Calendar.current
+        let start = calendar.startOfDay(for: date)
+        let end   = calendar.date(byAdding: .day, value: 1, to: start) ?? date
+
+        var all: [MedicationDoseLog] = []
+
+        do {
+            let local = try await UnifiedDataService.shared.query(MedicationDoseLog.self) { _ in
+                firestore.collection(collectionName)
+            }
+            all.append(contentsOf: local.filter { $0.dateTaken >= start && $0.dateTaken < end })
+        } catch {
+            print("⚠️ MedicationDoseRepository: local query failed: \(error)")
+        }
+
+        do {
+            let remote = try await queryFirestoreOnly { query in
+                query
+                    .whereField("createdBy", isEqualTo: userId)
+                    .whereField("dateTaken", isGreaterThanOrEqualTo: start)
+                    .whereField("dateTaken", isLessThan: end)
+                    .order(by: "dateTaken", descending: false)
+            }
+            all.append(contentsOf: remote)
+        } catch {
+            print("⚠️ MedicationDoseRepository: Firestore query failed: \(error)")
+        }
+
+        return deduplicated(all, ascending: true)
+    }
+
+    /// Most-recent doses across all dates, up to `limit`.
+    func fetchRecentDoses(userId: String, limit: Int = 50) async throws -> [MedicationDoseLog] {
+        var all: [MedicationDoseLog] = []
+
+        do {
+            let local = try await UnifiedDataService.shared.query(MedicationDoseLog.self) { _ in
+                firestore.collection(collectionName)
+            }
+            all.append(contentsOf: local)
+        } catch {
+            print("⚠️ MedicationDoseRepository: local query failed: \(error)")
+        }
+
+        do {
+            let remote = try await queryFirestoreOnly { query in
+                query
+                    .whereField("createdBy", isEqualTo: userId)
+                    .order(by: "dateTaken", descending: true)
+                    .limit(to: limit)
+            }
+            all.append(contentsOf: remote)
+        } catch {
+            print("⚠️ MedicationDoseRepository: Firestore query failed: \(error)")
+        }
+
+        return Array(deduplicated(all, ascending: false).prefix(limit))
+    }
+
+    // MARK: - Helpers
+
+    private func deduplicated(_ items: [MedicationDoseLog], ascending: Bool) -> [MedicationDoseLog] {
+        var seen   = Set<String>()
+        var result = [MedicationDoseLog]()
+        let sorted = items.sorted { ascending ? $0.dateTaken < $1.dateTaken : $0.dateTaken > $1.dateTaken }
+        for item in sorted {
+            if seen.insert(item.id).inserted { result.append(item) }
+        }
+        return result
+    }
+}
+
 // MARK: - Repository Manager (Optional - for dependency injection)
 
 class RepositoryManager {
     static let shared = RepositoryManager()
-    
+
     private init() {}
-    
+
     lazy var mealRepository: MealRepository = MealRepository.shared
     lazy var symptomRepository: SymptomRepository = SymptomRepository.shared
     lazy var reminderSettingsRepository: ReminderSettingsRepository = ReminderSettingsRepository.shared
-    
-    // Add other repositories as needed
+    lazy var medicationRepository: MedicationRepository = MedicationRepository.shared
+    lazy var medicationDoseRepository: MedicationDoseRepository = MedicationDoseRepository.shared
 }
 

@@ -68,6 +68,17 @@ struct HealthDataIntegrationView: View {
                     HealthTypeRow(icon: "waveform.path.ecg", color: .pink,   label: "Heart Rate")
                 }
 
+                // MARK: - Medications
+                Section(
+                    header: Text("Medications"),
+                    footer: Text("Track your medications manually within GutCheck to help surface insights about how they affect your gut health.")
+                ) {
+                    NavigationLink(destination: MedicationListView()) {
+                        Label("My Medications", systemImage: "pills.fill")
+                            .foregroundColor(.primary)
+                    }
+                }
+
                 // MARK: - Sync toggle (read)
                 Section(
                     header: Text("Sync Settings"),

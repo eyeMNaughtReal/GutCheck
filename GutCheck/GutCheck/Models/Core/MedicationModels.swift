@@ -4,7 +4,13 @@ import HealthKit
 
 // MARK: - Core Medication Models
 
-struct MedicationRecord: Identifiable, Codable, FirestoreModel {
+struct MedicationRecord: Identifiable, Codable, Hashable, FirestoreModel {
+
+    // Identity-based equality and hashing — avoids requiring all nested
+    // types to be Hashable.
+    static func == (lhs: MedicationRecord, rhs: MedicationRecord) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
+
     var id: String
     var createdBy: String
     let name: String
@@ -212,6 +218,92 @@ enum MedicationSource: String, CaseIterable, Codable {
         case .pharmacy: return "Pharmacy"
         case .doctor: return "Doctor"
         }
+    }
+}
+
+// MARK: - Medication Dose Log
+
+/// Records a single instance of a user taking a medication dose.
+struct MedicationDoseLog: Identifiable, Codable, FirestoreModel {
+    var id: String
+    var createdBy: String
+    /// The `MedicationRecord.id` this dose belongs to.
+    let medicationId: String
+    /// Denormalized name so doses can be displayed without a secondary fetch.
+    let medicationName: String
+    let dosageAmount: Double
+    let dosageUnit: String
+    /// The actual date + time the dose was taken.
+    let dateTaken: Date
+    let notes: String?
+    let privacyLevel: DataPrivacyLevel
+    let createdAt: Date
+
+    // MARK: - DataClassifiable
+
+    var requiresLocalStorage: Bool { privacyLevel != .public }
+    var allowsCloudSync: Bool     { privacyLevel == .public }
+
+    // MARK: - Init
+
+    init(
+        id: String = UUID().uuidString,
+        createdBy: String = "",
+        medicationId: String,
+        medicationName: String,
+        dosageAmount: Double,
+        dosageUnit: String,
+        dateTaken: Date = Date(),
+        notes: String? = nil,
+        privacyLevel: DataPrivacyLevel = .private,
+        createdAt: Date = Date()
+    ) {
+        self.id             = id
+        self.createdBy      = createdBy
+        self.medicationId   = medicationId
+        self.medicationName = medicationName
+        self.dosageAmount   = dosageAmount
+        self.dosageUnit     = dosageUnit
+        self.dateTaken      = dateTaken
+        self.notes          = notes
+        self.privacyLevel   = privacyLevel
+        self.createdAt      = createdAt
+    }
+
+    // MARK: - FirestoreModel
+
+    static var collectionName: String { "medicationDoses" }
+
+    init(from document: DocumentSnapshot) throws {
+        guard let data = document.data() else {
+            throw RepositoryError.invalidData("Document data is nil")
+        }
+        self.id             = document.documentID
+        self.createdBy      = data["createdBy"]      as? String ?? ""
+        self.medicationId   = data["medicationId"]   as? String ?? ""
+        self.medicationName = data["medicationName"] as? String ?? ""
+        self.dosageAmount   = data["dosageAmount"]   as? Double ?? 0.0
+        self.dosageUnit     = data["dosageUnit"]     as? String ?? "mg"
+        self.dateTaken      = (data["dateTaken"]  as? Timestamp)?.dateValue() ?? Date()
+        self.notes          = data["notes"]          as? String
+        let privacyRaw      = data["privacyLevel"]   as? String ?? "private"
+        self.privacyLevel   = DataPrivacyLevel(rawValue: privacyRaw) ?? .private
+        self.createdAt      = (data["createdAt"] as? Timestamp)?.dateValue() ?? Date()
+    }
+
+    func toFirestoreData() -> [String: Any] {
+        var data: [String: Any] = [
+            "createdBy":      createdBy,
+            "medicationId":   medicationId,
+            "medicationName": medicationName,
+            "dosageAmount":   dosageAmount,
+            "dosageUnit":     dosageUnit,
+            "dateTaken":      Timestamp(date: dateTaken),
+            "privacyLevel":   privacyLevel.rawValue,
+            "createdAt":      Timestamp(date: createdAt)
+        ]
+        if let notes = notes { data["notes"] = notes }
+        return data
     }
 }
 
