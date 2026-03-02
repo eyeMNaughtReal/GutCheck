@@ -280,8 +280,10 @@ class CoreDataStorageService: ObservableObject {
             let localSettings = LocalReminderSettings(context: context)
             localSettings.id = settings.id
             localSettings.userId = settings.createdBy
-            localSettings.mealReminderEnabled = settings.mealReminderEnabled
-            localSettings.mealReminderTime = settings.mealReminderTime
+            // Bridge: store breakfast values in the legacy mealReminder columns until
+            // a CoreData migration adds per-meal-type columns.
+            localSettings.mealReminderEnabled = settings.breakfastReminderEnabled
+            localSettings.mealReminderTime = settings.breakfastReminderTime
             localSettings.symptomReminderEnabled = settings.symptomReminderEnabled
             localSettings.symptomReminderTime = settings.symptomReminderTime
             localSettings.remindMeLaterInterval = Int16(settings.remindMeLaterInterval)
@@ -307,11 +309,12 @@ class CoreDataStorageService: ObservableObject {
                 return nil
             }
             
+            // Bridge: read from legacy mealReminder columns into breakfastReminder fields.
             return ReminderSettings(
                 id: id,
                 createdBy: userId,
-                mealReminderEnabled: localSetting.mealReminderEnabled,
-                mealReminderTime: localSetting.mealReminderTime ?? Date(),
+                breakfastReminderEnabled: localSetting.mealReminderEnabled,
+                breakfastReminderTime: localSetting.mealReminderTime ?? ReminderSettings.defaultTime(hour: 7),
                 symptomReminderEnabled: localSetting.symptomReminderEnabled,
                 symptomReminderTime: localSetting.symptomReminderTime ?? Date(),
                 remindMeLaterInterval: Int(localSetting.remindMeLaterInterval),
