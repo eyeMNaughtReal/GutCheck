@@ -149,15 +149,18 @@ struct CalendarMedicationsSectionHeader: View {
                 onLogDose()
             } label: {
                 HStack {
-                    Image(systemName: "plus.circle.fill")
+                    Image(systemName: "pills.fill")
+                        .font(.title2)
                     Text("Log Dose")
-                        .fontWeight(.semibold)
+                        .font(.headline)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 13)
-                .background(Color.purple)
-                .foregroundColor(.white)
-                .cornerRadius(12)
+                .padding()
+                .background(Color.purple.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+                .foregroundColor(.purple)
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 12)

@@ -263,15 +263,18 @@ struct CalendarMealsSectionHeader: View {
                 router.startMealLogging()
             } label: {
                 HStack {
-                    Image(systemName: "plus.circle.fill")
+                    Image(systemName: "fork.knife")
+                        .font(.title2)
                     Text("Log Meal")
-                        .fontWeight(.semibold)
+                        .font(.headline)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 13)
-                .background(Color.accentColor)
-                .foregroundColor(.white)
-                .cornerRadius(12)
+                .padding()
+                .background(Color.green.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+                .foregroundColor(.green)
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 12)
@@ -310,15 +313,18 @@ struct CalendarSymptomsSectionHeader: View {
                 router.startSymptomLogging()
             } label: {
                 HStack {
-                    Image(systemName: "plus.circle.fill")
+                    Image(systemName: "waveform.path.ecg")
+                        .font(.title2)
                     Text("Log Symptom")
-                        .fontWeight(.semibold)
+                        .font(.headline)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 13)
-                .background(Color.accentColor)
-                .foregroundColor(.white)
-                .cornerRadius(12)
+                .padding()
+                .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
+                .foregroundColor(.orange)
             }
             .padding(.horizontal, 16)
             .padding(.bottom, 12)
