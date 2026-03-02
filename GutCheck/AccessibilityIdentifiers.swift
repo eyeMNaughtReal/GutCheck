@@ -48,7 +48,6 @@ enum AccessibilityIdentifiers {
         static let notesField = "mealBuilder.notes.field"
         static let saveButton = "mealBuilder.save.button"
         static let cancelButton = "mealBuilder.cancel.button"
-        static let saveTemplateButton = "mealBuilder.saveTemplate.button"
         static let nutritionSummary = "mealBuilder.nutrition.summary"
         static let foodItemsList = "mealBuilder.foodItems.list"
         static let emptyState = "mealBuilder.empty.state"

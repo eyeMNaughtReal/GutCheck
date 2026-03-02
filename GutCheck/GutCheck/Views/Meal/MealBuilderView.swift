@@ -20,9 +20,7 @@ struct MealBuilderView: View {
     @State private var showingDiscard = false
     @State private var showingFoodOptions = false
     @State private var editingFoodItem: FoodItem?
-    @State private var showingTemplateSave = false
-    @State private var showingTemplateSaved = false
-    @State private var loadError: String? = nil
+@State private var loadError: String? = nil
     
     var body: some View {
         VStack(spacing: 0) {
@@ -272,30 +270,6 @@ struct MealBuilderView: View {
                     )
                     .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.saveButton)
                     
-                    // Save as Template button (only show when meal name is provided)
-                    if !mealService.mealName.isEmpty && !mealService.currentMeal.isEmpty {
-                        Button(action: {
-                            HapticManager.shared.medium()
-                            showingTemplateSave = true
-                        }) {
-                            HStack {
-                                Image(systemName: "square.on.square")
-                                    .font(.title3)
-                                Text("Save as Template")
-                                    .typography(Typography.button)
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(ColorTheme.primary)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                        }
-                        .accessibleButton(
-                            label: "Save as Template",
-                            hint: "Save this meal as a reusable template for future use"
-                        )
-                        .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.saveTemplateButton)
-                    }
                 }
             }
             .padding()
@@ -333,26 +307,6 @@ struct MealBuilderView: View {
             }
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
-        }
-        .alert("Save as Template", isPresented: $showingTemplateSave) {
-            Button("Save Template") {
-                Task {
-                    do {
-                        _ = try await mealService.saveAsTemplate()
-                        showingTemplateSaved = true
-                    } catch {
-                        print("Error saving template: \(error)")
-                    }
-                }
-            }
-            Button("Cancel", role: .cancel) { }
-        } message: {
-            Text("Save '\(mealService.mealName)' as a reusable meal template?")
-        }
-        .alert("Template Saved", isPresented: $showingTemplateSaved) {
-            Button("OK") { }
-        } message: {
-            Text("'\(mealService.mealName)' has been saved as a reusable template!")
         }
         .sheet(item: $editingFoodItem) { foodItem in
             UnifiedFoodDetailView(
