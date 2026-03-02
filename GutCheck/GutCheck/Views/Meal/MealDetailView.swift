@@ -76,20 +76,13 @@ struct MealDetailView: View {
                 nutritionSummarySection
                 notesSection
             }
-            .padding(.bottom, viewModel.isEditing ? 120 : 80)
+            .padding(.bottom, 80)
         }
         .navigationTitle("Meal Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                if !viewModel.isEditing {
-                    editMenuButton
-                }
-            }
-        }
-        .overlay(alignment: .bottom) {
-            if viewModel.isEditing {
-                editingBottomBar
+                editMenuButton
             }
         }
         .alert("Error", isPresented: $viewModel.showingErrorAlert) {
@@ -119,18 +112,9 @@ struct MealDetailView: View {
     
     private var mealHeaderSection: some View {
         VStack(spacing: 8) {
-            if viewModel.isEditing {
-                TextField("Meal name", text: $viewModel.meal.name)
-                    .font(.headline)
-                    .padding()
-                    .background(ColorTheme.surface)
-                    .cornerRadius(12)
-                    .multilineTextAlignment(.center)
-            } else {
-                Text(viewModel.meal.name)
-                    .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
-            }
+            Text(viewModel.meal.name)
+                .font(.headline)
+                .foregroundColor(ColorTheme.primaryText)
             
             HStack {
                 mealBadge(type: viewModel.meal.type)
@@ -177,30 +161,13 @@ struct MealDetailView: View {
     
     @ViewBuilder
     private var notesSection: some View {
-        if viewModel.isEditing {
+        if let notes = viewModel.meal.notes, !notes.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Notes")
                     .font(.headline)
                     .foregroundColor(ColorTheme.primaryText)
                     .padding(.horizontal)
-                
-                TextField("Add notes about this meal...", text: Binding(
-                    get: { viewModel.meal.notes ?? "" },
-                    set: { viewModel.meal.notes = $0.isEmpty ? nil : $0 }
-                ), axis: .vertical)
-                    .lineLimit(3...6)
-                    .padding()
-                    .background(ColorTheme.surface)
-                    .cornerRadius(12)
-                    .padding(.horizontal)
-            }
-        } else if let notes = viewModel.meal.notes, !notes.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Notes")
-                    .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
-                    .padding(.horizontal)
-                
+
                 Text(notes)
                     .padding()
                     .background(ColorTheme.surface)
@@ -213,10 +180,9 @@ struct MealDetailView: View {
     private var editMenuButton: some View {
         Menu {
             Button {
-                // Defer state change so the menu finishes dismissing before
-                // UIContextMenuInteraction is torn down, preventing the
-                // "updateVisibleMenuWithBlock: while no context menu is visible" warning.
-                Task { viewModel.isEditing = true }
+                // Defer sheet presentation until the menu finishes dismissing to
+                // avoid "updateVisibleMenuWithBlock: while no context menu is visible".
+                Task { router.editMeal(id: viewModel.meal.id) }
             } label: {
                 Label("Edit", systemImage: "pencil")
             }
@@ -232,40 +198,7 @@ struct MealDetailView: View {
     }
     
     // MARK: - UI Components
-    
-    private var editingBottomBar: some View {
-        VStack(spacing: 0) {
-            Divider()
-            
-            HStack(spacing: 16) {
-                Button("Cancel") {
-                    viewModel.isEditing = false
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(ColorTheme.surface)
-                .foregroundColor(ColorTheme.primaryText)
-                .cornerRadius(8)
-                
-                Button("Save") {
-                    Task {
-                        if await viewModel.saveMeal() {
-                            refreshManager.triggerRefresh()
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(ColorTheme.primary)
-                .foregroundColor(.white)
-                .cornerRadius(8)
-                .disabled(viewModel.isSaving)
-            }
-            .padding()
-            .background(ColorTheme.background)
-        }
-    }
-    
+
     private func foodItemRow(_ foodItem: FoodItem) -> some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
