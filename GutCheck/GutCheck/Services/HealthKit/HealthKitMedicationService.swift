@@ -173,6 +173,11 @@ class HealthKitMedicationService: ObservableObject {
     }
     
     func fetchMedicationsFromHealthKit() async throws -> [MedicationRecord] {
+        // Skip the query entirely if authorization has not been granted.
+        // This avoids a noisy "Authorization not determined" HKError in the console
+        // when the user has not yet connected HealthKit medication access.
+        guard isAuthorized else { return [] }
+
         let medicationType = HKObjectType.clinicalType(forIdentifier: .medicationRecord)!
         
         let predicate = HKQuery.predicateForSamples(
