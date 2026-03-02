@@ -7,7 +7,6 @@
 //  - Today's activity summary
 //  - Health insights (score, focus, avoidance tips)
 //  - Week selector for historical data browsing
-//  - Quick action buttons for logging meals and symptoms
 //  - Real-time data updates via RefreshManager
 //
 //  Created by Mark Conley on 7/12/25.
@@ -42,8 +41,6 @@ struct DashboardView: View {
     /// Manager for coordinating data refresh across the app
     @EnvironmentObject private var refreshManager: RefreshManager
 
-    @State private var showingLogMedication = false
-    
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
@@ -108,81 +105,6 @@ struct DashboardView: View {
                 .padding(.bottom, 20)
             }
             .background(ColorTheme.background)
-            
-            // Action Buttons - Side by side at bottom
-            HStack(spacing: 16) {
-                Button(action: {
-                    HapticManager.shared.medium()
-                    router.startMealLogging()
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "fork.knife")
-                            .font(.system(size: 18, weight: .semibold))
-                            .accessibleDecorative()
-                        Text("Log Meal")
-                            .typography(Typography.button)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .foregroundColor(.white)
-                    .background(Color.blue)
-                    .cornerRadius(12)
-                }
-                .accessibleButton(
-                    label: "Log Meal",
-                    hint: "Tap to log a new meal"
-                )
-                .accessibilityIdentifier(AccessibilityIdentifiers.Dashboard.logMealButton)
-                
-                Button(action: {
-                    HapticManager.shared.medium()
-                    router.startSymptomLogging()
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "heart.text.square")
-                            .font(.system(size: 18, weight: .semibold))
-                            .accessibleDecorative()
-                        Text("Log Symptom")
-                            .typography(Typography.button)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .foregroundColor(.white)
-                    .background(Color.purple)
-                    .cornerRadius(12)
-                }
-                .accessibleButton(
-                    label: "Log Symptom",
-                    hint: "Tap to log symptoms"
-                )
-                .accessibilityIdentifier(AccessibilityIdentifiers.Dashboard.logSymptomButton)
-
-                Button(action: {
-                    HapticManager.shared.medium()
-                    showingLogMedication = true
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "pills.fill")
-                            .font(.system(size: 18, weight: .semibold))
-                            .accessibleDecorative()
-                        Text("Log Meds")
-                            .typography(Typography.button)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .foregroundColor(.white)
-                    .background(Color(red: 0.5, green: 0.2, blue: 0.7))
-                    .cornerRadius(12)
-                }
-                .accessibleButton(
-                    label: "Log Meds",
-                    hint: "Tap to log a medication dose"
-                )
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            .background(ColorTheme.cardBackground)
-            .shadow(color: ColorTheme.shadowColor.opacity(0.1), radius: 8, x: 0, y: -2)
         }
         .navigationTitle("Dashboard")
         .navigationBarTitleDisplayMode(.large)
@@ -210,9 +132,6 @@ struct DashboardView: View {
         .onChange(of: refreshManager.refreshToken) { _, _ in
             print("📱 DashboardView: Refresh triggered by RefreshManager")
             loadDataIfAuthenticated()
-        }
-        .sheet(isPresented: $showingLogMedication) {
-            LogMedicationDoseView { }
         }
     }
     
