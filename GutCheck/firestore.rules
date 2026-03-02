@@ -168,6 +168,28 @@ service cloud.firestore {
     }
     
     // ============================================================================
+    // MEDICATION DOSE LOGS SECURITY
+    // ============================================================================
+
+    match /medicationDoses/{doseId} {
+      // Users can read their own medication dose logs
+      allow read: if isCreator(resource.data.createdBy);
+
+      // Users can create dose logs (must include createdBy field matching auth UID)
+      allow create: if isAuthenticated() &&
+        request.auth.uid == request.resource.data.createdBy &&
+        hasRequiredFields(request.resource.data, ['createdBy', 'medicationId', 'medicationName', 'dosageAmount', 'dosageUnit', 'dateTaken']);
+
+      // Users can update their own dose logs; createdBy cannot be changed
+      allow update: if isCreator(resource.data.createdBy) &&
+        request.auth.uid == request.resource.data.createdBy &&
+        request.resource.data.createdBy == resource.data.createdBy;
+
+      // Users can delete their own dose logs
+      allow delete: if isCreator(resource.data.createdBy);
+    }
+
+    // ============================================================================
     // REMINDER SETTINGS SECURITY
     // ============================================================================
     
