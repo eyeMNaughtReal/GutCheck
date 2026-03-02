@@ -12,9 +12,15 @@ struct ReminderSettings: Identifiable, Codable, Hashable, Equatable, FirestoreMo
     var id: String = UUID().uuidString
     var createdBy: String = ""  // Firebase UID - required for FirestoreModel
 
-    // Daily Reminders
-    var mealReminderEnabled: Bool = false
-    var mealReminderTime: Date = Date()
+    // Meal Reminders — fires 15 min after each typical meal time
+    var breakfastReminderEnabled: Bool = false
+    var breakfastReminderTime: Date = ReminderSettings.defaultTime(hour: 7)
+    var lunchReminderEnabled: Bool = false
+    var lunchReminderTime: Date = ReminderSettings.defaultTime(hour: 12)
+    var dinnerReminderEnabled: Bool = false
+    var dinnerReminderTime: Date = ReminderSettings.defaultTime(hour: 18)
+
+    // Other Daily Reminders
     var symptomReminderEnabled: Bool = false
     var symptomReminderTime: Date = Date()
     var medicationReminderEnabled: Bool = false
@@ -31,30 +37,34 @@ struct ReminderSettings: Identifiable, Codable, Hashable, Equatable, FirestoreMo
 
     // Metadata
     var lastUpdated: Date = Date()
-    
+
+    // MARK: - Helpers
+
+    /// Returns a Date set to today at the given hour (minute 0) in the current calendar.
+    static func defaultTime(hour: Int) -> Date {
+        var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+        components.hour = hour
+        components.minute = 0
+        components.second = 0
+        return Calendar.current.date(from: components) ?? Date()
+    }
+
     // MARK: - DataClassifiable Conformance
-    
-    /// Privacy level for reminder settings
-    /// Reminder settings are considered public as they don't contain sensitive personal information
-    var privacyLevel: DataPrivacyLevel {
-        return .public
-    }
-    
-    /// Whether reminder settings require local encrypted storage
-    var requiresLocalStorage: Bool {
-        return privacyLevel == .private || privacyLevel == .confidential
-    }
-    
-    /// Whether reminder settings can be synced to the cloud
-    var allowsCloudSync: Bool {
-        return privacyLevel == .public
-    }
-    
-    // MARK: - Initializers
+
+    var privacyLevel: DataPrivacyLevel { .public }
+    var requiresLocalStorage: Bool { privacyLevel == .private || privacyLevel == .confidential }
+    var allowsCloudSync: Bool { privacyLevel == .public }
+
+    // MARK: - Memberwise Initializer
+
     init(id: String = UUID().uuidString,
          createdBy: String = "",
-         mealReminderEnabled: Bool = false,
-         mealReminderTime: Date = Date(),
+         breakfastReminderEnabled: Bool = false,
+         breakfastReminderTime: Date = ReminderSettings.defaultTime(hour: 7),
+         lunchReminderEnabled: Bool = false,
+         lunchReminderTime: Date = ReminderSettings.defaultTime(hour: 12),
+         dinnerReminderEnabled: Bool = false,
+         dinnerReminderTime: Date = ReminderSettings.defaultTime(hour: 18),
          symptomReminderEnabled: Bool = false,
          symptomReminderTime: Date = Date(),
          medicationReminderEnabled: Bool = false,
@@ -66,8 +76,12 @@ struct ReminderSettings: Identifiable, Codable, Hashable, Equatable, FirestoreMo
          patternAlertEnabled: Bool = true) {
         self.id = id
         self.createdBy = createdBy
-        self.mealReminderEnabled = mealReminderEnabled
-        self.mealReminderTime = mealReminderTime
+        self.breakfastReminderEnabled = breakfastReminderEnabled
+        self.breakfastReminderTime = breakfastReminderTime
+        self.lunchReminderEnabled = lunchReminderEnabled
+        self.lunchReminderTime = lunchReminderTime
+        self.dinnerReminderEnabled = dinnerReminderEnabled
+        self.dinnerReminderTime = dinnerReminderTime
         self.symptomReminderEnabled = symptomReminderEnabled
         self.symptomReminderTime = symptomReminderTime
         self.medicationReminderEnabled = medicationReminderEnabled
@@ -79,76 +93,107 @@ struct ReminderSettings: Identifiable, Codable, Hashable, Equatable, FirestoreMo
         self.patternAlertEnabled = patternAlertEnabled
         self.lastUpdated = Date()
     }
-    
+
     // MARK: - FirestoreModel Implementation
+
     init(from document: DocumentSnapshot) throws {
         let data = document.data()
         guard let data = data else {
             throw RepositoryError.invalidData("Document data is nil")
         }
-        
+
         self.id = document.documentID
-        
+
         guard let createdBy = data["createdBy"] as? String else {
             throw RepositoryError.invalidData("Missing or invalid createdBy field")
         }
         self.createdBy = createdBy
-        
-        self.mealReminderEnabled = data["mealReminderEnabled"] as? Bool ?? false
-        self.symptomReminderEnabled = data["symptomReminderEnabled"] as? Bool ?? false
+
+        // Meal reminders
+        self.breakfastReminderEnabled = data["breakfastReminderEnabled"] as? Bool ?? false
+        self.lunchReminderEnabled     = data["lunchReminderEnabled"]     as? Bool ?? false
+        self.dinnerReminderEnabled    = data["dinnerReminderEnabled"]    as? Bool ?? false
+
+        // Other daily reminders
+        self.symptomReminderEnabled   = data["symptomReminderEnabled"]   as? Bool ?? false
         self.medicationReminderEnabled = data["medicationReminderEnabled"] as? Bool ?? false
-        self.weeklyInsightEnabled = data["weeklyInsightEnabled"] as? Bool ?? false
-        self.newInsightsEnabled = data["newInsightsEnabled"] as? Bool ?? true
+
+        // Smart notifications
+        self.newInsightsEnabled  = data["newInsightsEnabled"]  as? Bool ?? true
         self.patternAlertEnabled = data["patternAlertEnabled"] as? Bool ?? true
+
         self.remindMeLaterInterval = data["remindMeLaterInterval"] as? Int ?? 15
 
-        // Handle date fields
-        if let mealTimestamp = data["mealReminderTime"] as? Timestamp {
-            self.mealReminderTime = mealTimestamp.dateValue()
+        // Meal time fields — fall back to sensible defaults when not yet in Firestore
+        if let ts = data["breakfastReminderTime"] as? Timestamp {
+            self.breakfastReminderTime = ts.dateValue()
         } else {
-            self.mealReminderTime = Date()
+            self.breakfastReminderTime = ReminderSettings.defaultTime(hour: 7)
         }
 
-        if let symptomTimestamp = data["symptomReminderTime"] as? Timestamp {
-            self.symptomReminderTime = symptomTimestamp.dateValue()
+        if let ts = data["lunchReminderTime"] as? Timestamp {
+            self.lunchReminderTime = ts.dateValue()
+        } else {
+            self.lunchReminderTime = ReminderSettings.defaultTime(hour: 12)
+        }
+
+        if let ts = data["dinnerReminderTime"] as? Timestamp {
+            self.dinnerReminderTime = ts.dateValue()
+        } else {
+            self.dinnerReminderTime = ReminderSettings.defaultTime(hour: 18)
+        }
+
+        if let ts = data["symptomReminderTime"] as? Timestamp {
+            self.symptomReminderTime = ts.dateValue()
         } else {
             self.symptomReminderTime = Date()
         }
 
-        if let medicationTimestamp = data["medicationReminderTime"] as? Timestamp {
-            self.medicationReminderTime = medicationTimestamp.dateValue()
+        if let ts = data["medicationReminderTime"] as? Timestamp {
+            self.medicationReminderTime = ts.dateValue()
         } else {
             self.medicationReminderTime = Date()
         }
 
-        if let weeklyTimestamp = data["weeklyInsightTime"] as? Timestamp {
-            self.weeklyInsightTime = weeklyTimestamp.dateValue()
+        if let ts = data["weeklyInsightTime"] as? Timestamp {
+            self.weeklyInsightTime = ts.dateValue()
         } else {
             self.weeklyInsightTime = Date()
         }
 
-        if let lastUpdatedTimestamp = data["lastUpdated"] as? Timestamp {
-            self.lastUpdated = lastUpdatedTimestamp.dateValue()
+        self.weeklyInsightEnabled = data["weeklyInsightEnabled"] as? Bool ?? false
+
+        if let ts = data["lastUpdated"] as? Timestamp {
+            self.lastUpdated = ts.dateValue()
         } else {
             self.lastUpdated = Date()
         }
     }
-    
+
     func toFirestoreData() -> [String: Any] {
         return [
             "id": id,
             "createdBy": createdBy,
-            "mealReminderEnabled": mealReminderEnabled,
-            "mealReminderTime": Timestamp(date: mealReminderTime),
+            // Meal reminders
+            "breakfastReminderEnabled": breakfastReminderEnabled,
+            "breakfastReminderTime": Timestamp(date: breakfastReminderTime),
+            "lunchReminderEnabled": lunchReminderEnabled,
+            "lunchReminderTime": Timestamp(date: lunchReminderTime),
+            "dinnerReminderEnabled": dinnerReminderEnabled,
+            "dinnerReminderTime": Timestamp(date: dinnerReminderTime),
+            // Other daily reminders
             "symptomReminderEnabled": symptomReminderEnabled,
             "symptomReminderTime": Timestamp(date: symptomReminderTime),
             "medicationReminderEnabled": medicationReminderEnabled,
             "medicationReminderTime": Timestamp(date: medicationReminderTime),
             "remindMeLaterInterval": remindMeLaterInterval,
+            // Weekly reports
             "weeklyInsightEnabled": weeklyInsightEnabled,
             "weeklyInsightTime": Timestamp(date: weeklyInsightTime),
+            // Smart notifications
             "newInsightsEnabled": newInsightsEnabled,
             "patternAlertEnabled": patternAlertEnabled,
+            // Metadata
             "lastUpdated": Timestamp(date: Date()),
             "createdAt": Timestamp(date: Date())
         ]

@@ -12,17 +12,47 @@ struct UserRemindersView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                ReminderSection(title: "Daily Reminders", color: ColorTheme.accent) {
-                    Toggle("Meal Reminder", isOn: $localSettings.mealReminderEnabled)
+                ReminderSection(title: "Meal Reminders", color: ColorTheme.accent) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "clock.fill")
+                            .font(.caption)
+                            .foregroundColor(ColorTheme.accent)
+                        Text("Set your typical meal time. A reminder fires 15 minutes after to log what you ate.")
+                            .font(.caption)
+                            .foregroundColor(ColorTheme.secondaryText)
+                    }
+                    .padding(.bottom, 4)
+
+                    Toggle("Breakfast", isOn: $localSettings.breakfastReminderEnabled)
                         .toggleStyle(SwitchToggleStyle(tint: ColorTheme.accent))
 
-                    if localSettings.mealReminderEnabled {
-                        DatePicker("Time", selection: $localSettings.mealReminderTime, displayedComponents: .hourAndMinute)
+                    if localSettings.breakfastReminderEnabled {
+                        DatePicker("Typical time", selection: $localSettings.breakfastReminderTime, displayedComponents: .hourAndMinute)
                             .accentColor(ColorTheme.accent)
                     }
 
                     Divider()
 
+                    Toggle("Lunch", isOn: $localSettings.lunchReminderEnabled)
+                        .toggleStyle(SwitchToggleStyle(tint: ColorTheme.accent))
+
+                    if localSettings.lunchReminderEnabled {
+                        DatePicker("Typical time", selection: $localSettings.lunchReminderTime, displayedComponents: .hourAndMinute)
+                            .accentColor(ColorTheme.accent)
+                    }
+
+                    Divider()
+
+                    Toggle("Dinner", isOn: $localSettings.dinnerReminderEnabled)
+                        .toggleStyle(SwitchToggleStyle(tint: ColorTheme.accent))
+
+                    if localSettings.dinnerReminderEnabled {
+                        DatePicker("Typical time", selection: $localSettings.dinnerReminderTime, displayedComponents: .hourAndMinute)
+                            .accentColor(ColorTheme.accent)
+                    }
+                }
+
+                ReminderSection(title: "Daily Reminders", color: ColorTheme.accent) {
                     Toggle("Symptom Reminder", isOn: $localSettings.symptomReminderEnabled)
                         .toggleStyle(SwitchToggleStyle(tint: ColorTheme.accent))
 

@@ -92,7 +92,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 
         Task { @MainActor in
             switch true {
-            case identifier == "mealReminder":
+            case identifier == "breakfastReminder",
+                 identifier == "lunchReminder",
+                 identifier == "dinnerReminder":
                 router.startMealLogging()
 
             case identifier == "symptomReminder",

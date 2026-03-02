@@ -115,15 +115,23 @@ class ReminderSettingsService: ObservableObject {
     }
     
     private func syncToLocalStorage(_ settings: ReminderSettings) {
-        UserDefaults.standard.set(settings.mealReminderEnabled, forKey: "mealReminderEnabled")
-        UserDefaults.standard.set(settings.mealReminderTime, forKey: "mealReminderTime")
+        // Meal reminders
+        UserDefaults.standard.set(settings.breakfastReminderEnabled, forKey: "breakfastReminderEnabled")
+        UserDefaults.standard.set(settings.breakfastReminderTime, forKey: "breakfastReminderTime")
+        UserDefaults.standard.set(settings.lunchReminderEnabled, forKey: "lunchReminderEnabled")
+        UserDefaults.standard.set(settings.lunchReminderTime, forKey: "lunchReminderTime")
+        UserDefaults.standard.set(settings.dinnerReminderEnabled, forKey: "dinnerReminderEnabled")
+        UserDefaults.standard.set(settings.dinnerReminderTime, forKey: "dinnerReminderTime")
+        // Other daily reminders
         UserDefaults.standard.set(settings.symptomReminderEnabled, forKey: "symptomReminderEnabled")
         UserDefaults.standard.set(settings.symptomReminderTime, forKey: "symptomReminderTime")
         UserDefaults.standard.set(settings.medicationReminderEnabled, forKey: "medicationReminderEnabled")
         UserDefaults.standard.set(settings.medicationReminderTime, forKey: "medicationReminderTime")
         UserDefaults.standard.set(settings.remindMeLaterInterval, forKey: "remindMeLaterInterval")
+        // Weekly reports
         UserDefaults.standard.set(settings.weeklyInsightEnabled, forKey: "weeklyInsightEnabled")
         UserDefaults.standard.set(settings.weeklyInsightTime, forKey: "weeklyInsightTime")
+        // Smart notifications
         UserDefaults.standard.set(settings.newInsightsEnabled, forKey: "newInsightsEnabled")
         UserDefaults.standard.set(settings.patternAlertEnabled, forKey: "patternAlertEnabled")
     }
@@ -151,24 +159,35 @@ class ReminderSettingsService: ObservableObject {
         // Remove existing notifications
         center.removeAllPendingNotificationRequests()
         
-        // Schedule meal reminders
-        if settings.mealReminderEnabled {
+        // Schedule meal reminders — each fires 15 min after the user's typical meal time
+        let mealReminders: [(enabled: Bool, time: Date, identifier: String, title: String)] = [
+            (settings.breakfastReminderEnabled, settings.breakfastReminderTime,
+             "breakfastReminder", "Time to Log Your Breakfast"),
+            (settings.lunchReminderEnabled,     settings.lunchReminderTime,
+             "lunchReminder",     "Time to Log Your Lunch"),
+            (settings.dinnerReminderEnabled,    settings.dinnerReminderTime,
+             "dinnerReminder",    "Time to Log Your Dinner")
+        ]
+
+        for meal in mealReminders where meal.enabled {
             let content = UNMutableNotificationContent()
-            content.title = "Time to Log Your Meal"
-            content.body = "Don't forget to track what you ate. Consistent logging leads to better insights."
+            content.title = meal.title
+            content.body  = "Don't forget to track what you ate. Consistent logging leads to better insights."
             content.sound = .default
 
-            let trigger = calendarTrigger(for: settings.mealReminderTime)
-            let request = UNNotificationRequest(identifier: "mealReminder", content: content, trigger: trigger)
+            // Fire 15 minutes after the stored meal time
+            let fireTime = Calendar.current.date(byAdding: .minute, value: 15, to: meal.time) ?? meal.time
+            let trigger  = calendarTrigger(for: fireTime)
+            let request  = UNNotificationRequest(identifier: meal.identifier, content: content, trigger: trigger)
 
             do {
                 try await center.add(request)
                 #if DEBUG
-                print("✅ ReminderSettingsService: Scheduled meal reminder")
+                print("✅ ReminderSettingsService: Scheduled \(meal.identifier)")
                 #endif
             } catch {
                 #if DEBUG
-                print("❌ ReminderSettingsService: Error scheduling meal reminder: \(error)")
+                print("❌ ReminderSettingsService: Error scheduling \(meal.identifier): \(error)")
                 #endif
             }
         }
