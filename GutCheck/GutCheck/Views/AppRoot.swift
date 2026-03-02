@@ -114,6 +114,13 @@ struct AppRoot: View {
                 }
                 
                 NavigationStack {
+                    MedicationCalendarView()
+                }
+                .tabItem {
+                    Label("Meds", systemImage: "pills.fill")
+                }
+
+                NavigationStack {
                     InsightsView()
                 }
                 .tabItem {
