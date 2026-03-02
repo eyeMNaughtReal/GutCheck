@@ -96,7 +96,9 @@ struct CalendarView: View {
                                 }
                                 Button {
                                     HapticManager.shared.light()
-                                    router.editMeal(id: meal.id)
+                                    // Defer sheet presentation so the swipe interaction
+                                    // fully closes before UIContextMenuInteraction is torn down.
+                                    Task { router.editMeal(id: meal.id) }
                                 } label: {
                                     Label("Edit", systemImage: "pencil")
                                 }

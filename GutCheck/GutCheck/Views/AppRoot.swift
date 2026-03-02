@@ -141,17 +141,9 @@ struct AppRoot: View {
                                 .environmentObject(authService)
                         }
                     case .mealForm(let id):
-                        if id != nil {
-                            // Edit existing meal - MealBuilderView supports editing with meal ID
-                            MealBuilderView()
-                                .environmentObject(router)
-                                .environmentObject(refreshManager)
-                        } else {
-                            // Create new meal
-                            MealBuilderView()
-                                .environmentObject(router)
-                                .environmentObject(refreshManager)
-                        }
+                        MealBuilderView(mealId: id)
+                            .environmentObject(router)
+                            .environmentObject(refreshManager)
                     case .symptomForm(let id):
                         if id != nil {
                             // Edit existing symptom - need to create LogSymptomView_New with id support

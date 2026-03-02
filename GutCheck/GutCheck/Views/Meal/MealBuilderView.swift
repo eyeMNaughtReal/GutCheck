@@ -9,6 +9,8 @@
 import SwiftUI
 
 struct MealBuilderView: View {
+    var mealId: String? = nil
+
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var router: AppRouter
     @EnvironmentObject var refreshManager: RefreshManager
@@ -20,6 +22,7 @@ struct MealBuilderView: View {
     @State private var editingFoodItem: FoodItem?
     @State private var showingTemplateSave = false
     @State private var showingTemplateSaved = false
+    @State private var loadError: String? = nil
     
     var body: some View {
         VStack(spacing: 0) {
@@ -302,8 +305,21 @@ struct MealBuilderView: View {
                     .shadow(color: ColorTheme.shadowColor, radius: 8, x: 0, y: -4)
             )
         }
-        .navigationTitle("Build Your Meal")
+        .navigationTitle(mealId == nil ? "Build Your Meal" : "Edit Meal")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            guard let id = mealId else { return }
+            do {
+                try await mealService.loadMeal(id: id)
+            } catch {
+                loadError = error.localizedDescription
+            }
+        }
+        .alert("Failed to Load Meal", isPresented: .constant(loadError != nil)) {
+            Button("OK") { loadError = nil; dismiss() }
+        } message: {
+            Text(loadError ?? "")
+        }
         .sheet(isPresented: $showingDatePicker) {
             DateTimePickerView(date: $mealService.mealDate)
         }

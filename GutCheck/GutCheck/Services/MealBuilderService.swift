@@ -25,6 +25,9 @@ class MealBuilderService: ObservableObject {
     // Navigation state
     @Published var shouldNavigateToBuilder: Bool = false
     @Published var shouldDismissModal: Bool = false
+
+    // Edit state — non-nil when editing an existing meal
+    @Published var editingMealId: String? = nil
     
     // MARK: - Dependencies
     
@@ -97,8 +100,26 @@ class MealBuilderService: ObservableObject {
         notes = ""
         mealDate = Date()
         isBuilding = false
+        editingMealId = nil
         shouldNavigateToBuilder = false
         shouldDismissModal = false
+    }
+
+    /// Load an existing meal into the builder for editing.
+    func loadMeal(id: String) async throws {
+        guard let meal = try await mealRepository.fetch(id: id) else {
+            Swift.print("⚠️ MealBuilderService: No meal found with id \(id)")
+            return
+        }
+        Swift.print("✏️ MealBuilderService: Loaded meal '\(meal.name)' for editing")
+        clearMeal()
+        editingMealId = meal.id
+        mealName = meal.name
+        mealType = meal.type
+        mealDate = meal.date
+        notes = meal.notes ?? ""
+        currentMeal = meal.foodItems
+        isBuilding = true
     }
     
     /// Save the current meal to the repository
@@ -115,6 +136,7 @@ class MealBuilderService: ObservableObject {
         let finalMealName = mealName.isEmpty ? generateDefaultMealName() : mealName
         
         let meal = Meal(
+            id: editingMealId ?? UUID().uuidString,
             name: finalMealName,
             date: mealDate,
             type: mealType,
