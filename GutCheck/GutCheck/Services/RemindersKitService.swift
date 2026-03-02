@@ -99,11 +99,18 @@ final class RemindersKitService: ObservableObject {
             let calendar = try getOrCreateGutCheckCalendar()
             try removeExistingGutCheckReminders(in: calendar)
 
-            if settings.mealReminderEnabled {
+            // Meal reminders — each fires 15 min after the user's typical meal time
+            let mealReminders: [(enabled: Bool, time: Date, title: String)] = [
+                (settings.breakfastReminderEnabled, settings.breakfastReminderTime, "Log your breakfast 🍳"),
+                (settings.lunchReminderEnabled,     settings.lunchReminderTime,     "Log your lunch 🥗"),
+                (settings.dinnerReminderEnabled,    settings.dinnerReminderTime,     "Log your dinner 🍽️")
+            ]
+            for meal in mealReminders where meal.enabled {
+                let fireTime = Calendar.current.date(byAdding: .minute, value: 15, to: meal.time) ?? meal.time
                 try addReminder(
-                    title: "Log your meal 🍽️",
+                    title: meal.title,
                     notes: "Open GutCheck to log what you ate.",
-                    time: settings.mealReminderTime,
+                    time: fireTime,
                     recurrence: .daily,
                     calendar: calendar
                 )
