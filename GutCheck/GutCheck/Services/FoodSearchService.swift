@@ -112,6 +112,49 @@ class FoodSearchService: ObservableObject, HasLoadingState {
         if food.ingredients != nil { score += 1 }
         return score
     }
+
+    // MARK: - Ingredient Enhancement
+
+    /// Fetches ingredient data from OpenFoodFacts and returns a copy of the item with ingredients populated.
+    /// Returns the original item unchanged if it already has ingredients or the lookup fails.
+    func enhanceFoodItemWithIngredients(_ foodItem: FoodItem) async -> FoodItem {
+        guard foodItem.ingredients.isEmpty else {
+            return foodItem
+        }
+
+        do {
+            let products = try await openFoodFactsService.searchFoods(query: foodItem.name, pageSize: 1)
+            guard let firstProduct = products.first,
+                  let ingredientsText = firstProduct.ingredientsText,
+                  !ingredientsText.isEmpty else {
+                return foodItem
+            }
+
+            var enhancedItem = foodItem
+            enhancedItem.ingredients = parseIngredients(from: ingredientsText)
+            return enhancedItem
+        } catch {
+            #if DEBUG
+            print("⚠️ FoodSearchService: Could not fetch ingredients for '\(foodItem.name)': \(error)")
+            #endif
+            return foodItem
+        }
+    }
+
+    // MARK: - Ingredient Parsing
+
+    private func parseIngredients(from ingredientsString: String) -> [String] {
+        let cleanedString = ingredientsString
+            .replacingOccurrences(of: ".", with: "")
+            .replacingOccurrences(of: ";", with: ",")
+            .replacingOccurrences(of: " and ", with: ", ")
+            .replacingOccurrences(of: " & ", with: ", ")
+
+        return cleanedString
+            .components(separatedBy: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+            .filter { !$0.isEmpty }
+    }
 }
 
 // MARK: - Errors
