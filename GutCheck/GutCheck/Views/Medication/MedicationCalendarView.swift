@@ -143,37 +143,34 @@ struct CalendarMedicationsSectionHeader: View {
                 .padding(.top, 16)
                 .padding(.bottom, 8)
 
-            // Log Dose inline button
-            Button {
-                HapticManager.shared.medium()
-                onLogDose()
-            } label: {
-                HStack {
-                    Image(systemName: "pills.fill")
-                        .font(.title2)
-                    Text("Log Dose")
-                        .font(.headline)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+            // Section title + Log Dose button on the same row
+            HStack {
+                Text("Medications")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                Spacer()
+                Button {
+                    HapticManager.shared.medium()
+                    onLogDose()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.subheadline.weight(.semibold))
+                        Text("Log Dose")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .frame(minWidth: 148)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.orange, in: Capsule())
+                    .foregroundColor(.white)
                 }
-                .padding()
-                .background(Color.purple.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
-                .foregroundColor(.purple)
+                .accessibleButton(label: "Log Dose", hint: "Tap to log a medication dose")
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
             .padding(.bottom, 12)
-            .accessibleButton(label: "Log Dose", hint: "Tap to log a medication dose")
-
-            // Section header label
-            Text("Medications")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-                .padding(.bottom, 12)
         }
     }
 }
