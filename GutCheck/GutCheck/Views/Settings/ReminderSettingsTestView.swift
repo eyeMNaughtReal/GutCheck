@@ -27,7 +27,9 @@ struct ReminderSettingsTestView: View {
                                 .font(.headline)
                             
                             Group {
-                                Text("Meal Reminder: \(settings.mealReminderEnabled ? "Enabled" : "Disabled")")
+                                Text("Breakfast Reminder: \(settings.breakfastReminderEnabled ? "Enabled" : "Disabled")")
+                                Text("Lunch Reminder: \(settings.lunchReminderEnabled ? "Enabled" : "Disabled")")
+                                Text("Dinner Reminder: \(settings.dinnerReminderEnabled ? "Enabled" : "Disabled")")
                                 Text("Symptom Reminder: \(settings.symptomReminderEnabled ? "Enabled" : "Disabled")")
                                 Text("Weekly Insights: \(settings.weeklyInsightEnabled ? "Enabled" : "Disabled")")
                                 Text("Remind Later Interval: \(settings.remindMeLaterInterval) minutes")
@@ -61,7 +63,9 @@ struct ReminderSettingsTestView: View {
                     Button("Create Test Settings") {
                         Task {
                             let testSettings = ReminderSettings(
-                                mealReminderEnabled: true,
+                                breakfastReminderEnabled: true,
+                                lunchReminderEnabled: true,
+                                dinnerReminderEnabled: true,
                                 symptomReminderEnabled: true,
                                 remindMeLaterInterval: 30,
                                 weeklyInsightEnabled: true

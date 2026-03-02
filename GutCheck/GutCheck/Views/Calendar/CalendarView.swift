@@ -257,37 +257,34 @@ struct CalendarMealsSectionHeader: View {
             .padding(.top, 16)
             .padding(.bottom, 8)
 
-            // Log Meal inline button
-            Button {
-                HapticManager.shared.medium()
-                router.startMealLogging()
-            } label: {
-                HStack {
-                    Image(systemName: "fork.knife")
-                        .font(.title2)
-                    Text("Log Meal")
-                        .font(.headline)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+            // Section title + Log Meal button on the same row
+            HStack {
+                Text("Meals")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                Spacer()
+                Button {
+                    HapticManager.shared.medium()
+                    router.startMealLogging()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.subheadline.weight(.semibold))
+                        Text("Log Meal")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .frame(minWidth: 148)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.orange, in: Capsule())
+                    .foregroundColor(.white)
                 }
-                .padding()
-                .background(Color.green.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
-                .foregroundColor(.green)
+                .accessibleButton(label: "Log Meal", hint: "Tap to log a new meal")
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
             .padding(.bottom, 12)
-            .accessibleButton(label: "Log Meal", hint: "Tap to log a new meal")
-
-            // Section header label
-            Text("Meals")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-                .padding(.bottom, 12)
         }
     }
 }
@@ -307,38 +304,35 @@ struct CalendarSymptomsSectionHeader: View {
                 .padding(.top, 16)
                 .padding(.bottom, 8)
 
-            // Log Symptom inline button
-            Button {
-                HapticManager.shared.medium()
-                router.startSymptomLogging()
-            } label: {
-                HStack {
-                    Image(systemName: "waveform.path.ecg")
-                        .font(.title2)
-                    Text("Log Symptom")
-                        .font(.headline)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+            // Section title + Log Symptom button on the same row
+            HStack {
+                Text("Symptoms")
+                    .font(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                Spacer()
+                Button {
+                    HapticManager.shared.medium()
+                    router.startSymptomLogging()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.subheadline.weight(.semibold))
+                        Text("Log Symptom")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .frame(minWidth: 148)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.orange, in: Capsule())
+                    .foregroundColor(.white)
                 }
-                .padding()
-                .background(Color.orange.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
-                .foregroundColor(.orange)
+                .accessibleButton(label: "Log Symptom", hint: "Tap to log a new symptom")
+                .accessibilityIdentifier(AccessibilityIdentifiers.Calendar.floatingActionButton)
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
             .padding(.bottom, 12)
-            .accessibleButton(label: "Log Symptom", hint: "Tap to log a new symptom")
-            .accessibilityIdentifier(AccessibilityIdentifiers.Calendar.floatingActionButton)
-
-            // Section header label
-            Text("Symptoms")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundColor(.primary)
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-                .padding(.bottom, 12)
         }
     }
 }

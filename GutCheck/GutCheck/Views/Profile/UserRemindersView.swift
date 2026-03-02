@@ -12,23 +12,67 @@ struct UserRemindersView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                ReminderSection(title: "Daily Reminders", color: ColorTheme.accent) {
-                    Toggle("Daily Meal Reminder", isOn: $localSettings.mealReminderEnabled)
+                ReminderSection(title: "Meal Reminders", color: ColorTheme.accent) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "clock.fill")
+                            .font(.caption)
+                            .foregroundColor(ColorTheme.accent)
+                        Text("Set your typical meal time. A reminder fires 15 minutes after to log what you ate.")
+                            .font(.caption)
+                            .foregroundColor(ColorTheme.secondaryText)
+                    }
+                    .padding(.bottom, 4)
+
+                    Toggle("Breakfast", isOn: $localSettings.breakfastReminderEnabled)
                         .toggleStyle(SwitchToggleStyle(tint: ColorTheme.accent))
-                    
-                    if localSettings.mealReminderEnabled {
-                        DatePicker("Time", selection: $localSettings.mealReminderTime, displayedComponents: .hourAndMinute)
+
+                    if localSettings.breakfastReminderEnabled {
+                        DatePicker("Typical time", selection: $localSettings.breakfastReminderTime, displayedComponents: .hourAndMinute)
                             .accentColor(ColorTheme.accent)
                     }
-                    
-                    Toggle("Daily Symptom Reminder", isOn: $localSettings.symptomReminderEnabled)
+
+                    Divider()
+
+                    Toggle("Lunch", isOn: $localSettings.lunchReminderEnabled)
                         .toggleStyle(SwitchToggleStyle(tint: ColorTheme.accent))
-                    
+
+                    if localSettings.lunchReminderEnabled {
+                        DatePicker("Typical time", selection: $localSettings.lunchReminderTime, displayedComponents: .hourAndMinute)
+                            .accentColor(ColorTheme.accent)
+                    }
+
+                    Divider()
+
+                    Toggle("Dinner", isOn: $localSettings.dinnerReminderEnabled)
+                        .toggleStyle(SwitchToggleStyle(tint: ColorTheme.accent))
+
+                    if localSettings.dinnerReminderEnabled {
+                        DatePicker("Typical time", selection: $localSettings.dinnerReminderTime, displayedComponents: .hourAndMinute)
+                            .accentColor(ColorTheme.accent)
+                    }
+                }
+
+                ReminderSection(title: "Daily Reminders", color: ColorTheme.accent) {
+                    Toggle("Symptom Reminder", isOn: $localSettings.symptomReminderEnabled)
+                        .toggleStyle(SwitchToggleStyle(tint: ColorTheme.accent))
+
                     if localSettings.symptomReminderEnabled {
                         DatePicker("Time", selection: $localSettings.symptomReminderTime, displayedComponents: .hourAndMinute)
                             .accentColor(ColorTheme.accent)
                     }
-                    
+
+                    Divider()
+
+                    Toggle("Medication Reminder", isOn: $localSettings.medicationReminderEnabled)
+                        .toggleStyle(SwitchToggleStyle(tint: ColorTheme.accent))
+
+                    if localSettings.medicationReminderEnabled {
+                        DatePicker("Time", selection: $localSettings.medicationReminderTime, displayedComponents: .hourAndMinute)
+                            .accentColor(ColorTheme.accent)
+                    }
+
+                    Divider()
+
                     HStack {
                         Text("Remind Me Later Interval")
                         Spacer()
@@ -41,15 +85,36 @@ struct UserRemindersView: View {
                         .accentColor(ColorTheme.secondaryText)
                     }
                 }
-                
-                ReminderSection(title: "AI Insights", color: ColorTheme.secondary) {
-                    Toggle("Weekly Insight Summary", isOn: $localSettings.weeklyInsightEnabled)
+
+                ReminderSection(title: "Weekly Reports", color: ColorTheme.secondary) {
+                    Toggle("Weekly Gut Health Summary", isOn: $localSettings.weeklyInsightEnabled)
                         .toggleStyle(SwitchToggleStyle(tint: ColorTheme.secondary))
-                    
+
                     if localSettings.weeklyInsightEnabled {
-                        DatePicker("Time", selection: $localSettings.weeklyInsightTime, displayedComponents: .hourAndMinute)
+                        DatePicker("Time (Mondays)", selection: $localSettings.weeklyInsightTime, displayedComponents: .hourAndMinute)
                             .accentColor(ColorTheme.secondary)
                     }
+                }
+
+                ReminderSection(title: "Smart Notifications", color: ColorTheme.primary) {
+                    HStack(spacing: 12) {
+                        Image(systemName: "sparkles")
+                            .font(.subheadline)
+                            .foregroundColor(ColorTheme.primary)
+                            .frame(width: 20)
+                        Text("Sent automatically when GutCheck detects new insights or patterns in your data.")
+                            .font(.caption)
+                            .foregroundColor(ColorTheme.secondaryText)
+                    }
+                    .padding(.bottom, 4)
+
+                    Toggle("New Insights Available", isOn: $localSettings.newInsightsEnabled)
+                        .toggleStyle(SwitchToggleStyle(tint: ColorTheme.primary))
+
+                    Divider()
+
+                    Toggle("Pattern Detected", isOn: $localSettings.patternAlertEnabled)
+                        .toggleStyle(SwitchToggleStyle(tint: ColorTheme.primary))
                 }
                 
                 // ── Apple Reminders Sync ──────────────────────────────────────

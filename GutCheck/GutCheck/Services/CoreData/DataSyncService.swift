@@ -181,11 +181,14 @@ class DataSyncService: ObservableObject {
             return
         }
         
+        // CoreData LocalReminderSettings only has the legacy mealReminderEnabled/Time column.
+        // Bridge it to breakfastReminderEnabled/Time until a CoreData migration adds the
+        // per-meal-type columns. Lunch and dinner are persisted in Firestore only.
         let settings = ReminderSettings(
             id: id,
             createdBy: userId,
-            mealReminderEnabled: localSettings.mealReminderEnabled,
-            mealReminderTime: localSettings.mealReminderTime ?? Date(),
+            breakfastReminderEnabled: localSettings.mealReminderEnabled,
+            breakfastReminderTime: localSettings.mealReminderTime ?? ReminderSettings.defaultTime(hour: 7),
             symptomReminderEnabled: localSettings.symptomReminderEnabled,
             symptomReminderTime: localSettings.symptomReminderTime ?? Date(),
             remindMeLaterInterval: Int(localSettings.remindMeLaterInterval),
