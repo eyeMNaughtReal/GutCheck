@@ -213,13 +213,16 @@ struct MealDetailView: View {
     private var editMenuButton: some View {
         Menu {
             Button {
-                viewModel.isEditing = true
+                // Defer state change so the menu finishes dismissing before
+                // UIContextMenuInteraction is torn down, preventing the
+                // "updateVisibleMenuWithBlock: while no context menu is visible" warning.
+                Task { viewModel.isEditing = true }
             } label: {
                 Label("Edit", systemImage: "pencil")
             }
-            
+
             Button(role: .destructive) {
-                viewModel.showingDeleteConfirmation = true
+                Task { viewModel.showingDeleteConfirmation = true }
             } label: {
                 Label("Delete", systemImage: "trash")
             }
