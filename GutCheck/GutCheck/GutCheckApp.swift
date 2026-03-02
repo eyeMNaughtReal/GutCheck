@@ -7,18 +7,19 @@
 
 import SwiftUI
 import UIKit
+import UserNotifications
 import FirebaseCore
 import FirebaseFirestore
 
 // Configure Firebase before the app starts
-class AppDelegate: NSObject, UIApplicationDelegate {
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-        
+
         #if DEBUG
         // Run diagnostics in debug mode to help identify configuration issues
         FirebaseDiagnostics.runDiagnostics()
         #endif
-        
+
         // Configure Firebase - try automatic configuration first
         if FirebaseApp.app() == nil {
             // Check if GoogleService-Info.plist exists
@@ -30,39 +31,88 @@ class AppDelegate: NSObject, UIApplicationDelegate {
                 print("⚠️ GoogleService-Info.plist not found!")
                 print("⚠️ Please add GoogleService-Info.plist to your project")
                 print("⚠️ Download it from: https://console.firebase.google.com/")
-                
+
                 // You can add manual configuration here as a temporary workaround:
                 // let options = FirebaseOptions(googleAppID: "1:123:ios:abc",
                 //                               gcmSenderID: "123")
                 // options.apiKey = "your-api-key"
                 // options.projectID = "your-project-id"
                 // FirebaseApp.configure(options: options)
-                
+
                 fatalError("GoogleService-Info.plist is required. Please download it from Firebase Console and add it to your project.")
             }
         }
-        
+
         // Configure Firestore settings to prevent connection issues
         let db = Firestore.firestore()
         let settings = FirestoreSettings()
-        
+
         // Use modern cache settings instead of deprecated properties.
         // Cap at 100 MB to prevent unbounded local disk growth.
         settings.cacheSettings = PersistentCacheSettings(sizeBytes: NSNumber(value: 100 * 1024 * 1024))
-        
+
         // Set a reasonable timeout
         settings.dispatchQueue = DispatchQueue.global(qos: .userInitiated)
-        
+
         db.settings = settings
-        
+
         print("🔥 Firebase configured with Firestore settings")
-        
+
+        // Register as the notification delegate so banners appear while the
+        // app is in the foreground and taps can be routed to the right screen
+        UNUserNotificationCenter.current().delegate = self
+
         // Test basic Firebase connectivity
         Task {
             await GutCheckApp.testFirebaseConnection()
         }
-        
+
         return true
+    }
+
+    // MARK: - UNUserNotificationCenterDelegate
+
+    /// Show banner + play sound even when the app is in the foreground
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound])
+    }
+
+    /// Deep-link to the appropriate screen when the user taps a notification
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        let identifier = response.notification.request.identifier
+        let router = AppRouter.shared
+
+        Task { @MainActor in
+            switch true {
+            case identifier == "mealReminder":
+                router.startMealLogging()
+
+            case identifier == "symptomReminder",
+                 identifier.hasPrefix("symptomReminder_"):   // covers "Remind Me Later"
+                router.startSymptomLogging()
+
+            case identifier == "medicationReminder":
+                router.selectedTab = .medications
+
+            case identifier == "weeklyInsight",
+                 identifier == "newInsights",
+                 identifier == "patternAlert":
+                router.selectedTab = .insights
+
+            default:
+                break
+            }
+        }
+
+        completionHandler()
     }
 }
 
