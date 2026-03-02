@@ -119,9 +119,13 @@ class ReminderSettingsService: ObservableObject {
         UserDefaults.standard.set(settings.mealReminderTime, forKey: "mealReminderTime")
         UserDefaults.standard.set(settings.symptomReminderEnabled, forKey: "symptomReminderEnabled")
         UserDefaults.standard.set(settings.symptomReminderTime, forKey: "symptomReminderTime")
+        UserDefaults.standard.set(settings.medicationReminderEnabled, forKey: "medicationReminderEnabled")
+        UserDefaults.standard.set(settings.medicationReminderTime, forKey: "medicationReminderTime")
         UserDefaults.standard.set(settings.remindMeLaterInterval, forKey: "remindMeLaterInterval")
         UserDefaults.standard.set(settings.weeklyInsightEnabled, forKey: "weeklyInsightEnabled")
         UserDefaults.standard.set(settings.weeklyInsightTime, forKey: "weeklyInsightTime")
+        UserDefaults.standard.set(settings.newInsightsEnabled, forKey: "newInsightsEnabled")
+        UserDefaults.standard.set(settings.patternAlertEnabled, forKey: "patternAlertEnabled")
     }
     
     private func scheduleNotifications(for settings: ReminderSettings) async {
@@ -143,13 +147,13 @@ class ReminderSettingsService: ObservableObject {
         // Schedule meal reminders
         if settings.mealReminderEnabled {
             let content = UNMutableNotificationContent()
-            content.title = "Meal Reminder"
-            content.body = "Don't forget to log your meals!"
+            content.title = "Time to Log Your Meal"
+            content.body = "Don't forget to track what you ate. Consistent logging leads to better insights."
             content.sound = .default
-            
+
             let trigger = calendarTrigger(for: settings.mealReminderTime)
             let request = UNNotificationRequest(identifier: "mealReminder", content: content, trigger: trigger)
-            
+
             do {
                 try await center.add(request)
                 #if DEBUG
@@ -165,8 +169,8 @@ class ReminderSettingsService: ObservableObject {
         // Schedule symptom reminders
         if settings.symptomReminderEnabled {
             let content = UNMutableNotificationContent()
-            content.title = "Symptom Reminder"
-            content.body = "Don't forget to log your symptoms!"
+            content.title = "Symptom Check-In"
+            content.body = "How's your gut feeling today? Tap to log your symptoms."
             content.sound = .default
 
             let trigger = calendarTrigger(for: settings.symptomReminderTime)
@@ -184,11 +188,33 @@ class ReminderSettingsService: ObservableObject {
             }
         }
 
-        // Schedule weekly insight reminders
+        // Schedule medication reminders
+        if settings.medicationReminderEnabled {
+            let content = UNMutableNotificationContent()
+            content.title = "Medication Reminder"
+            content.body = "Time to take your medication. Tap to log your dose."
+            content.sound = .default
+
+            let trigger = calendarTrigger(for: settings.medicationReminderTime)
+            let request = UNNotificationRequest(identifier: "medicationReminder", content: content, trigger: trigger)
+
+            do {
+                try await center.add(request)
+                #if DEBUG
+                print("✅ ReminderSettingsService: Scheduled medication reminder")
+                #endif
+            } catch {
+                #if DEBUG
+                print("❌ ReminderSettingsService: Error scheduling medication reminder: \(error)")
+                #endif
+            }
+        }
+
+        // Schedule weekly summary reminders
         if settings.weeklyInsightEnabled {
             let content = UNMutableNotificationContent()
-            content.title = "Weekly Insight"
-            content.body = "Check your AI-powered weekly health insights!"
+            content.title = "Your Weekly Gut Health Summary"
+            content.body = "Your report for the past 7 days is ready. See your trends and patterns."
             content.sound = .default
 
             let trigger = calendarTrigger(for: settings.weeklyInsightTime, weekday: 2) // Monday
@@ -197,11 +223,11 @@ class ReminderSettingsService: ObservableObject {
             do {
                 try await center.add(request)
                 #if DEBUG
-                print("✅ ReminderSettingsService: Scheduled weekly insight reminder")
+                print("✅ ReminderSettingsService: Scheduled weekly summary reminder")
                 #endif
             } catch {
                 #if DEBUG
-                print("❌ ReminderSettingsService: Error scheduling weekly insight reminder: \(error)")
+                print("❌ ReminderSettingsService: Error scheduling weekly summary reminder: \(error)")
                 #endif
             }
         }

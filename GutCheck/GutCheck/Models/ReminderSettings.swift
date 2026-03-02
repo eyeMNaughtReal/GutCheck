@@ -11,18 +11,24 @@ import FirebaseFirestore
 struct ReminderSettings: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
     var id: String = UUID().uuidString
     var createdBy: String = ""  // Firebase UID - required for FirestoreModel
-    
+
     // Daily Reminders
     var mealReminderEnabled: Bool = false
     var mealReminderTime: Date = Date()
     var symptomReminderEnabled: Bool = false
     var symptomReminderTime: Date = Date()
+    var medicationReminderEnabled: Bool = false
+    var medicationReminderTime: Date = Date()
     var remindMeLaterInterval: Int = 15 // minutes
-    
-    // AI Insights
+
+    // Weekly Reports
     var weeklyInsightEnabled: Bool = false
     var weeklyInsightTime: Date = Date()
-    
+
+    // Smart Notifications (server-triggered via FCM)
+    var newInsightsEnabled: Bool = true
+    var patternAlertEnabled: Bool = true
+
     // Metadata
     var lastUpdated: Date = Date()
     
@@ -51,18 +57,26 @@ struct ReminderSettings: Identifiable, Codable, Hashable, Equatable, FirestoreMo
          mealReminderTime: Date = Date(),
          symptomReminderEnabled: Bool = false,
          symptomReminderTime: Date = Date(),
+         medicationReminderEnabled: Bool = false,
+         medicationReminderTime: Date = Date(),
          remindMeLaterInterval: Int = 15,
          weeklyInsightEnabled: Bool = false,
-         weeklyInsightTime: Date = Date()) {
+         weeklyInsightTime: Date = Date(),
+         newInsightsEnabled: Bool = true,
+         patternAlertEnabled: Bool = true) {
         self.id = id
         self.createdBy = createdBy
         self.mealReminderEnabled = mealReminderEnabled
         self.mealReminderTime = mealReminderTime
         self.symptomReminderEnabled = symptomReminderEnabled
         self.symptomReminderTime = symptomReminderTime
+        self.medicationReminderEnabled = medicationReminderEnabled
+        self.medicationReminderTime = medicationReminderTime
         self.remindMeLaterInterval = remindMeLaterInterval
         self.weeklyInsightEnabled = weeklyInsightEnabled
         self.weeklyInsightTime = weeklyInsightTime
+        self.newInsightsEnabled = newInsightsEnabled
+        self.patternAlertEnabled = patternAlertEnabled
         self.lastUpdated = Date()
     }
     
@@ -82,28 +96,37 @@ struct ReminderSettings: Identifiable, Codable, Hashable, Equatable, FirestoreMo
         
         self.mealReminderEnabled = data["mealReminderEnabled"] as? Bool ?? false
         self.symptomReminderEnabled = data["symptomReminderEnabled"] as? Bool ?? false
+        self.medicationReminderEnabled = data["medicationReminderEnabled"] as? Bool ?? false
         self.weeklyInsightEnabled = data["weeklyInsightEnabled"] as? Bool ?? false
+        self.newInsightsEnabled = data["newInsightsEnabled"] as? Bool ?? true
+        self.patternAlertEnabled = data["patternAlertEnabled"] as? Bool ?? true
         self.remindMeLaterInterval = data["remindMeLaterInterval"] as? Int ?? 15
-        
+
         // Handle date fields
         if let mealTimestamp = data["mealReminderTime"] as? Timestamp {
             self.mealReminderTime = mealTimestamp.dateValue()
         } else {
             self.mealReminderTime = Date()
         }
-        
+
         if let symptomTimestamp = data["symptomReminderTime"] as? Timestamp {
             self.symptomReminderTime = symptomTimestamp.dateValue()
         } else {
             self.symptomReminderTime = Date()
         }
-        
+
+        if let medicationTimestamp = data["medicationReminderTime"] as? Timestamp {
+            self.medicationReminderTime = medicationTimestamp.dateValue()
+        } else {
+            self.medicationReminderTime = Date()
+        }
+
         if let weeklyTimestamp = data["weeklyInsightTime"] as? Timestamp {
             self.weeklyInsightTime = weeklyTimestamp.dateValue()
         } else {
             self.weeklyInsightTime = Date()
         }
-        
+
         if let lastUpdatedTimestamp = data["lastUpdated"] as? Timestamp {
             self.lastUpdated = lastUpdatedTimestamp.dateValue()
         } else {
@@ -119,9 +142,13 @@ struct ReminderSettings: Identifiable, Codable, Hashable, Equatable, FirestoreMo
             "mealReminderTime": Timestamp(date: mealReminderTime),
             "symptomReminderEnabled": symptomReminderEnabled,
             "symptomReminderTime": Timestamp(date: symptomReminderTime),
+            "medicationReminderEnabled": medicationReminderEnabled,
+            "medicationReminderTime": Timestamp(date: medicationReminderTime),
             "remindMeLaterInterval": remindMeLaterInterval,
             "weeklyInsightEnabled": weeklyInsightEnabled,
             "weeklyInsightTime": Timestamp(date: weeklyInsightTime),
+            "newInsightsEnabled": newInsightsEnabled,
+            "patternAlertEnabled": patternAlertEnabled,
             "lastUpdated": Timestamp(date: Date()),
             "createdAt": Timestamp(date: Date())
         ]
