@@ -130,12 +130,19 @@ class ReminderSettingsService: ObservableObject {
     
     private func scheduleNotifications(for settings: ReminderSettings) async {
         let center = UNUserNotificationCenter.current()
-        let permissionManager = PermissionManager.shared
-        
-        // Check permission through centralized system
-        if !permissionManager.notificationStatus.isGranted {
+
+        // Query the live authorization status directly — the cached value on
+        // PermissionManager is populated asynchronously and may still be
+        // .notDetermined the first time this runs, causing all scheduling to
+        // be silently skipped.
+        let authSettings = await center.notificationSettings()
+        let isAuthorized = authSettings.authorizationStatus == .authorized
+                        || authSettings.authorizationStatus == .provisional
+                        || authSettings.authorizationStatus == .ephemeral
+
+        guard isAuthorized else {
             #if DEBUG
-            print("⚠️ ReminderSettingsService: Notification permission not granted")
+            print("⚠️ ReminderSettingsService: Notification permission not granted (\(authSettings.authorizationStatus.rawValue))")
             #endif
             // Don't request here - should be handled by proper UI flow
             return
