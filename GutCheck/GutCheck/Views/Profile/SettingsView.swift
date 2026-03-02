@@ -93,7 +93,7 @@ struct SettingsView: View {
                         }
                     }
                     .accessibilityLabel("My Medications")
-                    .accessibilityHint("Tap to manage your medication catalog")
+                    .accessibilityHint("Tap to add or edit your medications")
                 }
 
                 Section("Healthcare") {

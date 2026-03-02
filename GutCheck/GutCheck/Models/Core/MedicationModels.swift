@@ -5,7 +5,9 @@ import HealthKit
 // MARK: - Core Medication Models
 
 struct MedicationRecord: Identifiable, Codable, Hashable, FirestoreModel {
-    // Equality and hashing by identity — avoids requiring nested types to be Hashable.
+
+    // Identity-based equality and hashing — avoids requiring all nested
+    // types to be Hashable.
     static func == (lhs: MedicationRecord, rhs: MedicationRecord) -> Bool { lhs.id == rhs.id }
     func hash(into hasher: inout Hasher) { hasher.combine(id) }
 
@@ -221,12 +223,13 @@ enum MedicationSource: String, CaseIterable, Codable {
 
 // MARK: - Medication Dose Log
 
-/// A single instance of a user taking a medication dose.
+/// Records a single instance of a user taking a medication dose.
 struct MedicationDoseLog: Identifiable, Codable, FirestoreModel {
     var id: String
     var createdBy: String
+    /// The `MedicationRecord.id` this dose belongs to.
     let medicationId: String
-    /// Denormalized name so doses can be displayed without an extra fetch.
+    /// Denormalized name so doses can be displayed without a secondary fetch.
     let medicationName: String
     let dosageAmount: Double
     let dosageUnit: String
@@ -237,10 +240,12 @@ struct MedicationDoseLog: Identifiable, Codable, FirestoreModel {
     let createdAt: Date
 
     // MARK: - DataClassifiable
+
     var requiresLocalStorage: Bool { privacyLevel != .public }
-    var allowsCloudSync: Bool     { privacyLevel == .public  }
+    var allowsCloudSync: Bool     { privacyLevel == .public }
 
     // MARK: - Init
+
     init(
         id: String = UUID().uuidString,
         createdBy: String = "",
@@ -266,6 +271,7 @@ struct MedicationDoseLog: Identifiable, Codable, FirestoreModel {
     }
 
     // MARK: - FirestoreModel
+
     static var collectionName: String { "medicationDoses" }
 
     init(from document: DocumentSnapshot) throws {

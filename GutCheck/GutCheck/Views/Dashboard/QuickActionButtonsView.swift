@@ -11,11 +11,13 @@ struct QuickActionButtonsView: View {
             NavigationLink(destination: LogSymptomView()) {
                 ActionButton(icon: "stethoscope", label: "Log Symptom", color: ColorTheme.secondary)
             }
-            Button { showingLogMedication = true } label: {
+            Button {
+                showingLogMedication = true
+            } label: {
                 ActionButton(icon: "pills.fill", label: "Log Meds", color: .purple)
             }
             .sheet(isPresented: $showingLogMedication) {
-                LogMedicationDoseView { }
+                LogMedicationDoseView()
             }
         }
     }

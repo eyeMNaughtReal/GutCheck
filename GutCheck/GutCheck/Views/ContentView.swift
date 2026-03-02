@@ -31,7 +31,7 @@ struct ContentView: View {
                     case .meals, .symptoms:
                         CalendarView(selectedTab: router.selectedTab)
                     case .medications:
-                        MedicationCalendarView()
+                        MedicationsView()
                     case .insights:
                         InsightsView()
                     }
