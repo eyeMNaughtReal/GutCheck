@@ -11,12 +11,15 @@ class RecentActivityViewModel: ObservableObject {
     // Repository dependencies
     private let mealRepository: MealRepository
     private let symptomRepository: SymptomRepository
+    private let medicationDoseRepository: MedicationDoseRepository
     private var medicationService: HealthKitMedicationService?
-    
+
     init(mealRepository: MealRepository = MealRepository.shared,
-         symptomRepository: SymptomRepository = SymptomRepository.shared) {
+         symptomRepository: SymptomRepository = SymptomRepository.shared,
+         medicationDoseRepository: MedicationDoseRepository = MedicationDoseRepository.shared) {
         self.mealRepository = mealRepository
         self.symptomRepository = symptomRepository
+        self.medicationDoseRepository = medicationDoseRepository
     }
     
     func loadRecentActivity(for date: Date, authService: AuthService) {
@@ -69,12 +72,43 @@ class RecentActivityViewModel: ObservableObject {
             print("   - Symptom: \(symptom.id) at \(symptom.date)")
         }
         
-        // Fetch medications for the date
+        // Fetch logged medication doses from repository (primary source)
+        // This covers doses the user logs manually via the app.
+        do {
+            let doses = try await medicationDoseRepository.fetchDosesForDate(date, userId: currentUser.id)
+            print("💊 RecentActivityViewModel: Found \(doses.count) logged medication doses")
+            for dose in doses {
+                // Convert MedicationDoseLog → MedicationRecord for ActivityEntry display
+                let record = MedicationRecord(
+                    id: dose.id,
+                    createdBy: dose.createdBy,
+                    name: dose.medicationName,
+                    dosage: MedicationDosage(
+                        amount: dose.dosageAmount,
+                        unit: dose.dosageUnit,
+                        frequency: .asNeeded
+                    ),
+                    startDate: dose.dateTaken,
+                    endDate: nil,
+                    isActive: true,
+                    notes: dose.notes,
+                    source: .manual,
+                    privacyLevel: dose.privacyLevel,
+                    healthKitUUID: nil
+                )
+                entries.append(ActivityEntry(type: .medication(record), timestamp: dose.dateTaken))
+                print("   - Dose: \(dose.medicationName) at \(dose.dateTaken)")
+            }
+        } catch {
+            print("⚠️ RecentActivityViewModel: Could not fetch medication doses: \(error.localizedDescription)")
+        }
+
+        // Also fetch from HealthKit (supplemental: doctor-prescribed clinical records)
         let medications = try await fetchMedicationsForDate(date)
-        print("💊 RecentActivityViewModel: Found \(medications.count) medications")
+        print("💊 RecentActivityViewModel: Found \(medications.count) HealthKit medication records")
         for medication in medications {
             entries.append(ActivityEntry(type: .medication(medication), timestamp: medication.startDate))
-            print("   - Medication: \(medication.name) at \(medication.startDate)")
+            print("   - HK Medication: \(medication.name) at \(medication.startDate)")
         }
         
         // Sort by timestamp (most recent first) - no limit, show all entries for the day
