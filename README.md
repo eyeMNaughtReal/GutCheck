@@ -13,8 +13,13 @@ A comprehensive iOS application for tracking digestive health, meals, symptoms, 
 ### **📱 Comprehensive Tracking**
 - **Meal Logging**: Photo recognition, barcode scanning, and manual entry
 - **Symptom Monitoring**: Medical-grade scales (Bristol Stool Type, pain levels)
-- **Medication Integration**: Real-time HealthKit medication tracking
+- **Medication Integration**: Real-time HealthKit medication tracking with dose logging
 - **Calendar Views**: Unified calendar for meals, symptoms, and insights
+
+### **🔔 Notifications & Reminders**
+- **Meal Reminders**: Per-meal-type notifications (Breakfast, Lunch, Dinner) firing 15 minutes after scheduled meal time
+- **Apple Reminders Integration**: EventKit integration to sync health reminders with Apple Reminders
+- **iOS Notification Support**: Full UNUserNotificationCenter delegate for foreground and background notifications
 
 ### **🔒 Privacy-First Design**
 - **Local Processing**: Sensitive data processed on-device
@@ -35,6 +40,7 @@ A comprehensive iOS application for tracking digestive health, meals, symptoms, 
 - **Backend**: Firebase (Firestore, Authentication, Storage)
 - **AI/ML**: Core ML, Google Vision API, Custom AI services
 - **Health Integration**: HealthKit with real-time observers
+- **Notifications**: UNUserNotificationCenter + EventKit (Apple Reminders)
 - **Data Privacy**: Local encryption + cloud storage hybrid
 
 ## 🚀 **Getting Started**
@@ -61,11 +67,20 @@ A comprehensive iOS application for tracking digestive health, meals, symptoms, 
 - ✅ Unified meal tracking system
 - ✅ Comprehensive symptom tracking
 - ✅ Dashboard insights and health scoring
+- ✅ Dashboard Today's Summary with logged medication doses
 - ✅ Calendar and analytics views
-- ✅ HealthKit medication integration
+- ✅ HealthKit medication integration with real-time sync
+- ✅ Manual medication tracking and dose logging
+- ✅ Medication calendar view (dedicated Meds tab)
 - ✅ AI-powered food recognition and analysis
 - ✅ Reusable meal templates
 - ✅ Enhanced insights system
+- ✅ App notifications with per-meal-type reminders
+- ✅ Apple Reminders integration via EventKit
+- ✅ Card-style Log buttons (Meal, Symptom, Dose)
+- ✅ Edit meal workflow with MealBuilderView
+- ✅ Service layer consolidation and dead code removal
+- ✅ CI/CD pipeline with automated security scanning
 
 **In Development**:
 - 🚧 Advanced AI features
@@ -110,7 +125,8 @@ GutCheck is designed with privacy and compliance in mind:
 - **AI Integration**: Smart nutrition estimation and pattern recognition
 - **Privacy Compliance**: Enterprise-grade data protection
 - **Performance**: Sub-second data loading and insights generation
-- **Reusable Templates**: Save and reuse meal combinations
+- **Notification System**: Smart meal and health reminders
+- **Apple Reminders Sync**: Native iOS Reminders integration via EventKit
 - **Enhanced Analytics**: Advanced pattern recognition and insights
 
 ## 📞 **Support**
@@ -128,4 +144,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Built with ❤️ for better gut health**
 
-*Last Updated: December 2025*
+*Last Updated: March 2026*
