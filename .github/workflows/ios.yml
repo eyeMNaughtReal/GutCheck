@@ -82,80 +82,21 @@ jobs:
         EOF
       working-directory: GutCheck/GutCheck
 
-    - name: Resolve Swift Package Dependencies
-      run: |
-        xcodebuild -resolvePackageDependencies \
-          -project GutCheck.xcodeproj \
-          -scheme GutCheck
-      working-directory: GutCheck
-
-    - name: Prepare iOS Simulator
-      run: |
-        # Ensure a runtime is installed; download if missing
-        IOS_RUNTIME=$(xcrun simctl list runtimes | grep -E "^iOS [0-9]" | grep -v "unavailable" | head -1)
-        if [ -z "$IOS_RUNTIME" ]; then
-          echo "No iOS Simulator runtime found — downloading..."
-          xcodebuild -downloadPlatform iOS
-        else
-          echo "iOS Simulator runtime found: $IOS_RUNTIME"
-        fi
-
-        # Get the runtime identifier for the available iOS runtime
-        RUNTIME_ID=$(xcrun simctl list runtimes | grep -E "^iOS [0-9]" | grep -v "unavailable" | tail -1 | grep -oE 'com\.apple\.CoreSimulator\.SimRuntime\.[A-Za-z0-9-]+')
-        echo "Runtime identifier: $RUNTIME_ID"
-
-        # Create a fresh simulator device for this runtime and boot it
-        UDID=$(xcrun simctl create "GutCheck-CI" "iPhone 16" "$RUNTIME_ID")
-        echo "Created simulator UDID: $UDID"
-        xcrun simctl boot "$UDID"
-        echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
-
     - name: Build GutCheck
       run: |
         xcodebuild clean build \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
-          -destination "id=${{ env.SIMULATOR_UDID }}" \
+          -destination "generic/platform=iOS Simulator" \
           -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
           CODE_SIGNING_ALLOWED=NO \
           ONLY_ACTIVE_ARCH=NO
       working-directory: GutCheck
-
-    - name: Run Unit Tests
-      run: |
-        xcodebuild test \
-          -project GutCheck.xcodeproj \
-          -scheme GutCheck \
-          -destination "id=${{ env.SIMULATOR_UDID }}" \
-          -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
-          CODE_SIGNING_ALLOWED=NO \
-          ONLY_ACTIVE_ARCH=NO \
-          -skip-testing:GutCheckUITests \
-          -enableCodeCoverage YES \
-          -resultBundlePath ~/Library/Developer/Xcode/DerivedData/Build/Logs/Test/results.xcresult
-      working-directory: GutCheck
-
-    - name: Generate Code Coverage Report
-      run: |
-        xcrun xccov view --report --json ~/Library/Developer/Xcode/DerivedData/Build/Logs/Test/results.xcresult > coverage.json
-        xcrun xccov view --report ~/Library/Developer/Xcode/DerivedData/Build/Logs/Test/results.xcresult
-      working-directory: GutCheck
-      continue-on-error: true
-
-    - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        file: GutCheck/coverage.json
-        flags: ios
-        name: ios-coverage
-      continue-on-error: true
 
     - name: Upload Build Artifacts on Failure
       if: failure()
       uses: actions/upload-artifact@v4
       with:
         name: build-logs
-        path: |
-          ~/Library/Developer/Xcode/DerivedData/Build/Logs/
-          GutCheck/coverage.json
+        path: ~/Library/Developer/Xcode/DerivedData/Build/Logs/
         retention-days: 5

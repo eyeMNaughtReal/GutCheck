@@ -84,25 +84,6 @@ jobs:
           EOF
         working-directory: GutCheck/GutCheck
 
-      - name: Prepare iOS Simulator
-        if: matrix.language == 'swift'
-        run: |
-          IOS_RUNTIME=$(xcrun simctl list runtimes | grep -E "^iOS [0-9]" | grep -v "unavailable" | head -1)
-          if [ -z "$IOS_RUNTIME" ]; then
-            echo "No iOS Simulator runtime found — downloading..."
-            xcodebuild -downloadPlatform iOS
-          else
-            echo "iOS Simulator runtime found: $IOS_RUNTIME"
-          fi
-
-          RUNTIME_ID=$(xcrun simctl list runtimes | grep -E "^iOS [0-9]" | grep -v "unavailable" | tail -1 | grep -oE 'com\.apple\.CoreSimulator\.SimRuntime\.[A-Za-z0-9-]+')
-          echo "Runtime identifier: $RUNTIME_ID"
-
-          UDID=$(xcrun simctl create "GutCheck-CI" "iPhone 16" "$RUNTIME_ID")
-          echo "Created simulator UDID: $UDID"
-          xcrun simctl boot "$UDID"
-          echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
-
       # ── CodeQL core steps ───────────────────────────────────────────────────
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -117,7 +98,7 @@ jobs:
           xcodebuild build \
             -project GutCheck.xcodeproj \
             -scheme GutCheck \
-            -destination "id=${{ env.SIMULATOR_UDID }}" \
+            -destination "generic/platform=iOS Simulator" \
             CODE_SIGNING_ALLOWED=NO \
             ONLY_ACTIVE_ARCH=NO
 
