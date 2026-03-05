@@ -89,6 +89,16 @@ jobs:
           -scheme GutCheck
       working-directory: GutCheck
 
+    - name: Ensure iOS Simulator Runtime
+      run: |
+        IOS_RUNTIME=$(xcrun simctl list runtimes | grep -E "^iOS [0-9]" | grep -v "unavailable" | head -1)
+        if [ -z "$IOS_RUNTIME" ]; then
+          echo "No iOS Simulator runtime found — downloading..."
+          xcodebuild -downloadPlatform iOS
+        else
+          echo "iOS Simulator runtime found: $IOS_RUNTIME"
+        fi
+
     - name: Build GutCheck
       run: |
         xcodebuild clean build \
