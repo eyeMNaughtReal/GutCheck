@@ -2,9 +2,9 @@ name: CodeQL
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, development]
   pull_request:
-    branches: [main, develop]
+    branches: [main, development]
   schedule:
     # Run every Monday at 08:00 UTC for ongoing security coverage
     - cron: '0 8 * * 1'
@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       # ── Swift-only setup ────────────────────────────────────────────────────
       - name: Set up Xcode
@@ -84,35 +84,6 @@ jobs:
           EOF
         working-directory: GutCheck/GutCheck
 
-      - name: Prepare iOS Simulator
-        if: matrix.language == 'swift'
-        working-directory: GutCheck
-        run: |
-          xcrun simctl list runtimes
-          IOS_RUNTIME=$(xcrun simctl list runtimes 2>&1 | \
-            grep -E "^iOS [0-9]" | grep -v "unavailable" | head -1)
-          if [ -z "$IOS_RUNTIME" ]; then
-            echo "No installed iOS runtime — downloading iOS platform"
-            xcodebuild -downloadPlatform iOS
-            xcrun simctl list runtimes
-          fi
-          UDID=$(xcodebuild -showdestinations \
-            -project GutCheck.xcodeproj \
-            -scheme GutCheck 2>&1 | \
-            grep "platform:iOS Simulator" | \
-            grep -i "name:iPhone" | \
-            tail -1 | \
-            grep -oE 'id:[0-9A-Fa-f-]+' | \
-            sed 's/id://')
-          if [ -z "$UDID" ]; then
-            UDID=$(xcrun simctl list devices available | \
-              grep -E "^ +iPhone" | tail -1 | \
-              grep -oE '[0-9A-Fa-f]{8}-([0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12}')
-          fi
-          xcrun simctl boot "$UDID" 2>/dev/null || true
-          echo "SIMULATOR_UDID=$UDID" >> $GITHUB_ENV
-          echo "Using simulator UDID: $UDID"
-
       # ── CodeQL core steps ───────────────────────────────────────────────────
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -127,7 +98,7 @@ jobs:
           xcodebuild build \
             -project GutCheck.xcodeproj \
             -scheme GutCheck \
-            -destination "id=${{ env.SIMULATOR_UDID }}" \
+            -destination "platform=iOS Simulator,name=iPhone 16,OS=latest" \
             CODE_SIGNING_ALLOWED=NO \
             ONLY_ACTIVE_ARCH=NO
 
