@@ -228,23 +228,8 @@ struct AuthenticationView: View {
     
     private var authToggleSection: some View {
         VStack(spacing: 20) {
-            // Social Sign-In Options
-            socialSignInSection
-            
-            // Divider
-            HStack {
-                Rectangle()
-                    .fill(ColorTheme.secondaryText.opacity(0.3))
-                    .frame(height: 1)
-                
-                Text("or")
-                    .font(.footnote)
-                    .foregroundColor(ColorTheme.secondaryText)
-                
-                Rectangle()
-                    .fill(ColorTheme.secondaryText.opacity(0.3))
-                    .frame(height: 1)
-            }
+            // Social Sign-In Options (requires Apple Developer Program membership)
+            // socialSignInSection
             
             Button(action: viewModel.toggleAuthMode) {
                 Text(viewModel.isShowingSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
