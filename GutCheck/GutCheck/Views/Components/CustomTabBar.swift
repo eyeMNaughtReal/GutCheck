@@ -53,7 +53,7 @@ struct CustomTabBar: View {
     private func handleTabSelection(_ tab: Tab) {
         print("🔧 CustomTabBar: Handling tab selection for \(tab)")
         print("🔧 Current tab: \(selectedTab), switching to: \(tab)")
-        print("🔧 Current navigation path count: \(router.path.count)")
+        print("🔧 Current tab: \(selectedTab)")
         
         // If switching to a different tab, reset navigation and switch tab
         if selectedTab != tab {
@@ -63,7 +63,7 @@ struct CustomTabBar: View {
             print("🔧 Tab switch completed")
         } else {
             // Same tab selected - pop to root if we're in a navigation stack
-            if !router.path.isEmpty {
+            if true {
                 router.navigateToRoot()
                 print("🔧 Same tab selected - popped to root for tab: \(tab)")
             }

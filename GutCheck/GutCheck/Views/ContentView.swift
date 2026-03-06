@@ -23,7 +23,7 @@ struct ContentView: View {
     
     var body: some View {
         ZStack(alignment: .bottom) {
-            NavigationStack(path: $router.path) {
+            NavigationStack(path: $router.dashboardPath) {
                 Group {
                     switch router.selectedTab {
                     case .dashboard:

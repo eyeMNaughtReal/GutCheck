@@ -7,111 +7,33 @@ struct AppRoot: View {
     
     var body: some View {
         ZStack(alignment: .bottom) {
-            TabView {
-                NavigationStack(path: $router.path) {
+            TabView(selection: $router.selectedTab) {
+                NavigationStack(path: $router.dashboardPath) {
                     DashboardView()
-                        .navigationDestination(for: AppDestination.self) { destination in
-                            switch destination {
-                            case .dashboard:
-                                DashboardView()
-                            case .calendar(let date):
-                                CalendarView(selectedDate: date)
-                            case .mealDetail(let id):
-                                if let id = id {
-                                    MealDetailView(mealId: id)
-                                        .environmentObject(router)
-                                        .environmentObject(refreshManager)
-                                } else {
-                                    Text("Invalid meal")
-                                }
-                            case .symptomDetail(let id):
-                                if let id = id {
-                                    SymptomDetailView(symptomId: id)
-                                        .environmentObject(router)
-                                        .environmentObject(refreshManager)
-                                } else {
-                                    Text("Invalid symptom")
-                                }
-                            case .settings:
-                                SettingsView()
-                            case .analytics:
-                                InsightsView()
-                            }
-                        }
+                        .withAppNavigationDestinations(router: router, refreshManager: refreshManager)
                 }
                 .tabItem {
                     Label("Dashboard", systemImage: "house.fill")
                 }
+                .tag(Tab.dashboard)
                 
-                NavigationStack(path: $router.path) {
+                NavigationStack(path: $router.mealsPath) {
                     CalendarView(selectedTab: .meals)
-                        .navigationDestination(for: AppDestination.self) { destination in
-                            switch destination {
-                            case .dashboard:
-                                DashboardView()
-                            case .calendar(let date):
-                                CalendarView(selectedDate: date)
-                            case .mealDetail(let id):
-                                if let id = id {
-                                    MealDetailView(mealId: id)
-                                        .environmentObject(router)
-                                        .environmentObject(refreshManager)
-                                } else {
-                                    Text("Invalid meal")
-                                }
-                            case .symptomDetail(let id):
-                                if let id = id {
-                                    SymptomDetailView(symptomId: id)
-                                        .environmentObject(router)
-                                        .environmentObject(refreshManager)
-                                } else {
-                                    Text("Invalid symptom")
-                                }
-                            case .settings:
-                                SettingsView()
-                            case .analytics:
-                                InsightsView()
-                            }
-                        }
+                        .withAppNavigationDestinations(router: router, refreshManager: refreshManager)
                 }
                 .tabItem {
                     Label("Meals", systemImage: "fork.knife")
                 }
+                .tag(Tab.meals)
                 
-                NavigationStack(path: $router.path) {
+                NavigationStack(path: $router.symptomsPath) {
                     CalendarView(selectedTab: .symptoms)
-                        .navigationDestination(for: AppDestination.self) { destination in
-                            switch destination {
-                            case .dashboard:
-                                DashboardView()
-                            case .calendar(let date):
-                                CalendarView(selectedDate: date)
-                            case .mealDetail(let id):
-                                if let id = id {
-                                    MealDetailView(mealId: id)
-                                        .environmentObject(router)
-                                        .environmentObject(refreshManager)
-                                } else {
-                                    Text("Invalid meal")
-                                }
-                            case .symptomDetail(let id):
-                                if let id = id {
-                                    SymptomDetailView(symptomId: id)
-                                        .environmentObject(router)
-                                        .environmentObject(refreshManager)
-                                } else {
-                                    Text("Invalid symptom")
-                                }
-                            case .settings:
-                                SettingsView()
-                            case .analytics:
-                                InsightsView()
-                            }
-                        }
+                        .withAppNavigationDestinations(router: router, refreshManager: refreshManager)
                 }
                 .tabItem {
                     Label("Symptoms", systemImage: "heart.text.square.fill")
                 }
+                .tag(Tab.symptoms)
                 
                 NavigationStack {
                     MedicationCalendarView()
@@ -119,6 +41,7 @@ struct AppRoot: View {
                 .tabItem {
                     Label("Meds", systemImage: "pills.fill")
                 }
+                .tag(Tab.medications)
 
                 NavigationStack {
                     InsightsView()
@@ -126,6 +49,7 @@ struct AppRoot: View {
                 .tabItem {
                     Label("Insights", systemImage: "chart.bar.fill")
                 }
+                .tag(Tab.insights)
             }
             
             // Handle the sheet presentations
@@ -166,6 +90,51 @@ struct AppRoot: View {
 
         .environmentObject(router)
         .environmentObject(refreshManager)
+    }
+}
+
+// MARK: - Shared Navigation Destinations
+
+private struct AppNavigationDestinations: ViewModifier {
+    @ObservedObject var router: AppRouter
+    @ObservedObject var refreshManager: RefreshManager
+
+    func body(content: Content) -> some View {
+        content
+            .navigationDestination(for: AppDestination.self) { destination in
+                switch destination {
+                case .dashboard:
+                    DashboardView()
+                case .calendar(let date):
+                    CalendarView(selectedDate: date)
+                case .mealDetail(let id):
+                    if let id = id {
+                        MealDetailView(mealId: id)
+                            .environmentObject(router)
+                            .environmentObject(refreshManager)
+                    } else {
+                        Text("Invalid meal")
+                    }
+                case .symptomDetail(let id):
+                    if let id = id {
+                        SymptomDetailView(symptomId: id)
+                            .environmentObject(router)
+                            .environmentObject(refreshManager)
+                    } else {
+                        Text("Invalid symptom")
+                    }
+                case .settings:
+                    SettingsView()
+                case .analytics:
+                    InsightsView()
+                }
+            }
+    }
+}
+
+extension View {
+    func withAppNavigationDestinations(router: AppRouter, refreshManager: RefreshManager) -> some View {
+        modifier(AppNavigationDestinations(router: router, refreshManager: refreshManager))
     }
 }
 
