@@ -228,8 +228,23 @@ struct AuthenticationView: View {
     
     private var authToggleSection: some View {
         VStack(spacing: 20) {
-            // Social Sign-In Options (disabled for now)
-            // socialSignInSection
+            // Social Sign-In Options
+            socialSignInSection
+            
+            // Divider
+            HStack {
+                Rectangle()
+                    .fill(ColorTheme.secondaryText.opacity(0.3))
+                    .frame(height: 1)
+                
+                Text("or")
+                    .font(.footnote)
+                    .foregroundColor(ColorTheme.secondaryText)
+                
+                Rectangle()
+                    .fill(ColorTheme.secondaryText.opacity(0.3))
+                    .frame(height: 1)
+            }
             
             Button(action: viewModel.toggleAuthMode) {
                 Text(viewModel.isShowingSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
@@ -243,43 +258,24 @@ struct AuthenticationView: View {
     
     private var socialSignInSection: some View {
         VStack(spacing: 12) {
-            // Apple Sign-In uses the official Apple button
-            /*
             AppleSignInButtonView(
                 onRequest: { request in
-                    print("🍎 [AuthenticationView] onRequest callback triggered")
-                    // Set up the request with nonce
                     let hashedNonce = authService.prepareAppleSignIn()
                     request.requestedScopes = [.fullName, .email]
                     request.nonce = hashedNonce
-                    print("🍎 [AuthenticationView] Request configured with nonce")
                 },
                 onCompletion: { result in
-                    print("🍎 [AuthenticationView] onCompletion callback triggered")
                     switch result {
                     case .success(let authorization):
-                        print("🍎 [AuthenticationView] Authorization successful, calling signInWithApple")
                         Task { 
                             await viewModel.signInWithApple(authorization)
                         }
                     case .failure(let error):
-                        print("🍎 [AuthenticationView] Authorization failed: \(error)")
-                        // Propagate error to auth service
                         authService.errorMessage = "Apple Sign-In failed: \(error.localizedDescription)"
                     }
                 }
             )
             .frame(height: 50)
-            */
-            
-            // Phone sign-in disabled for now
-            // SocialSignInButton(
-            //     provider: .phone,
-            //     action: {
-            //         viewModel.isShowingPhoneAuth = true
-            //     },
-            //     isLoading: authService.isLoading
-            // )
         }
     }
     

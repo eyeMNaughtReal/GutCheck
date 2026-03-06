@@ -94,8 +94,8 @@ struct SocialSignInButton: View {
     }
 }
 
-// MARK: - Apple Sign In Button (Commented out for future integration)
-/*
+// MARK: - Apple Sign In Button
+
 struct AppleSignInButtonView: UIViewRepresentable {
     let onRequest: (ASAuthorizationAppleIDRequest) -> Void
     let onCompletion: (Result<ASAuthorization, Error>) -> Void
@@ -230,7 +230,6 @@ struct AppleSignInButtonView: UIViewRepresentable {
         }
     }
 }
-*/
 
 #Preview {
     VStack(spacing: 16) {
