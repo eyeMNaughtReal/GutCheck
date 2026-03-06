@@ -98,7 +98,7 @@ jobs:
           xcodebuild build \
             -project GutCheck.xcodeproj \
             -scheme GutCheck \
-            -destination "platform=iOS Simulator,name=iPhone 16,OS=latest" \
+            -destination "generic/platform=iOS Simulator" \
             CODE_SIGNING_ALLOWED=NO \
             ONLY_ACTIVE_ARCH=NO
 

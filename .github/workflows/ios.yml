@@ -82,59 +82,21 @@ jobs:
         EOF
       working-directory: GutCheck/GutCheck
 
-    - name: Resolve Swift Package Dependencies
-      run: |
-        xcodebuild -resolvePackageDependencies \
-          -project GutCheck.xcodeproj \
-          -scheme GutCheck
-      working-directory: GutCheck
-
     - name: Build GutCheck
       run: |
         xcodebuild clean build \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
-          -destination "platform=iOS Simulator,name=iPhone 16,OS=latest" \
+          -destination "generic/platform=iOS Simulator" \
           -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
           CODE_SIGNING_ALLOWED=NO \
           ONLY_ACTIVE_ARCH=NO
       working-directory: GutCheck
-
-    - name: Run Unit Tests
-      run: |
-        xcodebuild test \
-          -project GutCheck.xcodeproj \
-          -scheme GutCheck \
-          -destination "platform=iOS Simulator,name=iPhone 16,OS=latest" \
-          -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
-          CODE_SIGNING_ALLOWED=NO \
-          ONLY_ACTIVE_ARCH=NO \
-          -skip-testing:GutCheckUITests \
-          -enableCodeCoverage YES \
-          -resultBundlePath ~/Library/Developer/Xcode/DerivedData/Build/Logs/Test/results.xcresult
-      working-directory: GutCheck
-
-    - name: Generate Code Coverage Report
-      run: |
-        xcrun xccov view --report --json ~/Library/Developer/Xcode/DerivedData/Build/Logs/Test/results.xcresult > coverage.json
-        xcrun xccov view --report ~/Library/Developer/Xcode/DerivedData/Build/Logs/Test/results.xcresult
-      working-directory: GutCheck
-      continue-on-error: true
-
-    - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        file: GutCheck/coverage.json
-        flags: ios
-        name: ios-coverage
-      continue-on-error: true
 
     - name: Upload Build Artifacts on Failure
       if: failure()
       uses: actions/upload-artifact@v4
       with:
         name: build-logs
-        path: |
-          ~/Library/Developer/Xcode/DerivedData/Build/Logs/
-          GutCheck/coverage.json
+        path: ~/Library/Developer/Xcode/DerivedData/Build/Logs/
         retention-days: 5

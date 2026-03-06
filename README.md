@@ -89,7 +89,7 @@ A comprehensive iOS application for tracking digestive health, meals, symptoms, 
 
 ## 🤝 **Contributing**
 
-We welcome contributions! Please see our [Contributing Guide](GutCheck/CONTRIBUTING.md) for details on:
+We welcome contributions! Please see our [Contributing Guide](docs/contributing.md) for details on:
 - Code style and standards
 - Testing requirements
 - Pull request process
@@ -97,14 +97,23 @@ We welcome contributions! Please see our [Contributing Guide](GutCheck/CONTRIBUT
 
 ## 📚 **Documentation**
 
-**📖 [Complete Documentation](DOCUMENTATION.md)** - Consolidated guide covering all aspects of the project
+All documentation lives in the **[`docs/`](docs/)** folder:
 
-This single document includes:
-- Project overview and architecture
-- User workflows and development guide
-- Project status and feature roadmap
-- Privacy compliance and API integration
-- Contributing guidelines and setup instructions
+| Document | Description |
+|---|---|
+| [documentation.md](docs/documentation.md) | Complete project guide — architecture, workflows, API integration |
+| [contributing.md](docs/contributing.md) | How to contribute, code style, PR process |
+| [firebase-setup.md](docs/firebase-setup.md) | Firebase setup, Firestore rules, security testing |
+| [compliance.md](docs/compliance.md) | GDPR/CCPA/HIPAA compliance, permissions guide |
+| [accessibility.md](docs/accessibility.md) | Accessibility checklist and design standards |
+| [accessibility-progress.md](docs/accessibility-progress.md) | Phase 0–2 implementation progress |
+| [color-system.md](docs/color-system.md) | Color palette, assets, and installation guide |
+| [insights-system.md](docs/insights-system.md) | Insights and pattern recognition system |
+| [core-data.md](docs/core-data.md) | CoreData implementation details |
+| [performance-profiling.md](docs/performance-profiling.md) | Performance monitoring system |
+| [compliance.md](docs/compliance.md) | Privacy compliance and permissions |
+| [navigation-plan.md](docs/navigation-plan.md) | Native navigation architecture |
+| [repository-pattern.md](docs/repository-pattern.md) | Repository pattern implementation |
 
 ## 🔐 **Privacy & Compliance**
 
@@ -133,8 +142,8 @@ GutCheck is designed with privacy and compliance in mind:
 
 For support, questions, or feature requests:
 - Create an issue in this repository
-- Check our [Complete Documentation](DOCUMENTATION.md)
-- Review our [Contributing Guide](GutCheck/CONTRIBUTING.md)
+- Check our [Complete Documentation](docs/documentation.md)
+- Review our [Contributing Guide](docs/contributing.md)
 
 ## 📄 **License**
 
