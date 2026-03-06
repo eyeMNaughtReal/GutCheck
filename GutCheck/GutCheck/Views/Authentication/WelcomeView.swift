@@ -109,6 +109,7 @@ private struct WelcomePageView: View {
 // MARK: - Preview Helpers
 
 private class MockAuthService: AuthenticationProtocol {
+    @Published var isAuthStateResolved = true
     @Published var isAuthenticated = false
     @Published var isLoading = false
     @Published var errorMessage: String?

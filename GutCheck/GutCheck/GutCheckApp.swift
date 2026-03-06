@@ -142,7 +142,15 @@ struct GutCheckApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if authService.isAuthenticated {
+                if !authService.isAuthStateResolved {
+                    // Show loading while Firebase restores auth session
+                    ZStack {
+                        ColorTheme.background
+                            .ignoresSafeArea()
+                        ProgressView()
+                            .tint(ColorTheme.primary)
+                    }
+                } else if authService.isAuthenticated {
                     AppRoot()
                         .environmentObject(authService)
                         .environmentObject(settingsVM)

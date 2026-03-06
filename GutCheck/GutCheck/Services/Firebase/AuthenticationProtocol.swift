@@ -2,6 +2,7 @@ import Foundation
 
 @MainActor
 protocol AuthenticationProtocol: ObservableObject {
+    var isAuthStateResolved: Bool { get }
     var isAuthenticated: Bool { get }
     var isLoading: Bool { get }
     var errorMessage: String? { get set }
