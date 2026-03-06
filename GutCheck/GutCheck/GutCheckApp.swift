@@ -166,8 +166,8 @@ struct GutCheckApp: App {
             }
             .onChange(of: TimeoutManager.shared.shouldResetToHome) { _, shouldReset in
                 if shouldReset {
-                    // Reset navigation state
-                    AppRouter.shared.navigateToRoot()
+                    // Reset navigation state and return to Dashboard tab
+                    AppRouter.shared.resetToHome()
                     // Reset the timeout state
                     TimeoutManager.shared.resetTimeoutState()
                 }

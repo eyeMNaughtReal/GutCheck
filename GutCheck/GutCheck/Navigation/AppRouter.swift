@@ -33,15 +33,37 @@ enum SheetDestination: Identifiable {
 class AppRouter: ObservableObject {
     static let shared = AppRouter()
     
-    @Published var path = NavigationPath()
+    // Per-tab navigation paths to prevent cross-tab state leakage
+    @Published var dashboardPath = NavigationPath()
+    @Published var mealsPath = NavigationPath()
+    @Published var symptomsPath = NavigationPath()
     @Published var activeSheet: SheetDestination?
     @Published var selectedTab: Tab = .dashboard
     @Published private var isNavigating = false
     
+    /// The navigation path for the currently selected tab
+    private var activePath: NavigationPath {
+        get {
+            switch selectedTab {
+            case .dashboard: return dashboardPath
+            case .meals: return mealsPath
+            case .symptoms: return symptomsPath
+            default: return NavigationPath()
+            }
+        }
+        set {
+            switch selectedTab {
+            case .dashboard: dashboardPath = newValue
+            case .meals: mealsPath = newValue
+            case .symptoms: symptomsPath = newValue
+            default: break
+            }
+        }
+    }
+    
     // Navigation methods
     func navigateTo(_ destination: AppDestination) {
         print("🧭 AppRouter: Navigating to \(destination)")
-        print("🧭 AppRouter: Current path before navigation: \(path)")
         
         // Prevent duplicate navigation while one is in progress
         guard !isNavigating else {
@@ -51,8 +73,7 @@ class AppRouter: ObservableObject {
         
         isNavigating = true
         
-        path.append(destination)
-        print("🧭 AppRouter: Path now contains \(path.count) destinations: \(path)")
+        activePath.append(destination)
         
         // Reset navigation flag after a short delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -61,18 +82,26 @@ class AppRouter: ObservableObject {
     }
     
     func navigateBack() {
-        if !path.isEmpty {
-            path.removeLast()
+        if !activePath.isEmpty {
+            activePath.removeLast()
         }
     }
     
     func clearNavigationPath() {
-        // NavigationPath doesn't have removeAll, so we'll clear it by setting to empty
-        path = NavigationPath()
+        activePath = NavigationPath()
     }
     
     func navigateToRoot() {
-        path = NavigationPath()
+        activePath = NavigationPath()
+    }
+    
+    /// Reset everything back to the Dashboard tab with empty navigation stacks
+    func resetToHome() {
+        dashboardPath = NavigationPath()
+        mealsPath = NavigationPath()
+        symptomsPath = NavigationPath()
+        activeSheet = nil
+        selectedTab = .dashboard
     }
     
     // Sheet presentation methods
