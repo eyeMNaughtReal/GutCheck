@@ -10,11 +10,11 @@ struct WeekSelector: View {
     @State private var weekOffset: Int = 0
 
     private var weekDates: [Date] {
-        // Show the 7 days with the selected week in focus
-        let baseDate = calendar.date(byAdding: .weekOfYear, value: weekOffset, to: Date()) ?? Date()
-        let startOfWeek = calendar.dateInterval(of: .weekOfYear, for: baseDate)?.start ?? baseDate
+        // Center today (or the navigated day) in the week: 3 days before, center, 3 days after
+        let baseDate = calendar.date(byAdding: .day, value: weekOffset * 7, to: Date()) ?? Date()
+        let startDate = calendar.date(byAdding: .day, value: -3, to: baseDate) ?? baseDate
         return (0..<daysInWeek).compactMap { offset in
-            calendar.date(byAdding: .day, value: offset, to: startOfWeek)
+            calendar.date(byAdding: .day, value: offset, to: startDate)
         }
     }
 
@@ -59,7 +59,7 @@ struct WeekSelector: View {
             .padding(.horizontal)
             
             // Week day selector
-            HStack(spacing: 0) {
+            HStack(spacing: 4) {
                 ForEach(weekDates, id: \.self) { date in
                     Button(action: {
                         selectedDate = date
@@ -151,13 +151,11 @@ struct WeekSelector: View {
     
     /// Update week offset to show the week containing the selected date
     private func updateWeekOffsetForSelectedDate() {
-        let today = Date()
-        let selectedWeek = calendar.dateInterval(of: .weekOfYear, for: selectedDate)?.start ?? selectedDate
-        let todayWeek = calendar.dateInterval(of: .weekOfYear, for: today)?.start ?? today
-        
-        if let weeksDifference = calendar.dateComponents([.weekOfYear], from: todayWeek, to: selectedWeek).weekOfYear {
-            weekOffset = weeksDifference
-        }
+        let today = calendar.startOfDay(for: Date())
+        let selected = calendar.startOfDay(for: selectedDate)
+        let daysDifference = calendar.dateComponents([.day], from: today, to: selected).day ?? 0
+        // Convert day difference to week offset (rounds toward zero)
+        weekOffset = daysDifference / 7
     }
     
     // MARK: - Computed Properties
