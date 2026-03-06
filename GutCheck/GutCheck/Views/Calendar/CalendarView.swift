@@ -794,64 +794,73 @@ struct DailyNutritionCard: View {
     let mealCount: Int
     let onTap: () -> Void
 
-    var body: some View {
-        Button(action: onTap) {
-            VStack(spacing: 12) {
-                HStack {
-                    Text("Daily Nutrition")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    Spacer()
-                    if mealCount > 0 {
-                        Text("See details")
-                            .font(.caption)
-                            .foregroundColor(.accentColor)
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundColor(.accentColor)
-                    }
+    private var cardContent: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("Daily Nutrition")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                Spacer()
+                if mealCount > 0 {
+                    Text("See details")
+                        .font(.caption)
+                        .foregroundColor(.accentColor)
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(.accentColor)
                 }
+            }
 
-                if mealCount == 0 {
-                    Text("Log a meal to see your daily nutrition totals.")
+            if mealCount == 0 {
+                Text("Log a meal to see your daily nutrition totals.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                // Calorie count — prominent
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text("\(nutrition.calories ?? 0)")
+                        .font(.system(size: 36, weight: .bold, design: .rounded))
+                        .foregroundColor(.primary)
+                    Text("kcal")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                } else {
-                    // Calorie count — prominent
-                    HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text("\(nutrition.calories ?? 0)")
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
-                            .foregroundColor(.primary)
-                        Text("kcal")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text("\(mealCount) meal\(mealCount == 1 ? "" : "s")")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
+                    Spacer()
+                    Text("\(mealCount) meal\(mealCount == 1 ? "" : "s")")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
 
-                    // P / C / F pills
-                    HStack(spacing: 8) {
-                        MacroPill(label: "P", value: nutrition.protein, color: .blue)
-                        MacroPill(label: "C", value: nutrition.carbs,   color: .green)
-                        MacroPill(label: "F", value: nutrition.fat,     color: .red)
-                        if let fiber = nutrition.fiber, fiber > 0 {
-                            MacroPill(label: "Fiber", value: fiber, color: .orange)
-                        }
+                // P / C / F pills
+                HStack(spacing: 8) {
+                    MacroPill(label: "P", value: nutrition.protein, color: .blue)
+                    MacroPill(label: "C", value: nutrition.carbs,   color: .green)
+                    MacroPill(label: "F", value: nutrition.fat,     color: .red)
+                    if let fiber = nutrition.fiber, fiber > 0 {
+                        MacroPill(label: "Fiber", value: fiber, color: .orange)
                     }
                 }
             }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(Color(.secondarySystemGroupedBackground))
-                    .shadow(color: .black.opacity(0.06), radius: 3, x: 0, y: 1)
-            )
         }
-        .buttonStyle(PlainButtonStyle())
-        .disabled(mealCount == 0)
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .shadow(color: .black.opacity(0.06), radius: 3, x: 0, y: 1)
+        )
+    }
+
+    var body: some View {
+        Group {
+            if mealCount > 0 {
+                Button(action: onTap) {
+                    cardContent
+                }
+                .buttonStyle(PlainButtonStyle())
+            } else {
+                cardContent
+            }
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(mealCount == 0
             ? "Daily nutrition — no meals logged"
