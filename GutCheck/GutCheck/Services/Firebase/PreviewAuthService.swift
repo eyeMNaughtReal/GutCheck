@@ -3,6 +3,7 @@ import FirebaseAuth
 
 @MainActor
 class PreviewAuthService: AuthenticationProtocol {
+    @Published private(set) var isAuthStateResolved: Bool = true
     @Published private(set) var isAuthenticated: Bool = true
     @Published private(set) var isLoading: Bool = false
     @Published var errorMessage: String?

@@ -15,6 +15,7 @@ import AuthenticationServices
 class AuthService: AuthenticationProtocol, HasLoadingState {
     @Published private(set) var authUser: FirebaseAuth.User?
     @Published private(set) var currentUser: User?
+    @Published private(set) var isAuthStateResolved = false
     @Published private(set) var isAuthenticated = false
     @Published private(set) var isAwaitingEmailVerification = false
     private var verificationId: String?
@@ -55,6 +56,8 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
                     self.isAuthenticated = false
                     self.currentUser = nil
                 }
+                
+                self.isAuthStateResolved = true
             }
         }
     }
