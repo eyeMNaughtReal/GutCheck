@@ -150,6 +150,8 @@ struct GutCheckApp: App {
                         .environmentObject(coreDataStack)
                         .environmentObject(localStorage)
                         .environmentObject(dataSyncService)
+                } else if authService.isAwaitingEmailVerification {
+                    EmailVerificationView(authService: authService)
                 } else {
                     AuthenticationView(authService: authService)
                 }

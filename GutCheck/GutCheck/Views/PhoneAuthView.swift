@@ -80,8 +80,11 @@ struct PhoneAuthView: View {
                     keyboardType: .phonePad
                 )
                 .onChange(of: viewModel.phoneNumber) { _, newValue in
-                    // Format phone number as user types
-                    viewModel.phoneNumber = formatPhoneDisplay(newValue)
+                    // Format phone number as user types, avoiding re-entrant updates
+                    let formatted = formatPhoneDisplay(newValue)
+                    if formatted != newValue {
+                        viewModel.phoneNumber = formatted
+                    }
                 }
                 
                 Text("Format: +1 (555) 123-4567")
@@ -164,22 +167,31 @@ struct PhoneAuthView: View {
     
     // MARK: - Helper Methods
     
-    private func formatPhoneDisplay(_ phone: String, mask: String = "(XXX) XXX-XXXX") -> String {
-        let digits = phone.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
-        
-        var formatted = ""
-        var index = digits.startIndex
-        
-        for char in mask where index < digits.endIndex {
-            if char == "X" {
-                formatted.append(digits[index])
-                index = digits.index(after: index)
-            } else {
-                formatted.append(char)
-            }
+    private func formatPhoneDisplay(_ phone: String) -> String {
+        // Strip the +1 prefix we add, so we only work with the local digits
+        var raw = phone
+        if raw.hasPrefix("+1 ") {
+            raw = String(raw.dropFirst(3))
+        } else if raw.hasPrefix("+1") {
+            raw = String(raw.dropFirst(2))
         }
         
-        return formatted
+        // Extract only digits
+        let digits = String(raw.unicodeScalars.filter(CharacterSet.decimalDigits.contains).prefix(10))
+        
+        if digits.isEmpty {
+            return ""
+        }
+        
+        // Build formatted string: +1 (XXX) XXX-XXXX
+        var result = "+1 ("
+        for (i, d) in digits.enumerated() {
+            if i == 3 { result += ") " }
+            if i == 6 { result += "-" }
+            result.append(d)
+        }
+        
+        return result
     }
 }
 

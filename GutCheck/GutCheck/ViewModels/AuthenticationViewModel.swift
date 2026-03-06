@@ -140,6 +140,30 @@ class AuthenticationViewModel: ObservableObject {
         }
     }
     
+    func resendVerificationEmail() async {
+        do {
+            try await authService.resendVerificationEmail()
+        } catch {
+            // Error is handled by AuthService
+        }
+    }
+    
+    func checkEmailVerification() async {
+        do {
+            try await authService.checkEmailVerification()
+        } catch {
+            // Error is handled by AuthService
+        }
+    }
+    
+    func cancelEmailVerification() {
+        do {
+            try authService.cancelEmailVerification()
+        } catch {
+            // Error is handled by AuthService
+        }
+    }
+    
     func toggleAuthMode() {
         isShowingSignUp.toggle()
         clearForm()
@@ -164,21 +188,18 @@ class AuthenticationViewModel: ObservableObject {
     }
     
     private func isValidPhoneNumber(_ phone: String) -> Bool {
-        let phoneRegex = "^[+]?[1-9]\\d{1,14}$"
-        let phonePredicate = NSPredicate(format: "SELF MATCHES %@", phoneRegex)
-        return phonePredicate.evaluate(with: phone.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: ""))
+        let cleaned = phone.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+        // Accept 10 digits (US) or 11 digits starting with 1 (US with country code)
+        return cleaned.count == 10 || (cleaned.count == 11 && cleaned.hasPrefix("1"))
     }
     
     private func formatPhoneNumber(_ phone: String) -> String {
-        let cleanedPhone = phone.replacingOccurrences(of: " ", with: "").replacingOccurrences(of: "-", with: "")
-        if cleanedPhone.hasPrefix("+") {
-            return cleanedPhone
-        } else if cleanedPhone.hasPrefix("1") && cleanedPhone.count == 11 {
-            return "+\(cleanedPhone)"
-        } else if cleanedPhone.count == 10 {
-            return "+1\(cleanedPhone)"
+        var digits = phone.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
+        // Normalize to 10 digits without country code
+        if digits.count == 11 && digits.hasPrefix("1") {
+            digits = String(digits.dropFirst())
         }
-        return cleanedPhone
+        return "+1\(digits)"
     }
     
     private func getPasswordStrength(_ password: String) -> PasswordStrength {
