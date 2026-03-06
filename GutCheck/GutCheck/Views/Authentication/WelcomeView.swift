@@ -113,6 +113,7 @@ private class MockAuthService: AuthenticationProtocol {
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var isPhoneVerificationInProgress = false
+    @Published var isAwaitingEmailVerification = false
     @Published var currentUser: User?
     
     func signIn(email: String, password: String) async throws {}

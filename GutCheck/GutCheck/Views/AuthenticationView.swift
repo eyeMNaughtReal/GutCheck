@@ -55,9 +55,10 @@ struct AuthenticationView: View {
         .sheet(isPresented: $viewModel.isShowingForgotPassword) {
             forgotPasswordSheet
         }
-        .sheet(isPresented: $viewModel.isShowingPhoneAuth) {
-            PhoneAuthView(authService: authService)
-        }
+        // Phone auth disabled for now
+        // .sheet(isPresented: $viewModel.isShowingPhoneAuth) {
+        //     PhoneAuthView(authService: authService)
+        // }
     }
     
     // MARK: - Header Section
@@ -227,23 +228,8 @@ struct AuthenticationView: View {
     
     private var authToggleSection: some View {
         VStack(spacing: 20) {
-            // Social Sign-In Options
-            socialSignInSection
-            
-            // Divider
-            HStack {
-                Rectangle()
-                    .fill(ColorTheme.secondaryText.opacity(0.3))
-                    .frame(height: 1)
-                
-                Text("or")
-                    .font(.footnote)
-                    .foregroundColor(ColorTheme.secondaryText)
-                
-                Rectangle()
-                    .fill(ColorTheme.secondaryText.opacity(0.3))
-                    .frame(height: 1)
-            }
+            // Social Sign-In Options (disabled for now)
+            // socialSignInSection
             
             Button(action: viewModel.toggleAuthMode) {
                 Text(viewModel.isShowingSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
@@ -286,13 +272,14 @@ struct AuthenticationView: View {
             .frame(height: 50)
             */
             
-            SocialSignInButton(
-                provider: .phone,
-                action: {
-                    viewModel.isShowingPhoneAuth = true
-                },
-                isLoading: authService.isLoading
-            )
+            // Phone sign-in disabled for now
+            // SocialSignInButton(
+            //     provider: .phone,
+            //     action: {
+            //         viewModel.isShowingPhoneAuth = true
+            //     },
+            //     isLoading: authService.isLoading
+            // )
         }
     }
     

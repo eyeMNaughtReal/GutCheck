@@ -15,8 +15,12 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
     @Published private(set) var authUser: FirebaseAuth.User?
     @Published private(set) var currentUser: User?
     @Published private(set) var isAuthenticated = false
+    @Published private(set) var isAwaitingEmailVerification = false
     private var verificationId: String?
     @Published private(set) var isPhoneVerificationInProgress = false
+    /// Temporarily holds the email for resending verification when the user is signed out
+    private var pendingVerificationEmail: String?
+    private var pendingVerificationPassword: String?
     
     let loadingState = LoadingStateManager()
     
@@ -30,13 +34,24 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
         // Listen for auth state changes
         authStateListenerHandle = auth.addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
-                self?.authUser = user
-                self?.isAuthenticated = user != nil
+                guard let self = self else { return }
+                self.authUser = user
                 
                 if let authUser = user {
-                    await self?.loadCurrentUser(userId: authUser.uid)
+                    await self.loadCurrentUser(userId: authUser.uid)
+                    
+                    // Check if this is an email user who hasn't verified yet
+                    let isEmailUser = authUser.providerData.contains { $0.providerID == "password" }
+                    if isEmailUser && !authUser.isEmailVerified {
+                        self.isAuthenticated = false
+                        self.isAwaitingEmailVerification = true
+                    } else {
+                        self.isAuthenticated = true
+                        self.isAwaitingEmailVerification = false
+                    }
                 } else {
-                    self?.currentUser = nil
+                    self.isAuthenticated = false
+                    self.currentUser = nil
                 }
             }
         }
@@ -60,6 +75,16 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
         do {
             let result = try await auth.signIn(withEmail: email, password: password)
             authUser = result.user
+            
+            // Block unverified email users
+            if !result.user.isEmailVerified {
+                pendingVerificationEmail = email
+                pendingVerificationPassword = password
+                isAwaitingEmailVerification = true
+                isAuthenticated = false
+                return
+            }
+            
             isAuthenticated = true
             await loadCurrentUser(userId: result.user.uid)
         } catch {
@@ -77,7 +102,6 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
         do {
             let result = try await auth.createUser(withEmail: email, password: password)
             authUser = result.user
-            isAuthenticated = true
             
             // Create user profile in Firestore
             let newUser = try await createUserProfile(
@@ -89,6 +113,13 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
                 privacyPolicyAccepted: privacyPolicyAccepted
             )
             currentUser = newUser
+            
+            // Send verification email and hold at verification screen
+            try await result.user.sendEmailVerification()
+            pendingVerificationEmail = email
+            pendingVerificationPassword = password
+            isAwaitingEmailVerification = true
+            isAuthenticated = false
             
         } catch {
             errorMessage = handleAuthError(error)
@@ -168,6 +199,100 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
             errorMessage = handleAuthError(error)
             throw error
         }
+    }
+    
+    // MARK: - Email Verification
+    
+    func resendVerificationEmail() async throws {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        
+        // If we have a signed-in user, use them directly
+        if let user = auth.currentUser {
+            try await user.reload()
+            if user.isEmailVerified {
+                // Already verified — proceed to authenticated state
+                isAwaitingEmailVerification = false
+                isAuthenticated = true
+                await loadCurrentUser(userId: user.uid)
+                return
+            }
+            try await user.sendEmailVerification()
+            return
+        }
+        
+        // Otherwise, sign in temporarily to resend
+        guard let email = pendingVerificationEmail,
+              let password = pendingVerificationPassword else {
+            throw AuthError.custom("No pending verification. Please sign in again.")
+        }
+        
+        do {
+            let result = try await auth.signIn(withEmail: email, password: password)
+            try await result.user.sendEmailVerification()
+            authUser = result.user
+        } catch {
+            errorMessage = handleAuthError(error)
+            throw error
+        }
+    }
+    
+    func checkEmailVerification() async throws {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        
+        // If we have a signed-in user, reload and check
+        if let user = auth.currentUser {
+            try await user.reload()
+            if user.isEmailVerified {
+                isAwaitingEmailVerification = false
+                isAuthenticated = true
+                pendingVerificationEmail = nil
+                pendingVerificationPassword = nil
+                await loadCurrentUser(userId: user.uid)
+                return
+            } else {
+                throw AuthError.custom("Email not yet verified. Please check your inbox and tap the verification link.")
+            }
+        }
+        
+        // If no current user, try signing in with stored credentials
+        guard let email = pendingVerificationEmail,
+              let password = pendingVerificationPassword else {
+            throw AuthError.custom("No pending verification. Please sign in again.")
+        }
+        
+        do {
+            let result = try await auth.signIn(withEmail: email, password: password)
+            try await result.user.reload()
+            
+            if result.user.isEmailVerified {
+                authUser = result.user
+                isAwaitingEmailVerification = false
+                isAuthenticated = true
+                pendingVerificationEmail = nil
+                pendingVerificationPassword = nil
+                await loadCurrentUser(userId: result.user.uid)
+            } else {
+                authUser = result.user
+                throw AuthError.custom("Email not yet verified. Please check your inbox and tap the verification link.")
+            }
+        } catch let error as AuthError {
+            errorMessage = error.errorDescription
+            throw error
+        } catch {
+            errorMessage = handleAuthError(error)
+            throw error
+        }
+    }
+    
+    func cancelEmailVerification() throws {
+        isAwaitingEmailVerification = false
+        pendingVerificationEmail = nil
+        pendingVerificationPassword = nil
+        try signOut()
     }
     
     // MARK: - Re-authentication Methods

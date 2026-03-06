@@ -7,6 +7,7 @@ class PreviewAuthService: AuthenticationProtocol {
     @Published private(set) var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published private(set) var isPhoneVerificationInProgress: Bool = false
+    @Published private(set) var isAwaitingEmailVerification: Bool = false
     @Published private(set) var currentUser: User? = User(
         id: "preview",
         email: "preview@example.com",

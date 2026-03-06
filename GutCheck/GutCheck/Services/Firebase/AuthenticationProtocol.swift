@@ -6,6 +6,7 @@ protocol AuthenticationProtocol: ObservableObject {
     var isLoading: Bool { get }
     var errorMessage: String? { get set }
     var isPhoneVerificationInProgress: Bool { get }
+    var isAwaitingEmailVerification: Bool { get }
     var currentUser: User? { get }
     
     func signIn(email: String, password: String) async throws
