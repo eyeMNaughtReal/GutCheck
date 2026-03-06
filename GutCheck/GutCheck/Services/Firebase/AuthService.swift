@@ -9,6 +9,7 @@ import Foundation
 import FirebaseAuth
 import FirebaseFirestore
 import CryptoKit
+import AuthenticationServices
 
 @MainActor
 class AuthService: AuthenticationProtocol, HasLoadingState {
@@ -21,6 +22,7 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
     /// Temporarily holds the email for resending verification when the user is signed out
     private var pendingVerificationEmail: String?
     private var pendingVerificationPassword: String?
+    private var currentNonce: String?
     
     let loadingState = LoadingStateManager()
     
@@ -449,6 +451,99 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
             errorMessage = handleAuthError(error)
             throw error
         }
+    }
+    
+    // MARK: - Apple Sign In
+    
+    /// Prepares the Apple Sign-In request by generating and storing a nonce.
+    /// Returns the SHA256-hashed nonce to include in the ASAuthorizationAppleIDRequest.
+    func prepareAppleSignIn() -> String {
+        let nonce = randomNonceString()
+        currentNonce = nonce
+        return sha256(nonce)
+    }
+    
+    /// Signs in with Apple using the authorization result from ASAuthorizationController.
+    func signInWithApple(_ authorization: ASAuthorization) async throws {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+        
+        guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential else {
+            throw AuthError.custom("Invalid Apple credential type")
+        }
+        
+        guard let identityToken = appleIDCredential.identityToken,
+              let idTokenString = String(data: identityToken, encoding: .utf8) else {
+            throw AuthError.custom("Unable to retrieve Apple identity token")
+        }
+        
+        guard let nonce = currentNonce else {
+            throw AuthError.custom("No nonce available. Please try signing in again.")
+        }
+        
+        do {
+            let credential = OAuthProvider.credential(
+                providerID: .apple,
+                idToken: idTokenString,
+                rawNonce: nonce
+            )
+            
+            let result = try await auth.signIn(with: credential)
+            authUser = result.user
+            
+            // Check if this is a new user (first sign-in) or returning user
+            let userDoc = try await FirebaseManager.shared.userDocument(result.user.uid).getDocument()
+            
+            if !userDoc.exists {
+                // New user: extract name from Apple credential (only provided on first sign-in)
+                let firstName = appleIDCredential.fullName?.givenName ?? ""
+                let lastName = appleIDCredential.fullName?.familyName ?? ""
+                let email = appleIDCredential.email ?? result.user.email ?? ""
+                
+                let newUser = try await createUserProfile(
+                    userId: result.user.uid,
+                    email: email,
+                    firstName: firstName,
+                    lastName: lastName,
+                    signInMethod: .apple
+                )
+                currentUser = newUser
+            } else {
+                await loadCurrentUser(userId: result.user.uid)
+            }
+            
+            // Apple users are pre-verified — skip email verification
+            isAuthenticated = true
+            isAwaitingEmailVerification = false
+            currentNonce = nil
+            
+        } catch {
+            currentNonce = nil
+            errorMessage = handleAuthError(error)
+            throw error
+        }
+    }
+    
+    private func randomNonceString(length: Int = 32) -> String {
+        precondition(length > 0)
+        var randomBytes = [UInt8](repeating: 0, count: length)
+        let errorCode = SecRandomCopyBytes(kSecRandomDefault, randomBytes.count, &randomBytes)
+        if errorCode != errSecSuccess {
+            fatalError("Unable to generate nonce. SecRandomCopyBytes failed with OSStatus \(errorCode)")
+        }
+        
+        let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+        let nonce = randomBytes.map { byte in
+            charset[Int(byte) % charset.count]
+        }
+        return String(nonce)
+    }
+    
+    private func sha256(_ input: String) -> String {
+        let inputData = Data(input.utf8)
+        let hashedData = SHA256.hash(data: inputData)
+        return hashedData.compactMap { String(format: "%02x", $0) }.joined()
     }
     
     // MARK: - User Profile Management

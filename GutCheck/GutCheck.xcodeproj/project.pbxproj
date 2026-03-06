@@ -7,24 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6D260A922F4CFF370070459D /* PHASE_2_PROGRESS.md in Resources */ = {isa = PBXBuildFile; fileRef = 6D260A912F4CFF370070459D /* PHASE_2_PROGRESS.md */; };
-		6D260A942F4D22CF0070459D /* COLOR_ASSET_FIX.md in Resources */ = {isa = PBXBuildFile; fileRef = 6D260A932F4D22CF0070459D /* COLOR_ASSET_FIX.md */; };
 		6DEADC292E1F365E00CAF395 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 6DEADC282E1F365E00CAF395 /* FirebaseAnalytics */; };
 		6DEADC2B2E1F365E00CAF395 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 6DEADC2A2E1F365E00CAF395 /* FirebaseAuth */; };
 		6DEADC2D2E1F365E00CAF395 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 6DEADC2C2E1F365E00CAF395 /* FirebaseFirestore */; };
 		6DEADC2F2E1F365E00CAF395 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 6DEADC2E2E1F365E00CAF395 /* FirebaseStorage */; };
 		6DF1632E2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF1632D2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift */; };
-		6DF163302F4CD6F6002C0671 /* FIREBASE_SETUP_GUIDE.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DF1632F2F4CD6F6002C0671 /* FIREBASE_SETUP_GUIDE.md */; };
-		6DF163342F4CDB1B002C0671 /* APPLE_DESIGN_STANDARDS_REVIEW.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DF163332F4CDB1B002C0671 /* APPLE_DESIGN_STANDARDS_REVIEW.md */; };
-		6DF163362F4CDBF1002C0671 /* ACCESSIBILITY_IMPLEMENTATION_CHECKLIST.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DF163352F4CDBF1002C0671 /* ACCESSIBILITY_IMPLEMENTATION_CHECKLIST.md */; };
-		6DF163382F4CDD59002C0671 /* PHASE_0_DISCOVERY_REPORT.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DF163372F4CDD59002C0671 /* PHASE_0_DISCOVERY_REPORT.md */; };
-		6DF1633A2F4CDE20002C0671 /* PHASE_0_SUMMARY.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DF163392F4CDE20002C0671 /* PHASE_0_SUMMARY.md */; };
 		6DF1633C2F4CDE70002C0671 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF1633B2F4CDE70002C0671 /* HapticManager.swift */; };
 		6DF1633E2F4CDEA1002C0671 /* AccessibilityHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF1633D2F4CDEA1002C0671 /* AccessibilityHelpers.swift */; };
 		6DF163402F4CDEC6002C0671 /* AccessibilityIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF1633F2F4CDEC6002C0671 /* AccessibilityIdentifiers.swift */; };
 		6DF163422F4CDEEE002C0671 /* Typography.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF163412F4CDEEE002C0671 /* Typography.swift */; };
-		6DF163442F4CDF29002C0671 /* PHASE_1_SUMMARY.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DF163432F4CDF29002C0671 /* PHASE_1_SUMMARY.md */; };
-		6DF163482F4CE393002C0671 /* DASHBOARD_UI_POLISH.md in Resources */ = {isa = PBXBuildFile; fileRef = 6DF163472F4CE393002C0671 /* DASHBOARD_UI_POLISH.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -45,23 +36,14 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		6D260A912F4CFF370070459D /* PHASE_2_PROGRESS.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PHASE_2_PROGRESS.md; sourceTree = "<group>"; };
-		6D260A932F4D22CF0070459D /* COLOR_ASSET_FIX.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = COLOR_ASSET_FIX.md; sourceTree = "<group>"; };
 		6DEADBED2E1F312300CAF395 /* GutCheck.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GutCheck.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6DEADBFA2E1F312500CAF395 /* GutCheckTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GutCheckTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6DEADC042E1F312500CAF395 /* GutCheckUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GutCheckUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6DF1632D2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnoseFirebaseSetup.swift; sourceTree = "<group>"; };
-		6DF1632F2F4CD6F6002C0671 /* FIREBASE_SETUP_GUIDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = FIREBASE_SETUP_GUIDE.md; sourceTree = "<group>"; };
-		6DF163332F4CDB1B002C0671 /* APPLE_DESIGN_STANDARDS_REVIEW.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = APPLE_DESIGN_STANDARDS_REVIEW.md; sourceTree = "<group>"; };
-		6DF163352F4CDBF1002C0671 /* ACCESSIBILITY_IMPLEMENTATION_CHECKLIST.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ACCESSIBILITY_IMPLEMENTATION_CHECKLIST.md; sourceTree = "<group>"; };
-		6DF163372F4CDD59002C0671 /* PHASE_0_DISCOVERY_REPORT.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PHASE_0_DISCOVERY_REPORT.md; sourceTree = "<group>"; };
-		6DF163392F4CDE20002C0671 /* PHASE_0_SUMMARY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PHASE_0_SUMMARY.md; sourceTree = "<group>"; };
 		6DF1633B2F4CDE70002C0671 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
 		6DF1633D2F4CDEA1002C0671 /* AccessibilityHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityHelpers.swift; sourceTree = "<group>"; };
 		6DF1633F2F4CDEC6002C0671 /* AccessibilityIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityIdentifiers.swift; sourceTree = "<group>"; };
 		6DF163412F4CDEEE002C0671 /* Typography.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Typography.swift; sourceTree = "<group>"; };
-		6DF163432F4CDF29002C0671 /* PHASE_1_SUMMARY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = PHASE_1_SUMMARY.md; sourceTree = "<group>"; };
-		6DF163472F4CE393002C0671 /* DASHBOARD_UI_POLISH.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = DASHBOARD_UI_POLISH.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -132,19 +114,10 @@
 				6DEADC072E1F312500CAF395 /* GutCheckUITests */,
 				6DEADBEE2E1F312300CAF395 /* Products */,
 				6DF1632D2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift */,
-				6DF1632F2F4CD6F6002C0671 /* FIREBASE_SETUP_GUIDE.md */,
-				6DF163332F4CDB1B002C0671 /* APPLE_DESIGN_STANDARDS_REVIEW.md */,
-				6DF163352F4CDBF1002C0671 /* ACCESSIBILITY_IMPLEMENTATION_CHECKLIST.md */,
-				6DF163372F4CDD59002C0671 /* PHASE_0_DISCOVERY_REPORT.md */,
-				6DF163392F4CDE20002C0671 /* PHASE_0_SUMMARY.md */,
 				6DF1633B2F4CDE70002C0671 /* HapticManager.swift */,
 				6DF1633D2F4CDEA1002C0671 /* AccessibilityHelpers.swift */,
 				6DF1633F2F4CDEC6002C0671 /* AccessibilityIdentifiers.swift */,
 				6DF163412F4CDEEE002C0671 /* Typography.swift */,
-				6DF163432F4CDF29002C0671 /* PHASE_1_SUMMARY.md */,
-				6DF163472F4CE393002C0671 /* DASHBOARD_UI_POLISH.md */,
-				6D260A912F4CFF370070459D /* PHASE_2_PROGRESS.md */,
-				6D260A932F4D22CF0070459D /* COLOR_ASSET_FIX.md */,
 			);
 			sourceTree = "<group>";
 		};
@@ -285,15 +258,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6D260A922F4CFF370070459D /* PHASE_2_PROGRESS.md in Resources */,
-				6DF163362F4CDBF1002C0671 /* ACCESSIBILITY_IMPLEMENTATION_CHECKLIST.md in Resources */,
-				6DF163442F4CDF29002C0671 /* PHASE_1_SUMMARY.md in Resources */,
-				6DF163342F4CDB1B002C0671 /* APPLE_DESIGN_STANDARDS_REVIEW.md in Resources */,
-				6DF163482F4CE393002C0671 /* DASHBOARD_UI_POLISH.md in Resources */,
-				6D260A942F4D22CF0070459D /* COLOR_ASSET_FIX.md in Resources */,
-				6DF1633A2F4CDE20002C0671 /* PHASE_0_SUMMARY.md in Resources */,
-				6DF163302F4CD6F6002C0671 /* FIREBASE_SETUP_GUIDE.md in Resources */,
-				6DF163382F4CDD59002C0671 /* PHASE_0_DISCOVERY_REPORT.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
