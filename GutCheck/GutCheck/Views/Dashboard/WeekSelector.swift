@@ -59,67 +59,49 @@ struct WeekSelector: View {
             .padding(.horizontal)
             
             // Week day selector
-            ScrollViewReader { proxy in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 12) {
-                        ForEach(weekDates, id: \.self) { date in
-                            Button(action: {
-                                selectedDate = date
-                                onDateSelected?(date)
-                            }) {
-                                VStack {
-                                    Text(shortWeekdayString(for: date))
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    Text(dayString(for: date))
-                                        .font(.headline)
-                                        .foregroundColor(selectedDate.isSameDay(as: date) ? .white : .primary)
+            HStack(spacing: 0) {
+                ForEach(weekDates, id: \.self) { date in
+                    Button(action: {
+                        selectedDate = date
+                        onDateSelected?(date)
+                    }) {
+                        VStack {
+                            Text(shortWeekdayString(for: date))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text(dayString(for: date))
+                                .font(.headline)
+                                .foregroundColor(selectedDate.isSameDay(as: date) ? .white : .primary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 60)
+                        .background(
+                            Group {
+                                if selectedDate.isSameDay(as: date) {
+                                    ColorTheme.accent
+                                } else if date.isSameDay(as: Date()) {
+                                    ColorTheme.accent.opacity(0.3)
+                                } else {
+                                    ColorTheme.cardBackground
                                 }
-                                .frame(width: 44, height: 60)
-                                .background(
-                                    Group {
-                                        if selectedDate.isSameDay(as: date) {
-                                            ColorTheme.accent
-                                        } else if date.isSameDay(as: Date()) {
-                                            ColorTheme.accent.opacity(0.3)
-                                        } else {
-                                            ColorTheme.cardBackground
-                                        }
-                                    }
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(date.isSameDay(as: Date()) ? ColorTheme.accent : Color.clear, lineWidth: 2)
-                                )
-                                .cornerRadius(10)
-                                .shadow(color: selectedDate.isSameDay(as: date) ? ColorTheme.shadowColor : .clear, radius: 4, x: 0, y: 2)
                             }
-                            .id(date)
-                        }
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 10)
+                                .stroke(date.isSameDay(as: Date()) ? ColorTheme.accent : Color.clear, lineWidth: 2)
+                        )
+                        .cornerRadius(10)
+                        .shadow(color: selectedDate.isSameDay(as: date) ? ColorTheme.shadowColor : .clear, radius: 4, x: 0, y: 2)
                     }
                 }
-                .padding(.horizontal)
-                .onAppear {
-                    // Calculate week offset based on selected date
-                    updateWeekOffsetForSelectedDate()
-                    
-                    // Scroll to selected date on appear
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        if let targetDate = weekDates.first(where: { $0.isSameDay(as: selectedDate) }) {
-                            proxy.scrollTo(targetDate, anchor: .center)
-                        }
-                    }
-                }
-                .onChange(of: selectedDate) {
-                    // If selectedDate is today, center it and reset week offset
-                    if selectedDate.isSameDay(as: Date()) {
-                        weekOffset = 0
-                        if let today = weekDates.first(where: { $0.isSameDay(as: Date()) }) {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                proxy.scrollTo(today, anchor: .center)
-                            }
-                        }
-                    }
+            }
+            .padding(.horizontal)
+            .onAppear {
+                updateWeekOffsetForSelectedDate()
+            }
+            .onChange(of: selectedDate) {
+                if selectedDate.isSameDay(as: Date()) {
+                    weekOffset = 0
                 }
             }
         }
