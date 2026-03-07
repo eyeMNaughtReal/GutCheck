@@ -380,6 +380,36 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
         }
     }
     
+    /// Delete the account after the user has already been re-authenticated.
+    /// Call this after ReauthenticationView succeeds.
+    func deleteAuthenticatedAccount() async throws {
+        guard let currentFirebaseUser = authUser else {
+            throw AuthError.noUser
+        }
+        
+        isLoading = true
+        errorMessage = nil
+        
+        defer { isLoading = false }
+        
+        do {
+            print("🗑️ AuthService: Deleting user data from Firestore")
+            try await deleteUserData(userId: currentFirebaseUser.uid)
+            
+            print("🗑️ AuthService: Deleting Firebase Auth account")
+            try await currentFirebaseUser.delete()
+            
+            authUser = nil
+            currentUser = nil
+            isAuthenticated = false
+            
+            print("✅ AuthService: Account deleted successfully")
+        } catch {
+            errorMessage = error.localizedDescription
+            throw error
+        }
+    }
+    
     /// Convenience method for deleting account with email/password
     func deleteAccountWithEmail(email: String, password: String) async throws {
         let credential = EmailAuthProvider.credential(withEmail: email, password: password)

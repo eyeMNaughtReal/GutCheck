@@ -196,6 +196,45 @@ struct SettingsView: View {
                 }
                 
                 Section("Account Management") {
+                    // Linked account display
+                    if let user = authService.currentUser {
+                        HStack(spacing: 12) {
+                            Image(systemName: user.signInMethod.icon)
+                                .foregroundColor(ColorTheme.primary)
+                                .frame(width: 20)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Signed in with \(user.signInMethod.displayName)")
+                                    .font(.subheadline)
+                                    .fontWeight(.medium)
+                                Text(user.email)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(ColorTheme.success)
+                        }
+                        .padding(.vertical, 4)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("Signed in with \(user.signInMethod.displayName), \(user.email)")
+                    }
+                    
+                    // Sign out
+                    Button {
+                        HapticManager.shared.medium()
+                        try? authService.signOut()
+                    } label: {
+                        HStack {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .foregroundColor(.orange)
+                            Text("Sign Out")
+                                .foregroundColor(ColorTheme.primaryText)
+                        }
+                    }
+                    .accessibilityLabel("Sign Out")
+                    .accessibilityHint("Tap to sign out of your account")
+                    
+                    // Delete account
                     NavigationLink(destination: DeleteAccountView()) {
                         HStack {
                             Image(systemName: "trash")
