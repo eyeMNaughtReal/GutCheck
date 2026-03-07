@@ -4,6 +4,8 @@ struct AppRoot: View {
     @StateObject private var router = AppRouter.shared
     @StateObject private var refreshManager = RefreshManager.shared
     @EnvironmentObject var authService: AuthService
+    @EnvironmentObject var serverStatusService: ServerStatusService
+    @State private var showingServerStatusSheet = false
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -50,6 +52,17 @@ struct AppRoot: View {
                     Label("Insights", systemImage: "chart.bar.fill")
                 }
                 .tag(Tab.insights)
+            }
+            
+            .safeAreaInset(edge: .top) {
+                OfflineBannerView(showingStatusSheet: $showingServerStatusSheet)
+                    .animation(.easeInOut(duration: 0.3), value: serverStatusService.isOffline)
+            }
+            
+            // Server status sheet (separate from router sheets)
+            .sheet(isPresented: $showingServerStatusSheet) {
+                ServerStatusSheet()
+                    .environmentObject(serverStatusService)
             }
             
             // Handle the sheet presentations
