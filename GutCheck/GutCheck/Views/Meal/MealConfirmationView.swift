@@ -4,6 +4,7 @@ struct MealConfirmationView: View {
     let meal: Meal
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var router: AppRouter
+    @EnvironmentObject private var serverStatus: ServerStatusService
     @StateObject private var viewModel = MealConfirmationViewModel()
     
     var body: some View {
@@ -60,21 +61,32 @@ struct MealConfirmationView: View {
                 .roundedCard()
                 
                 // AI Analysis
-                if let analysis = viewModel.aiAnalysis {
+                if serverStatus.isOffline {
+                    HStack(spacing: 8) {
+                        Image(systemName: "wifi.slash")
+                            .foregroundColor(ColorTheme.secondaryText)
+                        Text("AI analysis unavailable while offline")
+                            .font(.subheadline)
+                            .foregroundColor(ColorTheme.secondaryText)
+                    }
+                    .padding()
+                    .frame(maxWidth: .infinity)
+                    .roundedCard()
+                } else if let analysis = viewModel.aiAnalysis {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Smart Analysis")
                             .font(.title2)
                             .bold()
-                        
+
                         ForEach(analysis.insights, id: \.self) { insight in
                             Label(insight, systemImage: "brain")
                                 .font(.subheadline)
                                 .padding(.vertical, 4)
                         }
-                        
+
                         if !analysis.warnings.isEmpty {
                             Divider()
-                            
+
                             ForEach(analysis.warnings, id: \.self) { warning in
                                 Label(warning, systemImage: "exclamationmark.triangle")
                                     .font(.subheadline)
@@ -128,6 +140,7 @@ struct MealConfirmationView: View {
             Text(viewModel.errorMessage ?? "An unknown error occurred")
         })
         .task {
+            guard !serverStatus.isOffline else { return }
             await viewModel.analyzeMeal(meal)
         }
     }
@@ -286,5 +299,6 @@ struct MealAnalysis {
             createdBy: "preview-user"
         ))
         .environmentObject(AppRouter.shared)
+        .environmentObject(ServerStatusService.shared)
     }
 }

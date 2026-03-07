@@ -10,6 +10,7 @@ import Combine
 
 struct FoodSearchView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var serverStatus: ServerStatusService
     @StateObject private var viewModel = FoodSearchViewModel()
     @State private var navigationPath = NavigationPath()
     @State private var selectedFoodItem: FoodItem?
@@ -29,6 +30,7 @@ struct FoodSearchView: View {
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                             .typography(Typography.body)
                             .onSubmit {
+                                guard !serverStatus.isOffline else { return }
                                 HapticManager.shared.light()
                                 viewModel.search()
                             }
@@ -52,7 +54,7 @@ struct FoodSearchView: View {
                             .background(ColorTheme.accent)
                             .cornerRadius(8)
                         }
-                        .disabled(viewModel.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        .disabled(viewModel.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || serverStatus.isOffline)
                         .accessibleButton(
                             label: "Search",
                             hint: viewModel.searchQuery.isEmpty 
@@ -86,7 +88,9 @@ struct FoodSearchView: View {
                 .padding()
 
                 // Results or suggestions
-                if viewModel.isSearching {
+                if serverStatus.isOffline {
+                    offlineView
+                } else if viewModel.isSearching {
                     loadingView
                 } else if !viewModel.hasSearched && viewModel.searchQuery.isEmpty {
                     suggestionsList
@@ -100,11 +104,11 @@ struct FoodSearchView: View {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 36))
                             .foregroundColor(ColorTheme.accent.opacity(0.6))
-                        
+
                         Text("Ready to Search")
                             .font(.headline)
                             .foregroundColor(ColorTheme.primaryText)
-                        
+
                         Text("Tap the Search button to find foods")
                             .font(.subheadline)
                             .foregroundColor(ColorTheme.secondaryText)
@@ -150,6 +154,50 @@ struct FoodSearchView: View {
         }
     }
     
+    private var offlineView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "wifi.slash")
+                .font(.system(size: 48))
+                .foregroundColor(ColorTheme.warning)
+
+            Text("You're Offline")
+                .typography(Typography.headline)
+                .foregroundColor(ColorTheme.primaryText)
+
+            Text("Food search requires an internet connection.\nYou can still add food manually.")
+                .typography(Typography.subheadline)
+                .foregroundColor(ColorTheme.secondaryText)
+                .multilineTextAlignment(.center)
+
+            Button {
+                HapticManager.shared.medium()
+                let customFoodItem = FoodItem(
+                    name: viewModel.searchQuery.isEmpty ? "Custom Food" : viewModel.searchQuery,
+                    quantity: "1 serving",
+                    nutrition: NutritionInfo()
+                )
+                selectedFoodItem = customFoodItem
+            } label: {
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Add Custom Food")
+                        .typography(Typography.button)
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .background(ColorTheme.primary)
+                .cornerRadius(10)
+            }
+            .accessibleButton(
+                label: "Add Custom Food",
+                hint: "Create a custom food item with manual entry"
+            )
+        }
+        .padding()
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
     private var loadingView: some View {
         VStack(spacing: 16) {
             ProgressView()
