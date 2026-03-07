@@ -10,6 +10,7 @@ import SwiftUI
 
 struct ServerStatusSheet: View {
     @EnvironmentObject private var serverStatus: ServerStatusService
+    @ObservedObject private var syncService = DataSyncService.shared
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -173,6 +174,15 @@ struct ServerStatusSheet: View {
                 title: "Pending changes",
                 subtitle: "\(serverStatus.pendingChangesCount) item\(serverStatus.pendingChangesCount == 1 ? "" : "s") waiting to sync"
             )
+
+            ServerStatusRow(
+                icon: "checkmark.icloud.fill",
+                iconColor: syncService.lastSyncDate != nil ? ColorTheme.success : ColorTheme.secondaryText,
+                title: "Last synced",
+                subtitle: serverStatus.lastSyncDescription
+            )
+
+            syncNowButton
         }
         .accessibilityId(AccessibilityIdentifiers.ServerStatus.whatsHappeningSection)
     }
@@ -233,6 +243,40 @@ struct ServerStatusSheet: View {
             )
         }
         .accessibilityId(AccessibilityIdentifiers.ServerStatus.temporarilyLimitedSection)
+    }
+
+    // MARK: - Sync Now Button
+
+    private var syncNowButton: some View {
+        Button {
+            Task {
+                try? await syncService.performFullSync()
+            }
+        } label: {
+            HStack(spacing: 6) {
+                if syncService.isSyncing {
+                    ProgressView()
+                        .tint(.white)
+                        .scaleEffect(0.7)
+                    Text("Syncing...")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                } else {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("Sync Now")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                }
+            }
+            .foregroundColor(.white)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity)
+            .background(Capsule().fill(syncService.isSyncing ? ColorTheme.secondaryText : ColorTheme.info))
+        }
+        .disabled(syncService.isSyncing)
+        .accessibilityLabel(syncService.isSyncing ? "Syncing in progress" : "Sync now")
     }
 }
 

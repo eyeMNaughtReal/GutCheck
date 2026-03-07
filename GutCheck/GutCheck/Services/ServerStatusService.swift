@@ -30,6 +30,16 @@ class ServerStatusService: ObservableObject {
         isDebugOfflineMode || !isFirebaseReachable || !isNetworkAvailable
     }
 
+    /// Human-readable description of the last successful sync time
+    var lastSyncDescription: String {
+        guard let date = DataSyncService.shared.lastSyncDate else {
+            return "Never synced"
+        }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return formatter.localizedString(for: date, relativeTo: Date())
+    }
+
     // MARK: - Private
 
     private let networkMonitor = NWPathMonitor()
