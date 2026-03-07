@@ -68,10 +68,10 @@ struct WeekSelector: View {
                         VStack {
                             Text(shortWeekdayString(for: date))
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundColor(ColorTheme.secondaryText)
                             Text(dayString(for: date))
                                 .font(.headline)
-                                .foregroundColor(selectedDate.isSameDay(as: date) ? .white : .primary)
+                                .foregroundColor(selectedDate.isSameDay(as: date) ? .white : ColorTheme.primaryText)
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 60)
