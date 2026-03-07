@@ -26,7 +26,7 @@ struct MedicationCalendarView: View {
             }
             .padding(.horizontal)
             .padding(.vertical, 12)
-            .background(Color(.systemBackground))
+            .background(ColorTheme.background)
 
             // Content List
             List {
@@ -64,7 +64,7 @@ struct MedicationCalendarView: View {
                         DoseCalendarRow(dose: dose)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(.secondarySystemGroupedBackground))
+                                    .fill(ColorTheme.cardBackground)
                             )
                             .padding(.horizontal, 16)
                             .padding(.vertical, 4)
@@ -90,7 +90,7 @@ struct MedicationCalendarView: View {
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
         }
-        .background(Color(.systemGroupedBackground))
+        .background(ColorTheme.background)
         .navigationTitle("Meds")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
@@ -148,7 +148,7 @@ struct CalendarMedicationsSectionHeader: View {
                 Text("Medications")
                     .font(.title3)
                     .fontWeight(.semibold)
-                    .foregroundColor(.primary)
+                    .foregroundColor(ColorTheme.primaryText)
                 Spacer()
                 Button {
                     HapticManager.shared.medium()
@@ -189,24 +189,24 @@ struct DailyMedicationCard: View {
             HStack {
                 Text("Daily Medications")
                     .font(.headline)
-                    .foregroundColor(.primary)
+                    .foregroundColor(ColorTheme.primaryText)
                 Spacer()
             }
 
             if doses.isEmpty {
                 Text("Log a dose to see your daily medication summary.")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 // Dose count — prominent
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text("\(doses.count)")
                         .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .foregroundColor(.primary)
+                        .foregroundColor(ColorTheme.primaryText)
                     Text("dose\(doses.count == 1 ? "" : "s") taken")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(ColorTheme.secondaryText)
                     Spacer()
                 }
 
@@ -225,8 +225,8 @@ struct DailyMedicationCard: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.06), radius: 3, x: 0, y: 1)
+                .fill(ColorTheme.cardBackground)
+                .shadow(color: ColorTheme.shadowColor, radius: 3, x: 0, y: 1)
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel(doses.isEmpty
@@ -246,7 +246,7 @@ private struct MedNamePill: View {
                 .foregroundColor(.purple)
             Text(name)
                 .font(.caption)
-                .foregroundColor(.primary)
+                .foregroundColor(ColorTheme.primaryText)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -293,21 +293,21 @@ struct DoseCalendarRow: View {
                 HStack {
                     Text(dose.medicationName)
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.primary)
+                        .foregroundColor(ColorTheme.primaryText)
                     Spacer()
                     Text(formattedTime)
                         .font(.system(size: 15))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(ColorTheme.secondaryText)
                 }
 
                 Text(dosageText)
                     .font(.system(size: 15))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(ColorTheme.secondaryText)
 
                 if let notes = dose.notes, !notes.isEmpty {
                     Text(notes)
                         .font(.system(size: 14))
-                        .foregroundColor(.secondary)
+                        .foregroundColor(ColorTheme.secondaryText)
                         .lineLimit(2)
                 }
             }
