@@ -12,7 +12,7 @@ import SwiftUI
 
 struct DeleteAccountView: View {
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var authService = AuthService()
+    @EnvironmentObject var authService: AuthService
     @State private var showingReauthentication = false
     @State private var showingFinalConfirmation = false
     @State private var showingAlert = false
@@ -117,7 +117,11 @@ struct DeleteAccountView: View {
             Text("Are you absolutely sure you want to delete your account? This action is permanent and cannot be undone.")
         }
         .alert(alertTitle, isPresented: $showingAlert) {
-            Button("OK") { }
+            Button("OK") {
+                if alertTitle == "Account Deleted" {
+                    dismiss()
+                }
+            }
         } message: {
             Text(alertMessage)
         }
@@ -128,16 +132,13 @@ struct DeleteAccountView: View {
         
         Task {
             do {
-                // For now, we'll use a placeholder credential
-                // In a real implementation, you'd collect the user's password or use a stored credential
-                // This is a simplified version - you might want to enhance this
-                try await authService.deleteAccountWithEmail(email: "user@example.com", password: "password")
+                // User was already re-authenticated via ReauthenticationView
+                try await authService.deleteAuthenticatedAccount()
                 
                 await MainActor.run {
                     alertTitle = "Account Deleted"
-                    alertMessage = "Your account has been successfully deleted. You will be signed out."
+                    alertMessage = "Your account has been successfully deleted."
                     showingAlert = true
-                    dismiss()
                 }
             } catch {
                 await MainActor.run {
@@ -192,5 +193,6 @@ struct DataRow: View {
 #Preview {
     NavigationStack {
         DeleteAccountView()
+            .environmentObject(AuthService())
     }
 }

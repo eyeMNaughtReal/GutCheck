@@ -16,7 +16,7 @@ struct ReauthenticationView: View {
     let onSuccess: () -> Void
     let onCancel: () -> Void
     
-    @StateObject private var authService = AuthService()
+    @EnvironmentObject var authService: AuthService
     @State private var email = ""
     @State private var password = ""
     @State private var showPhoneAuth = false
@@ -147,7 +147,7 @@ struct PhoneReauthenticationView: View {
     let onSuccess: () -> Void
     let onCancel: () -> Void
     
-    @StateObject private var authService = AuthService()
+    @EnvironmentObject var authService: AuthService
     @State private var phoneNumber = ""
     @State private var verificationCode = ""
     @State private var codeSent = false
