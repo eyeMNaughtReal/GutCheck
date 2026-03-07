@@ -126,6 +126,7 @@ struct GutCheckApp: App {
     @StateObject private var coreDataStack = CoreDataStack.shared
     @StateObject private var localStorage = CoreDataStorageService.shared
     @StateObject private var dataSyncService = DataSyncService.shared
+    @StateObject private var serverStatusService = ServerStatusService.shared
     @Environment(\.scenePhase) private var scenePhase
     
     static func testFirebaseConnection() async {
@@ -158,6 +159,7 @@ struct GutCheckApp: App {
                         .environmentObject(coreDataStack)
                         .environmentObject(localStorage)
                         .environmentObject(dataSyncService)
+                        .environmentObject(serverStatusService)
                 } else if authService.isAwaitingEmailVerification {
                     EmailVerificationView(authService: authService)
                 } else {
@@ -172,13 +174,24 @@ struct GutCheckApp: App {
                     TimeoutManager.shared.resetTimeoutState()
                 }
             }
+            .onChange(of: authService.isAuthenticated) { _, isAuthenticated in
+                if isAuthenticated {
+                    serverStatusService.startMonitoring()
+                } else {
+                    serverStatusService.stopMonitoring()
+                }
+            }
             .onChange(of: scenePhase) { oldPhase, newPhase in
                 switch newPhase {
                 case .background:
                     TimeoutManager.shared.applicationDidEnterBackground()
+                    serverStatusService.stopMonitoring()
                 case .active:
                     TimeoutManager.shared.applicationWillEnterForeground()
                     Task { await HealthKitSyncManager.shared.syncIfNeeded() }
+                    if authService.isAuthenticated {
+                        serverStatusService.startMonitoring()
+                    }
                 default:
                     break
                 }

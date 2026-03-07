@@ -213,6 +213,17 @@ enum AccessibilityIdentifiers {
         static let signOutButton = "profile.signOut.button"
     }
     
+    // MARK: - Server Status
+    enum ServerStatus {
+        static let offlineBanner = "serverStatus.offline.banner"
+        static let statusSheet = "serverStatus.sheet"
+        static let recheckCountdown = "serverStatus.recheck.countdown"
+        static let dismissButton = "serverStatus.dismiss.button"
+        static let whatsHappeningSection = "serverStatus.whatsHappening.section"
+        static let whatStillWorksSection = "serverStatus.whatStillWorks.section"
+        static let temporarilyLimitedSection = "serverStatus.temporarilyLimited.section"
+    }
+    
     // MARK: - Common Components
     enum Common {
         static let loadingIndicator = "common.loading"
