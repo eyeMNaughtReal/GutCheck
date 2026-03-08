@@ -191,9 +191,16 @@ struct GutCheckApp: App {
                     Task { await HealthKitSyncManager.shared.syncIfNeeded() }
                     if authService.isAuthenticated {
                         serverStatusService.startMonitoring()
+                        Task { try? await dataSyncService.performFullSync() }
                     }
                 default:
                     break
+                }
+            }
+            .onChange(of: serverStatusService.isOffline) { wasOffline, isOffline in
+                // When connectivity is restored, sync any queued changes
+                if wasOffline && !isOffline && authService.isAuthenticated {
+                    Task { try? await dataSyncService.performFullSync() }
                 }
             }
             .preferredColorScheme(settingsVM.preferredColorScheme)
