@@ -8,7 +8,6 @@
 import Foundation
 import FirebaseFirestore
 import FirebaseAuth
-import Network
 
 // Import for privacy-aware data routing
 @_exported import struct Foundation.Data
@@ -68,29 +67,9 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
     
     let collectionName: String
     lazy var firestore = Firestore.firestore()
-    private let networkMonitor = NWPathMonitor()
-    private let monitorQueue = DispatchQueue(label: "NetworkMonitor")
-    private var isNetworkAvailable = true
-    
+
     init(collectionName: String) {
         self.collectionName = collectionName
-        setupNetworkMonitoring()
-    }
-    
-    private func setupNetworkMonitoring() {
-        networkMonitor.pathUpdateHandler = { [weak self] path in
-            self?.isNetworkAvailable = path.status == .satisfied
-            if path.status != .satisfied {
-                print("🌐 Network disconnected - operations will use offline cache")
-            } else {
-                print("🌐 Network connected - normal operations resumed")
-            }
-        }
-        networkMonitor.start(queue: monitorQueue)
-    }
-    
-    deinit {
-        networkMonitor.cancel()
     }
     
     // MARK: - CRUD Operations
@@ -124,21 +103,14 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
     
     /// Save item to Firestore (used for public data and fallback)
     private func saveToFirestore(_ item: Model, userId: String) async throws {
-        // Check network connectivity before attempting save
-        if !isNetworkAvailable {
-            print("⚠️ Network unavailable - saving to local cache only")
-        }
-        
         var mutableItem = item
         mutableItem.createdBy = userId
-        
+
         let data = mutableItem.toFirestoreData()
-        
+
         do {
             print("🔥 Saving to Firestore - Collection: \(collectionName), Document ID: \(item.id)")
-            print("🔥 Data to save: \(data)")
-            print("🔥 Network available: \(isNetworkAvailable)")
-            
+
             // Use setData with the specific document ID to preserve the item's ID
             // Add retry logic for connection issues
             try await retryWithBackoff {
@@ -147,28 +119,40 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
             print("✅ Successfully saved to Firestore with ID: \(item.id)")
         } catch {
             print("❌ Firestore save error: \(error)")
-            print("❌ Error details: \(error.localizedDescription)")
-            
-            // Check if it's a specific Firestore error we can handle
+
+            // Check if it's a network-related Firestore error
             if let firestoreError = error as NSError?, firestoreError.domain == "FIRFirestoreErrorDomain" {
-                print("❌ Firestore Error Code: \(firestoreError.code)")
-                print("❌ Firestore Error UserInfo: \(firestoreError.userInfo)")
-                
-                // Handle specific Firestore errors
+                let networkErrorCodes = [14, 4, 13] // UNAVAILABLE, DEADLINE_EXCEEDED, INTERNAL
+
+                if networkErrorCodes.contains(firestoreError.code) {
+                    // Network error — queue in Core Data for later sync
+                    print("📦 Queuing to Core Data for later sync")
+                    try await queueForOfflineSync(mutableItem)
+                    return
+                }
+
+                // Non-network Firestore errors
                 switch firestoreError.code {
                 case 7: // PERMISSION_DENIED
                     throw RepositoryError.firebaseError(NSError(domain: "RepositoryError", code: 403, userInfo: [NSLocalizedDescriptionKey: "Permission denied. Please check Firestore security rules."]))
-                case 14: // UNAVAILABLE
-                    throw RepositoryError.firebaseError(NSError(domain: "RepositoryError", code: 503, userInfo: [NSLocalizedDescriptionKey: "Firestore service unavailable. Please try again later."]))
-                case 13: // INTERNAL ERROR
-                    throw RepositoryError.firebaseError(NSError(domain: "RepositoryError", code: 500, userInfo: [NSLocalizedDescriptionKey: "Internal Firestore error. Please check your Firebase project configuration."]))
                 default:
                     throw RepositoryError.firebaseError(error)
                 }
             }
-            
+
             throw RepositoryError.firebaseError(error)
         }
+    }
+
+    /// Queue an item in Core Data when Firestore is unavailable
+    private func queueForOfflineSync(_ item: Model) async throws {
+        if let meal = item as? Meal {
+            try await CoreDataStorageService.shared.saveMeal(meal)
+        } else if let symptom = item as? Symptom {
+            try await CoreDataStorageService.shared.saveSymptom(symptom)
+        }
+        await ServerStatusService.shared.refreshPendingChanges()
+        print("📦 Item queued for sync (pending changes updated)")
     }
     
     // Retry logic for transient network issues

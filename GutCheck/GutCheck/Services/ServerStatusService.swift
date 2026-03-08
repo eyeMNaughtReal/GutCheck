@@ -101,6 +101,11 @@ class ServerStatusService: ObservableObject {
         await refreshPendingChangesCount()
     }
 
+    /// Refresh the pending changes count (call after queuing new offline data)
+    func refreshPendingChanges() async {
+        await refreshPendingChangesCount()
+    }
+
     private func refreshPendingChangesCount() async {
         do {
             let unsynced = try await CoreDataStorageService.shared.getUnsyncedData()
