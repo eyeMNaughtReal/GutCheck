@@ -16,6 +16,14 @@ struct InsightsView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
+                    // Weekly Stats Row
+                    weeklyStatsRow
+
+                    // Top Summary Cards
+                    topSymptomsCard
+                    triggerFoodsCard
+                    bestDaysCard
+
                     // Recent Insights Section
                     if !viewModel.recentInsights.isEmpty {
                         recentInsightsSection
@@ -112,9 +120,193 @@ struct InsightsView: View {
             }
         }
     }
+
+    // MARK: - Summary Cards
+
+    private var weeklyStatsRow: some View {
+        HStack(spacing: 12) {
+            WeeklyStatPill(
+                icon: "fork.knife",
+                value: "\(viewModel.weeklyMealCount)",
+                label: "Meals",
+                color: ColorTheme.primary
+            )
+            WeeklyStatPill(
+                icon: "heart.text.clipboard",
+                value: "\(viewModel.weeklySymptomCount)",
+                label: "Symptoms",
+                color: viewModel.weeklySymptomCount > 0 ? ColorTheme.warning : ColorTheme.success
+            )
+            WeeklyStatPill(
+                icon: "calendar",
+                value: "7d",
+                label: "This Week",
+                color: ColorTheme.accent
+            )
+        }
+    }
+
+    private var topSymptomsCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Most Frequent Symptoms", systemImage: "chart.bar.fill")
+                .font(.headline)
+                .foregroundColor(ColorTheme.primaryText)
+
+            if viewModel.topSymptoms.isEmpty {
+                Text("No symptoms logged this week")
+                    .font(.subheadline)
+                    .foregroundColor(ColorTheme.secondaryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 4)
+            } else {
+                ForEach(Array(viewModel.topSymptoms.enumerated()), id: \.element.id) { index, item in
+                    HStack(spacing: 12) {
+                        Text("\(index + 1)")
+                            .font(.caption.bold())
+                            .foregroundColor(.white)
+                            .frame(width: 22, height: 22)
+                            .background(Circle().fill(rankColor(index)))
+
+                        Text(item.name)
+                            .font(.subheadline)
+                            .foregroundColor(ColorTheme.primaryText)
+
+                        Spacer()
+
+                        Text("\(item.count)×")
+                            .font(.subheadline.bold())
+                            .foregroundColor(ColorTheme.secondaryText)
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(ColorTheme.surface)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
+    }
+
+    private var triggerFoodsCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Top Triggering Foods", systemImage: "exclamationmark.triangle.fill")
+                .font(.headline)
+                .foregroundColor(ColorTheme.primaryText)
+
+            if viewModel.topTriggerFoods.isEmpty {
+                Text("Not enough data to identify triggers yet")
+                    .font(.subheadline)
+                    .foregroundColor(ColorTheme.secondaryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 4)
+            } else {
+                ForEach(Array(viewModel.topTriggerFoods.enumerated()), id: \.element.id) { index, item in
+                    HStack(spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.caption)
+                            .foregroundColor(rankColor(index))
+
+                        Text(item.name)
+                            .font(.subheadline)
+                            .foregroundColor(ColorTheme.primaryText)
+                            .lineLimit(1)
+
+                        Spacer()
+
+                        Text("\(item.count) correlation\(item.count == 1 ? "" : "s")")
+                            .font(.caption)
+                            .foregroundColor(ColorTheme.secondaryText)
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(ColorTheme.surface)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
+    }
+
+    private var bestDaysCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Best Days", systemImage: "checkmark.seal.fill")
+                .font(.headline)
+                .foregroundColor(ColorTheme.primaryText)
+
+            if viewModel.bestDays.isEmpty {
+                Text("Log symptoms for a week to see your best days")
+                    .font(.subheadline)
+                    .foregroundColor(ColorTheme.secondaryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.vertical, 4)
+            } else {
+                ForEach(Array(viewModel.bestDays.enumerated()), id: \.element.id) { index, item in
+                    HStack(spacing: 12) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(ColorTheme.success)
+
+                        Text(item.name)
+                            .font(.subheadline)
+                            .foregroundColor(ColorTheme.primaryText)
+
+                        Spacer()
+
+                        if item.count == 0 {
+                            Text("Symptom-free")
+                                .font(.caption)
+                                .foregroundColor(ColorTheme.success)
+                        } else {
+                            Text("Low symptoms")
+                                .font(.caption)
+                                .foregroundColor(ColorTheme.secondaryText)
+                        }
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(ColorTheme.surface)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
+    }
+
+    private func rankColor(_ index: Int) -> Color {
+        switch index {
+        case 0: return .red
+        case 1: return .orange
+        case 2: return .yellow
+        default: return .gray
+        }
+    }
 }
 
 // MARK: - Supporting Views
+
+private struct WeeklyStatPill: View {
+    let icon: String
+    let value: String
+    let label: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(color)
+
+            Text(value)
+                .font(.title2.bold())
+                .foregroundColor(ColorTheme.primaryText)
+
+            Text(label)
+                .font(.caption)
+                .foregroundColor(ColorTheme.secondaryText)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(ColorTheme.surface)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+    }
+}
 
 private struct AnalyticsInsightCard: View {
     let insight: HealthInsight
