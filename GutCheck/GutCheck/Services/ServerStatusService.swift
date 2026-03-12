@@ -67,7 +67,7 @@ class ServerStatusService: ObservableObject {
 
         // Initial Firebase probe after a short delay
         Task {
-            try? await Task.sleep(nanoseconds: 2_000_000_000) // 2s delay
+            try? await Task.sleep(for: .seconds(2))
             await performFirebaseCheck()
             startCountdown()
         }

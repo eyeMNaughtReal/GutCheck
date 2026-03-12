@@ -300,11 +300,11 @@ class DataSyncService: ObservableObject {
                 do {
                     try await performIncrementalSync()
                     // Wait 15 minutes before next sync
-                    try await Task.sleep(nanoseconds: 15 * 60 * 1_000_000_000)
+                    try await Task.sleep(for: .seconds(15 * 60))
                 } catch {
                     print("Background sync failed: \(error)")
                     // Wait 5 minutes before retry on failure
-                    try await Task.sleep(nanoseconds: 5 * 60 * 1_000_000_000)
+                    try await Task.sleep(for: .seconds(5 * 60))
                 }
             }
         }

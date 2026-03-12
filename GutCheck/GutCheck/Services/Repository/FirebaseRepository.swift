@@ -178,7 +178,7 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
                 if attempt < maxRetries - 1 {
                     let delay = pow(2.0, Double(attempt)) // Exponential backoff
                     print("🔄 Retry attempt \(attempt + 1) after \(delay) seconds")
-                    try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                    try await Task.sleep(for: .seconds(delay))
                 }
             }
         }
