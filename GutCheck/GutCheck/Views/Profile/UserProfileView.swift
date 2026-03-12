@@ -368,17 +368,13 @@ struct ProfileActionRow: View {
     }
 }
 
-#if DEBUG
-struct UserProfileView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationStack {
-            UserProfileView(user: User(
-                id: "1",
-                email: "jenny@email.com",
-                firstName: "Jenny",
-                lastName: "Wilson"
-            ))
-        }
+#Preview {
+    NavigationStack {
+        UserProfileView(user: User(
+            id: "1",
+            email: "jenny@email.com",
+            firstName: "Jenny",
+            lastName: "Wilson"
+        ))
     }
 }
-#endif

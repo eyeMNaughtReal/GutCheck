@@ -190,10 +190,6 @@ struct HealthKitTestView: View {
     }
 }
 
-#if DEBUG
-struct HealthKitTestView_Previews: PreviewProvider {
-    static var previews: some View {
-        HealthKitTestView()
-    }
+#Preview {
+    HealthKitTestView()
 }
-#endif

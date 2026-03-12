@@ -364,11 +364,7 @@ extension StoolType {
 
 // MARK: - Preview
 
-#if DEBUG
-struct PaginatedSymptomHistoryView_Previews: PreviewProvider {
-    static var previews: some View {
-        PaginatedSymptomHistoryView()
-            .environmentObject(AuthService())
-    }
+#Preview {
+    PaginatedSymptomHistoryView()
+        .environmentObject(AuthService())
 }
-#endif

@@ -92,10 +92,6 @@ struct ReminderSettingsTestView: View {
     }
 }
 
-#if DEBUG
-struct ReminderSettingsTestView_Previews: PreviewProvider {
-    static var previews: some View {
-        ReminderSettingsTestView()
-    }
+#Preview {
+    ReminderSettingsTestView()
 }
-#endif

@@ -444,10 +444,6 @@ extension ExportFormat {
     }
 }
 
-// MARK: - Preview
-
-struct HealthcareExportView_Previews: PreviewProvider {
-    static var previews: some View {
-        HealthcareExportView()
-    }
+#Preview {
+    HealthcareExportView()
 }

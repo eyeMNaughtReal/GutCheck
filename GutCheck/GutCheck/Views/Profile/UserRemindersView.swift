@@ -280,12 +280,8 @@ struct ReminderSection<Content: View>: View {
     }
 }
 
-#if DEBUG
-struct UserRemindersView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationView {
-            UserRemindersView()
-        }
+#Preview {
+    NavigationStack {
+        UserRemindersView()
     }
 }
-#endif
