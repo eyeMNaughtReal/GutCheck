@@ -348,7 +348,6 @@ class MedicationCalendarViewModel: ObservableObject {
             let loaded = try await doseRepo.fetchDosesForDate(selectedDate, userId: userId)
             doses = loaded.sorted { $0.dateTaken < $1.dateTaken }
         } catch {
-            print("❌ MedicationCalendarView: Error loading doses: \(error)")
             doses = []
         }
         isLoading = false
@@ -361,7 +360,6 @@ class MedicationCalendarViewModel: ObservableObject {
             DataSyncManager.shared.triggerRefreshAfterSave(operation: "Dose delete", dataType: .dashboard)
             AccessibilityAnnouncement.announce("Dose deleted")
         } catch {
-            print("❌ MedicationCalendarView: Error deleting dose: \(error)")
             AccessibilityAnnouncement.announce("Failed to delete dose")
         }
     }

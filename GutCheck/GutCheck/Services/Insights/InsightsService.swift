@@ -86,7 +86,6 @@ class InsightsService: ObservableObject {
     private func fetchMeals(for timeRange: DateInterval) async -> [Meal] {
         do {
             guard let userId = AuthenticationManager.shared.currentUserId else {
-                print("❌ Error fetching meals for insights: No authenticated user")
                 return []
             }
             
@@ -97,7 +96,6 @@ class InsightsService: ObservableObject {
                 userId: userId
             )
         } catch {
-            print("❌ Error fetching meals for insights: \(error)")
             return []
         }
     }
@@ -105,7 +103,6 @@ class InsightsService: ObservableObject {
     private func fetchSymptoms(for timeRange: DateInterval) async -> [Symptom] {
         do {
             guard let userId = AuthenticationManager.shared.currentUserId else {
-                print("❌ Error fetching symptoms for insights: No authenticated user")
                 return []
             }
             
@@ -116,7 +113,6 @@ class InsightsService: ObservableObject {
                 userId: userId
             )
         } catch {
-            print("❌ Error fetching symptoms for insights: \(error)")
             return []
         }
     }

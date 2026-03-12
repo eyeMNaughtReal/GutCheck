@@ -45,7 +45,6 @@ class LocalProfileImageStrategy: ProfileImageStrategy {
         
         await MainActor.run {
             delegate?.strategyDidUpdateProgress(1.0)
-            print("📢 LocalProfileImageStrategy: Local image saved, posting refresh notification")
             NotificationCenter.default.post(name: .profileImageUpdated, object: nil)
         }
         
@@ -123,20 +122,16 @@ class LocalProfileImageStrategy: ProfileImageStrategy {
     private func updateUserProfileImageURL(userId: String, imageURL: String) async throws {
         let userRef = FirebaseManager.shared.userDocument(userId)
         
-        print("🔥 LocalProfileImageStrategy: Updating Firestore for user \(userId) with imageURL: \(imageURL)")
         
         try await userRef.updateData([
             "profileImageURL": imageURL,
             "updatedAt": Timestamp(date: Date.now)
         ])
         
-        print("🔥 LocalProfileImageStrategy: Firestore update completed successfully")
         
         let document = try await userRef.getDocument()
         if let data = document.data(), let savedURL = data["profileImageURL"] as? String {
-            print("🔥 LocalProfileImageStrategy: Verified Firestore has profileImageURL: \(savedURL)")
         } else {
-            print("❌ LocalProfileImageStrategy: Failed to verify Firestore update")
         }
     }
     

@@ -108,7 +108,6 @@ final class HealthKitViewModel: ObservableObject {
     func updateUserProfileWithHealthData() async {
         guard let healthData = healthData,
               let currentUser = authService.currentUser else {
-            print("HealthKit: No health data or user available for profile update")
             return
         }
         
@@ -122,9 +121,7 @@ final class HealthKitViewModel: ObservableObject {
             
             // Update the user profile
             try await authService.updateUserProfile(updatedUserData)
-            print("HealthKit: Successfully updated user profile with health data")
         } catch {
-            print("HealthKit: Failed to update user profile: \(error.localizedDescription)")
         }
     }
 

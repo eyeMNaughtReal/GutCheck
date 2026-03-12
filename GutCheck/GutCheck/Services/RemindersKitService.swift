@@ -81,7 +81,6 @@ final class RemindersKitService: ObservableObject {
             return granted
         } catch {
             #if DEBUG
-            print("❌ RemindersKitService: requestAccess failed: \(error)")
             #endif
             refreshAuthorizationStatus()
             return false
@@ -138,11 +137,9 @@ final class RemindersKitService: ObservableObject {
 
             try store.commit()
             #if DEBUG
-            print("✅ RemindersKitService: Synced reminders to Apple Reminders app")
             #endif
         } catch {
             #if DEBUG
-            print("❌ RemindersKitService: Sync failed: \(error)")
             #endif
         }
     }
@@ -158,11 +155,9 @@ final class RemindersKitService: ObservableObject {
             try removeExistingGutCheckReminders(in: calendar)
             try store.commit()
             #if DEBUG
-            print("✅ RemindersKitService: Removed all GutCheck reminders from Apple Reminders")
             #endif
         } catch {
             #if DEBUG
-            print("❌ RemindersKitService: removeAll failed: \(error)")
             #endif
         }
     }

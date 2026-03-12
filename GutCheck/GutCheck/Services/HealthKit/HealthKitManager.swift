@@ -113,11 +113,9 @@ final class HealthKitManager {
             if let biologicalSex = try? healthStore.biologicalSex().biologicalSex {
                 healthData.biologicalSex = biologicalSex
                 #if DEBUG
-                print("HealthKit: Retrieved biological sex")
                 #endif
             } else {
                 #if DEBUG
-                print("HealthKit: No biological sex data available")
                 #endif
             }
 
@@ -165,7 +163,6 @@ final class HealthKitManager {
             }
 
         } catch {
-            print("HealthKit error: \(error.localizedDescription)")
             completion(nil)
         }
     }
@@ -281,9 +278,7 @@ final class HealthKitManager {
             DispatchQueue.main.async {
                 #if DEBUG
                 if success {
-                    print("✅ HealthKit: Successfully wrote meal data")
                 } else {
-                    print("❌ HealthKit: Failed to write meal data: \(error?.localizedDescription ?? "Unknown error")")
                 }
                 #endif
                 completion(success, error)
@@ -368,9 +363,7 @@ final class HealthKitManager {
             DispatchQueue.main.async {
                 #if DEBUG
                 if success {
-                    print("✅ HealthKit: Successfully wrote \(samples.count) symptom sample(s)")
                 } else {
-                    print("❌ HealthKit: Failed to write symptom data: \(error?.localizedDescription ?? "Unknown error")")
                 }
                 #endif
                 completion(success, error)
@@ -391,9 +384,7 @@ final class HealthKitManager {
         healthStore.save(waterSample) { success, error in
             DispatchQueue.main.async {
                 if success {
-                    print("✅ HealthKit: Successfully wrote water intake: \(amount)ml")
                 } else {
-                    print("❌ HealthKit: Failed to write water intake: \(error?.localizedDescription ?? "Unknown error")")
                 }
                 completion(success, error)
             }

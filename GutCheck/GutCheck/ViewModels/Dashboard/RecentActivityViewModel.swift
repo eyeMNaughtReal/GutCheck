@@ -25,19 +25,15 @@ class RecentActivityViewModel: ObservableObject {
     func loadRecentActivity(for date: Date, authService: AuthService) {
         isLoading = true
         errorMessage = nil
-        print("📊 RecentActivityViewModel: Loading activity for date: \(date)")
         
         Task {
             do {
                 let entries = try await fetchActivityEntries(for: date, authService: authService)
-                print("📊 RecentActivityViewModel: Loaded \(entries.count) activity entries")
                 await MainActor.run {
                     self.recentEntries = entries
                     self.isLoading = false
-                    print("📊 RecentActivityViewModel: Updated UI with \(self.recentEntries.count) entries")
                 }
             } catch {
-                print("❌ RecentActivityViewModel: Error loading recent activity: \(error)")
                 await MainActor.run {
                     self.errorMessage = error.localizedDescription
                     self.isLoading = false
@@ -50,33 +46,27 @@ class RecentActivityViewModel: ObservableObject {
     
     private func fetchActivityEntries(for date: Date, authService: AuthService) async throws -> [ActivityEntry] {
         guard let currentUser = authService.currentUser else {
-            print("❌ RecentActivityViewModel: No authenticated user")
             throw RepositoryError.noAuthenticatedUser
         }
         
-        print("🔍 RecentActivityViewModel: Fetching activity for user \(currentUser.id) on \(date)")
         var entries: [ActivityEntry] = []
         
         // Fetch meals using repository
         let meals = try await mealRepository.fetchMealsForDate(date, userId: currentUser.id)
-        print("🍽️ RecentActivityViewModel: Found \(meals.count) meals")
         for meal in meals {
             entries.append(ActivityEntry(type: .meal(meal), timestamp: meal.date))
         }
         
         // Fetch symptoms using repository
         let symptoms = try await symptomRepository.fetchSymptomsForDate(date, userId: currentUser.id)
-        print("🏥 RecentActivityViewModel: Found \(symptoms.count) symptoms")
         for symptom in symptoms {
             entries.append(ActivityEntry(type: .symptom(symptom), timestamp: symptom.date))
-            print("   - Symptom: \(symptom.id) at \(symptom.date)")
         }
         
         // Fetch logged medication doses from repository (primary source)
         // This covers doses the user logs manually via the app.
         do {
             let doses = try await medicationDoseRepository.fetchDosesForDate(date, userId: currentUser.id)
-            print("💊 RecentActivityViewModel: Found \(doses.count) logged medication doses")
             for dose in doses {
                 // Convert MedicationDoseLog → MedicationRecord for ActivityEntry display
                 let record = MedicationRecord(
@@ -97,25 +87,20 @@ class RecentActivityViewModel: ObservableObject {
                     healthKitUUID: nil
                 )
                 entries.append(ActivityEntry(type: .medication(record), timestamp: dose.dateTaken))
-                print("   - Dose: \(dose.medicationName) at \(dose.dateTaken)")
             }
         } catch {
-            print("⚠️ RecentActivityViewModel: Could not fetch medication doses: \(error.localizedDescription)")
         }
 
         // Also fetch from HealthKit (supplemental: doctor-prescribed clinical records)
         let medications = try await fetchMedicationsForDate(date)
-        print("💊 RecentActivityViewModel: Found \(medications.count) HealthKit medication records")
         for medication in medications {
             entries.append(ActivityEntry(type: .medication(medication), timestamp: medication.startDate))
-            print("   - HK Medication: \(medication.name) at \(medication.startDate)")
         }
         
         // Sort by timestamp (most recent first) - no limit, show all entries for the day
         let sortedEntries = entries
             .sorted { $0.timestamp > $1.timestamp }
         
-        print("📊 RecentActivityViewModel: Returning \(sortedEntries.count) total entries")
         return sortedEntries
     }
     
@@ -151,21 +136,17 @@ class RecentActivityViewModel: ObservableObject {
                 return medicationStart <= endOfDay && medicationEnd >= startOfDay
             }
             
-            print("💊 RecentActivityViewModel: Found \(medicationsForDate.count) medications for date \(date)")
             return medicationsForDate
         } catch {
             // Handle HealthKit authorization errors gracefully
             if let healthKitError = error as? HKError {
                 switch healthKitError.code {
                 case .errorAuthorizationDenied, .errorAuthorizationNotDetermined:
-                    print("💊 RecentActivityViewModel: HealthKit authorization not granted for medications - skipping")
                     return []
                 default:
-                    print("💊 RecentActivityViewModel: HealthKit error: \(healthKitError.localizedDescription)")
                     return []
                 }
             } else {
-                print("💊 RecentActivityViewModel: Error fetching medications: \(error.localizedDescription)")
                 return []
             }
         }

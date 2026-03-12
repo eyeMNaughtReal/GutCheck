@@ -204,7 +204,6 @@ struct CalendarView: View {
             
         }
         .onAppear {
-            print("📱 CalendarView: onAppear")
             if let date = selectedDate {
                 viewModel.setDate(date)
             }
@@ -212,17 +211,14 @@ struct CalendarView: View {
             viewModel.loadSymptoms()
         }
         .onChange(of: viewModel.selectedDate) { _, _ in
-            print("📅 CalendarView: Date changed to \(viewModel.selectedDate)")
             viewModel.loadMeals()
             viewModel.loadSymptoms()
         }
         .onChange(of: refreshManager.refreshToken) { _, _ in
-            print("🔄 CalendarView: Refresh triggered by RefreshManager")
             viewModel.loadMeals()
             viewModel.loadSymptoms()
         }
         .refreshable {
-            print("🔄 CalendarView: Manual refresh triggered")
             viewModel.loadMeals()
             viewModel.loadSymptoms()
         }
@@ -429,11 +425,9 @@ class CalendarViewModel: ObservableObject {
     // Public method to load meals from Firebase
     func loadMeals() {
         isLoadingMeals = true
-        print("📅 CalendarView: Loading meals for date: \(selectedDate)")
         Task {
             do {
                 guard let userId = AuthenticationManager.shared.currentUserId else {
-                    print("❌ CalendarView: No authenticated user for meals")
                     await MainActor.run {
                         self.meals = []
                         self.isLoadingMeals = false
@@ -441,14 +435,11 @@ class CalendarViewModel: ObservableObject {
                     return
                 }
                 let loadedMeals = try await MealRepository.shared.fetchMealsForDate(selectedDate, userId: userId)
-                print("🍽️ CalendarView: Loaded \(loadedMeals.count) meals from Firebase")
                 await MainActor.run {
                     self.meals = loadedMeals
                     self.isLoadingMeals = false
-                                    print("🍽️ CalendarView: Updated UI with \(self.meals.count) meals")
                 }
             } catch {
-                print("❌ CalendarView: Error loading meals: \(error)")
                 await MainActor.run {
                     self.meals = []
                     self.isLoadingMeals = false
@@ -460,18 +451,14 @@ class CalendarViewModel: ObservableObject {
     // Public method to load symptoms from Firebase
     func loadSymptoms() {
         isLoadingSymptoms = true
-        print("📅 CalendarView: Loading symptoms for date: \(selectedDate)")
         Task {
             do {
                 let loadedSymptoms = try await SymptomRepository.shared.getSymptoms(for: selectedDate)
-                print("📊 CalendarView: Loaded \(loadedSymptoms.count) symptoms from Firebase")
                 await MainActor.run {
                     self.symptoms = loadedSymptoms
                     self.isLoadingSymptoms = false
-                    print("📊 CalendarView: Updated UI with \(self.symptoms.count) symptoms")
                 }
             } catch {
-                print("❌ CalendarView: Error loading symptoms: \(error)")
                 await MainActor.run {
                     self.symptoms = []
                     self.isLoadingSymptoms = false
@@ -499,7 +486,6 @@ class CalendarViewModel: ObservableObject {
                 AccessibilityAnnouncement.announce("Meal deleted")
             }
         } catch {
-            print("❌ Error deleting meal: \(error)")
             await MainActor.run {
                 AccessibilityAnnouncement.announce("Failed to delete meal")
             }
@@ -515,7 +501,6 @@ class CalendarViewModel: ObservableObject {
                 AccessibilityAnnouncement.announce("Symptom deleted")
             }
         } catch {
-            print("❌ Error deleting symptom: \(error)")
             await MainActor.run {
                 AccessibilityAnnouncement.announce("Failed to delete symptom")
             }

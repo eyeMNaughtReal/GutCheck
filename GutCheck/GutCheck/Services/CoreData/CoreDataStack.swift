@@ -119,7 +119,6 @@ class CoreDataStack: ObservableObject {
             do {
                 try context.save()
             } catch {
-                print("Error saving Core Data context: \(error)")
             }
         }
     }
@@ -131,7 +130,6 @@ class CoreDataStack: ObservableObject {
             do {
                 try context.save()
             } catch {
-                print("Error saving background Core Data context: \(error)")
             }
         }
     }
@@ -184,7 +182,6 @@ class CoreDataStack: ObservableObject {
             
             try context.save()
         } catch {
-            print("Error cleaning up old data: \(error)")
         }
     }
     
@@ -204,7 +201,6 @@ extension NSManagedObjectContext {
             do {
                 try save()
             } catch {
-                print("Error saving context: \(error)")
             }
         }
     }

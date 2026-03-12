@@ -40,7 +40,6 @@ class AIAnalysisService {
         servingSize: String
     ) async throws -> NutritionEstimate {
         
-        print("🤖 AI estimating nutrition for: \(brand) \(name) (\(knownCalories) calories)")
         
         // Analyze the food name and brand to categorize it
         let category = categorizeBrandedFood(name: name, brand: brand)

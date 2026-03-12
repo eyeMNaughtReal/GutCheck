@@ -403,13 +403,11 @@ extension PermissionManager {
     nonisolated func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         Task { @MainActor in
             self.locationStatus = status.toPermissionStatus()
-            print("📍 PermissionManager: Location authorization changed to \(status)")
         }
     }
     
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         Task { @MainActor in
-            print("❌ PermissionManager: Location manager failed with error: \(error)")
         }
     }
 }

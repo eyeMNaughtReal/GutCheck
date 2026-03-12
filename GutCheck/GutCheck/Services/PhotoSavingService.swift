@@ -67,11 +67,9 @@ class PhotoSavingService: ObservableObject {
                     let result: SaveResult
                     if success {
                         result = .success
-                        print("✅ PhotoSavingService: Successfully saved meal photo")
                     } else {
                         let errorMessage = error?.localizedDescription ?? "Unknown error"
                         result = .error(errorMessage)
-                        print("❌ PhotoSavingService: Failed to save photo: \(errorMessage)")
                     }
                     
                     self?.lastSaveResult = result

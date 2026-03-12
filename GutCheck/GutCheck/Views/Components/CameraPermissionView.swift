@@ -243,11 +243,9 @@ struct SmartScanCameraPermissionView: View {
 #Preview {
     VStack(spacing: 20) {
         CameraPermissionView {
-            print("Permission granted!")
         }
         
         BarcodeCameraPermissionView {
-            print("Barcode permission granted!")
         }
     }
     .padding()

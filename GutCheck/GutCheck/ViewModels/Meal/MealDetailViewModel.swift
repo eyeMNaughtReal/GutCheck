@@ -46,16 +46,13 @@ class MealDetailViewModel: ObservableObject {
                 self.meal = loadedMeal
                 self.notes = loadedMeal.notes ?? ""
                 
-                print("✅ Meal loaded successfully: \(loadedMeal.name)")
             } else {
                 self.errorMessage = "Could not find the meal"
                 self.showingErrorAlert = true
-                print("⚠️ No meal found with ID: \(id)")
             }
         } catch {
             self.errorMessage = "Error loading meal: \(error.localizedDescription)"
             self.showingErrorAlert = true
-            print("❌ Error loading meal: \(error)")
         }
         
         isLoading = false

@@ -78,7 +78,6 @@ class InsightsViewModel: ObservableObject {
 
         } catch {
             self.error = error.localizedDescription
-            print("❌ Error loading insights: \(error)")
         }
         
         isLoading = false
@@ -140,7 +139,6 @@ class InsightsViewModel: ObservableObject {
         if let currentUser = authService.currentUser {
             return currentUser.id
         } else {
-            print("⚠️ InsightsViewModel: No authenticated user found, using default user ID")
             return "default_user"
         }
     }

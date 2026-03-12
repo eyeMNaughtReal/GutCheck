@@ -85,7 +85,6 @@ struct ProfileAvatarButton: View {
         isLoadingImage = false
         
         guard let user = user else {
-            print("🖼️ ProfileAvatarButton: No user provided")
             return
         }
         
@@ -93,27 +92,23 @@ struct ProfileAvatarButton: View {
         if let localStrategy = profileImageService.strategy as? LocalProfileImageStrategy,
            localStrategy.hasLocalProfileImage(for: user.id) {
             let localImagePath = "local://profile_\(user.id).jpg"
-            print("🖼️ ProfileAvatarButton: Loading local profile image: \(localImagePath)")
             isLoadingImage = true
             
             Task {
                 do {
                     let image = try await profileImageService.downloadProfileImage(from: localImagePath)
                     await MainActor.run {
-                        print("🖼️ ProfileAvatarButton: Successfully loaded local profile image")
                         self.profileImage = image
                         self.isLoadingImage = false
                     }
                 } catch {
                     await MainActor.run {
-                        print("🖼️ ProfileAvatarButton: Failed to load local profile image: \(error.localizedDescription)")
                         self.profileImage = nil
                         self.isLoadingImage = false
                     }
                 }
             }
         } else {
-            print("🖼️ ProfileAvatarButton: No local profile image found for user \(user.id)")
         }
     }
 }

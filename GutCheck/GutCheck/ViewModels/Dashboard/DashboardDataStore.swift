@@ -207,12 +207,10 @@ final class DashboardDataStore: ObservableObject {
         guard todaysMeals.isEmpty && todaysSymptoms.isEmpty else { return }
         
         // Load real data from repositories
-        print("📱 Dashboard: Loading symptoms for date: \(selectedDate)")
         Task {
             do {
                 // Load today's symptoms
                 let symptoms = try await SymptomRepository.shared.getSymptoms(for: selectedDate)
-                print("📊 Dashboard: Loaded \(symptoms.count) symptoms")
                 
                 // Load today's meals using the current user ID
                 if let currentUser = await authService?.currentUser {
@@ -220,18 +218,15 @@ final class DashboardDataStore: ObservableObject {
                         selectedDate,
                         userId: currentUser.id
                     )
-                    print("📊 Dashboard: Loaded \(userMeals.count) meals for user \(currentUser.id)")
                     await MainActor.run { [weak self] in
                         self?.todaysMeals = userMeals
                     }
                 } else {
-                    print("⚠️ Dashboard: No authenticated user found, skipping meal loading")
                 }
                 
                 await MainActor.run { [weak self] in
                     guard let self = self else { return }
                     self.todaysSymptoms = symptoms
-                    print("📊 Dashboard: Updated UI with \(self.todaysSymptoms.count) symptoms and \(self.todaysMeals.count) meals")
                     
                     // Calculate health score based on actual data
                     self.todaysHealthScore = self.calculateHealthScore()
@@ -244,7 +239,6 @@ final class DashboardDataStore: ObservableObject {
                     self.insightMessage = nil
                 }
             } catch {
-                print("❌ Dashboard: Error loading dashboard data: \(error)")
                 await MainActor.run { [weak self] in
                     guard let self = self else { return }
                     self.todaysSymptoms = []

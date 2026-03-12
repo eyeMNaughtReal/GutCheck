@@ -121,23 +121,19 @@ struct AppleSignInButtonView: UIViewRepresentable {
         
         @objc func handleAppleSignIn() {
             let logPrefix = "🍎 [SocialSignInButton]"
-            print("\(logPrefix) Starting Apple Sign-In process...")
             NSLog("\(logPrefix) Starting Apple Sign-In process...")
             
             // Check if running on simulator
             #if targetEnvironment(simulator)
-            print("\(logPrefix) Running on simulator - Apple Sign-In may not work properly")
             NSLog("\(logPrefix) Running on simulator - Apple Sign-In may not work properly")
             #endif
             
             // Check entitlements
-            print("\(logPrefix) Checking entitlements...")
             NSLog("\(logPrefix) Checking entitlements...")
             
             let provider = ASAuthorizationAppleIDProvider()
             let request = provider.createRequest()
             
-            print("\(logPrefix) Created authorization request")
             NSLog("\(logPrefix) Created authorization request")
             
             // Configure request with additional scopes
@@ -146,13 +142,11 @@ struct AppleSignInButtonView: UIViewRepresentable {
             // Call the onRequest callback to set up the request with nonce
             parent.onRequest(request)
             
-            print("\(logPrefix) Request configured with scopes: \(request.requestedScopes?.map(\.rawValue) ?? []), nonce: \(request.nonce?.prefix(10) ?? "nil")...")
             NSLog("\(logPrefix) Request configured with scopes: \(request.requestedScopes?.map(\.rawValue) ?? []), nonce: \(request.nonce?.prefix(10) ?? "nil")...")
             
             let controller = ASAuthorizationController(authorizationRequests: [request])
             controller.delegate = self
             controller.presentationContextProvider = self
-            print("🍎 [SocialSignInButton] Performing authorization request...")
             NSLog("🍎 [SocialSignInButton] Performing authorization request...")
             
             // Save the attempt time for debugging
@@ -162,17 +156,13 @@ struct AppleSignInButtonView: UIViewRepresentable {
         }
         
         func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
-            print("🍎 [SocialSignInButton] Apple Sign-In succeeded")
             NSLog("🍎 [SocialSignInButton] Apple Sign-In succeeded")
             
             // Examine the authorization details (DEBUG only — user identifiers are PII)
             #if DEBUG
             if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
-                print("🍎 [SocialSignInButton] Apple user identifier received (length: \(appleIDCredential.user.count))")
                 if let identityToken = appleIDCredential.identityToken {
-                    print("🍎 [SocialSignInButton] Identity token present, length: \(identityToken.count)")
                 } else {
-                    print("🍎 [SocialSignInButton] ⚠️ No identity token in credential!")
                 }
             }
             #endif
@@ -181,14 +171,11 @@ struct AppleSignInButtonView: UIViewRepresentable {
         }
         
         func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
-            print("🍎 [SocialSignInButton] Apple Sign-In failed with error: \(error)")
             NSLog("🍎 [SocialSignInButton] Apple Sign-In failed with error: \(error)")
             
             if let authError = error as? ASAuthorizationError {
-                print("🍎 [SocialSignInButton] ASAuthorizationError code: \(authError.code.rawValue)")
                 NSLog("🍎 [SocialSignInButton] ASAuthorizationError code: \(authError.code.rawValue)")
                 
-                print("🍎 [SocialSignInButton] ASAuthorizationError description: \(authError.localizedDescription)")
                 NSLog("🍎 [SocialSignInButton] ASAuthorizationError description: \(authError.localizedDescription)")
                 
                 // Store error for debugging
@@ -198,22 +185,16 @@ struct AppleSignInButtonView: UIViewRepresentable {
                 // Check specific error codes
                 switch authError.code {
                 case .canceled:
-                    print("🍎 [SocialSignInButton] User canceled the authorization")
                     NSLog("🍎 [SocialSignInButton] User canceled the authorization")
                 case .failed:
-                    print("🍎 [SocialSignInButton] Authorization failed")
                     NSLog("🍎 [SocialSignInButton] Authorization failed")
                 case .invalidResponse:
-                    print("🍎 [SocialSignInButton] Invalid response received")
                     NSLog("🍎 [SocialSignInButton] Invalid response received")
                 case .notHandled:
-                    print("🍎 [SocialSignInButton] Authorization request not handled")
                     NSLog("🍎 [SocialSignInButton] Authorization request not handled")
                 case .unknown:
-                    print("🍎 [SocialSignInButton] Unknown authorization error")
                     NSLog("🍎 [SocialSignInButton] Unknown authorization error")
                 default:
-                    print("🍎 [SocialSignInButton] Other authorization error")
                     NSLog("🍎 [SocialSignInButton] Other authorization error")
                 }
             }

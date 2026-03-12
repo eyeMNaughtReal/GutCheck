@@ -122,23 +122,18 @@ struct TodaysActivitySummaryView: View {
         .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
         .refreshable {
-            print("🔄 TodaysActivitySummaryView: Manual refresh triggered")
             viewModel.loadRecentActivity(for: selectedDate, authService: authService)
         }
     }
     
     private func handleEntryTap(_ entry: ActivityEntry) {
-        print("🔄 TodaysActivitySummaryView: Entry tapped - type: \(entry.type)")
         
         switch entry.type {
         case .meal(let meal):
-            print("🍽️ TodaysActivitySummaryView: Showing meal detail sheet: \(meal.id)")
             router.viewMealDetails(id: meal.id)
         case .symptom(let symptom):
-            print("🏥 TodaysActivitySummaryView: Showing symptom detail sheet: \(symptom.id)")
             router.viewSymptomDetails(id: symptom.id)
         case .medication(let medication):
-            print("💊 TodaysActivitySummaryView: Medication tapped: \(medication.name)")
             // For now, we'll just show a simple alert since we don't have a medication detail view yet
             // In the future, this could navigate to a medication detail view
             break

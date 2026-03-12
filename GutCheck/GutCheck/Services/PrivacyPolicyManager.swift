@@ -72,7 +72,6 @@ class PrivacyPolicyManager: ObservableObject {
             "updatedAt": FieldValue.serverTimestamp()
         ])
         
-        print("🔐 PrivacyPolicyManager: Privacy policy accepted for user \(userId)")
     }
     
     /// Checks if user needs to accept updated privacy policy

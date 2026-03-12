@@ -42,7 +42,6 @@ class ReminderSettingsService: ObservableObject {
             
         } catch {
             #if DEBUG
-            print("❌ ReminderSettingsService: Error loading settings: \(error)")
             #endif
             errorMessage = error.localizedDescription
             
@@ -82,12 +81,10 @@ class ReminderSettingsService: ObservableObject {
             await RemindersKitService.shared.syncReminders(from: updatedSettings)
 
             #if DEBUG
-            print("✅ ReminderSettingsService: Successfully saved reminder settings")
             #endif
             
         } catch {
             #if DEBUG
-            print("❌ ReminderSettingsService: Error saving settings: \(error)")
             #endif
             errorMessage = error.localizedDescription
         }
@@ -150,7 +147,6 @@ class ReminderSettingsService: ObservableObject {
 
         guard isAuthorized else {
             #if DEBUG
-            print("⚠️ ReminderSettingsService: Notification permission not granted (\(authSettings.authorizationStatus.rawValue))")
             #endif
             // Don't request here - should be handled by proper UI flow
             return
@@ -183,11 +179,9 @@ class ReminderSettingsService: ObservableObject {
             do {
                 try await center.add(request)
                 #if DEBUG
-                print("✅ ReminderSettingsService: Scheduled \(meal.identifier)")
                 #endif
             } catch {
                 #if DEBUG
-                print("❌ ReminderSettingsService: Error scheduling \(meal.identifier): \(error)")
                 #endif
             }
         }
@@ -205,11 +199,9 @@ class ReminderSettingsService: ObservableObject {
             do {
                 try await center.add(request)
                 #if DEBUG
-                print("✅ ReminderSettingsService: Scheduled symptom reminder")
                 #endif
             } catch {
                 #if DEBUG
-                print("❌ ReminderSettingsService: Error scheduling symptom reminder: \(error)")
                 #endif
             }
         }
@@ -227,11 +219,9 @@ class ReminderSettingsService: ObservableObject {
             do {
                 try await center.add(request)
                 #if DEBUG
-                print("✅ ReminderSettingsService: Scheduled medication reminder")
                 #endif
             } catch {
                 #if DEBUG
-                print("❌ ReminderSettingsService: Error scheduling medication reminder: \(error)")
                 #endif
             }
         }
@@ -249,11 +239,9 @@ class ReminderSettingsService: ObservableObject {
             do {
                 try await center.add(request)
                 #if DEBUG
-                print("✅ ReminderSettingsService: Scheduled weekly summary reminder")
                 #endif
             } catch {
                 #if DEBUG
-                print("❌ ReminderSettingsService: Error scheduling weekly summary reminder: \(error)")
                 #endif
             }
         }

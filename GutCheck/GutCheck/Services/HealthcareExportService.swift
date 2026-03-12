@@ -1169,7 +1169,6 @@ extension MealRepository {
             }
             allMeals.append(contentsOf: filteredLocalMeals)
         } catch {
-            print("⚠️ Local meal query failed: \(error)")
         }
         
         // Fetch from Firestore (public meals)
@@ -1203,7 +1202,6 @@ extension SymptomRepository {
             }
             allSymptoms.append(contentsOf: filteredLocalSymptoms)
         } catch {
-            print("⚠️ Local symptom query failed: \(error)")
         }
         
         // Fetch from Firestore (public symptoms)

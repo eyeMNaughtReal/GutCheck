@@ -137,7 +137,6 @@ struct ProfileImageView: View {
                 } catch {
                     await MainActor.run {
                         self.isLoadingImage = false
-                        print("Failed to load profile image: \(error)")
                     }
                 }
             }
@@ -152,12 +151,10 @@ struct ProfileImageView: View {
                     // Update the local profile image immediately
                     self.profileImage = image
                 }
-                print("✅ Profile image uploaded successfully: \(imageURL)")
                 
             } catch {
                 await MainActor.run {
                     self.showingUploadError = true
-                    print("❌ Failed to upload profile image: \(error)")
                 }
             }
         }
@@ -241,7 +238,6 @@ struct ProfileActionSection: View {
                 try authService.signOut()
                 dismiss()
             } catch {
-                print("Error signing out: \(error)")
             }
         }
     }

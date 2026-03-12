@@ -27,7 +27,6 @@ class DataSyncManager: ObservableObject {
     /// Trigger a dashboard refresh after data changes
     @MainActor
     func triggerRefresh() {
-        print("🔄 DataSyncManager: Triggering dashboard refresh")
         updateRefreshStates()
         
         // Also trigger RefreshManager to ensure all views are updated
@@ -37,7 +36,6 @@ class DataSyncManager: ObservableObject {
     /// Trigger a specific data type refresh
     @MainActor
     func triggerRefresh(for dataType: DataType) {
-        print("🔄 DataSyncManager: Triggering \(dataType.rawValue) refresh")
         
         switch dataType {
         case .dashboard:
@@ -61,7 +59,6 @@ class DataSyncManager: ObservableObject {
     
     /// Trigger refresh after successful save operation
     func triggerRefreshAfterSave(operation: String, dataType: DataType = .dashboard) {
-        print("✅ DataSyncManager: \(operation) successful, triggering \(dataType.rawValue) refresh")
         Task { @MainActor in
             triggerRefresh(for: dataType)
             
@@ -86,14 +83,12 @@ class DataSyncManager: ObservableObject {
     @MainActor
     func startBatchOperation() {
         isRefreshing = true
-        print("🔄 DataSyncManager: Starting batch operation")
     }
     
     /// Complete a batch operation and trigger refresh
     @MainActor
     func completeBatchOperation(dataType: DataType = .all) {
         defer { isRefreshing = false }
-        print("✅ DataSyncManager: Completing batch operation")
         triggerRefresh(for: dataType)
     }
     
@@ -124,7 +119,6 @@ class DataSyncManager: ObservableObject {
         shouldRefreshSymptoms = false
         shouldRefreshCalendar = false
         isRefreshing = false
-        print("🔄 DataSyncManager: Reset all refresh states")
     }
     
     // MARK: - Computed Properties
