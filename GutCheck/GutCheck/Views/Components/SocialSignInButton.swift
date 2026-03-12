@@ -156,7 +156,7 @@ struct AppleSignInButtonView: UIViewRepresentable {
             NSLog("🍎 [SocialSignInButton] Performing authorization request...")
             
             // Save the attempt time for debugging
-            UserDefaults.standard.set(Date(), forKey: "lastAppleSignInRequestTime")
+            UserDefaults.standard.set(Date.now, forKey: "lastAppleSignInRequestTime")
             
             controller.performRequests()
         }

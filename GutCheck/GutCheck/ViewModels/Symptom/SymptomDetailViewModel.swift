@@ -128,7 +128,7 @@ extension Symptom {
     static func emptySymptom() -> Symptom {
         return Symptom(
             id: "",
-            date: Date(),
+            date: Date.now,
             stoolType: .type4,
             painLevel: .none,
             urgencyLevel: .none,

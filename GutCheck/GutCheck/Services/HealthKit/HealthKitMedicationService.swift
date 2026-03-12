@@ -165,7 +165,7 @@ class HealthKitMedicationService: ObservableObject {
             await MainActor.run {
                 self.currentMedications = medications.filter { $0.isActive }
                 self.medicationHistory = medications
-                self.lastUpdateTime = Date()
+                self.lastUpdateTime = Date.now
             }
         } catch {
             print("Failed to fetch medications: \(error)")
@@ -181,7 +181,7 @@ class HealthKitMedicationService: ObservableObject {
         let medicationType = HKObjectType.clinicalType(forIdentifier: .medicationRecord)!
         
         let predicate = HKQuery.predicateForSamples(
-            withStart: Calendar.current.date(byAdding: .month, value: -3, to: Date()),
+            withStart: Calendar.current.date(byAdding: .month, value: -3, to: Date.now),
             end: nil,
             options: .strictStartDate
         )
@@ -226,7 +226,7 @@ class HealthKitMedicationService: ObservableObject {
         let endDate: Date?
         
         // Check if endDate is a reasonable date (not distant future)
-        let distantFuture = Calendar.current.date(byAdding: .year, value: 100, to: Date()) ?? Date.distantFuture
+        let distantFuture = Calendar.current.date(byAdding: .year, value: 100, to: Date.now) ?? Date.distantFuture
         if sample.endDate > distantFuture {
             // This represents "no end date" in HealthKit
             endDate = nil
@@ -234,7 +234,7 @@ class HealthKitMedicationService: ObservableObject {
         } else {
             endDate = sample.endDate
             if let endDate = endDate {
-                isActive = endDate > Date()
+                isActive = endDate > Date.now
             } else {
                 isActive = true
             }
@@ -285,7 +285,7 @@ class HealthKitMedicationService: ObservableObject {
         await MainActor.run {
             self.currentMedications.append(medication)
             self.medicationHistory.append(medication)
-            self.lastUpdateTime = Date()
+            self.lastUpdateTime = Date.now
         }
     }
     
@@ -314,13 +314,13 @@ class HealthKitMedicationService: ObservableObject {
 extension HKClinicalRecord {
     var isActive: Bool {
         // In HealthKit, endDate might be a distant future date to represent "no end date"
-        let distantFuture = Calendar.current.date(byAdding: .year, value: 100, to: Date()) ?? Date.distantFuture
+        let distantFuture = Calendar.current.date(byAdding: .year, value: 100, to: Date.now) ?? Date.distantFuture
         
         if self.endDate > distantFuture {
             // This represents "no end date" in HealthKit
             return true
         } else {
-            return self.endDate > Date()
+            return self.endDate > Date.now
         }
     }
 }

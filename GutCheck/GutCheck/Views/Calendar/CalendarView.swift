@@ -369,7 +369,7 @@ struct EmptyStateCard: View {
 
 // MARK: - ViewModel
 class CalendarViewModel: ObservableObject {
-    @Published var selectedDate = Date()
+    @Published var selectedDate = Date.now
     @Published var meals: [Meal] = []
     @Published var symptoms: [Symptom] = []
     @Published var isLoadingMeals = false

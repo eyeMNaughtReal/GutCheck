@@ -174,7 +174,7 @@ class CoreDataStack: ObservableObject {
         
         // Clean up old sync records
         let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName: "LocalMeal")
-        fetchRequest.predicate = NSPredicate(format: "syncStatus == %@ AND lastModified < %@", "synced", Date().addingTimeInterval(-30*24*60*60) as CVarArg)
+        fetchRequest.predicate = NSPredicate(format: "syncStatus == %@ AND lastModified < %@", "synced", Date.now.addingTimeInterval(-30*24*60*60) as CVarArg)
         
         do {
             let oldMeals = try context.fetch(fetchRequest) as? [LocalMeal] ?? []

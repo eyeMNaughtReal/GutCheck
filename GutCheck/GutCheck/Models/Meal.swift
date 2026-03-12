@@ -98,7 +98,7 @@ struct Meal: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
         if let timestamp = data["date"] as? Timestamp {
             self.date = timestamp.dateValue()
         } else {
-            self.date = Date()
+            self.date = Date.now
         }
         
         // Handle enum types

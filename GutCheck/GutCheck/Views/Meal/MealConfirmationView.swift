@@ -280,7 +280,7 @@ struct MealAnalysis {
     NavigationView {
         MealConfirmationView(meal: Meal(
             name: "Lunch",
-            date: Date(),
+            date: Date.now,
             type: .lunch,
             source: .manual,
             foodItems: [

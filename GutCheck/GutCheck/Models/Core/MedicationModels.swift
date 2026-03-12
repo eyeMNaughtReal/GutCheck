@@ -42,15 +42,15 @@ struct MedicationRecord: Identifiable, Codable, Hashable, FirestoreModel {
         createdBy: String = "",
         name: String,
         dosage: MedicationDosage,
-        startDate: Date = Date(),
+        startDate: Date = Date.now,
         endDate: Date? = nil,
         isActive: Bool = true,
         notes: String? = nil,
         source: MedicationSource = .manual,
         privacyLevel: DataPrivacyLevel = .private,
         healthKitUUID: UUID? = nil,
-        createdAt: Date = Date(),
-        updatedAt: Date = Date()
+        createdAt: Date = Date.now,
+        updatedAt: Date = Date.now
     ) {
         self.id = id
         self.createdBy = createdBy
@@ -81,7 +81,7 @@ struct MedicationRecord: Identifiable, Codable, Hashable, FirestoreModel {
         let name = data["name"] as? String ?? ""
         let dosageData = data["dosage"] as? [String: Any] ?? [:]
         let dosage = MedicationDosage(from: dosageData)
-        let startDate = (data["startDate"] as? Timestamp)?.dateValue() ?? Date()
+        let startDate = (data["startDate"] as? Timestamp)?.dateValue() ?? Date.now
         let endDate = (data["endDate"] as? Timestamp)?.dateValue()
         let isActive = data["isActive"] as? Bool ?? true
         let notes = data["notes"] as? String
@@ -91,8 +91,8 @@ struct MedicationRecord: Identifiable, Codable, Hashable, FirestoreModel {
         let privacyLevel = DataPrivacyLevel(rawValue: privacyRaw) ?? .private
         let healthKitUUIDString = data["healthKitUUID"] as? String
         let healthKitUUID = healthKitUUIDString.flatMap { UUID(uuidString: $0) }
-        let createdAt = (data["createdAt"] as? Timestamp)?.dateValue() ?? Date()
-        let updatedAt = (data["updatedAt"] as? Timestamp)?.dateValue() ?? Date()
+        let createdAt = (data["createdAt"] as? Timestamp)?.dateValue() ?? Date.now
+        let updatedAt = (data["updatedAt"] as? Timestamp)?.dateValue() ?? Date.now
         
         self.init(
             id: id,
@@ -121,7 +121,7 @@ struct MedicationRecord: Identifiable, Codable, Hashable, FirestoreModel {
             "source": source.rawValue,
             "privacyLevel": privacyLevel.rawValue,
             "createdAt": Timestamp(date: createdAt),
-            "updatedAt": Timestamp(date: Date())
+            "updatedAt": Timestamp(date: Date.now)
         ]
         
         if let endDate = endDate {
@@ -253,10 +253,10 @@ struct MedicationDoseLog: Identifiable, Codable, FirestoreModel {
         medicationName: String,
         dosageAmount: Double,
         dosageUnit: String,
-        dateTaken: Date = Date(),
+        dateTaken: Date = Date.now,
         notes: String? = nil,
         privacyLevel: DataPrivacyLevel = .private,
-        createdAt: Date = Date()
+        createdAt: Date = Date.now
     ) {
         self.id             = id
         self.createdBy      = createdBy
@@ -284,11 +284,11 @@ struct MedicationDoseLog: Identifiable, Codable, FirestoreModel {
         self.medicationName = data["medicationName"] as? String ?? ""
         self.dosageAmount   = data["dosageAmount"]   as? Double ?? 0.0
         self.dosageUnit     = data["dosageUnit"]     as? String ?? "mg"
-        self.dateTaken      = (data["dateTaken"]  as? Timestamp)?.dateValue() ?? Date()
+        self.dateTaken      = (data["dateTaken"]  as? Timestamp)?.dateValue() ?? Date.now
         self.notes          = data["notes"]          as? String
         let privacyRaw      = data["privacyLevel"]   as? String ?? "private"
         self.privacyLevel   = DataPrivacyLevel(rawValue: privacyRaw) ?? .private
-        self.createdAt      = (data["createdAt"] as? Timestamp)?.dateValue() ?? Date()
+        self.createdAt      = (data["createdAt"] as? Timestamp)?.dateValue() ?? Date.now
     }
 
     func toFirestoreData() -> [String: Any] {
@@ -329,7 +329,7 @@ struct MedicationInteraction: Identifiable, Codable {
         description: String,
         recommendations: [String],
         source: String = "AI Analysis",
-        createdAt: Date = Date()
+        createdAt: Date = Date.now
     ) {
         self.id = id
         self.medicationId = medicationId
@@ -410,7 +410,7 @@ struct SideEffect: Identifiable, Codable {
         frequency: SideEffectFrequency,
         onset: SideEffectOnset,
         duration: SideEffectDuration,
-        createdAt: Date = Date()
+        createdAt: Date = Date.now
     ) {
         self.id = id
         self.medicationId = medicationId

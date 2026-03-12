@@ -98,9 +98,9 @@ class AddMedicationViewModel: ObservableObject, HasLoadingState {
     @Published var dosageAmount:  String             = ""
     @Published var dosageUnit:    String             = "mg"
     @Published var frequency:     MedicationFrequency = .onceDaily
-    @Published var startDate:     Date               = Date()
+    @Published var startDate:     Date               = Date.now
     @Published var hasEndDate:    Bool               = false
-    @Published var endDate:       Date               = Date()
+    @Published var endDate:       Date               = Date.now
     @Published var isActive:      Bool               = true
     @Published var notes:         String             = ""
 
@@ -185,9 +185,9 @@ class AddMedicationViewModel: ObservableObject, HasLoadingState {
         dosageAmount = ""
         dosageUnit   = "mg"
         frequency    = .onceDaily
-        startDate    = Date()
+        startDate    = Date.now
         hasEndDate   = false
-        endDate      = Date()
+        endDate      = Date.now
         isActive     = true
         notes        = ""
         loadingState.reset()
@@ -209,7 +209,7 @@ class LogMedicationDoseViewModel: ObservableObject, HasLoadingState {
     // MARK: - Published: Form Fields
 
     /// Date and time the dose was taken (defaults to now).
-    @Published var dateTaken: Date = Date()
+    @Published var dateTaken: Date = Date.now
     @Published var notes: String   = ""
 
     // MARK: - Published: UI State
@@ -305,7 +305,7 @@ class LogMedicationDoseViewModel: ObservableObject, HasLoadingState {
 
     func resetForm() {
         selectedMedication = availableMedications.first
-        dateTaken          = Date()
+        dateTaken          = Date.now
         notes              = ""
         loadingState.reset()
     }

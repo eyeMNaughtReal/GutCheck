@@ -21,7 +21,7 @@ class CategoryInsightsViewModel: ObservableObject {
             let userId = getCurrentUserId()
             
             // Calculate time range for last 30 days
-            let endDate = Date()
+            let endDate = Date.now
             let startDate = Calendar.current.date(byAdding: .day, value: -30, to: endDate) ?? endDate
             let timeRange = DateInterval(start: startDate, end: endDate)
             

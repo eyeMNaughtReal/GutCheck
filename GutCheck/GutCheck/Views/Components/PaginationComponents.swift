@@ -389,13 +389,13 @@ struct DateRangePickerSheet: View {
         NavigationView {
             VStack(spacing: 20) {
                 DatePicker("Start Date", selection: Binding(
-                    get: { startDate ?? Date() },
+                    get: { startDate ?? Date.now },
                     set: { startDate = $0 }
                 ), displayedComponents: .date)
                 .datePickerStyle(.compact)
                 
                 DatePicker("End Date", selection: Binding(
-                    get: { endDate ?? Date() },
+                    get: { endDate ?? Date.now },
                     set: { endDate = $0 }
                 ), displayedComponents: .date)
                 .datePickerStyle(.compact)

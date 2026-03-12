@@ -37,7 +37,7 @@ struct ExportOptions {
     var anonymizeData: Bool
     
     static let `default` = ExportOptions(
-        dateRange: Calendar.current.date(byAdding: .month, value: -3, to: Date())!...Date(),
+        dateRange: Calendar.current.date(byAdding: .month, value: -3, to: Date.now)!...Date.now,
         includePrivateData: false,
         includeNutritionData: true,
         includeSymptomData: true,
@@ -514,7 +514,7 @@ class HealthcareExportService: ObservableObject {
         
         // Generated timestamp
         let generatedY = dateBoxY + 80
-        let generatedString = "Generated: \(DateFormatter().string(from: Date()))"
+        let generatedString = "Generated: \(DateFormatter().string(from: Date.now))"
         let generatedSize = generatedString.size(withAttributes: dateAttributes)
         generatedString.draw(at: CGPoint(x: (pageRect.width - generatedSize.width) / 2, y: generatedY), withAttributes: dateAttributes)
         

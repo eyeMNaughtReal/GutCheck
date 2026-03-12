@@ -127,7 +127,7 @@ class LocalProfileImageStrategy: ProfileImageStrategy {
         
         try await userRef.updateData([
             "profileImageURL": imageURL,
-            "updatedAt": Timestamp(date: Date())
+            "updatedAt": Timestamp(date: Date.now)
         ])
         
         print("🔥 LocalProfileImageStrategy: Firestore update completed successfully")
@@ -145,7 +145,7 @@ class LocalProfileImageStrategy: ProfileImageStrategy {
         
         try await userRef.updateData([
             "profileImageURL": FieldValue.delete(),
-            "updatedAt": Timestamp(date: Date())
+            "updatedAt": Timestamp(date: Date.now)
         ])
     }
 }

@@ -130,7 +130,7 @@ extension Meal {
         return Meal(
             id: "",
             name: "Loading...",
-            date: Date(),
+            date: Date.now,
             type: .breakfast,
             source: .manual,
             foodItems: []
@@ -141,7 +141,7 @@ extension Meal {
         return Meal(
             id: UUID().uuidString,
             name: "Sample Lunch",
-            date: Date(),
+            date: Date.now,
             type: .lunch,
             source: .manual,
             foodItems: [

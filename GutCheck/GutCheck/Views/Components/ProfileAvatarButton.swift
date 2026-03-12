@@ -129,8 +129,8 @@ struct ProfileAvatarButton: View {
                 firstName: "John",
                 lastName: "Doe",
                 signInMethod: .email,
-                createdAt: Date(),
-                updatedAt: Date()
+                createdAt: Date.now,
+                updatedAt: Date.now
             ),
             size: 50
         ) { }

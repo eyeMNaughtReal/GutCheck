@@ -461,7 +461,7 @@ class PatternRecognitionService {
     }
     
     private func analyzeMealTimingConsistency(meals: [Meal]) -> NutritionTrendInsight? {
-        let recentMeals = meals.filter { $0.date > Date().addingTimeInterval(-7 * 24 * 3600) }
+        let recentMeals = meals.filter { $0.date > Date.now.addingTimeInterval(-7 * 24 * 3600) }
         
         let mealHours = recentMeals.map { Calendar.current.component(.hour, from: $0.date) }
         let mealCounts = Dictionary(grouping: mealHours, by: { $0 }).mapValues { $0.count }

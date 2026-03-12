@@ -66,7 +66,7 @@ class ReminderSettingsService: ObservableObject {
         
         var updatedSettings = settings
         updatedSettings.createdBy = userId
-        updatedSettings.lastUpdated = Date()
+        updatedSettings.lastUpdated = Date.now
         
         do {
             try await reminderRepository.save(updatedSettings)

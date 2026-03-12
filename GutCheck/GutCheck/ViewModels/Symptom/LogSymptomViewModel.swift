@@ -13,7 +13,7 @@ import UserNotifications
 @MainActor
 class LogSymptomViewModel: ObservableObject, HasLoadingState {
     // Form state (unchanged)
-    @Published var symptomDate = Date()
+    @Published var symptomDate = Date.now
     @Published var selectedStoolType: StoolType?
     @Published var selectedPainLevel: Int = 0
     @Published var selectedUrgencyLevel: UrgencyLevel = .none
@@ -52,7 +52,7 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
         selectedUrgencyLevel != .none ||
         !selectedTags.isEmpty ||
         !notes.isEmpty ||
-        !Calendar.current.isDate(symptomDate, inSameDayAs: Date())
+        !Calendar.current.isDate(symptomDate, inSameDayAs: Date.now)
     }
     
     // MARK: - Tag Management (unchanged)
@@ -124,8 +124,8 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
         )
         
         print("🕐 LogSymptom: Symptom date: \(symptomDate)")
-        print("📝 LogSymptom: Current date: \(Date())")
-        print("🗓️ LogSymptom: Same day check: \(Calendar.current.isDate(symptomDate, inSameDayAs: Date()))")
+        print("📝 LogSymptom: Current date: \(Date.now)")
+        print("🗓️ LogSymptom: Same day check: \(Calendar.current.isDate(symptomDate, inSameDayAs: Date.now))")
         print("🕐 LogSymptom: Symptom date components - year: \(Calendar.current.component(.year, from: symptomDate)), month: \(Calendar.current.component(.month, from: symptomDate)), day: \(Calendar.current.component(.day, from: symptomDate))")
         
         Task {
@@ -193,7 +193,7 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
     }
     
     func resetForm() {
-        symptomDate = Date()
+        symptomDate = Date.now
         selectedStoolType = nil
         selectedPainLevel = 0
         selectedUrgencyLevel = .none

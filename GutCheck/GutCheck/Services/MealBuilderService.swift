@@ -17,7 +17,7 @@ class MealBuilderService: ObservableObject {
     // MARK: - Published Properties
     @Published var currentMeal: [FoodItem] = []
     @Published var mealType: MealType = .lunch
-    @Published var mealDate: Date = Date()
+    @Published var mealDate: Date = Date.now
     @Published var mealName: String = ""
     @Published var notes: String = ""
     @Published var isBuilding: Bool = false
@@ -86,7 +86,7 @@ class MealBuilderService: ObservableObject {
         Swift.print("🆕 MealBuilderService: Starting new \(type.rawValue) meal")
         clearMeal()
         mealType = type
-        mealDate = Date()
+        mealDate = Date.now
         isBuilding = false
     }
     
@@ -96,7 +96,7 @@ class MealBuilderService: ObservableObject {
         currentMeal.removeAll()
         mealName = ""
         notes = ""
-        mealDate = Date()
+        mealDate = Date.now
         isBuilding = false
         editingMealId = nil
         shouldNavigateToBuilder = false

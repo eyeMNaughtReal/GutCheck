@@ -11,7 +11,7 @@ import SwiftUI
 class DataSyncManager: ObservableObject {
     static let shared = DataSyncManager()
     
-    @Published private(set) var lastRefreshTime: Date = Date()
+    @Published private(set) var lastRefreshTime: Date = Date.now
     @Published private(set) var isRefreshing: Bool = false
     
     // Refresh triggers for different data types
@@ -102,7 +102,7 @@ class DataSyncManager: ObservableObject {
     @MainActor
     private func updateRefreshStates() {
         shouldRefreshDashboard.toggle()
-        lastRefreshTime = Date()
+        lastRefreshTime = Date.now
     }
     
     @MainActor
@@ -111,7 +111,7 @@ class DataSyncManager: ObservableObject {
         shouldRefreshMeals.toggle()
         shouldRefreshSymptoms.toggle()
         shouldRefreshCalendar.toggle()
-        lastRefreshTime = Date()
+        lastRefreshTime = Date.now
     }
     
     // MARK: - Reset Methods
@@ -137,7 +137,7 @@ class DataSyncManager: ObservableObject {
     }
     
     var timeSinceLastRefresh: TimeInterval {
-        Date().timeIntervalSince(lastRefreshTime)
+        Date.now.timeIntervalSince(lastRefreshTime)
     }
 }
 

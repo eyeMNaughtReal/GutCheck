@@ -37,7 +37,7 @@ class ServerStatusService: ObservableObject {
         }
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .full
-        return formatter.localizedString(for: date, relativeTo: Date())
+        return formatter.localizedString(for: date, relativeTo: Date.now)
     }
 
     // MARK: - Private

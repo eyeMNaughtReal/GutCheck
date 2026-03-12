@@ -86,7 +86,7 @@ struct HealthKitTestView: View {
                 if success {
                     isAuthorized = true
                     statusMessage = "✅ HealthKit authorized successfully!"
-                    testResults.append("✅ Authorization granted at \(Date().formatted())")
+                    testResults.append("✅ Authorization granted at \(Date.now.formatted())")
                 } else {
                     statusMessage = "❌ HealthKit authorization failed: \(error?.localizedDescription ?? "Unknown error")"
                     testResults.append("❌ Authorization failed: \(error?.localizedDescription ?? "Unknown")")
@@ -117,7 +117,7 @@ struct HealthKitTestView: View {
         
         let testMeal = Meal(
             name: "HealthKit Test Meal",
-            date: Date(),
+            date: Date.now,
             type: .lunch,
             source: .manual,
             foodItems: [testFoodItem],
@@ -146,7 +146,7 @@ struct HealthKitTestView: View {
         
         // Create test symptom
         let testSymptom = Symptom(
-            date: Date(),
+            date: Date.now,
             stoolType: .type4,
             painLevel: .mild,
             urgencyLevel: .mild,

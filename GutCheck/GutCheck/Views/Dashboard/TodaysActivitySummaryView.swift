@@ -150,7 +150,7 @@ struct TodaysActivitySummaryView: View {
 #Preview {
     TodaysActivitySummaryView(
         viewModel: RecentActivityViewModel(),
-        selectedDate: Date()
+        selectedDate: Date.now
     )
     .environmentObject(AppRouter.shared)
     .environmentObject(PreviewAuthService())

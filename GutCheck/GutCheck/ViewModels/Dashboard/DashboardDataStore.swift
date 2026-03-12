@@ -43,7 +43,7 @@ final class DashboardDataStore: ObservableObject {
     @Published var avoidanceTip: String = ""
     
     /// Currently selected date for dashboard data display
-    @Published var selectedDate: Date = Date()
+    @Published var selectedDate: Date = Date.now
     
     // MARK: - Private Properties
     
@@ -172,7 +172,7 @@ final class DashboardDataStore: ObservableObject {
             Meal(
                 id: "preview-1",
                 name: "Breakfast",
-                date: Date().addingTimeInterval(-3600 * 3),
+                date: Date.now.addingTimeInterval(-3600 * 3),
                 type: .breakfast,
                 source: .manual,
                 foodItems: [],
@@ -183,7 +183,7 @@ final class DashboardDataStore: ObservableObject {
             Meal(
                 id: "preview-2",
                 name: "Lunch",
-                date: Date(),
+                date: Date.now,
                 type: .lunch,
                 source: .manual,
                 foodItems: [],
