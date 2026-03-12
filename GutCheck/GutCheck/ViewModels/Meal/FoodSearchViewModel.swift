@@ -77,7 +77,7 @@ class FoodSearchViewModel: ObservableObject {
         let servingWeightGrams = nfood.servingWeight
         
         // Create quantity string
-        let quantityString = "\(String(format: "%g", servingQty)) \(servingUnit)"
+        let quantityString = "\(servingQty.formatted(.number)) \(servingUnit)"
         
         // Parse ingredients from Nutritionix ingredients string  
         let ingredientList: [String] = parseIngredients(from: nfood.ingredients)
@@ -92,48 +92,48 @@ class FoodSearchViewModel: ObservableObject {
         
         // Add basic nutrition values
         if let calories = nfood.calories {
-            nutritionDict["calories"] = String(format: "%.1f", calories)
+            nutritionDict["calories"] = calories.formatted(.number.precision(.fractionLength(1)))
         }
         if let protein = nfood.protein {
-            nutritionDict["protein"] = String(format: "%.1f", protein)
+            nutritionDict["protein"] = protein.formatted(.number.precision(.fractionLength(1)))
         }
         if let carbs = nfood.carbs {
-            nutritionDict["total_carbohydrate"] = String(format: "%.1f", carbs)
+            nutritionDict["total_carbohydrate"] = carbs.formatted(.number.precision(.fractionLength(1)))
         }
         if let fat = nfood.fat {
-            nutritionDict["total_fat"] = String(format: "%.1f", fat)
+            nutritionDict["total_fat"] = fat.formatted(.number.precision(.fractionLength(1)))
         }
         if let fiber = nfood.fiber {
-            nutritionDict["dietary_fiber"] = String(format: "%.1f", fiber)
+            nutritionDict["dietary_fiber"] = fiber.formatted(.number.precision(.fractionLength(1)))
         }
         if let sugar = nfood.sugar {
-            nutritionDict["sugars"] = String(format: "%.1f", sugar)
+            nutritionDict["sugars"] = sugar.formatted(.number.precision(.fractionLength(1)))
         }
         if let sodium = nfood.sodium {
-            nutritionDict["sodium"] = String(format: "%.1f", sodium)
+            nutritionDict["sodium"] = sodium.formatted(.number.precision(.fractionLength(1)))
         }
         
         // Add detailed nutrition from the specific properties
         if let saturatedFat = nfood.saturatedFat {
-            nutritionDict["saturated_fat"] = String(format: "%.1f", saturatedFat)
+            nutritionDict["saturated_fat"] = saturatedFat.formatted(.number.precision(.fractionLength(1)))
         }
         if let cholesterol = nfood.cholesterol {
-            nutritionDict["cholesterol"] = String(format: "%.1f", cholesterol)
+            nutritionDict["cholesterol"] = cholesterol.formatted(.number.precision(.fractionLength(1)))
         }
         if let potassium = nfood.potassium {
-            nutritionDict["potassium"] = String(format: "%.1f", potassium)
+            nutritionDict["potassium"] = potassium.formatted(.number.precision(.fractionLength(1)))
         }
         if let vitaminA = nfood.vitaminA {
-            nutritionDict["vitamin_a_dv"] = String(format: "%.0f", vitaminA)
+            nutritionDict["vitamin_a_dv"] = vitaminA.formatted(.number.precision(.fractionLength(0)))
         }
         if let vitaminC = nfood.vitaminC {
-            nutritionDict["vitamin_c_dv"] = String(format: "%.0f", vitaminC)
+            nutritionDict["vitamin_c_dv"] = vitaminC.formatted(.number.precision(.fractionLength(0)))
         }
         if let calcium = nfood.calcium {
-            nutritionDict["calcium_dv"] = String(format: "%.0f", calcium)
+            nutritionDict["calcium_dv"] = calcium.formatted(.number.precision(.fractionLength(0)))
         }
         if let iron = nfood.iron {
-            nutritionDict["iron_dv"] = String(format: "%.0f", iron)
+            nutritionDict["iron_dv"] = iron.formatted(.number.precision(.fractionLength(0)))
         }
         
         // Extract allergens with enhanced detection

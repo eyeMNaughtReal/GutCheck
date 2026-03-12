@@ -865,7 +865,7 @@ private struct MacroPill: View {
                 .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundStyle(color)
-            Text(value.map { String(format: "%.1fg", $0) } ?? "--")
+            Text(value.map { "\($0.formatted(.number.precision(.fractionLength(1))))g" } ?? "--")
                 .font(.caption)
                 .foregroundStyle(ColorTheme.primaryText)
         }
@@ -1167,7 +1167,7 @@ struct NutritionDetailRow: View {
         if unit == "kcal" || unit == "mg" {
             return "\(Int(v)) \(unit)"
         }
-        return String(format: "%.1f %@", v, unit)
+        return "\(v.formatted(.number.precision(.fractionLength(1)))) \(unit)"
     }
 
     var body: some View {

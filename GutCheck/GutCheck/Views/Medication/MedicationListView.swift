@@ -199,7 +199,7 @@ private struct MedicationRowView: View {
         if amt == amt.rounded() {
             return "\(Int(amt)) \(medication.dosage.unit)"
         } else {
-            return "\(String(format: "%.1f", amt)) \(medication.dosage.unit)"
+            return "\(amt.formatted(.number.precision(.fractionLength(1)))) \(medication.dosage.unit)"
         }
     }
 

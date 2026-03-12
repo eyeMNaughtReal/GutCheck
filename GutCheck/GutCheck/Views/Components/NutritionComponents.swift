@@ -48,15 +48,15 @@ struct UnifiedNutritionBadge: View {
     }
     
     init(protein: Double, style: BadgeStyle = .standard) {
-        self.init(value: String(format: "%.1f", protein), unit: "P", color: .blue, style: style)
+        self.init(value: protein.formatted(.number.precision(.fractionLength(1))), unit: "P", color: .blue, style: style)
     }
     
     init(carbs: Double, style: BadgeStyle = .standard) {
-        self.init(value: String(format: "%.1f", carbs), unit: "C", color: .green, style: style)
+        self.init(value: carbs.formatted(.number.precision(.fractionLength(1))), unit: "C", color: .green, style: style)
     }
     
     init(fat: Double, style: BadgeStyle = .standard) {
-        self.init(value: String(format: "%.1f", fat), unit: "F", color: .red, style: style)
+        self.init(value: fat.formatted(.number.precision(.fractionLength(1))), unit: "F", color: .red, style: style)
     }
     
     var body: some View {
@@ -209,15 +209,15 @@ struct UnifiedNutritionSummary: View {
     private var additionalNutrientsSection: some View {
         VStack(spacing: 8) {
             if let fiber = nutrition.fiber {
-                UnifiedMacroRow(label: "Fiber", value: String(format: "%.1f", fiber), unit: "g", color: .brown)
+                UnifiedMacroRow(label: "Fiber", value: fiber.formatted(.number.precision(.fractionLength(1))), unit: "g", color: .brown)
             }
             
             if let sodium = nutrition.sodium {
-                UnifiedMacroRow(label: "Sodium", value: String(format: "%.0f", sodium), unit: "mg", color: .purple)
+                UnifiedMacroRow(label: "Sodium", value: sodium.formatted(.number.precision(.fractionLength(0))), unit: "mg", color: .purple)
             }
             
             if let sugar = nutrition.sugar {
-                UnifiedMacroRow(label: "Sugar", value: String(format: "%.1f", sugar), unit: "g", color: .pink)
+                UnifiedMacroRow(label: "Sugar", value: sugar.formatted(.number.precision(.fractionLength(1))), unit: "g", color: .pink)
             }
         }
     }
@@ -237,7 +237,7 @@ struct NutrientColumn: View {
                 .font(.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
             
-            Text(String(format: "%.1f", value))
+            Text(value.formatted(.number.precision(.fractionLength(1))))
                 .font(.headline)
                 .foregroundStyle(color)
             
@@ -259,17 +259,17 @@ enum MacroType {
         case .calories:
             return ("Calories", "\(nutrition.calories ?? 0)", "calories", .orange)
         case .protein:
-            return ("Protein", String(format: "%.1f", nutrition.protein ?? 0), "g", .blue)
+            return ("Protein", (nutrition.protein ?? 0).formatted(.number.precision(.fractionLength(1))), "g", .blue)
         case .carbs:
-            return ("Carbs", String(format: "%.1f", nutrition.carbs ?? 0), "g", .green)
+            return ("Carbs", (nutrition.carbs ?? 0).formatted(.number.precision(.fractionLength(1))), "g", .green)
         case .fat:
-            return ("Fat", String(format: "%.1f", nutrition.fat ?? 0), "g", .red)
+            return ("Fat", (nutrition.fat ?? 0).formatted(.number.precision(.fractionLength(1))), "g", .red)
         case .fiber:
-            return ("Fiber", String(format: "%.1f", nutrition.fiber ?? 0), "g", .brown)
+            return ("Fiber", (nutrition.fiber ?? 0).formatted(.number.precision(.fractionLength(1))), "g", .brown)
         case .sodium:
-            return ("Sodium", String(format: "%.0f", nutrition.sodium ?? 0), "mg", .purple)
+            return ("Sodium", (nutrition.sodium ?? 0).formatted(.number.precision(.fractionLength(0))), "mg", .purple)
         case .sugar:
-            return ("Sugar", String(format: "%.1f", nutrition.sugar ?? 0), "g", .pink)
+            return ("Sugar", (nutrition.sugar ?? 0).formatted(.number.precision(.fractionLength(1))), "g", .pink)
         }
     }
 }

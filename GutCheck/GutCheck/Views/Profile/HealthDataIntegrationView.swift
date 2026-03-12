@@ -104,7 +104,7 @@ struct HealthDataIntegrationView: View {
                         }
                         if let glucose = healthKitVM.healthData?.bloodGlucose {
                             HealthDataRow(label: "Blood Glucose",
-                                         value: String(format: "%.1f mg/dL", glucose))
+                                         value: "\(glucose.formatted(.number.precision(.fractionLength(1)))) mg/dL")
                         }
                         if let hr = healthKitVM.healthData?.heartRate {
                             HealthDataRow(label: "Heart Rate", value: "\(Int(hr)) BPM")

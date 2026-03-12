@@ -170,19 +170,19 @@ private struct NutritionSummaryView: View {
                 Divider()
                 NutritionValueView(
                     label: "Protein",
-                    value: String(format: "%.1f", nutrition.protein ?? 0),
+                    value: (nutrition.protein ?? 0).formatted(.number.precision(.fractionLength(1))),
                     unit: "g"
                 )
                 Divider()
                 NutritionValueView(
                     label: "Carbs",
-                    value: String(format: "%.1f", nutrition.carbs ?? 0),
+                    value: (nutrition.carbs ?? 0).formatted(.number.precision(.fractionLength(1))),
                     unit: "g"
                 )
                 Divider()
                 NutritionValueView(
                     label: "Fat",
-                    value: String(format: "%.1f", nutrition.fat ?? 0),
+                    value: (nutrition.fat ?? 0).formatted(.number.precision(.fractionLength(1))),
                     unit: "g"
                 )
             }
@@ -191,7 +191,7 @@ private struct NutritionSummaryView: View {
                 HStack {
                     Label("Fiber", systemImage: "leaf")
                     Spacer()
-                    Text("\(String(format: "%.1f", fiber))g")
+                    Text("\(fiber.formatted(.number.precision(.fractionLength(1))))g")
                 }
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -201,7 +201,7 @@ private struct NutritionSummaryView: View {
                 HStack {
                     Label("Sugar", systemImage: "cube")
                     Spacer()
-                    Text("\(String(format: "%.1f", sugar))g")
+                    Text("\(sugar.formatted(.number.precision(.fractionLength(1))))g")
                 }
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
