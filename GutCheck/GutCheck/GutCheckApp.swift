@@ -24,13 +24,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         if FirebaseApp.app() == nil {
             // Check if GoogleService-Info.plist exists
             if let plistPath = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") {
-                print("✅ Found GoogleService-Info.plist at: \(plistPath)")
                 FirebaseApp.configure()
             } else {
                 // TEMPORARY: Manual configuration if plist is missing
-                print("⚠️ GoogleService-Info.plist not found!")
-                print("⚠️ Please add GoogleService-Info.plist to your project")
-                print("⚠️ Download it from: https://console.firebase.google.com/")
 
                 // You can add manual configuration here as a temporary workaround:
                 // let options = FirebaseOptions(googleAppID: "1:123:ios:abc",
@@ -56,7 +52,6 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 
         db.settings = settings
 
-        print("🔥 Firebase configured with Firestore settings")
 
         // Register as the notification delegate so banners appear while the
         // app is in the foreground and taps can be routed to the right screen
@@ -133,10 +128,7 @@ struct GutCheckApp: App {
         do {
             let testDoc = FirebaseManager.shared.testDocument("connection")
             let _ = try await testDoc.getDocument()
-            print("✅ Firebase connection test successful")
         } catch {
-            print("❌ Firebase connection test failed: \(error)")
-            print("❌ This suggests a configuration issue with GoogleService-Info.plist")
         }
     }
 

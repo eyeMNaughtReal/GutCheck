@@ -26,27 +26,20 @@ class SymptomDetailViewModel: DetailViewModel<Symptom> {
     
     override func loadEntity() async {
         guard let symptomId = symptomId else { 
-            print("⚠️ SymptomDetailViewModel: No symptom ID provided")
             return 
         }
         
         // Prevent duplicate loading if we already have the symptom
         if !entity.id.isEmpty && entity.id == symptomId {
-            print("🔄 SymptomDetailViewModel: Symptom already loaded, skipping duplicate load")
             return
         }
         
-        print("🔄 SymptomDetailViewModel: Loading symptom with ID: \(symptomId)")
         
         await executeWithLoading {
             let symptom = try await self.repository.fetch(id: symptomId)
             if let symptom = symptom {
-                print("✅ SymptomDetailViewModel: Successfully loaded symptom: \(symptom.id), date: \(symptom.date)")
-                print("✅ SymptomDetailViewModel: Symptom details - stoolType: \(symptom.stoolType.rawValue), painLevel: \(symptom.painLevel.rawValue), urgencyLevel: \(symptom.urgencyLevel.rawValue)")
-                print("✅ SymptomDetailViewModel: Symptom details - notes: \(symptom.notes ?? "nil"), tags: \(symptom.tags)")
                 self.entity = symptom
             } else {
-                print("❌ SymptomDetailViewModel: Failed to load symptom - repository returned nil")
             }
         }
     }

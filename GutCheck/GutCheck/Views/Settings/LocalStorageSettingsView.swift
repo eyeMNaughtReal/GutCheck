@@ -168,7 +168,6 @@ struct LocalStorageSettingsView: View {
                 try context.save()
             }
         } catch {
-            print("Error clearing local data: \(error)")
         }
     }
 }

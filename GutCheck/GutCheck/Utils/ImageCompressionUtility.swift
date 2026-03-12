@@ -44,7 +44,6 @@ struct ImageCompressionUtility {
             throw ImageCompressionError.compressionFailed
         }
         
-        print("🗜️ ImageCompressionUtility: Compressed image from original to \(compressedData.count) bytes at quality \(quality.value)")
         
         return compressedData
     }
@@ -67,7 +66,6 @@ struct ImageCompressionUtility {
             throw ImageCompressionError.compressionFailed
         }
         
-        print("🗜️ ImageCompressionUtility: Compressed image to \(compressedData.count) bytes at quality \(quality)")
         
         return compressedData
     }
@@ -94,7 +92,6 @@ struct ImageCompressionUtility {
             }
             
             if compressedData.count <= targetSizeBytes {
-                print("🗜️ ImageCompressionUtility: Achieved target size of \(targetSizeKB)KB in \(iteration + 1) iterations")
                 return compressedData
             }
             
@@ -113,7 +110,6 @@ struct ImageCompressionUtility {
             throw ImageCompressionError.compressionFailed
         }
         
-        print("⚠️ ImageCompressionUtility: Could not achieve target size \(targetSizeKB)KB, final size: \(finalData.count / 1024)KB")
         return finalData
     }
     

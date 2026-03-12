@@ -33,7 +33,6 @@ class CalendarDetailViewModel: ObservableObject {
             // Analyze the data for the day
             await analyzeDayData()
         } catch {
-            print("Error loading calendar data: \(error)")
             meals = []
             symptoms = []
         }
@@ -45,7 +44,6 @@ class CalendarDetailViewModel: ObservableObject {
             // Remove from local array
             symptoms.removeAll { $0.id == symptom.id }
         } catch {
-            print("Error deleting symptom: \(error)")
         }
     }
     
@@ -57,7 +55,6 @@ class CalendarDetailViewModel: ObservableObject {
                 symptoms[index] = updatedSymptom
             }
         } catch {
-            print("Error updating symptom: \(error)")
         }
     }
     
@@ -72,7 +69,6 @@ class CalendarDetailViewModel: ObservableObject {
             patterns = analysis.insights
             potentialTriggers = analysis.recommendations
         } catch {
-            print("Error analyzing day data: \(error)")
             patterns = nil
         }
     }

@@ -347,7 +347,6 @@ class CoreDataStorageService: ObservableObject {
                 do {
                     try context.save()
                 } catch {
-                    print("Error saving sync status: \(error)")
                 }
             }
         }
@@ -400,11 +399,9 @@ class CoreDataStorageService: ObservableObject {
                 
                 try context.save()
             } catch {
-                print("Error cleaning up old data: \(error)")
             }
         }
         } catch {
-            print("Error performing background task: \(error)")
         }
     }
 }

@@ -249,11 +249,9 @@ struct OnboardingNotificationView: View {
 #Preview {
     VStack(spacing: 20) {
         NotificationPermissionView { granted in
-            print("Permission result: \(granted)")
         }
         
         ReminderSetupNotificationView { granted in
-            print("Reminder permission: \(granted)")
         }
     }
     .padding()

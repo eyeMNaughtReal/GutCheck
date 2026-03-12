@@ -185,7 +185,6 @@ struct MedicationsView: View {
         do {
             todayDoses = try await MedicationDoseRepository.shared.fetchDosesForDate(Date.now, userId: userId)
         } catch {
-            print("⚠️ MedicationsView: failed to load today's doses: \(error)")
         }
         isLoadingDoses = false
     }

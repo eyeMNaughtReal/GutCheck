@@ -15,20 +15,17 @@ class OpenFoodFactsService {
             throw OpenFoodFactsError.invalidURL
         }
         
-        print("🥫 OpenFoodFacts: Searching for '\(query)' at URL: \(urlString)")
         
         do {
             let (data, response) = try await URLSession.shared.data(from: url)
             
             if let httpResponse = response as? HTTPURLResponse {
-                print("🥫 OpenFoodFacts HTTP Status: \(httpResponse.statusCode)")
                 if httpResponse.statusCode != 200 {
                     throw OpenFoodFactsError.httpError(httpResponse.statusCode)
                 }
             }
             
             let searchResponse = try JSONDecoder().decode(OpenFoodFactsSearchResponse.self, from: data)
-            print("🥫 OpenFoodFacts: Found \(searchResponse.products.count) products")
             
             // Filter out products without names or basic nutrition data
             let validProducts = searchResponse.products.filter { product in
@@ -37,14 +34,11 @@ class OpenFoodFactsService {
                 product.nutriments?.energyKcal100g != nil
             }
             
-            print("🥫 OpenFoodFacts: \(validProducts.count) valid products after filtering")
             return validProducts
             
         } catch let decodingError as DecodingError {
-            print("🥫 OpenFoodFacts JSON decoding error: \(decodingError)")
             throw OpenFoodFactsError.decodingError(decodingError)
         } catch {
-            print("🥫 OpenFoodFacts search error: \(error)")
             throw OpenFoodFactsError.networkError(error)
         }
     }
@@ -57,7 +51,6 @@ class OpenFoodFactsService {
             throw OpenFoodFactsError.invalidURL
         }
         
-        print("🥫 OpenFoodFacts: Getting product by barcode \(barcode)")
         
         do {
             let (data, response) = try await URLSession.shared.data(from: url)

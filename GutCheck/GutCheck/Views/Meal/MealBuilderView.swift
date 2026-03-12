@@ -248,7 +248,6 @@ struct MealBuilderView: View {
                             } catch {
                                 HapticManager.shared.error()
                                 // TODO: Show error alert
-                                Swift.print("❌ Failed to save meal: \(error)")
                                 AccessibilityAnnouncement.announce("Failed to save meal")
                             }
                         }

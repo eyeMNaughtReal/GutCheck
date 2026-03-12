@@ -27,12 +27,6 @@ struct SymptomDetailView: View {
         }
         .onAppear {
             #if DEBUG
-            print("🔄 SymptomDetailView: View appeared, symptomId: \(viewModel.symptomId ?? "nil")")
-            print("🔄 SymptomDetailView: Current entity ID: \(viewModel.entity.id)")
-            print("🔄 SymptomDetailView: Is loading: \(viewModel.isLoading)")
-            print("🔄 SymptomDetailView: Entity data - date: \(viewModel.entity.date), stoolType: \(viewModel.entity.stoolType.rawValue)")
-            print("🔄 SymptomDetailView: Entity data - painLevel: \(viewModel.entity.painLevel.rawValue), urgencyLevel: \(viewModel.entity.urgencyLevel.rawValue)")
-            print("🔄 SymptomDetailView: Entity data - notes: \(viewModel.entity.notes ?? "nil"), tags: \(viewModel.entity.tags)")
             #endif
 
             if viewModel.symptomId != nil && viewModel.entity.id.isEmpty {
@@ -43,12 +37,10 @@ struct SymptomDetailView: View {
         }
         .onChange(of: viewModel.entity) { _, newEntity in
             #if DEBUG
-            print("🔄 SymptomDetailView: Entity changed to: \(newEntity.id), date: \(newEntity.date)")
             #endif
         }
         .onChange(of: viewModel.isLoading) { _, isLoading in
             #if DEBUG
-            print("🔄 SymptomDetailView: Loading state changed to: \(isLoading)")
             #endif
         }
     }

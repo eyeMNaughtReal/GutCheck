@@ -123,19 +123,13 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
             createdBy: userId
         )
         
-        print("🕐 LogSymptom: Symptom date: \(symptomDate)")
-        print("📝 LogSymptom: Current date: \(Date.now)")
-        print("🗓️ LogSymptom: Same day check: \(Calendar.current.isDate(symptomDate, inSameDayAs: Date.now))")
-        print("🕐 LogSymptom: Symptom date components - year: \(Calendar.current.component(.year, from: symptomDate)), month: \(Calendar.current.component(.month, from: symptomDate)), day: \(Calendar.current.component(.day, from: symptomDate))")
         
         Task {
             do {
                 // Use repository instead of direct Firestore calls
                 #if DEBUG
-                print("💾 LogSymptom: Saving symptom — privacy: \(symptom.privacyLevel), requiresLocal: \(symptom.requiresLocalStorage), allowsCloud: \(symptom.allowsCloudSync)")
                 #endif
                 try await symptomRepository.save(symptom)
-                print("✅ LogSymptom: Successfully saved symptom")
                 
                 // Write to HealthKit
                 await self.writeToHealthKit(symptom)
@@ -148,7 +142,6 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
                     DataSyncManager.shared.triggerRefreshAfterSave(operation: "Symptom save", dataType: .symptoms)
                 }
             } catch {
-                print("❌ LogSymptom: Error saving symptom: \(error)")
                 await MainActor.run {
                     self.loadingState.setError(error.localizedDescription)
                     self.showingErrorAlert = true
@@ -169,7 +162,6 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
         
         // Check permission through centralized system
         guard permissionManager.notificationStatus.isGranted else {
-            print("⚠️ LogSymptomViewModel: Cannot schedule reminder - notification permission not granted")
             return
         }
         
@@ -185,9 +177,7 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
         
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                print("❌ LogSymptomViewModel: Error scheduling reminder: \(error)")
             } else {
-                print("✅ LogSymptomViewModel: Reminder scheduled successfully")
             }
         }
     }

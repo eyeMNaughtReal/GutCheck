@@ -80,23 +80,16 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
         }
         
         // Since T is constrained to DataClassifiable, we can directly access privacy level
-        print("🔒 BaseFirebaseRepository: Privacy classification detected: \(item.privacyLevel)")
-        print("🔒 BaseFirebaseRepository: Item type: \(String(describing: type(of: item)))")
-        print("🔒 BaseFirebaseRepository: Item ID: \(item.id)")
         
         switch item.privacyLevel {
         case .private, .confidential:
             // Save sensitive data to local encrypted storage
-            print("🔒 BaseFirebaseRepository: Routing private data to local encrypted storage")
             try await UnifiedDataService.shared.save(item)
-            print("🔒 BaseFirebaseRepository: Successfully saved to local storage")
             return
             
         case .public:
             // Save non-sensitive data to Firestore
-            print("☁️ BaseFirebaseRepository: Routing public data to Firestore")
             try await saveToFirestore(item, userId: userId)
-            print("☁️ BaseFirebaseRepository: Successfully saved to Firestore")
             return
         }
     }
@@ -109,16 +102,13 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
         let data = mutableItem.toFirestoreData()
 
         do {
-            print("🔥 Saving to Firestore - Collection: \(collectionName), Document ID: \(item.id)")
 
             // Use setData with the specific document ID to preserve the item's ID
             // Add retry logic for connection issues
             try await retryWithBackoff {
                 try await self.firestore.collection(self.collectionName).document(item.id).setData(data, merge: true)
             }
-            print("✅ Successfully saved to Firestore with ID: \(item.id)")
         } catch {
-            print("❌ Firestore save error: \(error)")
 
             // Check if it's a network-related Firestore error
             if let firestoreError = error as NSError?, firestoreError.domain == "FIRFirestoreErrorDomain" {
@@ -126,7 +116,6 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
 
                 if networkErrorCodes.contains(firestoreError.code) {
                     // Network error — queue in Core Data for later sync
-                    print("📦 Queuing to Core Data for later sync")
                     try await queueForOfflineSync(mutableItem)
                     return
                 }
@@ -152,7 +141,6 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
             try await CoreDataStorageService.shared.saveSymptom(symptom)
         }
         await ServerStatusService.shared.refreshPendingChanges()
-        print("📦 Item queued for sync (pending changes updated)")
     }
     
     // Retry logic for transient network issues
@@ -177,7 +165,6 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
                 
                 if attempt < maxRetries - 1 {
                     let delay = pow(2.0, Double(attempt)) // Exponential backoff
-                    print("🔄 Retry attempt \(attempt + 1) after \(delay) seconds")
                     try await Task.sleep(for: .seconds(delay))
                 }
             }
@@ -189,7 +176,6 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
     func fetch(id: String) async throws -> Model? {
         // First, try to fetch from local encrypted storage (for private data)
         if let localItem = try await UnifiedDataService.shared.fetch(Model.self, id: id) {
-            print("🔒 Retrieved from local storage: \(id)")
             return localItem
         }
         
@@ -198,12 +184,10 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
             let document = try await firestore.collection(collectionName).document(id).getDocument()
             
             guard document.exists else {
-                print("❌ Item not found in any storage: \(id)")
                 return nil
             }
             
             let item = try Model(from: document)
-            print("☁️ Retrieved from Firestore: \(id)")
             return item
         } catch {
             if error is RepositoryError {
@@ -240,10 +224,8 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
         // Also try to delete from Firestore (for public data)
         do {
             try await firestore.collection(collectionName).document(id).delete()
-            print("✅ Deleted from both storage locations: \(id)")
         } catch {
             // If Firestore deletion fails, it might not exist there (which is fine)
-            print("⚠️ Firestore deletion failed (item may not exist there): \(id)")
         }
     }
     
@@ -259,9 +241,7 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
                 return firestore.collection(collectionName) // Placeholder
             })
             allResults.append(contentsOf: localResults)
-            print("🔒 Retrieved \(localResults.count) items from local storage")
         } catch {
-            print("⚠️ Local storage query failed: \(error)")
         }
         
         // Then fetch from Firestore (for public data)
@@ -274,13 +254,10 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
                 try Model(from: document)
             }
             allResults.append(contentsOf: firestoreResults)
-            print("☁️ Retrieved \(firestoreResults.count) items from Firestore")
         } catch {
-            print("⚠️ Firestore query failed: \(error)")
             throw RepositoryError.firebaseError(error)
         }
         
-        print("✅ Total results: \(allResults.count) items")
         return allResults
     }
     
@@ -294,10 +271,8 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
             let firestoreResults = try snapshot.documents.compactMap { document in
                 try Model(from: document)
             }
-            print("☁️ Retrieved \(firestoreResults.count) items from Firestore only")
             return firestoreResults
         } catch {
-            print("⚠️ Firestore query failed: \(error)")
             throw RepositoryError.firebaseError(error)
         }
     }
@@ -333,9 +308,7 @@ class MealRepository: BaseFirebaseRepository<Meal> {
                 meal.date >= startOfDay && meal.date < endOfDay
             }
             allMeals.append(contentsOf: filteredLocalMeals)
-            print("🔒 Retrieved \(filteredLocalMeals.count) private meals for date")
         } catch {
-            print("⚠️ Local meal query failed: \(error)")
         }
         
         // Fetch from Firestore (public meals)
@@ -347,11 +320,9 @@ class MealRepository: BaseFirebaseRepository<Meal> {
                 .order(by: "date", descending: false)
         }
         allMeals.append(contentsOf: firestoreMeals)
-        print("☁️ Retrieved \(firestoreMeals.count) public meals for date")
         
         // Sort all meals by date
         let sortedMeals = allMeals.sorted { $0.date < $1.date }
-        print("✅ Total meals for date: \(sortedMeals.count)")
         
         return sortedMeals
     }
@@ -367,9 +338,7 @@ class MealRepository: BaseFirebaseRepository<Meal> {
                 return firestore.collection(collectionName)
             }
             allMeals.append(contentsOf: localMeals)
-            print("🔒 Retrieved \(localMeals.count) private meals")
         } catch {
-            print("⚠️ Local meal query failed: \(error)")
         }
         
         // Fetch from Firestore (public meals)
@@ -380,12 +349,10 @@ class MealRepository: BaseFirebaseRepository<Meal> {
                 .limit(to: limit)
         }
         allMeals.append(contentsOf: firestoreMeals)
-        print("☁️ Retrieved \(firestoreMeals.count) public meals")
         
         // Sort all meals by date (most recent first) and limit
         let sortedMeals = allMeals.sorted { $0.date > $1.date }
         let limitedMeals = Array(sortedMeals.prefix(limit))
-        print("✅ Total recent meals: \(limitedMeals.count)")
         
         return limitedMeals
     }
@@ -412,40 +379,31 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
         let startOfDay = calendar.startOfDay(for: date)
         let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay) ?? date
         
-        print("🔍 SymptomRepository: Fetching symptoms for date \(date) (start: \(startOfDay), end: \(endOfDay))")
         
         var allSymptoms: [Symptom] = []
         
         // Fetch from local encrypted storage (private symptoms)
         do {
-            print("🔍 SymptomRepository: Querying local encrypted storage...")
             let localSymptoms = try await UnifiedDataService.shared.query(Symptom.self) { _ in
                 // For now, fetch all local symptoms and filter by date
                 return firestore.collection(collectionName)
             }
             
-            print("🔍 SymptomRepository: Found \(localSymptoms.count) total local symptoms")
             
             // Filter local symptoms by date
-            print("🔍 SymptomRepository: Date filtering - startOfDay: \(startOfDay), endOfDay: \(endOfDay)")
             let filteredLocalSymptoms = localSymptoms.filter { symptom in
                 let isInRange = symptom.date >= startOfDay && symptom.date < endOfDay
-                print("🔍 SymptomRepository: Symptom \(symptom.id) date: \(symptom.date) - in range: \(isInRange)")
                 return isInRange
             }
             allSymptoms.append(contentsOf: filteredLocalSymptoms)
-            print("🔒 SymptomRepository: Retrieved \(filteredLocalSymptoms.count) private symptoms for date")
             
             // Debug: Print details of each local symptom
             for symptom in filteredLocalSymptoms {
-                print("🔒 SymptomRepository: Local symptom - ID: \(symptom.id), date: \(symptom.date), notes: \(symptom.notes ?? "none")")
             }
         } catch {
-            print("⚠️ SymptomRepository: Local symptom query failed: \(error)")
         }
         
         // Fetch from Firestore (public symptoms only - local storage already handled above)
-        print("🔍 SymptomRepository: Querying Firestore...")
         let firestoreSymptoms = try await queryFirestoreOnly { query in
             query
                 .whereField("createdBy", isEqualTo: userId)
@@ -454,29 +412,23 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
                 .order(by: "date", descending: false)
         }
         allSymptoms.append(contentsOf: firestoreSymptoms)
-        print("☁️ SymptomRepository: Retrieved \(firestoreSymptoms.count) public symptoms for date")
         
         // Debug: Print details of each Firestore symptom
         for symptom in firestoreSymptoms {
-            print("☁️ SymptomRepository: Firestore symptom - ID: \(symptom.id), date: \(symptom.date), notes: \(symptom.notes ?? "none")")
         }
         
         // Sort all symptoms by date
         let sortedSymptoms = allSymptoms.sorted { $0.date < $1.date }
-        print("✅ SymptomRepository: Total symptoms for date: \(sortedSymptoms.count)")
         
         // Debug: Check for duplicates
         let symptomIds = sortedSymptoms.map { $0.id }
         let uniqueIds = Set(symptomIds)
         if symptomIds.count != uniqueIds.count {
-            print("⚠️ SymptomRepository: DUPLICATE SYMPTOMS DETECTED!")
-            print("⚠️ SymptomRepository: Total count: \(symptomIds.count), Unique count: \(uniqueIds.count)")
             
             // Find duplicates
             let duplicateIds = symptomIds.filter { id in
                 symptomIds.filter { $0 == id }.count > 1
             }
-            print("⚠️ SymptomRepository: Duplicate IDs: \(duplicateIds)")
             
             // Remove duplicates by keeping only the first occurrence of each ID
             var deduplicatedSymptoms: [Symptom] = []
@@ -487,11 +439,9 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
                     deduplicatedSymptoms.append(symptom)
                     seenIds.insert(symptom.id)
                 } else {
-                    print("🔄 SymptomRepository: Removing duplicate symptom with ID: \(symptom.id)")
                 }
             }
             
-            print("✅ SymptomRepository: After deduplication: \(deduplicatedSymptoms.count) symptoms")
             return deduplicatedSymptoms
         }
         
@@ -507,9 +457,7 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
                 return firestore.collection(collectionName)
             }
             allSymptoms.append(contentsOf: localSymptoms)
-            print("🔒 Retrieved \(localSymptoms.count) private symptoms")
         } catch {
-            print("⚠️ Local symptom query failed: \(error)")
         }
         
         // Fetch from Firestore (public symptoms only - local storage already handled above)
@@ -520,7 +468,6 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
                 .limit(to: limit)
         }
         allSymptoms.append(contentsOf: firestoreSymptoms)
-        print("☁️ Retrieved \(firestoreSymptoms.count) public symptoms")
         
         // Sort all symptoms by date (most recent first) and limit
         let sortedSymptoms = allSymptoms.sorted { $0.date > $1.date }
@@ -534,12 +481,10 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
                 deduplicatedSymptoms.append(symptom)
                 seenIds.insert(symptom.id)
             } else {
-                print("🔄 SymptomRepository: Removing duplicate symptom with ID: \(symptom.id) from recent symptoms")
             }
         }
         
         let limitedSymptoms = Array(deduplicatedSymptoms.prefix(limit))
-        print("✅ SymptomRepository: Total recent symptoms after deduplication: \(limitedSymptoms.count)")
         
         return limitedSymptoms
     }
@@ -563,7 +508,6 @@ class MedicationRepository: BaseFirebaseRepository<MedicationRecord> {
             }
             all.append(contentsOf: local)
         } catch {
-            print("⚠️ MedicationRepository: local query failed: \(error)")
         }
 
         // Firestore (public medications, if any)
@@ -576,7 +520,6 @@ class MedicationRepository: BaseFirebaseRepository<MedicationRecord> {
             }
             all.append(contentsOf: remote)
         } catch {
-            print("⚠️ MedicationRepository: Firestore query failed: \(error)")
         }
 
         return deduplicated(all.filter { $0.isActive }, sortedBy: { $0.startDate < $1.startDate })
@@ -592,7 +535,6 @@ class MedicationRepository: BaseFirebaseRepository<MedicationRecord> {
             }
             all.append(contentsOf: local)
         } catch {
-            print("⚠️ MedicationRepository: local query failed: \(error)")
         }
 
         do {
@@ -603,7 +545,6 @@ class MedicationRepository: BaseFirebaseRepository<MedicationRecord> {
             }
             all.append(contentsOf: remote)
         } catch {
-            print("⚠️ MedicationRepository: Firestore query failed: \(error)")
         }
 
         return deduplicated(all, sortedBy: { $0.startDate > $1.startDate })
@@ -647,7 +588,6 @@ class MedicationDoseRepository: BaseFirebaseRepository<MedicationDoseLog> {
             }
             all.append(contentsOf: local.filter { $0.dateTaken >= start && $0.dateTaken < end })
         } catch {
-            print("⚠️ MedicationDoseRepository: local query failed: \(error)")
         }
 
         do {
@@ -660,7 +600,6 @@ class MedicationDoseRepository: BaseFirebaseRepository<MedicationDoseLog> {
             }
             all.append(contentsOf: remote)
         } catch {
-            print("⚠️ MedicationDoseRepository: Firestore query failed: \(error)")
         }
 
         return deduplicated(all, ascending: true)
@@ -676,7 +615,6 @@ class MedicationDoseRepository: BaseFirebaseRepository<MedicationDoseLog> {
             }
             all.append(contentsOf: local)
         } catch {
-            print("⚠️ MedicationDoseRepository: local query failed: \(error)")
         }
 
         do {
@@ -688,7 +626,6 @@ class MedicationDoseRepository: BaseFirebaseRepository<MedicationDoseLog> {
             }
             all.append(contentsOf: remote)
         } catch {
-            print("⚠️ MedicationDoseRepository: Firestore query failed: \(error)")
         }
 
         return Array(deduplicated(all, ascending: false).prefix(limit))

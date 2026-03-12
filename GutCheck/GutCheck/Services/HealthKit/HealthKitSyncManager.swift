@@ -41,7 +41,6 @@ class HealthKitSyncManager: ObservableObject {
     func syncIfNeeded() async {
         guard UserDefaults.standard.bool(forKey: authorizedKey) else { return }
         guard UserDefaults.standard.bool(forKey: "healthKitSyncEnabled") else {
-            print("ℹ️ HealthKitSyncManager: Skipping — sync disabled by user preference")
             return
         }
         guard HKHealthStore.isHealthDataAvailable() else { return }
@@ -50,12 +49,10 @@ class HealthKitSyncManager: ObservableObject {
         let lastSync = UserDefaults.standard.double(forKey: lastSyncKey)
 
         guard now - lastSync >= syncInterval else {
-            print("ℹ️ HealthKitSyncManager: Skipping — synced \(Int((now - lastSync) / 60)) min ago")
             return
         }
 
         guard let data = await HealthKitAsyncWrapper.shared.fetchUserHealthData() else {
-            print("⚠️ HealthKitSyncManager: No data returned from HealthKit")
             return
         }
 
@@ -63,13 +60,11 @@ class HealthKitSyncManager: ObservableObject {
         UserDefaults.standard.set(now, forKey: lastSyncKey)
 
         guard hasChanges(data) else {
-            print("ℹ️ HealthKitSyncManager: No changes detected in HealthKit data")
             return
         }
 
         saveSnapshot(data)
         latestHealthData = data
-        print("✅ HealthKitSyncManager: Health data updated — changes detected")
     }
 
     // MARK: - Change Detection

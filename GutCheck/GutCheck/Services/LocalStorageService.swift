@@ -124,13 +124,11 @@ class LocalStorageService {
             // Encode the data
             let data = try JSONEncoder().encode(item)
             #if DEBUG
-            print("🔒 Encoding data for storage: \(type)/\(id), size: \(data.count) bytes")
             #endif
 
             // Encrypt the data
             let encryptedData = try encrypt(data, using: encryptionKey)
             #if DEBUG
-            print("🔒 Data encrypted successfully: \(encryptedData.count) bytes")
             #endif
 
             // Create file path
@@ -141,18 +139,14 @@ class LocalStorageService {
             try encryptedData.write(to: fileURL)
 
             #if DEBUG
-            print("🔒 Stored private data: \(type)/\(id) (encrypted)")
             #endif
         } catch let error as LocalStorageError {
             #if DEBUG
-            print("❌ LocalStorage error: \(error)")
             #endif
             throw error
         } catch {
             #if DEBUG
-            print("❌ Unexpected error during encryption/storage: \(error)")
             if let cryptoError = error as? CryptoKitError {
-                print("🔐 CryptoKit error code: \(cryptoError)")
             }
             #endif
             throw LocalStorageError.encryptionFailed
@@ -179,7 +173,6 @@ class LocalStorageService {
             // Check if file exists
             guard fileManager.fileExists(atPath: fileURL.path) else {
                 #if DEBUG
-                print("🔍 File not found: \(fileName)")
                 #endif
                 return nil
             }
@@ -187,32 +180,26 @@ class LocalStorageService {
             // Read encrypted data
             let encryptedData = try Data(contentsOf: fileURL)
             #if DEBUG
-            print("🔓 Reading encrypted data: \(fileName), size: \(encryptedData.count) bytes")
             #endif
 
             // Decrypt the data
             let decryptedData = try decrypt(encryptedData, using: encryptionKey)
             #if DEBUG
-            print("🔓 Data decrypted successfully: \(decryptedData.count) bytes")
             #endif
 
             // Decode the data
             let item = try JSONDecoder().decode(itemType, from: decryptedData)
 
             #if DEBUG
-            print("🔓 Retrieved private data: \(type)/\(id) (decrypted)")
             #endif
             return item
         } catch let error as LocalStorageError {
             #if DEBUG
-            print("❌ LocalStorage error during retrieval: \(error)")
             #endif
             throw error
         } catch {
             #if DEBUG
-            print("❌ Unexpected error during decryption/retrieval: \(error)")
             if let cryptoError = error as? CryptoKitError {
-                print("🔐 CryptoKit error code: \(cryptoError)")
             }
             #endif
             throw LocalStorageError.decryptionFailed
@@ -231,7 +218,6 @@ class LocalStorageService {
         if fileManager.fileExists(atPath: fileURL.path) {
             try fileManager.removeItem(at: fileURL)
             #if DEBUG
-            print("🗑️ Deleted private data: \(type)/\(id)")
             #endif
         }
     }
@@ -249,7 +235,6 @@ class LocalStorageService {
             return Array(Set(types)) // Remove duplicates
         } catch {
             #if DEBUG
-            print("❌ Error listing private data types: \(error)")
             #endif
             return []
         }
@@ -269,12 +254,10 @@ class LocalStorageService {
                 return nil
             }
             #if DEBUG
-            print("🔍 Found \(typeFiles.count) files for type: \(type)")
             #endif
             return typeFiles
         } catch {
             #if DEBUG
-            print("❌ Error listing private data files for type \(type): \(error)")
             #endif
             return []
         }
@@ -289,7 +272,6 @@ class LocalStorageService {
         }
 
         #if DEBUG
-        print("🗑️ Cleared all private data")
         #endif
     }
     
@@ -304,7 +286,6 @@ class LocalStorageService {
         resetKeychainKey()
 
         #if DEBUG
-        print("✅ Encryption reset and data cleared")
         #endif
     }
     

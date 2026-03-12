@@ -64,14 +64,12 @@ open class BaseViewModel: ObservableObject {
     func handleError(_ error: Error) {
         errorMessage = error.localizedDescription
         showingErrorAlert = true
-        print("❌ Error in \(String(describing: type(of: self))): \(error)")
     }
     
     /// Handle success consistently
     func handleSuccess(message: String? = nil) {
         errorMessage = nil
         if let message = message {
-            print("✅ Success in \(String(describing: type(of: self))): \(message)")
         }
     }
     

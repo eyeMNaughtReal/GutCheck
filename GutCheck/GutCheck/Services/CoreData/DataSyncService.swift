@@ -60,7 +60,6 @@ class DataSyncService: ObservableObject {
             syncProgress = 1.0
             
         } catch {
-            print("Full sync failed: \(error)")
             throw error
         }
     }
@@ -302,7 +301,6 @@ class DataSyncService: ObservableObject {
                     // Wait 15 minutes before next sync
                     try await Task.sleep(for: .seconds(15 * 60))
                 } catch {
-                    print("Background sync failed: \(error)")
                     // Wait 5 minutes before retry on failure
                     try await Task.sleep(for: .seconds(5 * 60))
                 }

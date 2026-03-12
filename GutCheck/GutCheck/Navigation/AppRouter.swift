@@ -63,11 +63,9 @@ class AppRouter: ObservableObject {
     
     // Navigation methods
     func navigateTo(_ destination: AppDestination) {
-        print("🧭 AppRouter: Navigating to \(destination)")
         
         // Prevent duplicate navigation while one is in progress
         guard !isNavigating else {
-            print("🧭 AppRouter: Navigation already in progress, skipping \(destination)")
             return
         }
         
@@ -135,15 +133,11 @@ class AppRouter: ObservableObject {
     }
     
     func viewMealDetails(id: String) {
-        print("🧭 AppRouter: viewMealDetails called with ID: \(id)")
         navigateTo(.mealDetail(id))
-        print("🧭 AppRouter: Navigating to meal detail: \(id)")
     }
     
     func viewSymptomDetails(id: String) {
-        print("🧭 AppRouter: viewSymptomDetails called with ID: \(id)")
         navigateTo(.symptomDetail(id))
-        print("🧭 AppRouter: Navigating to symptom detail: \(id)")
     }
     
     func showProfile() {

@@ -87,7 +87,6 @@ class CategoryInsightsViewModel: ObservableObject {
             
         } catch {
             self.error = error.localizedDescription
-            print("❌ Error loading category insights: \(error)")
         }
         
         isLoading = false
@@ -100,7 +99,6 @@ class CategoryInsightsViewModel: ObservableObject {
         } else {
             // Fallback to a default if no user is authenticated
             // This should rarely happen in a properly authenticated app
-            print("⚠️ CategoryInsightsViewModel: No authenticated user found, using default user ID")
             return "default_user"
         }
     }

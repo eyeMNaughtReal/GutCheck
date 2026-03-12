@@ -130,7 +130,6 @@ struct DashboardView: View {
             dashboardStore.loadDataForSelectedDate()
         }
         .onChange(of: refreshManager.refreshToken) { _, _ in
-            print("📱 DashboardView: Refresh triggered by RefreshManager")
             loadDataIfAuthenticated()
         }
     }
@@ -141,11 +140,9 @@ struct DashboardView: View {
     /// This method ensures data is only loaded for authenticated users
     private func loadDataIfAuthenticated() {
         guard authService.isAuthenticated, authService.currentUser != nil else {
-            print("📱 DashboardView: Cannot load data - user not authenticated or currentUser nil")
             return
         }
         
-        print("📱 DashboardView: Loading data for \(dashboardStore.selectedDate)")
         recentActivityViewModel.loadRecentActivity(for: dashboardStore.selectedDate, authService: authService)
     }
 }

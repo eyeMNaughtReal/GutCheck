@@ -40,7 +40,6 @@ class UnifiedDataService: ObservableObject {
     /// - Parameter item: The data item to save
     /// - Throws: Storage or encryption errors
     func save<T: DataClassifiable & Codable>(_ item: T) async throws {
-        print("🔄 UnifiedDataService: Saving item with privacy level: \(item.privacyLevel)")
         
         switch item.privacyLevel {
         case .private, .confidential:
@@ -60,17 +59,14 @@ class UnifiedDataService: ObservableObject {
     /// - Returns: The retrieved data item
     /// - Throws: Storage or decryption errors
     func fetch<T: DataClassifiable & Codable>(_ type: T.Type, id: String) async throws -> T? {
-        print("🔄 UnifiedDataService: Fetching item with ID: \(id)")
         
         // Try private storage first (for sensitive data)
         if let privateItem = try await privateStorage.retrievePrivateData(type: String(describing: type), id: id, as: type) {
-            print("🔒 Retrieved from private storage: \(id)")
             return privateItem
         }
         
         // For now, we'll need to implement cloud storage fetching
         // This is a simplified approach
-        print("☁️ Cloud storage fetching not yet implemented")
         return nil
     }
     
@@ -80,13 +76,11 @@ class UnifiedDataService: ObservableObject {
     ///   - id: The unique identifier
     /// - Throws: Storage errors
     func delete<T: DataClassifiable>(_ type: T.Type, id: String) async throws {
-        print("🔄 UnifiedDataService: Deleting item with ID: \(id)")
         
         // Delete from private storage
         try await privateStorage.deletePrivateData(type: String(describing: type), id: id)
         
         // TODO: Delete from cloud storage when implemented
-        print("✅ Deleted item from private storage: \(id)")
     }
     
     /// Query data from appropriate storage based on privacy requirements
@@ -96,21 +90,17 @@ class UnifiedDataService: ObservableObject {
     /// - Returns: Array of matching data items
     /// - Throws: Storage or decryption errors
     func query<T: DataClassifiable & Codable>(_ type: T.Type, queryBuilder: (Query) -> Query) async throws -> [T] {
-        print("🔄 UnifiedDataService: Querying data of type: \(String(describing: type))")
         
         var results: [T] = []
         
         // Query private storage for sensitive data
         let privateTypes = privateStorage.listPrivateDataTypes()
-        print("🔒 Available private data types: \(privateTypes)")
         
         for dataType in privateTypes {
             if dataType == String(describing: type) {
-                print("🔒 Querying private storage for type: \(dataType)")
                 
                 // Get all private data files for this type
                 let privateDataFiles = try await privateStorage.listPrivateDataFiles(for: dataType)
-                print("🔒 Found \(privateDataFiles.count) private data files for type: \(dataType)")
                 
                 // Load and decode each private data item
                 for fileName in privateDataFiles {
@@ -118,19 +108,15 @@ class UnifiedDataService: ObservableObject {
                         let id = fileName.replacingOccurrences(of: "\(dataType)_", with: "").replacingOccurrences(of: ".encrypted", with: "")
                         if let item = try await privateStorage.retrievePrivateData(type: dataType, id: id, as: type) {
                             results.append(item)
-                            print("🔒 Successfully loaded private data: \(dataType)/\(id)")
                         }
                     } catch {
-                        print("⚠️ Failed to load private data from file \(fileName): \(error)")
                     }
                 }
             }
         }
         
         // TODO: Query cloud storage for public data
-        print("☁️ Cloud storage querying not yet implemented")
         
-        print("✅ Query completed. Found \(results.count) items")
         return results
     }
     
@@ -144,7 +130,6 @@ class UnifiedDataService: ObservableObject {
         let id = (item as? any Identifiable)?.id as? String ?? UUID().uuidString
         
         try await privateStorage.storePrivateData(item, type: type, id: id)
-        print("🔒 Stored in private storage: \(type)/\(id)")
     }
     
     /// Store data in cloud storage
@@ -152,7 +137,6 @@ class UnifiedDataService: ObservableObject {
     /// - Throws: Cloud storage errors
     private func storeCloudData<T: Codable>(_ item: T) async throws {
         // TODO: Implement cloud storage when Firebase integration is ready
-        print("☁️ Cloud storage not yet implemented for: \(String(describing: type(of: item)))")
     }
 }
 

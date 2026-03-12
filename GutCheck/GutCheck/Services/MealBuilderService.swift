@@ -41,7 +41,6 @@ class MealBuilderService: ObservableObject {
     
     /// Add a food item to the current meal being built
     func addFoodItem(_ item: FoodItem) {
-        Swift.print("📝 MealBuilderService: Adding food item '\(item.name)' to meal")
         currentMeal.append(item)
         isBuilding = true
         
@@ -56,7 +55,6 @@ class MealBuilderService: ObservableObject {
     
     /// Remove a food item from the current meal
     func removeFoodItem(_ item: FoodItem) {
-        Swift.print("🗑️ MealBuilderService: Removing food item '\(item.name)' from meal")
         currentMeal.removeAll { $0.id == item.id }
         
         if currentMeal.isEmpty {
@@ -66,7 +64,6 @@ class MealBuilderService: ObservableObject {
     
     /// Update an existing food item in the current meal
     func updateFoodItem(_ item: FoodItem) {
-        Swift.print("✏️ MealBuilderService: Updating food item '\(item.name)'")
         if let index = currentMeal.firstIndex(where: { $0.id == item.id }) {
             currentMeal[index] = item
         }
@@ -74,7 +71,6 @@ class MealBuilderService: ObservableObject {
     
     /// Replace all food items in the current meal
     func setFoodItems(_ items: [FoodItem]) {
-        Swift.print("📋 MealBuilderService: Setting \(items.count) food items")
         currentMeal = items
         isBuilding = !items.isEmpty
     }
@@ -83,7 +79,6 @@ class MealBuilderService: ObservableObject {
     
     /// Start building a new meal (clears current state)
     func startNewMeal(type: MealType = .lunch) {
-        Swift.print("🆕 MealBuilderService: Starting new \(type.rawValue) meal")
         clearMeal()
         mealType = type
         mealDate = Date.now
@@ -92,7 +87,6 @@ class MealBuilderService: ObservableObject {
     
     /// Clear the current meal being built
     func clearMeal() {
-        Swift.print("🧹 MealBuilderService: Clearing current meal")
         currentMeal.removeAll()
         mealName = ""
         notes = ""
@@ -106,10 +100,8 @@ class MealBuilderService: ObservableObject {
     /// Load an existing meal into the builder for editing.
     func loadMeal(id: String) async throws {
         guard let meal = try await mealRepository.fetch(id: id) else {
-            Swift.print("⚠️ MealBuilderService: No meal found with id \(id)")
             return
         }
-        Swift.print("✏️ MealBuilderService: Loaded meal '\(meal.name)' for editing")
         clearMeal()
         editingMealId = meal.id
         mealName = meal.name
@@ -145,7 +137,6 @@ class MealBuilderService: ObservableObject {
             createdBy: userId
         )
         
-        Swift.print("💾 MealBuilderService: Saving meal '\(meal.name)' with \(meal.foodItems.count) items")
         
         try await mealRepository.save(meal)
         

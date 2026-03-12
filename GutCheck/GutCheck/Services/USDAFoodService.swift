@@ -28,7 +28,6 @@ class USDAFoodService {
         request.setValue(apiKey, forHTTPHeaderField: "X-Api-Key")
 
         #if DEBUG
-        print("🥗 USDA: Searching for '\(query)'")
         #endif
 
         do {
@@ -36,7 +35,6 @@ class USDAFoodService {
 
             if let httpResponse = response as? HTTPURLResponse {
                 #if DEBUG
-                print("🥗 USDA HTTP Status: \(httpResponse.statusCode)")
                 #endif
                 switch httpResponse.statusCode {
                 case 200: break
@@ -47,20 +45,17 @@ class USDAFoodService {
 
             let searchResponse = try JSONDecoder().decode(USDASearchResponse.self, from: data)
             #if DEBUG
-            print("🥗 USDA: Found \(searchResponse.foods.count) foods")
             #endif
             return searchResponse.foods
 
         } catch let decodingError as DecodingError {
             #if DEBUG
-            print("🥗 USDA JSON decoding error: \(decodingError)")
             #endif
             throw USDAFoodError.decodingError(decodingError)
         } catch let usdaError as USDAFoodError {
             throw usdaError
         } catch {
             #if DEBUG
-            print("🥗 USDA search error: \(error)")
             #endif
             throw USDAFoodError.networkError(error)
         }

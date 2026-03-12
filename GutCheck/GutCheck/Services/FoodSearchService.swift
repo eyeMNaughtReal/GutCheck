@@ -24,7 +24,6 @@ class FoodSearchService: ObservableObject, HasLoadingState {
             loadingState.clearError()
         } catch {
             #if DEBUG
-            print("❌ FoodSearchService: Search failed with error: \(error)")
             #endif
             loadingState.setError(error.localizedDescription)
         }
@@ -34,7 +33,6 @@ class FoodSearchService: ObservableObject, HasLoadingState {
 
     private func performSearch(query: String) async throws {
         #if DEBUG
-        print("🔍 FoodSearchService: Starting parallel search for '\(query)'")
         #endif
 
         // Launch both searches concurrently
@@ -44,7 +42,6 @@ class FoodSearchService: ObservableObject, HasLoadingState {
         let (usda, off) = await (usdaResults, offResults)
 
         #if DEBUG
-        print("🔍 USDA returned: \(usda.count) | OpenFoodFacts returned: \(off.count)")
         #endif
 
         // USDA first so its results take priority during deduplication
@@ -67,7 +64,6 @@ class FoodSearchService: ObservableObject, HasLoadingState {
         }
 
         #if DEBUG
-        print("🔍 Search complete. Final results count: \(results.count)")
         #endif
     }
 
@@ -79,7 +75,6 @@ class FoodSearchService: ObservableObject, HasLoadingState {
             return foods.map { usdaFoodService.convertToFoodSearchResult($0) }
         } catch {
             #if DEBUG
-            print("🔍 USDA search failed (continuing with OpenFoodFacts): \(error.localizedDescription)")
             #endif
             return []
         }
@@ -91,7 +86,6 @@ class FoodSearchService: ObservableObject, HasLoadingState {
             return products.map { openFoodFactsService.convertToFoodSearchResult($0) }
         } catch {
             #if DEBUG
-            print("🔍 OpenFoodFacts search failed: \(error.localizedDescription)")
             #endif
             return []
         }
@@ -135,7 +129,6 @@ class FoodSearchService: ObservableObject, HasLoadingState {
             return enhancedItem
         } catch {
             #if DEBUG
-            print("⚠️ FoodSearchService: Could not fetch ingredients for '\(foodItem.name)': \(error)")
             #endif
             return foodItem
         }

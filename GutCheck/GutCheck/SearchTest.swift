@@ -50,16 +50,13 @@ struct SearchTestView: View {
     }
     
     private func testSearch() async {
-        print("🔍 Starting search test...")
         isLoading = true
         errorMessage = ""
         testResults = []
         
-        print("🔍 Calling searchFoods with query: 'apple'")
         await searchService.searchFoods(query: "apple")
         
         await MainActor.run {
-            print("🔍 Search completed with \(searchService.results.count) results")
             self.testResults = searchService.results
             self.isLoading = false
         }

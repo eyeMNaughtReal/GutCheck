@@ -54,7 +54,6 @@ class HealthKitMedicationService: ObservableObject {
     /// - Returns: True if authorization granted, false otherwise
     func requestMedicationAuthorization() async -> Bool {
         guard HKHealthStore.isHealthDataAvailable() else {
-            print("HealthKit is not available on this device")
             return false
         }
         
@@ -69,7 +68,6 @@ class HealthKitMedicationService: ObservableObject {
             await startObservingMedications()
             return true
         } catch {
-            print("Failed to request medication authorization: \(error)")
             return false
         }
     }
@@ -101,7 +99,6 @@ class HealthKitMedicationService: ObservableObject {
         // Create observer query that triggers on any medication record change
         let query = HKObserverQuery(sampleType: medicationType, predicate: nil) { [weak self] _, completion, error in
             if let error = error {
-                print("Medication observer error: \(error)")
                 completion()
                 return
             }
@@ -137,9 +134,7 @@ class HealthKitMedicationService: ObservableObject {
         
         do {
             try await healthStore.enableBackgroundDelivery(for: medicationType, frequency: .immediate)
-            print("Enabled background delivery for medication records")
         } catch {
-            print("Failed to enable background delivery for medication records: \(error)")
         }
     }
     
@@ -168,7 +163,6 @@ class HealthKitMedicationService: ObservableObject {
                 self.lastUpdateTime = Date.now
             }
         } catch {
-            print("Failed to fetch medications: \(error)")
         }
     }
     
@@ -196,7 +190,6 @@ class HealthKitMedicationService: ObservableObject {
                 sortDescriptors: [sortDescriptor]
             ) { [weak self] _, samples, error in
                 if let error = error {
-                    print("Query error for medication records: \(error)")
                     continuation.resume(throwing: error)
                     return
                 }

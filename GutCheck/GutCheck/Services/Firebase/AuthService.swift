@@ -315,7 +315,6 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
         
         do {
             try await currentFirebaseUser.reauthenticate(with: credential)
-            print("🔐 AuthService: User re-authenticated successfully")
         } catch {
             errorMessage = handleAuthError(error)
             throw error
@@ -356,15 +355,12 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
         
         do {
             // Step 1: Re-authenticate before deletion
-            print("🔐 AuthService: Re-authenticating user before account deletion")
             try await currentFirebaseUser.reauthenticate(with: credential)
             
             // Step 2: Delete user data from Firestore
-            print("🗑️ AuthService: Deleting user data from Firestore")
             try await deleteUserData(userId: currentFirebaseUser.uid)
             
             // Step 3: Delete the Firebase Auth account
-            print("🗑️ AuthService: Deleting Firebase Auth account")
             try await currentFirebaseUser.delete()
             
             // Step 4: Clear local state
@@ -372,10 +368,8 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
             currentUser = nil
             isAuthenticated = false
             
-            print("✅ AuthService: Account deleted successfully")
         } catch {
             errorMessage = error.localizedDescription
-            print("❌ AuthService: Failed to delete account: \(error)")
             throw error
         }
     }
@@ -393,17 +387,14 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
         defer { isLoading = false }
         
         do {
-            print("🗑️ AuthService: Deleting user data from Firestore")
             try await deleteUserData(userId: currentFirebaseUser.uid)
             
-            print("🗑️ AuthService: Deleting Firebase Auth account")
             try await currentFirebaseUser.delete()
             
             authUser = nil
             currentUser = nil
             isAuthenticated = false
             
-            print("✅ AuthService: Account deleted successfully")
         } catch {
             errorMessage = error.localizedDescription
             throw error
@@ -583,15 +574,12 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
     
     private func loadCurrentUser(userId: String) async {
         do {
-            print("👤 AuthService: Loading user data for \(userId)")
             let document = try await FirebaseManager.shared.userDocument(userId).getDocument()
             if let data = document.data() {
                 let user = try parseUser(from: data, id: userId)
-                print("👤 AuthService: Loaded user - profileImageURL: \(user.profileImageURL ?? "nil")")
                 currentUser = user
             }
         } catch {
-            print("Error loading user profile: \(error)")
         }
     }
     
@@ -732,7 +720,6 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
         }
 
         #if DEBUG
-        print("🗑️ AuthService: Deleted \(documentsToDelete.count) Firestore documents for user \(userId)")
         #endif
     }
     
@@ -771,10 +758,8 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
     /// Refresh the current user data from Firestore
     func refreshCurrentUser() async {
         guard let userId = authUser?.uid else { 
-            print("🔄 AuthService: No authUser.uid available for refresh")
             return 
         }
-        print("🔄 AuthService: Refreshing current user data...")
         await loadCurrentUser(userId: userId)
     }
 }
