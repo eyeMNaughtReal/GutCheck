@@ -26,7 +26,7 @@ struct MedicationListView: View {
         .navigationTitle("My Medications")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     viewModel.showingAddMedication = true
                 } label: {

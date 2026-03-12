@@ -217,7 +217,7 @@ struct HealthKitPermissionExplanationView: View {
             .navigationTitle("HealthKit Integration")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }

@@ -462,7 +462,7 @@ struct DateTimePickerView: View {
             .navigationTitle("Select Date & Time")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         HapticManager.shared.light()
                         dismiss()

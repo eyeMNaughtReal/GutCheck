@@ -145,10 +145,10 @@ struct LogMedicationDoseView: View {
 
     @ToolbarContentBuilder
     private var toolbarItems: some ToolbarContent {
-        ToolbarItem(placement: .navigationBarLeading) {
+        ToolbarItem(placement: .topBarLeading) {
             Button("Cancel") { dismiss() }
         }
-        ToolbarItem(placement: .navigationBarTrailing) {
+        ToolbarItem(placement: .topBarTrailing) {
             Group {
                 if viewModel.isSaving {
                     ProgressView()

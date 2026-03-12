@@ -302,7 +302,7 @@ struct AuthenticationView: View {
             .background(ColorTheme.background)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         viewModel.isShowingForgotPassword = false
                     }

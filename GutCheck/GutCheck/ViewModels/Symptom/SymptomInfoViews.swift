@@ -82,7 +82,7 @@ struct BristolStoolInfoView: View {
             .navigationTitle("Bristol Stool Scale")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
@@ -193,7 +193,7 @@ struct PainLevelInfoView: View {
             .navigationTitle("Pain Assessment")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
@@ -285,7 +285,7 @@ struct UrgencyLevelInfoView: View {
             .navigationTitle("Urgency Assessment")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }

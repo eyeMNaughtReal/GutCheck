@@ -225,7 +225,7 @@ struct HealthDataIntegrationView: View {
             }
             .navigationTitle("Apple Health")
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Close") { dismiss() }
                 }
             }
@@ -329,7 +329,7 @@ struct HealthKitPermissionsGuideView: View {
             .navigationTitle("Health App Settings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button {
                         dismiss()
                     } label: {
