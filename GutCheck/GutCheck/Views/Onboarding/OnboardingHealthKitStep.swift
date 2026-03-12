@@ -53,7 +53,7 @@ struct OnboardingHealthKitStep: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.primary)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 .disabled(isRequesting)
                 
                 Button("Learn More") {
@@ -95,7 +95,7 @@ struct OnboardingHealthKitStep: View {
         }
         .padding(16)
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private func healthKitBenefit(_ icon: String, _ title: String, _ description: String) -> some View {
@@ -145,7 +145,7 @@ struct OnboardingHealthKitStep: View {
         }
         .padding(16)
         .background(ColorTheme.success.opacity(0.1))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private func requestHealthKitPermission() {
@@ -209,7 +209,7 @@ struct HealthKitPermissionExplanationView: View {
                     }
                     .padding(16)
                     .background(ColorTheme.cardBackground)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 32)
@@ -257,6 +257,6 @@ struct HealthKitPermissionExplanationView: View {
         }
         .padding(16)
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 }

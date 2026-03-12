@@ -50,7 +50,7 @@ struct MealLoggingOptionsView: View {
                         .padding()
                         .background(ColorTheme.accent)
                         .foregroundStyle(.white)
-                        .cornerRadius(12)
+                        .clipShape(.rect(cornerRadius: 12))
                     }
                     
                     Button(action: {
@@ -62,7 +62,7 @@ struct MealLoggingOptionsView: View {
                             .padding()
                             .background(ColorTheme.surface)
                             .foregroundStyle(ColorTheme.primaryText)
-                            .cornerRadius(12)
+                            .clipShape(.rect(cornerRadius: 12))
                     }
                 }
                 .padding(.horizontal, 24)

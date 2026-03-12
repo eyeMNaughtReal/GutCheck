@@ -121,7 +121,7 @@ struct PermissionRequestView: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 4)
                         .background(ColorTheme.surface)
-                        .cornerRadius(8)
+                        .clipShape(.rect(cornerRadius: 8))
                 }
                 
                 Text(permissionType.description)
@@ -164,7 +164,7 @@ struct PermissionRequestView: View {
         }
         .padding(16)
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     // MARK: - Permission Status View
@@ -192,7 +192,7 @@ struct PermissionRequestView: View {
         }
         .padding(12)
         .background(status.statusColor.opacity(0.1))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
     
     // MARK: - Completion View
@@ -242,7 +242,7 @@ struct PermissionRequestView: View {
         }
         .padding(16)
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     // MARK: - Bottom Action View
@@ -271,7 +271,7 @@ struct PermissionRequestView: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(ColorTheme.primary)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                     .disabled(isRequestingPermissions)
                     
                     if !permissionType.isRequired {
@@ -290,7 +290,7 @@ struct PermissionRequestView: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(ColorTheme.primary)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                 }
             } else {
                 // Completion button
@@ -302,7 +302,7 @@ struct PermissionRequestView: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.primary)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
             }
         }
         .padding(.horizontal, 24)

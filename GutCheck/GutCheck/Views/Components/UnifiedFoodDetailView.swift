@@ -71,7 +71,7 @@ struct UnifiedFoodDetailView: View {
         }
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
     }
     
@@ -205,7 +205,7 @@ struct UnifiedFoodDetailView: View {
             }
             .padding()
             .background(ColorTheme.surface)
-            .cornerRadius(12)
+            .clipShape(.rect(cornerRadius: 12))
             
             Text("Per \(customQuantity)")
                 .font(.subheadline)
@@ -257,7 +257,7 @@ struct UnifiedFoodDetailView: View {
             }
             .padding()
             .background(ColorTheme.cardBackground)
-            .cornerRadius(12)
+            .clipShape(.rect(cornerRadius: 12))
             .shadow(color: ColorTheme.shadowColor, radius: 2, x: 0, y: 1)
         }
     }
@@ -349,7 +349,7 @@ struct UnifiedFoodDetailView: View {
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color.green.opacity(0.1))
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
             } else {
                 LazyVGrid(columns: [
                     GridItem(.flexible()),
@@ -363,7 +363,7 @@ struct UnifiedFoodDetailView: View {
         }
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 2, x: 0, y: 1)
     }
     
@@ -447,7 +447,7 @@ struct UnifiedFoodDetailView: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.accent)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
         }
         .padding(.top)
     }
@@ -625,7 +625,7 @@ struct HealthIndicatorBadge: View {
             RoundedRectangle(cornerRadius: 8)
                 .stroke(indicator.severity.borderColor.opacity(0.3), lineWidth: 1)
         )
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
         .onTapGesture {
             showingDetail = true
         }
@@ -680,7 +680,7 @@ struct DetailSectionRow: View {
         }
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 2, x: 0, y: 1)
     }
 }
@@ -740,7 +740,7 @@ struct NutritionDetailsView: View {
                     }
                     .padding()
                     .background(ColorTheme.cardBackground)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                     
                     // Additional nutrition details (remaining items)
                     if !remainingNutritionDetails.isEmpty {
@@ -760,7 +760,7 @@ struct NutritionDetailsView: View {
                         }
                         .padding()
                         .background(ColorTheme.cardBackground)
-                        .cornerRadius(12)
+                        .clipShape(.rect(cornerRadius: 12))
                     }
                 }
                 .padding()
@@ -881,7 +881,7 @@ struct NutritionDetailsView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
         .background(ColorTheme.surface)
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 
@@ -910,7 +910,7 @@ struct NutritionDetailItem: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
         .background(ColorTheme.surface)
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
     
     private var formattedLabel: String {
@@ -1126,7 +1126,7 @@ struct AllergensView: View {
                                 }
                                 .padding()
                                 .background(ColorTheme.error.opacity(0.1))
-                                .cornerRadius(12)
+                                .clipShape(.rect(cornerRadius: 12))
                                 .padding(.horizontal)
                             }
                         }
@@ -1187,7 +1187,7 @@ struct AllergensView: View {
                                 }
                                 .padding()
                                 .background(indicator.color.opacity(0.1))
-                                .cornerRadius(12)
+                                .clipShape(.rect(cornerRadius: 12))
                                 .padding(.horizontal)
                             }
                         }

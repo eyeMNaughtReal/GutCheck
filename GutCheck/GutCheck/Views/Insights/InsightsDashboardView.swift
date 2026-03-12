@@ -349,7 +349,7 @@ struct StatCard: View {
         .frame(maxWidth: .infinity)
         .padding()
         .background(Color(.systemBackground))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 }
@@ -395,7 +395,7 @@ struct CategoryFilterButton: View {
                 .padding(.vertical, 8)
                 .background(isSelected ? Color.accentColor : Color(.systemGray6))
                 .foregroundStyle(isSelected ? .white : .primary)
-                .cornerRadius(20)
+                .clipShape(.rect(cornerRadius: 20))
         }
     }
 }
@@ -544,7 +544,7 @@ struct InsightCard: View {
         }
         .padding()
         .background(Color(.systemBackground))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 }

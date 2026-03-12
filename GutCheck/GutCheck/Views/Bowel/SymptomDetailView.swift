@@ -144,7 +144,7 @@ struct SymptomDetailView: View {
             .frame(width: 58)
             .padding(.vertical, 10)
             .background(ColorTheme.primary.opacity(0.1))
-            .cornerRadius(12)
+            .clipShape(.rect(cornerRadius: 12))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(viewModel.entity.date.formatted(.dateTime.weekday(.wide)))
@@ -167,7 +167,7 @@ struct SymptomDetailView: View {
         }
         .padding(16)
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
     }
 
@@ -209,7 +209,7 @@ struct SymptomDetailView: View {
             )
         }
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
     }
 
@@ -228,7 +228,7 @@ struct SymptomDetailView: View {
             }
         }
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
     }
 
@@ -246,7 +246,7 @@ struct SymptomDetailView: View {
                 .foregroundStyle(iconColor)
                 .frame(width: 28, height: 28)
                 .background(iconColor.opacity(0.12))
-                .cornerRadius(8)
+                .clipShape(.rect(cornerRadius: 8))
 
             Text(label)
                 .font(.subheadline)
@@ -268,7 +268,7 @@ struct SymptomDetailView: View {
                     .foregroundStyle(ColorTheme.info)
                     .frame(width: 28, height: 28)
                     .background(ColorTheme.info.opacity(0.12))
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
 
                 Text("Notes")
                     .font(.subheadline)
@@ -293,7 +293,7 @@ struct SymptomDetailView: View {
                     .foregroundStyle(ColorTheme.secondary)
                     .frame(width: 28, height: 28)
                     .background(ColorTheme.secondary.opacity(0.12))
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
 
                 Text("Tags")
                     .font(.subheadline)
@@ -310,7 +310,7 @@ struct SymptomDetailView: View {
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                             .background(ColorTheme.primary.opacity(0.12))
-                            .cornerRadius(20)
+                            .clipShape(.rect(cornerRadius: 20))
                     }
                 }
                 .padding(.leading, 40)
@@ -336,7 +336,7 @@ struct SymptomDetailView: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
             .background(color.opacity(0.15))
-            .cornerRadius(20)
+            .clipShape(.rect(cornerRadius: 20))
     }
 
     // MARK: - Color Helpers

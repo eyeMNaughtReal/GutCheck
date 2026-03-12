@@ -54,7 +54,7 @@ struct NotificationPermissionView: View {
         }
         .padding(24)
         .background(ColorTheme.cardBackground)
-        .cornerRadius(16)
+        .clipShape(.rect(cornerRadius: 16))
         .onAppear {
             permissionManager.updateAllPermissionStates()
         }
@@ -78,7 +78,7 @@ struct NotificationPermissionView: View {
         }
         .padding(16)
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private func reminderBenefit(_ icon: String, _ title: String, _ description: String) -> some View {
@@ -143,7 +143,7 @@ struct NotificationPermissionView: View {
         }
         .padding(16)
         .background(permissionManager.notificationStatus.statusColor.opacity(0.1))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private var actionButtons: some View {
@@ -166,7 +166,7 @@ struct NotificationPermissionView: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.primary)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 .disabled(isRequesting)
                 
                 Button("Maybe Later") {
@@ -184,7 +184,7 @@ struct NotificationPermissionView: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.primary)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 
                 Button("Continue Without Notifications") {
                     onPermissionResult(false)
@@ -201,7 +201,7 @@ struct NotificationPermissionView: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.success)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
             }
         }
     }

@@ -251,7 +251,7 @@ private struct MedNamePill: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(Color.purple.opacity(0.12))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 

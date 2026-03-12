@@ -72,7 +72,7 @@ struct MealTypeSelectionView: View {
                 }
                 .padding()
                 .background(ColorTheme.cardBackground)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(ColorTheme.border, lineWidth: 1)
@@ -113,7 +113,7 @@ struct MealTypeSelectionView: View {
                                 }
                                 .padding()
                                 .background(isSelected ? ColorTheme.primary : ColorTheme.cardBackground)
-                                .cornerRadius(12)
+                                .clipShape(.rect(cornerRadius: 12))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
                                         .stroke(isSelected ? ColorTheme.primary : ColorTheme.border, lineWidth: 1)
@@ -138,7 +138,7 @@ struct MealTypeSelectionView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(ColorTheme.primary)
-                        .cornerRadius(12)
+                        .clipShape(.rect(cornerRadius: 12))
                 }
                 .padding(.bottom)
             }

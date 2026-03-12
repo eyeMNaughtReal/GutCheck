@@ -41,7 +41,7 @@ struct MealDetailView: View {
             .padding(.vertical, 4)
             .background(mealTypeColor(type).opacity(0.2))
             .foregroundStyle(mealTypeColor(type))
-            .cornerRadius(12)
+            .clipShape(.rect(cornerRadius: 12))
     }
     
     private func mealTypeColor(_ type: MealType) -> Color {
@@ -171,7 +171,7 @@ struct MealDetailView: View {
                 Text(notes)
                     .padding()
                     .background(ColorTheme.surface)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                     .padding(.horizontal)
             }
         }
@@ -221,7 +221,7 @@ struct MealDetailView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .padding(.horizontal)
     }
     
@@ -259,7 +259,7 @@ struct MealDetailView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private func nutritionItem(name: String, value: Double?, unit: String, color: Color) -> some View {

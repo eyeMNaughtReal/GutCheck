@@ -52,7 +52,7 @@ struct FoodSearchView: View {
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
                             .background(ColorTheme.accent)
-                            .cornerRadius(8)
+                            .clipShape(.rect(cornerRadius: 8))
                         }
                         .disabled(viewModel.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || serverStatus.isOffline)
                         .accessibleButton(
@@ -187,7 +187,7 @@ struct FoodSearchView: View {
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
                 .background(ColorTheme.primary)
-                .cornerRadius(10)
+                .clipShape(.rect(cornerRadius: 10))
             }
             .accessibleButton(
                 label: "Add Custom Food",
@@ -341,7 +341,7 @@ struct FoodSearchView: View {
                                 .padding()
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(ColorTheme.surface)
-                                .cornerRadius(12)
+                                .clipShape(.rect(cornerRadius: 12))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
                                         .stroke(ColorTheme.border, lineWidth: 1)
@@ -444,7 +444,7 @@ struct FoodItemResultRow: View {
                                     .padding(.vertical, 2)
                                     .background(ColorTheme.error.opacity(0.2))
                                     .foregroundStyle(ColorTheme.error)
-                                    .cornerRadius(4)
+                                    .clipShape(.rect(cornerRadius: 4))
                             }
                             if item.allergens.count > 3 {
                                 Text("+\(item.allergens.count - 3)")
@@ -476,7 +476,7 @@ struct FoodItemResultRow: View {
         }
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 2, x: 0, y: 1)
         .padding(.horizontal)
     }
@@ -539,7 +539,7 @@ struct SimpleRecentFoodRow: View {
                                 .padding(.vertical, 2)
                                 .background(ColorTheme.accent.opacity(0.2))
                                 .foregroundStyle(ColorTheme.accent)
-                                .cornerRadius(4)
+                                .clipShape(.rect(cornerRadius: 4))
                         }
                         
                         if let protein = item.nutrition.protein {
@@ -549,7 +549,7 @@ struct SimpleRecentFoodRow: View {
                                 .padding(.vertical, 2)
                                 .background(Color.blue.opacity(0.2))
                                 .foregroundStyle(.blue)
-                                .cornerRadius(4)
+                                .clipShape(.rect(cornerRadius: 4))
                         }
                         
                         if let carbs = item.nutrition.carbs {
@@ -559,7 +559,7 @@ struct SimpleRecentFoodRow: View {
                                 .padding(.vertical, 2)
                                 .background(Color.green.opacity(0.2))
                                 .foregroundStyle(.green)
-                                .cornerRadius(4)
+                                .clipShape(.rect(cornerRadius: 4))
                         }
                         
                         if let fat = item.nutrition.fat {
@@ -569,7 +569,7 @@ struct SimpleRecentFoodRow: View {
                                 .padding(.vertical, 2)
                                 .background(Color.red.opacity(0.2))
                                 .foregroundStyle(.red)
-                                .cornerRadius(4)
+                                .clipShape(.rect(cornerRadius: 4))
                         }
                     }
                     
@@ -583,7 +583,7 @@ struct SimpleRecentFoodRow: View {
                                     .padding(.vertical, 2)
                                     .background(ColorTheme.error.opacity(0.2))
                                     .foregroundStyle(ColorTheme.error)
-                                    .cornerRadius(4)
+                                    .clipShape(.rect(cornerRadius: 4))
                             }
                             if item.allergens.count > 2 {
                                 Text("+\(item.allergens.count - 2)")
@@ -615,7 +615,7 @@ struct SimpleRecentFoodRow: View {
         }
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 2, x: 0, y: 1)
     }
     

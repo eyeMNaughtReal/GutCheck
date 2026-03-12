@@ -86,7 +86,7 @@ struct SocialSignInButton: View {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(provider.borderColor, lineWidth: 1)
             )
-            .cornerRadius(12)
+            .clipShape(.rect(cornerRadius: 12))
             .shadow(color: ColorTheme.shadowColor, radius: 2, x: 0, y: 1)
         }
         .disabled(isLoading)
