@@ -10,48 +10,38 @@ struct AppRoot: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             TabView(selection: $router.selectedTab) {
-                NavigationStack(path: $router.dashboardPath) {
-                    DashboardView()
-                        .withAppNavigationDestinations(router: router, refreshManager: refreshManager)
+                SwiftUI.Tab("Dashboard", systemImage: "house.fill", value: GutCheck.Tab.dashboard) {
+                    NavigationStack(path: $router.dashboardPath) {
+                        DashboardView()
+                            .withAppNavigationDestinations(router: router, refreshManager: refreshManager)
+                    }
                 }
-                .tabItem {
-                    Label("Dashboard", systemImage: "house.fill")
-                }
-                .tag(Tab.dashboard)
-                
-                NavigationStack(path: $router.mealsPath) {
-                    CalendarView(selectedTab: .meals)
-                        .withAppNavigationDestinations(router: router, refreshManager: refreshManager)
-                }
-                .tabItem {
-                    Label("Meals", systemImage: "fork.knife")
-                }
-                .tag(Tab.meals)
-                
-                NavigationStack(path: $router.symptomsPath) {
-                    CalendarView(selectedTab: .symptoms)
-                        .withAppNavigationDestinations(router: router, refreshManager: refreshManager)
-                }
-                .tabItem {
-                    Label("Symptoms", systemImage: "heart.text.square.fill")
-                }
-                .tag(Tab.symptoms)
-                
-                NavigationStack {
-                    MedicationCalendarView()
-                }
-                .tabItem {
-                    Label("Meds", systemImage: "pills.fill")
-                }
-                .tag(Tab.medications)
 
-                NavigationStack {
-                    InsightsView()
+                SwiftUI.Tab("Meals", systemImage: "fork.knife", value: GutCheck.Tab.meals) {
+                    NavigationStack(path: $router.mealsPath) {
+                        CalendarView(selectedTab: .meals)
+                            .withAppNavigationDestinations(router: router, refreshManager: refreshManager)
+                    }
                 }
-                .tabItem {
-                    Label("Insights", systemImage: "chart.bar.fill")
+
+                SwiftUI.Tab("Symptoms", systemImage: "heart.text.square.fill", value: GutCheck.Tab.symptoms) {
+                    NavigationStack(path: $router.symptomsPath) {
+                        CalendarView(selectedTab: .symptoms)
+                            .withAppNavigationDestinations(router: router, refreshManager: refreshManager)
+                    }
                 }
-                .tag(Tab.insights)
+
+                SwiftUI.Tab("Meds", systemImage: "pills.fill", value: GutCheck.Tab.medications) {
+                    NavigationStack {
+                        MedicationCalendarView()
+                    }
+                }
+
+                SwiftUI.Tab("Insights", systemImage: "chart.bar.fill", value: GutCheck.Tab.insights) {
+                    NavigationStack {
+                        InsightsView()
+                    }
+                }
             }
             
             .safeAreaInset(edge: .top) {
