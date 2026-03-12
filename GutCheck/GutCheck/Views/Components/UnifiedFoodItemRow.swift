@@ -159,7 +159,7 @@ struct UnifiedFoodItemRow: View {
             if config.showMacros {
                 if let protein = item.nutrition.protein {
                     NutritionBadge(
-                        text: config.compactMacros ? "\(String(format: "%.1f", protein)) P" : "P: \(String(format: "%.1f", protein))g",
+                        text: config.compactMacros ? "\(protein.formatted(.number.precision(.fractionLength(1)))) P" : "P: \(protein.formatted(.number.precision(.fractionLength(1))))g",
                         color: .blue,
                         size: config.badgeSize
                     )
@@ -167,7 +167,7 @@ struct UnifiedFoodItemRow: View {
                 
                 if let carbs = item.nutrition.carbs {
                     NutritionBadge(
-                        text: config.compactMacros ? "\(String(format: "%.1f", carbs)) C" : "C: \(String(format: "%.1f", carbs))g",
+                        text: config.compactMacros ? "\(carbs.formatted(.number.precision(.fractionLength(1)))) C" : "C: \(carbs.formatted(.number.precision(.fractionLength(1))))g",
                         color: .green,
                         size: config.badgeSize
                     )
@@ -175,7 +175,7 @@ struct UnifiedFoodItemRow: View {
                 
                 if let fat = item.nutrition.fat {
                     NutritionBadge(
-                        text: config.compactMacros ? "\(String(format: "%.1f", fat)) F" : "F: \(String(format: "%.1f", fat))g",
+                        text: config.compactMacros ? "\(fat.formatted(.number.precision(.fractionLength(1)))) F" : "F: \(fat.formatted(.number.precision(.fractionLength(1))))g",
                         color: .red,
                         size: config.badgeSize
                     )

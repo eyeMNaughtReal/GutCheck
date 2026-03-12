@@ -268,7 +268,7 @@ struct MealDetailView: View {
                 .font(.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
             
-            Text("\(String(format: "%.1f", value ?? 0))\(unit)")
+            Text("\((value ?? 0).formatted(.number.precision(.fractionLength(1))))\(unit)")
                 .font(.subheadline.bold())
                 .foregroundStyle(color)
         }

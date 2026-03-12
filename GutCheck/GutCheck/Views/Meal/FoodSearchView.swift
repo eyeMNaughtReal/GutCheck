@@ -543,7 +543,7 @@ struct SimpleRecentFoodRow: View {
                         }
                         
                         if let protein = item.nutrition.protein {
-                            Text("\(String(format: "%.1f", protein)) P")
+                            Text("\(protein.formatted(.number.precision(.fractionLength(1)))) P")
                                 .typography(Typography.caption)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
@@ -553,7 +553,7 @@ struct SimpleRecentFoodRow: View {
                         }
                         
                         if let carbs = item.nutrition.carbs {
-                            Text("\(String(format: "%.1f", carbs)) C")
+                            Text("\(carbs.formatted(.number.precision(.fractionLength(1)))) C")
                                 .typography(Typography.caption)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
@@ -563,7 +563,7 @@ struct SimpleRecentFoodRow: View {
                         }
                         
                         if let fat = item.nutrition.fat {
-                            Text("\(String(format: "%.1f", fat)) F")
+                            Text("\(fat.formatted(.number.precision(.fractionLength(1)))) F")
                                 .typography(Typography.caption)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
@@ -627,15 +627,15 @@ struct SimpleRecentFoodRow: View {
         }
         
         if let protein = item.nutrition.protein {
-            label += ", \(String(format: "%.1f", protein)) grams protein"
+            label += ", \(protein.formatted(.number.precision(.fractionLength(1)))) grams protein"
         }
         
         if let carbs = item.nutrition.carbs {
-            label += ", \(String(format: "%.1f", carbs)) grams carbohydrates"
+            label += ", \(carbs.formatted(.number.precision(.fractionLength(1)))) grams carbohydrates"
         }
         
         if let fat = item.nutrition.fat {
-            label += ", \(String(format: "%.1f", fat)) grams fat"
+            label += ", \(fat.formatted(.number.precision(.fractionLength(1)))) grams fat"
         }
         
         if !item.allergens.isEmpty {

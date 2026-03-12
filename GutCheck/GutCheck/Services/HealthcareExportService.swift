@@ -399,7 +399,7 @@ class HealthcareExportService: ObservableObject {
             
             if let avgInterval = intervals.isEmpty ? nil : intervals.reduce(0, +) / Double(intervals.count) {
                 if avgInterval < 2 {
-                    recommendations.append("Consider spacing meals further apart (current average: \(String(format: "%.1f", avgInterval)) hours)")
+                    recommendations.append("Consider spacing meals further apart (current average: \(avgInterval.formatted(.number.precision(.fractionLength(1)))) hours)")
                 }
             }
         }

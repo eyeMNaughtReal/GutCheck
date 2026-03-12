@@ -345,9 +345,9 @@ class PatternRecognitionService {
                     impact: .negative,
                     confidence: 0.8,
                     title: "Sleep Deprivation Impact",
-                    description: "Short sleep (\(String(format: "%.1f", sleepHours))h) correlates with symptoms",
+                    description: "Short sleep (\(sleepHours.formatted(.number.precision(.fractionLength(1))))h) correlates with symptoms",
                     evidence: [
-                        "Sleep duration: \(String(format: "%.1f", sleepHours)) hours",
+                        "Sleep duration: \(sleepHours.formatted(.number.precision(.fractionLength(1)))) hours",
                         "Symptoms: \(symptomsOnDay.count)"
                     ],
                     recommendations: [
@@ -440,7 +440,7 @@ class PatternRecognitionService {
                 targetValue: 25,
                 unit: "g",
                 evidence: [
-                    "Average daily fiber: \(String(format: "%.1f", averageDailyFiber))g",
+                    "Average daily fiber: \(averageDailyFiber.formatted(.number.precision(.fractionLength(1))))g",
                     "Recommended: 25g+ daily"
                 ],
                 recommendations: [

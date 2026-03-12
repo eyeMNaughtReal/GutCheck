@@ -252,7 +252,7 @@ class InsightsService: ObservableObject {
         
         description += trend.description + " "
         
-        description += "Your current intake is \(String(format: "%.1f", trend.currentValue)) \(trend.unit), while the recommended target is \(String(format: "%.1f", trend.targetValue)) \(trend.unit). "
+        description += "Your current intake is \(trend.currentValue.formatted(.number.precision(.fractionLength(1)))) \(trend.unit), while the recommended target is \(trend.targetValue.formatted(.number.precision(.fractionLength(1)))) \(trend.unit). "
         
         if trend.currentValue < trend.targetValue {
             description += "This represents a \(Int(((trend.targetValue - trend.currentValue) / trend.targetValue) * 100))% shortfall from your target. "

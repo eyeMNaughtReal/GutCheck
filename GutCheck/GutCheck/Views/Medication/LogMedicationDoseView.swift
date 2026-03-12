@@ -164,7 +164,7 @@ struct LogMedicationDoseView: View {
     // MARK: - Helpers
 
     private func formattedAmount(_ amount: Double) -> String {
-        amount == amount.rounded() ? "\(Int(amount))" : String(format: "%.1f", amount)
+        amount == amount.rounded() ? "\(Int(amount))" : amount.formatted(.number.precision(.fractionLength(1)))
     }
 }
 
@@ -191,7 +191,7 @@ private struct MedicationPickerRow: View {
     }
 
     private func formattedAmount(_ amount: Double) -> String {
-        amount == amount.rounded() ? "\(Int(amount))" : String(format: "%.1f", amount)
+        amount == amount.rounded() ? "\(Int(amount))" : amount.formatted(.number.precision(.fractionLength(1)))
     }
 }
 

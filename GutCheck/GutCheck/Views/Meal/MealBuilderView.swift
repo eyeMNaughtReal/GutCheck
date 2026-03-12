@@ -419,13 +419,13 @@ struct NutrientLabel: View {
                 .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
             
-            Text("\(String(format: "%.1f", value ?? 0)) \(unit)")
+            Text("\((value ?? 0).formatted(.number.precision(.fractionLength(1)))) \(unit)")
                 .typography(Typography.headline)
                 .foregroundStyle(color)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(name): \(String(format: "%.1f", value ?? 0)) \(unit)")
+        .accessibilityLabel("\(name): \((value ?? 0).formatted(.number.precision(.fractionLength(1)))) \(unit)")
     }
 }
 

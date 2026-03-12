@@ -62,12 +62,12 @@ struct AddWaterView: View {
     
     private var fluidOunces: String {
         let oz = cups * 8.0
-        return String(format: "%.1f", oz)
+        return oz.formatted(.number.precision(.fractionLength(1)))
     }
     
     private var milliliters: String {
         let ml = cups * 236.6 // 1 cup ≈ 236.6 mL
-        return String(format: "%.0f", ml)
+        return ml.formatted(.number.precision(.fractionLength(0)))
     }
     
     // MARK: - Actions

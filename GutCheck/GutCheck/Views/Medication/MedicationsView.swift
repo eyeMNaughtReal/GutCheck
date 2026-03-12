@@ -251,7 +251,7 @@ private struct DoseRowView: View {
 
     private func formattedDose(_ dose: MedicationDoseLog) -> String {
         let amt = dose.dosageAmount
-        let formatted = amt == amt.rounded() ? "\(Int(amt))" : String(format: "%.1f", amt)
+        let formatted = amt == amt.rounded() ? "\(Int(amt))" : amt.formatted(.number.precision(.fractionLength(1)))
         return "\(formatted) \(dose.dosageUnit)"
     }
 }
@@ -289,7 +289,7 @@ private struct MedCatalogRow: View {
 
     private var formattedDosage: String {
         let amt = medication.dosage.amount
-        let n   = amt == amt.rounded() ? "\(Int(amt))" : String(format: "%.1f", amt)
+        let n   = amt == amt.rounded() ? "\(Int(amt))" : amt.formatted(.number.precision(.fractionLength(1)))
         return "\(n) \(medication.dosage.unit)"
     }
 }

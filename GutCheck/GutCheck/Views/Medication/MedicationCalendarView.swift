@@ -271,7 +271,7 @@ struct DoseCalendarRow: View {
         if dose.dosageAmount > 0 {
             let amtStr = dose.dosageAmount.truncatingRemainder(dividingBy: 1) == 0
                 ? String(Int(dose.dosageAmount))
-                : String(format: "%.1f", dose.dosageAmount)
+                : dose.dosageAmount.formatted(.number.precision(.fractionLength(1)))
             return "\(amtStr) \(dose.dosageUnit)"
         }
         return dose.dosageUnit

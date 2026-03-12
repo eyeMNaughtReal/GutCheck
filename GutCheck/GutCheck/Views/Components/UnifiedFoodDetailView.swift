@@ -198,7 +198,7 @@ struct UnifiedFoodDetailView: View {
                     .font(.subheadline)
                 
                 Stepper(value: $servingMultiplier, in: 0.1...10.0, step: 0.1) {
-                    Text(String(format: "%.1f", servingMultiplier))
+                    Text(servingMultiplier.formatted(.number.precision(.fractionLength(1))))
                         .font(.headline)
                         .foregroundStyle(ColorTheme.primary)
                 }
@@ -310,17 +310,17 @@ struct UnifiedFoodDetailView: View {
             // Macros in a compact row
             HStack(spacing: 12) {
                 if let protein = foodItem.nutrition.protein {
-                    Text("P: \(String(format: "%.1f", protein))g")
+                    Text("P: \(protein.formatted(.number.precision(.fractionLength(1))))g")
                         .font(.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                 }
                 if let carbs = foodItem.nutrition.carbs {
-                    Text("C: \(String(format: "%.1f", carbs))g")
+                    Text("C: \(carbs.formatted(.number.precision(.fractionLength(1))))g")
                         .font(.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                 }
                 if let fat = foodItem.nutrition.fat {
-                    Text("F: \(String(format: "%.1f", fat))g")
+                    Text("F: \(fat.formatted(.number.precision(.fractionLength(1))))g")
                         .font(.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                 }
@@ -468,7 +468,7 @@ struct UnifiedFoodDetailView: View {
         if multiplier == 1.0 {
             customQuantity = baseQuantity
         } else {
-            customQuantity = "\(String(format: "%.1f", multiplier)) × \(baseQuantity)"
+            customQuantity = "\(multiplier.formatted(.number.precision(.fractionLength(1)))) × \(baseQuantity)"
         }
         foodItem.quantity = customQuantity
     }
@@ -869,7 +869,7 @@ struct NutritionDetailsView: View {
                 .foregroundStyle(ColorTheme.secondaryText)
                 .multilineTextAlignment(.center)
             
-            Text(String(format: "%.1f", value))
+            Text(value.formatted(.number.precision(.fractionLength(1))))
                 .font(.subheadline)
                 .fontWeight(.semibold)
                 .foregroundStyle(ColorTheme.primaryText)
@@ -919,7 +919,7 @@ struct NutritionDetailItem: View {
     
     private var formattedValue: String {
         if let doubleValue = Double(value) {
-            return String(format: "%.1f", doubleValue)
+            return doubleValue.formatted(.number.precision(.fractionLength(1)))
         }
         return value
     }
