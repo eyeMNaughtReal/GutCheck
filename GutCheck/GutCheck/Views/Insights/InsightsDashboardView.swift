@@ -468,13 +468,13 @@ struct InsightCard: View {
             // Confidence level
             HStack {
                 Text("Confidence")
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundColor(.secondary)
                 
                 Spacer()
                 
                 Text("\(insight.confidenceLevel)%")
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundColor(.secondary)
             }
             

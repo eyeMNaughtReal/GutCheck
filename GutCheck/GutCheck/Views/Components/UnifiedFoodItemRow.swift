@@ -188,7 +188,7 @@ struct UnifiedFoodItemRow: View {
         HStack {
             ForEach(item.allergens.prefix(config.maxAllergens), id: \.self) { allergen in
                 Text(allergen)
-                    .font(.caption2)
+                    .font(.caption)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 2)
                     .background(ColorTheme.error.opacity(0.2))
@@ -197,7 +197,7 @@ struct UnifiedFoodItemRow: View {
             }
             if item.allergens.count > config.maxAllergens {
                 Text("+\(item.allergens.count - config.maxAllergens)")
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundColor(ColorTheme.secondaryText)
             }
         }
@@ -265,7 +265,7 @@ enum BadgeSize {
     
     var font: Font {
         switch self {
-        case .small: return .caption2
+        case .small: return .caption
         case .medium: return .caption
         case .large: return .subheadline
         }

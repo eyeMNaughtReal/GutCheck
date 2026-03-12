@@ -223,7 +223,7 @@ private struct NutritionValueView: View {
             Text(value)
                 .font(.headline)
             Text(unit)
-                .font(.caption2)
+                .font(.caption)
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity)

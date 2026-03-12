@@ -59,7 +59,7 @@ struct TodaysActivitySummaryView: View {
                                 .foregroundColor(ColorTheme.primary)
                             
                             Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                                .font(.caption2)
+                                .font(.caption)
                                 .foregroundColor(ColorTheme.primary)
                         }
                     }

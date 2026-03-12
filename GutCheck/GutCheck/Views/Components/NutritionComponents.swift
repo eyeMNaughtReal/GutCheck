@@ -20,7 +20,7 @@ struct UnifiedNutritionBadge: View {
         
         var fontSize: Font {
             switch self {
-            case .compact: return .caption2
+            case .compact: return .caption
             case .standard: return .caption
             case .large: return .footnote
             }
@@ -242,7 +242,7 @@ struct NutrientColumn: View {
                 .foregroundColor(color)
             
             Text(unit)
-                .font(.caption2)
+                .font(.caption)
                 .foregroundColor(ColorTheme.secondaryText)
         }
         .frame(maxWidth: .infinity)

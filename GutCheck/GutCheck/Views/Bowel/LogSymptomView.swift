@@ -43,7 +43,7 @@ struct BristolScaleSelectionView: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                             Text(info.description)
-                                .font(.caption2)
+                                .font(.caption)
                                 .foregroundColor(selectedStoolType == info.type ? .white.opacity(0.8) : ColorTheme.secondaryText)
                                 .multilineTextAlignment(.center)
                                 .lineLimit(1)
@@ -135,7 +135,7 @@ struct PainLevelSliderView: View {
                                             .stroke(painColor(for: i), lineWidth: selectedPainLevel == i ? 2 : 1)
                                     )
                                 Text(labels[i])
-                                    .typography(Typography.caption2)
+                                    .typography(Typography.caption)
                                     .fontWeight(.medium)
                                     .foregroundColor(selectedPainLevel == i ? ColorTheme.primaryText : ColorTheme.secondaryText)
                             }

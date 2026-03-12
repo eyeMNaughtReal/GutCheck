@@ -613,7 +613,7 @@ struct HealthIndicatorBadge: View {
                 Text(indicator.icon)
                     .font(.caption)
                 Text(indicator.text)
-                    .font(.caption2)
+                    .font(.caption)
                     .fontWeight(.medium)
             }
             .foregroundColor(indicator.color)
@@ -875,7 +875,7 @@ struct NutritionDetailsView: View {
                 .foregroundColor(ColorTheme.primaryText)
             
             Text(unit)
-                .font(.caption2)
+                .font(.caption)
                 .foregroundColor(ColorTheme.secondaryText)
         }
         .frame(maxWidth: .infinity)
@@ -903,7 +903,7 @@ struct NutritionDetailItem: View {
             
             if !unit.isEmpty {
                 Text(unit)
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundColor(ColorTheme.secondaryText)
             }
         }

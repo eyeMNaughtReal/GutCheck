@@ -39,7 +39,7 @@ struct ProfileImageView: View {
                         .scaleEffect(0.8)
                     
                     Text("Uploading...")
-                        .font(.caption2)
+                        .font(.caption)
                         .foregroundColor(ColorTheme.accent)
                 }
                 .padding(12)
@@ -52,7 +52,7 @@ struct ProfileImageView: View {
             
             // Pro badge
             Text("Pro")
-                .font(.caption2.bold())
+                .font(.caption.bold())
                 .foregroundColor(.white)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 4)

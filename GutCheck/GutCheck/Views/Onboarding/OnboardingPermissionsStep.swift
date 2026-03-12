@@ -150,7 +150,7 @@ struct OnboardingPermissionsStep: View {
                     .foregroundColor(ColorTheme.primaryText)
                 
                 Text(description)
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundColor(ColorTheme.secondaryText)
             }
             

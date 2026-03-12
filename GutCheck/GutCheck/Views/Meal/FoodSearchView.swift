@@ -439,7 +439,7 @@ struct FoodItemResultRow: View {
                         HStack {
                             ForEach(item.allergens.prefix(3), id: \.self) { allergen in
                                 Text(allergen)
-                                    .font(.caption2)
+                                    .font(.caption)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
                                     .background(ColorTheme.error.opacity(0.2))
@@ -448,7 +448,7 @@ struct FoodItemResultRow: View {
                             }
                             if item.allergens.count > 3 {
                                 Text("+\(item.allergens.count - 3)")
-                                    .font(.caption2)
+                                    .font(.caption)
                                     .foregroundColor(ColorTheme.secondaryText)
                             }
                         }
@@ -578,7 +578,7 @@ struct SimpleRecentFoodRow: View {
                         HStack {
                             ForEach(item.allergens.prefix(2), id: \.self) { allergen in
                                 Text(allergen)
-                                    .font(.caption2)
+                                    .font(.caption)
                                     .padding(.horizontal, 4)
                                     .padding(.vertical, 2)
                                     .background(ColorTheme.error.opacity(0.2))
@@ -587,7 +587,7 @@ struct SimpleRecentFoodRow: View {
                             }
                             if item.allergens.count > 2 {
                                 Text("+\(item.allergens.count - 2)")
-                                    .font(.caption2)
+                                    .font(.caption)
                                     .foregroundColor(ColorTheme.secondaryText)
                             }
                         }

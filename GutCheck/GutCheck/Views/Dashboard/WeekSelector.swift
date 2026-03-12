@@ -38,7 +38,7 @@ struct WeekSelector: View {
                     
                     Button(action: { resetToCurrentWeek() }) {
                         Text("Today")
-                            .font(.caption2)
+                            .font(.caption)
                             .fontWeight(.medium)
                             .foregroundColor(ColorTheme.accent)
                             .padding(.horizontal, 8)
