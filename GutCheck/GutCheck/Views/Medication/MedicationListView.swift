@@ -154,7 +154,7 @@ private struct MedicationRowView: View {
                 Spacer()
                 if medication.isActive {
                     Text("Active")
-                        .font(.caption2)
+                        .font(.caption)
                         .fontWeight(.semibold)
                         .foregroundColor(.green)
                         .padding(.horizontal, 6)
@@ -180,7 +180,7 @@ private struct MedicationRowView: View {
             // Source + start date
             HStack(spacing: 4) {
                 Image(systemName: sourceIcon)
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(.tertiary)
                 Text(dateLabel)
                     .font(.caption)

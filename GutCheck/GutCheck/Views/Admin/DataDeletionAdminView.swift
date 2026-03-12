@@ -183,7 +183,7 @@ struct DataTypeBadge: View {
     
     var body: some View {
         Text(text)
-            .font(.caption2)
+            .font(.caption)
             .fontWeight(.medium)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)

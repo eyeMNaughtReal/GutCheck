@@ -84,7 +84,7 @@ struct TabBarItem: View {
                     .font(.system(size: 22, weight: .medium))
                     .foregroundColor(isSelected ? ColorTheme.primary : ColorTheme.secondaryText)
                 Text(label)
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundColor(isSelected ? ColorTheme.primary : ColorTheme.secondaryText)
             }
             .frame(maxWidth: .infinity)

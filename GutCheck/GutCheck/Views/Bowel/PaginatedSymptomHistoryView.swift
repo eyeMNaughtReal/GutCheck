@@ -290,11 +290,11 @@ struct SimpleIndicator: View {
     var body: some View {
         HStack(spacing: 2) {
             Image(systemName: icon)
-                .font(.caption2)
+                .font(.caption)
                 .foregroundColor(color)
             
             Text(text)
-                .font(.caption2)
+                .font(.caption)
                 .foregroundColor(color)
         }
         .padding(.horizontal, 6)

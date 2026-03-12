@@ -242,7 +242,7 @@ private struct MedNamePill: View {
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: "pills.fill")
-                .font(.caption2)
+                .font(.caption)
                 .foregroundColor(.purple)
             Text(name)
                 .font(.caption)

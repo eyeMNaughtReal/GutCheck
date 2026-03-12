@@ -877,7 +877,7 @@ private struct MacroPill: View {
     var body: some View {
         HStack(spacing: 3) {
             Text(label)
-                .font(.caption2)
+                .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundColor(color)
             Text(value.map { String(format: "%.1fg", $0) } ?? "--")
@@ -967,7 +967,7 @@ private struct SymptomStatPill: View {
     var body: some View {
         HStack(spacing: 3) {
             Text(label)
-                .font(.caption2)
+                .font(.caption)
                 .fontWeight(.semibold)
                 .foregroundColor(color)
             Text(value)

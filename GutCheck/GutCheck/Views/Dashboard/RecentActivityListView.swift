@@ -110,7 +110,7 @@ struct ActivityRowView: View {
                         .foregroundColor(ColorTheme.secondaryText)
                     
                     Image(systemName: "chevron.right")
-                        .font(.caption2)
+                        .font(.caption)
                         .foregroundColor(ColorTheme.secondaryText)
                 }
             }

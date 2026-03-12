@@ -44,8 +44,9 @@ struct Typography {
     /// Caption - Use for image captions, labels
     static let caption = DynamicFont(textStyle: .caption, defaultSize: 12, weight: .regular)
     
-    /// Caption 2 - Use for smallest text
-    static let caption2 = DynamicFont(textStyle: .caption2, defaultSize: 11, weight: .regular)
+    /// Caption 2 - Mapped to .caption for improved readability (11pt is too small)
+    /// All usages have been migrated to .caption; this remains for backward compatibility.
+    static let caption2 = DynamicFont(textStyle: .caption, defaultSize: 12, weight: .regular)
     
     // MARK: - Custom Styles for GutCheck
     
@@ -53,7 +54,7 @@ struct Typography {
     static let nutritionValue = DynamicFont(textStyle: .title, defaultSize: 28, weight: .bold)
     
     /// Nutrition label - Small labels in nutrition cards
-    static let nutritionLabel = DynamicFont(textStyle: .caption2, defaultSize: 11, weight: .medium)
+    static let nutritionLabel = DynamicFont(textStyle: .caption, defaultSize: 12, weight: .medium)
     
     /// Bristol Scale number - Large type numbers in Bristol Scale
     static let bristolNumber = DynamicFont(textStyle: .title, defaultSize: 28, weight: .bold)
@@ -315,7 +316,7 @@ struct TypographyPreview: View {
  .font(.subheadline) → .typography(Typography.subheadline)
  .font(.footnote) → .typography(Typography.footnote)
  .font(.caption) → .typography(Typography.caption)
- .font(.caption2) → .typography(Typography.caption2)
+ .font(.caption2) → .typography(Typography.caption)  // caption2 is too small; use caption instead
  
  CUSTOM SIZES:
  .font(.system(size: 28, weight: .bold)) → .typography(Typography.nutritionValue)

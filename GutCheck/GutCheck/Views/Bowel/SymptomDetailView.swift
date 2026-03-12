@@ -133,7 +133,7 @@ struct SymptomDetailView: View {
             // Calendar day block
             VStack(spacing: 2) {
                 Text(viewModel.entity.date.formatted(.dateTime.month(.abbreviated)).uppercased())
-                    .font(.caption2)
+                    .font(.caption)
                     .fontWeight(.bold)
                     .foregroundColor(ColorTheme.primary)
                     .kerning(0.5)
@@ -155,7 +155,7 @@ struct SymptomDetailView: View {
                     .foregroundColor(ColorTheme.secondaryText)
                 HStack(spacing: 4) {
                     Image(systemName: "clock")
-                        .font(.caption2)
+                        .font(.caption)
                         .foregroundColor(ColorTheme.tertiaryText)
                     Text(viewModel.entity.date.formatted(.dateTime.hour().minute()))
                         .font(.caption)

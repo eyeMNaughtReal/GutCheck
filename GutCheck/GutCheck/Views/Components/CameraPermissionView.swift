@@ -90,28 +90,28 @@ struct CameraPermissionView: View {
                     
                     HStack(spacing: 8) {
                         Text("1.")
-                            .font(.caption2)
+                            .font(.caption)
                             .foregroundColor(ColorTheme.secondaryText)
                         Text("Open Settings app")
-                            .font(.caption2)
+                            .font(.caption)
                             .foregroundColor(ColorTheme.secondaryText)
                     }
                     
                     HStack(spacing: 8) {
                         Text("2.")
-                            .font(.caption2)
+                            .font(.caption)
                             .foregroundColor(ColorTheme.secondaryText)
                         Text("Find 'GutCheck' in the app list")
-                            .font(.caption2)
+                            .font(.caption)
                             .foregroundColor(ColorTheme.secondaryText)
                     }
                     
                     HStack(spacing: 8) {
                         Text("3.")
-                            .font(.caption2)
+                            .font(.caption)
                             .foregroundColor(ColorTheme.secondaryText)
                         Text("Enable 'Camera' permission")
-                            .font(.caption2)
+                            .font(.caption)
                             .foregroundColor(ColorTheme.secondaryText)
                     }
                 }

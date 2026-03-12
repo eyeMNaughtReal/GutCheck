@@ -128,13 +128,13 @@ struct NotificationPermissionView: View {
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text("1. Open Settings → Notifications")
-                            .font(.caption2)
+                            .font(.caption)
                             .foregroundColor(ColorTheme.secondaryText)
                         Text("2. Find 'GutCheck' and tap it")
-                            .font(.caption2)
+                            .font(.caption)
                             .foregroundColor(ColorTheme.secondaryText)
                         Text("3. Turn on 'Allow Notifications'")
-                            .font(.caption2)
+                            .font(.caption)
                             .foregroundColor(ColorTheme.secondaryText)
                     }
                 }
