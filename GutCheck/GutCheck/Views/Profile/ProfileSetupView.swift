@@ -12,14 +12,14 @@ struct ProfileSetupView: View {
             VStack(spacing: 24) {
                 Text("Set Up Your Profile")
                     .font(.title.bold())
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 TextField("First Name", text: $firstName)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                 TextField("Last Name", text: $lastName)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                 if let error = errorMessage {
                     Text(error)
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                 }
                 Button(action: saveProfile) {
                     if isSaving {
@@ -30,7 +30,7 @@ struct ProfileSetupView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(ColorTheme.accent)
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .cornerRadius(10)
                     }
                 }

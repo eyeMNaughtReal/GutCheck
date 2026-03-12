@@ -84,16 +84,16 @@ private struct WelcomePageView: View {
                 Text(page.title)
                     .font(.largeTitle)
                     .bold()
-                    .foregroundColor(ColorTheme.text)
+                    .foregroundStyle(ColorTheme.text)
                 
                 Text(page.subtitle)
                     .font(.title2)
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
                 
                 Text(page.description)
                     .font(.body)
                     .multilineTextAlignment(.center)
-                    .foregroundColor(ColorTheme.text)
+                    .foregroundStyle(ColorTheme.text)
                     .padding(.horizontal)
             }
         }

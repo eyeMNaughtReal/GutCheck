@@ -82,10 +82,10 @@ struct TabBarItem: View {
             VStack(spacing: 2) {
                 Image(systemName: icon)
                     .font(.system(size: 22, weight: .medium))
-                    .foregroundColor(isSelected ? ColorTheme.primary : ColorTheme.secondaryText)
+                    .foregroundStyle(isSelected ? ColorTheme.primary : ColorTheme.secondaryText)
                 Text(label)
                     .font(.caption)
-                    .foregroundColor(isSelected ? ColorTheme.primary : ColorTheme.secondaryText)
+                    .foregroundStyle(isSelected ? ColorTheme.primary : ColorTheme.secondaryText)
             }
             .frame(maxWidth: .infinity)
         }

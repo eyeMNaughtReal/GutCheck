@@ -103,7 +103,7 @@ struct PaginatedSymptomHistoryView: View {
                 } else if !viewModel.groupedSymptoms.isEmpty {
                     Text("No more symptoms")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .padding()
                 }
             }
@@ -144,11 +144,11 @@ struct SymptomDaySection: View {
                     Text(dayFormatter.string(from: date))
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(ColorTheme.primary)
+                        .foregroundStyle(ColorTheme.primary)
                     
                     Text(dateFormatter.string(from: date))
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 
                 Spacer()
@@ -157,7 +157,7 @@ struct SymptomDaySection: View {
                 Text("\(symptoms.count)")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(ColorTheme.accent)
@@ -208,7 +208,7 @@ struct SymptomRowView: View {
             Text(timeFormatter.string(from: symptom.date))
                 .font(.caption)
                 .fontWeight(.medium)
-                .foregroundColor(ColorTheme.primary)
+                .foregroundStyle(ColorTheme.primary)
                 .frame(width: 60, alignment: .leading)
             
             // Stool type indicator
@@ -245,7 +245,7 @@ struct SymptomRowView: View {
                 if let notes = symptom.notes, !notes.isEmpty {
                     Text(notes)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
             }
@@ -254,7 +254,7 @@ struct SymptomRowView: View {
             Button(action: onDelete) {
                 Image(systemName: "trash")
                     .font(.caption)
-                    .foregroundColor(.red)
+                    .foregroundStyle(.red)
                     .padding(8)
                     .background(Circle().fill(Color.red.opacity(0.1)))
             }
@@ -291,11 +291,11 @@ struct SimpleIndicator: View {
         HStack(spacing: 2) {
             Image(systemName: icon)
                 .font(.caption)
-                .foregroundColor(color)
+                .foregroundStyle(color)
             
             Text(text)
                 .font(.caption)
-                .foregroundColor(color)
+                .foregroundStyle(color)
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 2)

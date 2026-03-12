@@ -39,7 +39,7 @@ struct MealTypeSelectionView: View {
                     
                     Text("Select which meal to add \(foodItem.name) to:")
                         .font(.body)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                         .multilineTextAlignment(.center)
                 }
                 .padding(.top)
@@ -55,7 +55,7 @@ struct MealTypeSelectionView: View {
                             if let brand = foodItem.nutritionDetails["brand"], !brand.isEmpty {
                                 Text(brand)
                                     .font(.subheadline)
-                                    .foregroundColor(ColorTheme.secondaryText)
+                                    .foregroundStyle(ColorTheme.secondaryText)
                             }
                         }
                         
@@ -99,17 +99,17 @@ struct MealTypeSelectionView: View {
                                         Text(mealTypeInfo.display)
                                             .font(.body)
                                             .fontWeight(.medium)
-                                            .foregroundColor(isSelected ? .white : ColorTheme.primaryText)
+                                            .foregroundStyle(isSelected ? .white : ColorTheme.primaryText)
                                         
                                         Text(mealTypeInfo.description)
                                             .font(.caption)
-                                            .foregroundColor(isSelected ? .white.opacity(0.8) : ColorTheme.secondaryText)
+                                            .foregroundStyle(isSelected ? .white.opacity(0.8) : ColorTheme.secondaryText)
                                     }
                                     
                                     Spacer()
                                     
                                     Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                                        .foregroundColor(isSelected ? .white : ColorTheme.secondaryText)
+                                        .foregroundStyle(isSelected ? .white : ColorTheme.secondaryText)
                                 }
                                 .padding()
                                 .background(isSelected ? ColorTheme.primary : ColorTheme.cardBackground)
@@ -134,7 +134,7 @@ struct MealTypeSelectionView: View {
                     Text("Add to \(mealTypes.first(where: { $0.type == selectedMealType.rawValue })?.display ?? "Meal")")
                         .font(.headline)
                         .fontWeight(.medium)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(ColorTheme.primary)
@@ -149,7 +149,7 @@ struct MealTypeSelectionView: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
                 }
             }
         }

@@ -8,13 +8,13 @@ struct TodaySummaryView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Today's Summary")
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             HStack(spacing: 16) {
                 Label("\(mealsCount) Meals", systemImage: "fork.knife")
-                    .foregroundColor(ColorTheme.accent)
+                    .foregroundStyle(ColorTheme.accent)
                 Spacer()
                 Label("\(symptomsCount) Symptoms", systemImage: "exclamationmark.triangle")
-                    .foregroundColor(ColorTheme.warning)
+                    .foregroundStyle(ColorTheme.warning)
             }
             .font(.subheadline)
         }

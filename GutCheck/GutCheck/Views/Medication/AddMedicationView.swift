@@ -123,7 +123,7 @@ struct AddMedicationView: View {
             ZStack(alignment: .topLeading) {
                 if viewModel.notes.isEmpty {
                     Text("e.g. Take with food, prescribed by Dr. Smith…")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .font(.body)
                         .padding(.top, 8)
                         .padding(.leading, 4)

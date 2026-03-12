@@ -8,11 +8,11 @@ struct EmptyStateView: View {
         VStack(spacing: 16) {
             Image(systemName: imageName)
                 .font(.system(size: 50))
-                .foregroundColor(.gray)
+                .foregroundStyle(.gray)
             
             Text(message)
                 .font(.body)
-                .foregroundColor(.gray)
+                .foregroundStyle(.gray)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
         }

@@ -15,7 +15,7 @@ struct InsightDetailView: View {
                     if let description = insight.detailedDescription {
                         Text(description)
                             .font(.body)
-                            .foregroundColor(ColorTheme.text.opacity(0.8))
+                            .foregroundStyle(ColorTheme.text.opacity(0.8))
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -35,7 +35,7 @@ struct InsightDetailView: View {
                             .frame(height: 200)
                             .overlay(
                                 Text("Chart Visualization")
-                                    .foregroundColor(ColorTheme.accent)
+                                    .foregroundStyle(ColorTheme.accent)
                                     .font(.headline)
                             )
                     }
@@ -112,7 +112,7 @@ private struct InsightHeaderView: View {
             Label(insight.title, systemImage: insight.iconName)
                 .font(.title2)
                 .bold()
-                .foregroundColor(ColorTheme.primary)
+                .foregroundStyle(ColorTheme.primary)
             
             Text(insight.summary)
                 .font(.headline)
@@ -124,7 +124,7 @@ private struct InsightHeaderView: View {
                 Label(insight.dateRange, systemImage: "calendar")
             }
             .font(.subheadline)
-            .foregroundColor(.secondary)
+            .foregroundStyle(.secondary)
         }
     }
 }
@@ -139,14 +139,14 @@ private struct ContributingFactorRow: View {
                     .font(.headline)
                 Text(factor.description)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Spacer()
             
             Text("\(Int(factor.impact * 100))%")
                 .font(.headline)
-                .foregroundColor(impactColor)
+                .foregroundStyle(impactColor)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 8)
@@ -183,7 +183,7 @@ private struct RelatedInsightRow: View {
                     .font(.subheadline)
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 4)

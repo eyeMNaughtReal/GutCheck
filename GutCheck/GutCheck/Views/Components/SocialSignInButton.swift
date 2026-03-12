@@ -81,7 +81,7 @@ struct SocialSignInButton: View {
             .frame(maxWidth: .infinity)
             .frame(height: 50)
             .background(provider.backgroundColor)
-            .foregroundColor(provider.foregroundColor)
+            .foregroundStyle(provider.foregroundColor)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(provider.borderColor, lineWidth: 1)

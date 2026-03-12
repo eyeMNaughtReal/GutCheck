@@ -53,7 +53,7 @@ struct UnifiedFoodDetailView: View {
             HStack {
                 Text(foodItem.name)
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
                 
@@ -64,7 +64,7 @@ struct UnifiedFoodDetailView: View {
             
             Text(foodItem.quantity)
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             
             // Unified nutrition display
             unifiedNutritionCompact
@@ -141,10 +141,10 @@ struct UnifiedFoodDetailView: View {
                     VStack {
                         Image(systemName: "fork.knife")
                             .font(.system(size: 48))
-                            .foregroundColor(ColorTheme.accent)
+                            .foregroundStyle(ColorTheme.accent)
                         Text("Food Image")
                             .font(.caption)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                 )
             
@@ -152,13 +152,13 @@ struct UnifiedFoodDetailView: View {
                 Text(foodItem.name)
                     .font(.title2)
                     .fontWeight(.bold)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                     .multilineTextAlignment(.center)
                 
                 if let brand = foodItem.nutritionDetails["brand"] {
                     Text(brand)
                         .font(.subheadline)
-                        .foregroundColor(ColorTheme.accent)
+                        .foregroundStyle(ColorTheme.accent)
                 }
                 
                 sourceIndicator
@@ -170,11 +170,11 @@ struct UnifiedFoodDetailView: View {
         HStack {
             Text("Source:")
                 .font(.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             
             Text(sourceDescription)
                 .font(.caption)
-                .foregroundColor(ColorTheme.primary)
+                .foregroundStyle(ColorTheme.primary)
         }
     }
     
@@ -191,7 +191,7 @@ struct UnifiedFoodDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Serving Size")
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             HStack {
                 Text("Amount:")
@@ -200,7 +200,7 @@ struct UnifiedFoodDetailView: View {
                 Stepper(value: $servingMultiplier, in: 0.1...10.0, step: 0.1) {
                     Text(String(format: "%.1f", servingMultiplier))
                         .font(.headline)
-                        .foregroundColor(ColorTheme.primary)
+                        .foregroundStyle(ColorTheme.primary)
                 }
             }
             .padding()
@@ -209,7 +209,7 @@ struct UnifiedFoodDetailView: View {
             
             Text("Per \(customQuantity)")
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
         }
     }
     
@@ -217,7 +217,7 @@ struct UnifiedFoodDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Nutrition Facts")
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
 
             VStack(spacing: 0) {
                 // Macronutrients
@@ -267,7 +267,7 @@ struct UnifiedFoodDetailView: View {
         Text(title)
             .font(.caption)
             .fontWeight(.semibold)
-            .foregroundColor(.secondary)
+            .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.bottom, 4)
     }
@@ -304,7 +304,7 @@ struct UnifiedFoodDetailView: View {
             if let calories = foodItem.nutrition.calories {
                 Text("\(calories) calories")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
             }
             
             // Macros in a compact row
@@ -312,17 +312,17 @@ struct UnifiedFoodDetailView: View {
                 if let protein = foodItem.nutrition.protein {
                     Text("P: \(String(format: "%.1f", protein))g")
                         .font(.caption)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                 }
                 if let carbs = foodItem.nutrition.carbs {
                     Text("C: \(String(format: "%.1f", carbs))g")
                         .font(.caption)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                 }
                 if let fat = foodItem.nutrition.fat {
                     Text("F: \(String(format: "%.1f", fat))g")
                         .font(.caption)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                 }
             }
         }
@@ -334,17 +334,17 @@ struct UnifiedFoodDetailView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Health Indicators")
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             let indicators = healthIndicators
             
             if indicators.isEmpty {
                 HStack {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
+                        .foregroundStyle(.green)
                     Text("No health concerns detected")
                         .font(.subheadline)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                 }
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -443,7 +443,7 @@ struct UnifiedFoodDetailView: View {
         }) {
             Text(onUpdate != nil ? "Update Item" : "Add to Meal")
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.accent)
@@ -616,7 +616,7 @@ struct HealthIndicatorBadge: View {
                     .font(.caption)
                     .fontWeight(.medium)
             }
-            .foregroundColor(indicator.color)
+            .foregroundStyle(indicator.color)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -659,24 +659,24 @@ struct DetailSectionRow: View {
         HStack(spacing: 16) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundColor(iconColor)
+                .foregroundStyle(iconColor)
                 .frame(width: 24)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(subtitle)
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             
             Spacer()
             
             Image(systemName: "chevron.right")
                 .font(.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
         }
         .padding()
         .background(ColorTheme.cardBackground)
@@ -700,7 +700,7 @@ struct NutritionDetailsView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Micronutrients & Additional Details")
                             .font(.headline)
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                         
                         LazyVGrid(columns: [
                             GridItem(.flexible()),
@@ -747,7 +747,7 @@ struct NutritionDetailsView: View {
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Additional Nutrition Information")
                                 .font(.headline)
-                                .foregroundColor(ColorTheme.primaryText)
+                                .foregroundStyle(ColorTheme.primaryText)
                             
                             LazyVGrid(columns: [
                                 GridItem(.flexible()),
@@ -866,17 +866,17 @@ struct NutritionDetailsView: View {
         VStack(spacing: 4) {
             Text(label)
                 .font(.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
                 .multilineTextAlignment(.center)
             
             Text(String(format: "%.1f", value))
                 .font(.subheadline)
                 .fontWeight(.semibold)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             Text(unit)
                 .font(.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
@@ -893,18 +893,18 @@ struct NutritionDetailItem: View {
         VStack(spacing: 4) {
             Text(formattedLabel)
                 .font(.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
                 .multilineTextAlignment(.center)
             
             Text(formattedValue)
                 .font(.subheadline)
                 .fontWeight(.semibold)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             if !unit.isEmpty {
                 Text(unit)
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
         }
         .frame(maxWidth: .infinity)
@@ -1017,15 +1017,15 @@ struct IngredientsView: View {
                         VStack(spacing: 16) {
                             Image(systemName: "list.bullet")
                                 .font(.system(size: 48))
-                                .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
+                                .foregroundStyle(ColorTheme.secondaryText.opacity(0.5))
                             
                             Text("No Ingredients Listed")
                                 .font(.headline)
-                                .foregroundColor(ColorTheme.primaryText)
+                                .foregroundStyle(ColorTheme.primaryText)
                             
                             Text("Ingredient information is not available for this food item.")
                                 .font(.subheadline)
-                                .foregroundColor(ColorTheme.secondaryText)
+                                .foregroundStyle(ColorTheme.secondaryText)
                                 .multilineTextAlignment(.center)
                         }
                         .frame(maxWidth: .infinity, minHeight: 200)
@@ -1033,19 +1033,19 @@ struct IngredientsView: View {
                     } else {
                         Text("Ingredients are listed in order of predominance by weight.")
                             .font(.caption)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                             .padding(.horizontal)
                         
                         ForEach(Array(ingredients.enumerated()), id: \.offset) { index, ingredient in
                             HStack {
                                 Text("\(index + 1).")
                                     .font(.caption)
-                                    .foregroundColor(ColorTheme.secondaryText)
+                                    .foregroundStyle(ColorTheme.secondaryText)
                                     .frame(width: 24, alignment: .leading)
                                 
                                 Text(ingredient.capitalized)
                                     .font(.body)
-                                    .foregroundColor(ColorTheme.primaryText)
+                                    .foregroundStyle(ColorTheme.primaryText)
                                 
                                 Spacer()
                             }
@@ -1087,15 +1087,15 @@ struct AllergensView: View {
                         VStack(spacing: 16) {
                             Image(systemName: "checkmark.shield.fill")
                                 .font(.system(size: 48))
-                                .foregroundColor(ColorTheme.success)
+                                .foregroundStyle(ColorTheme.success)
                             
                             Text("No Known Allergens or Warnings")
                                 .font(.headline)
-                                .foregroundColor(ColorTheme.primaryText)
+                                .foregroundStyle(ColorTheme.primaryText)
                             
                             Text("No common allergens or health indicators were detected in this food item. However, always check the original packaging for complete allergen information.")
                                 .font(.subheadline)
-                                .foregroundColor(ColorTheme.secondaryText)
+                                .foregroundStyle(ColorTheme.secondaryText)
                                 .multilineTextAlignment(.center)
                         }
                         .frame(maxWidth: .infinity, minHeight: 200)
@@ -1105,22 +1105,22 @@ struct AllergensView: View {
                         if !allergens.isEmpty {
                             Text("Allergens:")
                                 .font(.headline)
-                                .foregroundColor(ColorTheme.primaryText)
+                                .foregroundStyle(ColorTheme.primaryText)
                                 .padding(.horizontal)
                             
                             Text("This food contains or may contain the following allergens:")
                                 .font(.subheadline)
-                                .foregroundColor(ColorTheme.secondaryText)
+                                .foregroundStyle(ColorTheme.secondaryText)
                                 .padding(.horizontal)
                             
                             ForEach(allergens, id: \.self) { allergen in
                                 HStack {
                                     Image(systemName: "exclamationmark.triangle.fill")
-                                        .foregroundColor(ColorTheme.error)
+                                        .foregroundStyle(ColorTheme.error)
                                     
                                     Text(allergen)
                                         .font(.body)
-                                        .foregroundColor(ColorTheme.primaryText)
+                                        .foregroundStyle(ColorTheme.primaryText)
                                     
                                     Spacer()
                                 }
@@ -1140,12 +1140,12 @@ struct AllergensView: View {
                             
                             Text("Health Indicators:")
                                 .font(.headline)
-                                .foregroundColor(ColorTheme.primaryText)
+                                .foregroundStyle(ColorTheme.primaryText)
                                 .padding(.horizontal)
                             
                             Text("Compounds that may affect your health:")
                                 .font(.subheadline)
-                                .foregroundColor(ColorTheme.secondaryText)
+                                .foregroundStyle(ColorTheme.secondaryText)
                                 .padding(.horizontal)
                             
                             ForEach(healthIndicators, id: \.text) { indicator in
@@ -1153,11 +1153,11 @@ struct AllergensView: View {
                                     // Category header
                                     HStack {
                                         Image(systemName: indicator.icon)
-                                            .foregroundColor(indicator.color)
+                                            .foregroundStyle(indicator.color)
                                         
                                         Text(indicator.text)
                                             .font(.headline)
-                                            .foregroundColor(ColorTheme.primaryText)
+                                            .foregroundStyle(ColorTheme.primaryText)
                                         
                                         Spacer()
                                     }
@@ -1166,12 +1166,12 @@ struct AllergensView: View {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Description:")
                                             .font(.subheadline)
-                                            .foregroundColor(ColorTheme.secondaryText)
+                                            .foregroundStyle(ColorTheme.secondaryText)
                                             .padding(.leading, 24) // Indent to align with icon
                                         
                                         Text(getCategoryDescription(indicator.text))
                                             .font(.caption)
-                                            .foregroundColor(ColorTheme.secondaryText)
+                                            .foregroundStyle(ColorTheme.secondaryText)
                                             .padding(.leading, 24) // Indent to align with icon
                                     }
                                     
@@ -1180,7 +1180,7 @@ struct AllergensView: View {
                                         ForEach(getCompoundsFromDescription(indicator.description), id: \.self) { compound in
                                             Text(compound)
                                                 .font(.caption)
-                                                .foregroundColor(ColorTheme.secondaryText)
+                                                .foregroundStyle(ColorTheme.secondaryText)
                                                 .padding(.leading, 24) // Indent to align with icon
                                         }
                                     }

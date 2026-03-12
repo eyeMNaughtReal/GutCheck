@@ -42,11 +42,11 @@ struct BristolStoolInfoView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Medical Classification System")
                             .font(.headline)
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                         
                         Text("Select the type that best matches your bowel movement consistency.")
                             .font(.subheadline)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
@@ -86,7 +86,7 @@ struct BristolStoolInfoView: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
                 }
             }
         }
@@ -143,11 +143,11 @@ struct PainLevelInfoView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("0-10 Numeric Pain Scale")
                             .font(.headline)
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                         
                         Text("Rate your abdominal pain, cramping, or discomfort.")
                             .font(.subheadline)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
@@ -162,14 +162,14 @@ struct PainLevelInfoView: View {
                                     Text("\(level)")
                                         .font(.title2)
                                         .fontWeight(.bold)
-                                        .foregroundColor(.white)
+                                        .foregroundStyle(.white)
                                         .frame(width: 40, height: 40)
                                         .background(Circle().fill(painColor(for: level)))
                                     
                                     Text(painLabel(for: level))
                                         .font(.caption)
                                         .fontWeight(.medium)
-                                        .foregroundColor(ColorTheme.secondaryText)
+                                        .foregroundStyle(ColorTheme.secondaryText)
                                         .multilineTextAlignment(.center)
                                 }
                                 .frame(maxWidth: .infinity)
@@ -197,7 +197,7 @@ struct PainLevelInfoView: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
                 }
             }
         }
@@ -239,11 +239,11 @@ struct UrgencyLevelInfoView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Urgency Classification")
                             .font(.headline)
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                         
                         Text("How urgently did you need to use the bathroom?")
                             .font(.subheadline)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
@@ -262,7 +262,7 @@ struct UrgencyLevelInfoView: View {
                                     Text(urgencyLabel(for: level))
                                         .font(.caption)
                                         .fontWeight(.medium)
-                                        .foregroundColor(ColorTheme.secondaryText)
+                                        .foregroundStyle(ColorTheme.secondaryText)
                                 }
                                 .frame(maxWidth: .infinity)
                             }
@@ -289,7 +289,7 @@ struct UrgencyLevelInfoView: View {
                     Button("Done") {
                         dismiss()
                     }
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
                 }
             }
         }
@@ -328,14 +328,14 @@ struct BristolQuickCard: View {
             Text("\(type)")
                 .font(.title2)
                 .fontWeight(.bold)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(width: 32, height: 32)
                 .background(Circle().fill(color))
             
             Text(title)
                 .font(.caption)
                 .fontWeight(.medium)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
         }
@@ -358,7 +358,7 @@ struct BristolDetailCard: View {
             Text("\(type)")
                 .font(.title3)
                 .fontWeight(.bold)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(width: 28, height: 28)
                 .background(Circle().fill(color))
             
@@ -366,11 +366,11 @@ struct BristolDetailCard: View {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             
             Spacer()
@@ -394,7 +394,7 @@ struct LegendItem: View {
             Text(text)
                 .font(.caption)
                 .fontWeight(.medium)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
         }
     }
 }
@@ -410,7 +410,7 @@ struct PainRangeCard: View {
             Text(range)
                 .font(.subheadline)
                 .fontWeight(.bold)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(width: 36, height: 28)
                 .background(RoundedRectangle(cornerRadius: 6).fill(color))
             
@@ -418,11 +418,11 @@ struct PainRangeCard: View {
                 Text(title)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             
             Spacer()
@@ -449,11 +449,11 @@ struct UrgencyCard: View {
                 Text(level)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             
             Spacer()

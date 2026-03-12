@@ -102,7 +102,7 @@ struct MedicationListView: View {
         VStack(spacing: 20) {
             Image(systemName: "pills.circle")
                 .font(.system(size: 64))
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
 
             Text("No Medications Yet")
                 .font(.title2)
@@ -110,7 +110,7 @@ struct MedicationListView: View {
 
             Text("Add your current medications to track dosages and timing, and help GutCheck surface insights about how they affect your gut health.")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
 
@@ -156,7 +156,7 @@ private struct MedicationRowView: View {
                     Text("Active")
                         .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(.green)
+                        .foregroundStyle(.green)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(Color.green.opacity(0.12), in: Capsule())
@@ -168,13 +168,13 @@ private struct MedicationRowView: View {
                 if medication.dosage.amount > 0 {
                     Text(formattedDosage)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                     Text("·")
                         .foregroundStyle(.tertiary)
                 }
                 Text(medication.dosage.frequency.displayName)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
 
             // Source + start date

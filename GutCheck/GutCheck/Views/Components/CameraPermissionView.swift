@@ -31,15 +31,15 @@ struct CameraPermissionView: View {
             VStack(spacing: 16) {
                 Image(systemName: "camera.metering.none")
                     .font(.system(size: 72))
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                 
                 Text(title)
                     .font(.title2.bold())
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(message)
                     .multilineTextAlignment(.center)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .lineLimit(nil)
             }
             
@@ -66,17 +66,17 @@ struct CameraPermissionView: View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
                 Image(systemName: permissionManager.cameraStatus.statusIcon)
-                    .foregroundColor(permissionManager.cameraStatus.statusColor)
+                    .foregroundStyle(permissionManager.cameraStatus.statusColor)
                     .font(.system(size: 20))
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Camera Permission")
                         .font(.subheadline.bold())
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                     
                     Text(permissionManager.cameraStatus.statusText)
                         .font(.caption)
-                        .foregroundColor(permissionManager.cameraStatus.statusColor)
+                        .foregroundStyle(permissionManager.cameraStatus.statusColor)
                 }
                 
                 Spacer()
@@ -86,33 +86,33 @@ struct CameraPermissionView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("To enable camera access:")
                         .font(.caption.bold())
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                     
                     HStack(spacing: 8) {
                         Text("1.")
                             .font(.caption)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                         Text("Open Settings app")
                             .font(.caption)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                     
                     HStack(spacing: 8) {
                         Text("2.")
                             .font(.caption)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                         Text("Find 'GutCheck' in the app list")
                             .font(.caption)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                     
                     HStack(spacing: 8) {
                         Text("3.")
                             .font(.caption)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                         Text("Enable 'Camera' permission")
                             .font(.caption)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                 }
                 .padding(.top, 8)
@@ -139,7 +139,7 @@ struct CameraPermissionView: View {
                     }
                 }
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.primary)
@@ -150,7 +150,7 @@ struct CameraPermissionView: View {
                     permissionManager.openAppSettings()
                 }
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.primary)
@@ -160,7 +160,7 @@ struct CameraPermissionView: View {
                     onPermissionGranted()
                 }
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.success)
@@ -172,7 +172,7 @@ struct CameraPermissionView: View {
                 // Could show an info sheet or modal
             }
             .font(.caption)
-            .foregroundColor(ColorTheme.primary)
+            .foregroundStyle(ColorTheme.primary)
         }
     }
     

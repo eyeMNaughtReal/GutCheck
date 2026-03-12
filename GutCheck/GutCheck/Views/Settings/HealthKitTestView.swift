@@ -22,7 +22,7 @@ struct HealthKitTestView: View {
                     .padding()
                 
                 Text(statusMessage)
-                    .foregroundColor(isAuthorized ? .green : .orange)
+                    .foregroundStyle(isAuthorized ? .green : .orange)
                     .multilineTextAlignment(.center)
                     .padding()
                 
@@ -57,7 +57,7 @@ struct HealthKitTestView: View {
                             testResults.removeAll()
                         }
                         .buttonStyle(.borderless)
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                     }
                     .padding()
                 }

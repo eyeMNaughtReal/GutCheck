@@ -25,7 +25,7 @@ struct WeekSelector: View {
                 Button(action: { navigateToPreviousWeek() }) {
                     Image(systemName: "chevron.left.circle.fill")
                         .font(.title2)
-                        .foregroundColor(ColorTheme.accent)
+                        .foregroundStyle(ColorTheme.accent)
                 }
                 
                 Spacer()
@@ -34,13 +34,13 @@ struct WeekSelector: View {
                 VStack(spacing: 4) {
                     Text(weekRangeText)
                         .font(.caption)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                     
                     Button(action: { resetToCurrentWeek() }) {
                         Text("Today")
                             .font(.caption)
                             .fontWeight(.medium)
-                            .foregroundColor(ColorTheme.accent)
+                            .foregroundStyle(ColorTheme.accent)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
                             .background(ColorTheme.accent.opacity(0.1))
@@ -53,7 +53,7 @@ struct WeekSelector: View {
                 Button(action: { navigateToNextWeek() }) {
                     Image(systemName: "chevron.right.circle.fill")
                         .font(.title2)
-                        .foregroundColor(ColorTheme.accent)
+                        .foregroundStyle(ColorTheme.accent)
                 }
             }
             .padding(.horizontal)
@@ -68,10 +68,10 @@ struct WeekSelector: View {
                         VStack {
                             Text(shortWeekdayString(for: date))
                                 .font(.caption)
-                                .foregroundColor(ColorTheme.secondaryText)
+                                .foregroundStyle(ColorTheme.secondaryText)
                             Text(dayString(for: date))
                                 .font(.headline)
-                                .foregroundColor(selectedDate.isSameDay(as: date) ? .white : ColorTheme.primaryText)
+                                .foregroundStyle(selectedDate.isSameDay(as: date) ? .white : ColorTheme.primaryText)
                         }
                         .frame(maxWidth: .infinity)
                         .frame(height: 60)

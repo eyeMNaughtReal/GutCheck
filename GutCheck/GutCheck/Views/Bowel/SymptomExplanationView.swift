@@ -15,7 +15,7 @@ struct SymptomExplanationView: View {
                             .bold()
                         
                         Text(symptomType.description)
-                            .foregroundColor(ColorTheme.text.opacity(0.8))
+                            .foregroundStyle(ColorTheme.text.opacity(0.8))
                     }
                     .padding()
                     .roundedCard()
@@ -42,7 +42,7 @@ struct SymptomExplanationView: View {
                             
                             ForEach(symptomType.commonTriggers, id: \.self) { trigger in
                                 Label(trigger, systemImage: "exclamationmark.triangle")
-                                    .foregroundColor(ColorTheme.text.opacity(0.8))
+                                    .foregroundStyle(ColorTheme.text.opacity(0.8))
                                     .padding(.vertical, 4)
                             }
                         }
@@ -58,7 +58,7 @@ struct SymptomExplanationView: View {
                         
                         ForEach(symptomType.managementTips, id: \.self) { tip in
                             Label(tip, systemImage: "checkmark.circle")
-                                .foregroundColor(ColorTheme.text.opacity(0.8))
+                                .foregroundStyle(ColorTheme.text.opacity(0.8))
                                 .padding(.vertical, 4)
                         }
                     }
@@ -73,7 +73,7 @@ struct SymptomExplanationView: View {
                         
                         ForEach(symptomType.warningSignals, id: \.self) { warning in
                             Label(warning, systemImage: "exclamationmark.shield")
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                                 .padding(.vertical, 4)
                         }
                     }
@@ -102,7 +102,7 @@ private struct SeverityRow: View {
         HStack(spacing: 16) {
             Text("\(level.range)")
                 .font(.headline)
-                .foregroundColor(level.color)
+                .foregroundStyle(level.color)
                 .frame(width: 60, alignment: .leading)
             
             VStack(alignment: .leading) {
@@ -110,7 +110,7 @@ private struct SeverityRow: View {
                     .font(.headline)
                 Text(level.description)
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.text.opacity(0.8))
+                    .foregroundStyle(ColorTheme.text.opacity(0.8))
             }
         }
         .padding(.vertical, 8)

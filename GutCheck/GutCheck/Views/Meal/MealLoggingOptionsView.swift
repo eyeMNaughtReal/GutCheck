@@ -20,17 +20,17 @@ struct MealLoggingOptionsView: View {
                 // Icon
                 Image(systemName: "magnifyingglass.circle.fill")
                     .font(.system(size: 80))
-                    .foregroundColor(ColorTheme.accent)
+                    .foregroundStyle(ColorTheme.accent)
                 
                 // Title
                 Text("Add Food")
                     .font(.title.bold())
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 // Description
                 Text("Search our database to find and log your food")
                     .font(.body)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
                 
@@ -49,7 +49,7 @@ struct MealLoggingOptionsView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(ColorTheme.accent)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .cornerRadius(12)
                     }
                     
@@ -61,7 +61,7 @@ struct MealLoggingOptionsView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(ColorTheme.surface)
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                             .cornerRadius(12)
                     }
                 }

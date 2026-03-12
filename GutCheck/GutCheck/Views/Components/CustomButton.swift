@@ -73,7 +73,7 @@ struct CustomButton: View {
             .frame(maxWidth: .infinity)
             .frame(height: 50)
             .background(isDisabled ? ColorTheme.disabled : style.backgroundColor)
-            .foregroundColor(style.foregroundColor)
+            .foregroundStyle(style.foregroundColor)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(style.borderColor, lineWidth: style == .outline ? 2 : 0)

@@ -27,7 +27,7 @@ struct SearchTestView: View {
             
             if !errorMessage.isEmpty {
                 Text("Error: \(errorMessage)")
-                    .foregroundColor(.red)
+                    .foregroundStyle(.red)
             }
             
             Text("Results: \(testResults.count)")

@@ -182,21 +182,21 @@ struct HealthScoreCard: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Health Score")
                         .typography(Typography.headline)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                     
                     HStack(alignment: .firstTextBaseline, spacing: 4) {
                         Text("\(score)")
                             .font(.system(size: 52, weight: .bold, design: .rounded))
-                            .foregroundColor(scoreColor)
+                            .foregroundStyle(scoreColor)
                         
                         Text("/10")
                             .typography(Typography.title)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                     
                     Text(scoreLabel)
                         .typography(Typography.subheadline)
-                        .foregroundColor(scoreColor)
+                        .foregroundStyle(scoreColor)
                         .fontWeight(.medium)
                 }
                 
@@ -217,7 +217,7 @@ struct HealthScoreCard: View {
                     
                     Image(systemName: score >= 7 ? "checkmark.circle.fill" : "heart.fill")
                         .font(.system(size: 28))
-                        .foregroundColor(scoreColor)
+                        .foregroundStyle(scoreColor)
                 }
                 .accessibleDecorative()
             }
@@ -264,7 +264,7 @@ struct DashboardInsightCard: View {
             HStack(spacing: 8) {
                 Image(systemName: icon)
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(iconColor)
+                    .foregroundStyle(iconColor)
                     .frame(width: 32, height: 32)
                     .background(iconColor.opacity(0.15))
                     .cornerRadius(8)
@@ -273,12 +273,12 @@ struct DashboardInsightCard: View {
                 Text(title)
                     .typography(Typography.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
             }
             
             Text(content)
                 .typography(Typography.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
                 .lineLimit(4)
                 .multilineTextAlignment(.leading)
                 .fixedSize(horizontal: false, vertical: true)
@@ -308,12 +308,12 @@ struct FloatingActionButton: View {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .accessibleDecorative()
                 
                 Text(label)
                     .typography(Typography.button)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 14)
@@ -338,11 +338,11 @@ struct TriggerAlertCard: View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.title3)
-                .foregroundColor(.orange)
+                .foregroundStyle(.orange)
             
             Text(alert)
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
                 .multilineTextAlignment(.leading)
             
             Spacer()
@@ -386,12 +386,12 @@ struct DashboardInsightsView: View {
                 HStack {
                     Text("Today's Health Score")
                         .font(.headline)
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                     Spacer()
                     Text("\(healthScore)/10")
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(healthScoreColor)
+                        .foregroundStyle(healthScoreColor)
                 }
                 
                 // Health Score Bar
@@ -414,16 +414,16 @@ struct DashboardInsightsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Image(systemName: "target")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                     Text("Today's Focus")
                         .font(.headline)
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Text(todaysFocus)
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .multilineTextAlignment(.leading)
             }
             .padding()
@@ -435,16 +435,16 @@ struct DashboardInsightsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Image(systemName: "exclamationmark.triangle")
-                        .foregroundColor(.orange)
+                        .foregroundStyle(.orange)
                     Text("Avoidance Tip")
                         .font(.headline)
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Text(avoidanceTip)
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .multilineTextAlignment(.leading)
             }
             .padding()

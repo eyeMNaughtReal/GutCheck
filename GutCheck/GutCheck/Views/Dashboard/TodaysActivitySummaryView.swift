@@ -43,7 +43,7 @@ struct TodaysActivitySummaryView: View {
             HStack {
                 Text("Today's Summary")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
                 
@@ -56,11 +56,11 @@ struct TodaysActivitySummaryView: View {
                         HStack(spacing: 4) {
                             Text(isExpanded ? "See Less" : "See All")
                                 .font(.caption)
-                                .foregroundColor(ColorTheme.primary)
+                                .foregroundStyle(ColorTheme.primary)
                             
                             Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                                 .font(.caption)
-                                .foregroundColor(ColorTheme.primary)
+                                .foregroundStyle(ColorTheme.primary)
                         }
                     }
                 }
@@ -70,28 +70,28 @@ struct TodaysActivitySummaryView: View {
             VStack(spacing: 8) {
                 HStack(spacing: 8) {
                     Image(systemName: "fork.knife")
-                        .foregroundColor(ColorTheme.accent)
+                        .foregroundStyle(ColorTheme.accent)
                         .frame(width: 20)
                     Text("\(mealsCount) \(mealsCount == 1 ? "Meal" : "Meals")")
-                        .foregroundColor(ColorTheme.accent)
+                        .foregroundStyle(ColorTheme.accent)
                     Spacer()
                 }
                 
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle")
-                        .foregroundColor(ColorTheme.warning)
+                        .foregroundStyle(ColorTheme.warning)
                         .frame(width: 20)
                     Text("\(symptomsCount) \(symptomsCount == 1 ? "Symptom" : "Symptoms")")
-                        .foregroundColor(ColorTheme.warning)
+                        .foregroundStyle(ColorTheme.warning)
                     Spacer()
                 }
                 
                 HStack(spacing: 8) {
                     Image(systemName: "pills")
-                        .foregroundColor(ColorTheme.primary)
+                        .foregroundStyle(ColorTheme.primary)
                         .frame(width: 20)
                     Text("\(medicationsCount) \(medicationsCount == 1 ? "Medication" : "Medications")")
-                        .foregroundColor(ColorTheme.primary)
+                        .foregroundStyle(ColorTheme.primary)
                     Spacer()
                 }
             }

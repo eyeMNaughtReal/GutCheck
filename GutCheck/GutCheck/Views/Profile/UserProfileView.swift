@@ -40,7 +40,7 @@ struct ProfileImageView: View {
                     
                     Text("Uploading...")
                         .font(.caption)
-                        .foregroundColor(ColorTheme.accent)
+                        .foregroundStyle(ColorTheme.accent)
                 }
                 .padding(12)
                 .background(
@@ -53,7 +53,7 @@ struct ProfileImageView: View {
             // Pro badge
             Text("Pro")
                 .font(.caption.bold())
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 4)
                 .background(Capsule().fill(ColorTheme.accent))
@@ -95,7 +95,7 @@ struct ProfileImageView: View {
                             } else {
                                 Text(user.initials)
                                     .font(.system(size: 36, weight: .bold))
-                                    .foregroundColor(ColorTheme.accent)
+                                    .foregroundStyle(ColorTheme.accent)
                             }
                         }
                     )
@@ -109,7 +109,7 @@ struct ProfileImageView: View {
                         Spacer()
                         Image(systemName: "camera.fill")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .padding(8)
                             .background(Circle().fill(ColorTheme.accent))
                             .offset(x: -8, y: -8)
@@ -305,12 +305,12 @@ struct UserProfileView: View {
             
             Text(user.fullName)
                 .font(.title2.bold())
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
                 .padding(.top, 4)
             
             Text(user.email)
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
                 .padding(.bottom, 8)
         }
     }
@@ -324,15 +324,15 @@ struct ProfileInfoCard: View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundColor(ColorTheme.accent)
+                .foregroundStyle(ColorTheme.accent)
                 .padding(8)
                 .background(Circle().fill(ColorTheme.accent.opacity(0.08)))
             Text(title)
                 .font(.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             Text(value)
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
         }
         .frame(maxWidth: .infinity)
         .padding()
@@ -351,15 +351,15 @@ struct ProfileActionRow: View {
         HStack {
             Image(systemName: icon)
                 .font(.title3)
-                .foregroundColor(ColorTheme.accent)
+                .foregroundStyle(ColorTheme.accent)
                 .frame(width: 36, height: 36)
                 .background(Circle().fill(ColorTheme.accent.opacity(0.08)))
             Text(title)
                 .font(.body)
-                .foregroundColor(textColor)
+                .foregroundStyle(textColor)
             Spacer()
             Image(systemName: "chevron.right")
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
         }
         .padding()
         .background(ColorTheme.cardBackground)

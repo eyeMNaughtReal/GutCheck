@@ -96,7 +96,7 @@ struct MedicationsView: View {
             }
             .padding()
             .background(Color.purple.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
-            .foregroundColor(.purple)
+            .foregroundStyle(.purple)
         }
         .accessibilityLabel("Log a medication dose")
         .accessibilityHint("Tap to record that you took a medication")
@@ -171,7 +171,7 @@ struct MedicationsView: View {
             NavigationLink(destination: MedicationListView()) {
                 Text("Manage all medications…")
                     .font(.subheadline)
-                    .foregroundColor(.purple)
+                    .foregroundStyle(.purple)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
@@ -199,7 +199,7 @@ private struct SectionTitle: View {
     var body: some View {
         Label(title, systemImage: systemImage)
             .font(.headline)
-            .foregroundColor(.primary)
+            .foregroundStyle(.primary)
     }
 }
 
@@ -225,7 +225,7 @@ private struct DoseRowView: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(.green)
+                .foregroundStyle(.green)
                 .font(.title3)
             VStack(alignment: .leading, spacing: 2) {
                 Text(dose.medicationName)
@@ -262,7 +262,7 @@ private struct MedCatalogRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "pills.fill")
-                .foregroundColor(.purple)
+                .foregroundStyle(.purple)
                 .font(.title3)
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 2) {

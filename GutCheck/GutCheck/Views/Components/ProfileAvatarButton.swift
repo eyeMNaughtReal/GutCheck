@@ -47,11 +47,11 @@ struct ProfileAvatarButton: View {
                                 if let user = user {
                                     Text(user.initials)
                                         .font(.system(size: size * 0.4, weight: .semibold))
-                                        .foregroundColor(ColorTheme.accent)
+                                        .foregroundStyle(ColorTheme.accent)
                                 } else {
                                     Image(systemName: "person.circle.fill")
                                         .font(.system(size: size * 0.8))
-                                        .foregroundColor(ColorTheme.accent)
+                                        .foregroundStyle(ColorTheme.accent)
                                 }
                             }
                         )

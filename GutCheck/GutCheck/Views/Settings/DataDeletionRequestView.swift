@@ -32,14 +32,14 @@ struct DataDeletionRequestView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                             Text("Data Deletion Request")
                                 .font(.headline)
                         }
                         
                         Text("This will submit a request to delete your data. The request will be reviewed by our team before any data is permanently removed.")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 8)
                 }
@@ -82,7 +82,7 @@ struct DataDeletionRequestView: View {
                         Text("• Some data may be retained for legal compliance")
                     }
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 }
                 
                 Section {

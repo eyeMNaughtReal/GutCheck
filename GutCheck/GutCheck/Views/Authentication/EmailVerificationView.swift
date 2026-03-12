@@ -18,18 +18,18 @@ struct EmailVerificationView: View {
             // Icon
             Image(systemName: "envelope.badge")
                 .font(.system(size: 60))
-                .foregroundColor(ColorTheme.primary)
+                .foregroundStyle(ColorTheme.primary)
             
             // Title
             VStack(spacing: 12) {
                 Text("Verify Your Email")
                     .font(.title)
                     .fontWeight(.bold)
-                    .foregroundColor(ColorTheme.text)
+                    .foregroundStyle(ColorTheme.text)
                 
                 Text("We sent a verification link to your email address. Please check your inbox and tap the link to continue.")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
             }
@@ -71,7 +71,7 @@ struct EmailVerificationView: View {
                 } label: {
                     Text("Back to Sign In")
                         .font(.footnote)
-                        .foregroundColor(ColorTheme.primary)
+                        .foregroundStyle(ColorTheme.primary)
                 }
             }
             .padding(.horizontal, 24)

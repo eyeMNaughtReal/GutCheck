@@ -43,7 +43,7 @@ struct RegisterView: View {
                         
                         Text("Track your digestive health journey with GutCheck")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                     }
                     .padding(.top)
@@ -80,13 +80,13 @@ struct RegisterView: View {
                         if !password.isEmpty && password.count < 8 {
                             Text("Password must be at least 8 characters")
                                 .font(.caption)
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                         }
                         
                         if !confirmPassword.isEmpty && password != confirmPassword {
                             Text("Passwords do not match")
                                 .font(.caption)
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                         }
                     }
                     .padding(.horizontal)
@@ -109,7 +109,7 @@ struct RegisterView: View {
                     if let error = errorMessage {
                         Text(error)
                             .font(.subheadline)
-                            .foregroundColor(.red)
+                            .foregroundStyle(.red)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
                     }
@@ -127,7 +127,7 @@ struct RegisterView: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(isFormValid ? ColorTheme.primary : Color.gray)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .cornerRadius(10)
                     .padding(.horizontal)
                     .disabled(!isFormValid || isLoading)

@@ -38,11 +38,11 @@ struct CategoryInsightsView: View {
         VStack(spacing: 16) {
             Image(systemName: category.iconName)
                 .font(.system(size: 48))
-                .foregroundColor(category.accentColor)
+                .foregroundStyle(category.accentColor)
             
             Text(category.description)
                 .font(.body)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
                 .multilineTextAlignment(.center)
         }
         .padding()
@@ -55,7 +55,7 @@ struct CategoryInsightsView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Active Insights")
                 .font(.title2.bold())
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             ForEach(viewModel.activeInsights) { insight in
                 NavigationLink(destination: InsightDetailView(insight: insight)) {
@@ -69,7 +69,7 @@ struct CategoryInsightsView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Historical Insights")
                 .font(.title2.bold())
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             ForEach(viewModel.historicalInsights) { insight in
                 NavigationLink(destination: InsightDetailView(insight: insight)) {
@@ -83,15 +83,15 @@ struct CategoryInsightsView: View {
         VStack(spacing: 16) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 48))
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             
             Text("No Insights Yet")
                 .font(.title3.bold())
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             Text("Keep logging your meals and symptoms. We'll analyze your data to provide insights in this category.")
                 .font(.body)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
                 .multilineTextAlignment(.center)
         }
         .padding()
@@ -111,33 +111,33 @@ private struct ActiveInsightRow: View {
             HStack {
                 Image(systemName: insight.iconName)
                     .font(.title2)
-                    .foregroundColor(ColorTheme.accent)
+                    .foregroundStyle(ColorTheme.accent)
                 
                 Text(insight.title)
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
                 
                 Text("\(insight.confidenceLevel)%")
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             
             Text(insight.summary)
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
                 .lineLimit(2)
             
             HStack {
                 Text(insight.dateRange)
                     .font(.caption)
-                    .foregroundColor(ColorTheme.accent)
+                    .foregroundStyle(ColorTheme.accent)
                 
                 Spacer()
                 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
         }
         .padding()
@@ -154,22 +154,22 @@ private struct HistoricalInsightRow: View {
             HStack {
                 Image(systemName: insight.iconName)
                     .font(.headline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                 
                 Text(insight.title)
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                 
                 Spacer()
                 
                 Text(insight.dateRange)
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             
             Text(insight.summary)
                 .font(.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
                 .lineLimit(1)
         }
         .padding()

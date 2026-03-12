@@ -148,10 +148,10 @@ private struct NetworkDebugger: View {
                     .font(.headline)
                 Text(request.method)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 if let statusCode = request.statusCode {
                     Text("Status: \(statusCode)")
-                        .foregroundColor(statusCode >= 400 ? .red : .green)
+                        .foregroundStyle(statusCode >= 400 ? .red : .green)
                 }
             }
         }
