@@ -293,8 +293,8 @@ extension View {
  
  5. Tab bar items:
  ```swift
- .tabItem {
-     Label("Dashboard", systemImage: "house.fill")
+ Tab("Dashboard", systemImage: "house.fill", value: .dashboard) {
+     DashboardView()
  }
  .accessibilityId(AccessibilityIdentifiers.TabBar.dashboard)
  ```
