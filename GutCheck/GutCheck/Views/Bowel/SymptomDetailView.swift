@@ -86,10 +86,10 @@ struct SymptomDetailView: View {
         .navigationTitle("Symptom Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 trailingToolbarContent
             }
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 leadingToolbarContent
             }
         }

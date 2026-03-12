@@ -613,7 +613,7 @@ struct SectionHeader: View {
             .navigationTitle("Symptom Time")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         HapticManager.shared.light()
                         showingDatePicker = false

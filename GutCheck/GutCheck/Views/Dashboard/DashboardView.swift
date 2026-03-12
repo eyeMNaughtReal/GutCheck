@@ -109,7 +109,7 @@ struct DashboardView: View {
         .navigationTitle("Dashboard")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 ProfileAvatarButton(user: authService.currentUser) {
                     router.showProfile()
                 }

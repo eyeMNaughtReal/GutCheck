@@ -103,7 +103,7 @@ struct UnifiedFoodDetailView: View {
         .navigationTitle("Food Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button("Cancel") {
                     dismiss()
                 }
@@ -768,7 +768,7 @@ struct NutritionDetailsView: View {
             .navigationTitle("Nutrition Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
@@ -1059,7 +1059,7 @@ struct IngredientsView: View {
             .navigationTitle("Ingredients")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
@@ -1198,7 +1198,7 @@ struct AllergensView: View {
             .navigationTitle("Allergens & Warnings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }

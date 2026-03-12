@@ -94,12 +94,12 @@ struct MedicationCalendarView: View {
         .navigationTitle("Meds")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 ProfileAvatarButton(user: authService.currentUser) {
                     router.showProfile()
                 }
             }
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 NavigationLink(destination: MedicationListView()) {
                     Image(systemName: "list.bullet")
                         .accessibilityLabel("Manage medications")

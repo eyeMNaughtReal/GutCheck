@@ -43,7 +43,7 @@ struct UnifiedCalendarView: View {
             }
             .navigationTitle("Calendar")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button(action: { showingDatePicker = true }) {
                         Image(systemName: "calendar")
                     }
@@ -202,7 +202,7 @@ private struct DatePickerView: View {
             .navigationTitle("Choose Date")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         isPresented = false
                     }

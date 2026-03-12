@@ -31,7 +31,7 @@ struct MedicationsView: View {
         .navigationTitle("Medications")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showingAddMed = true
                 } label: {

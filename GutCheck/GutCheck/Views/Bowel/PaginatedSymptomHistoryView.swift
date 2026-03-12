@@ -54,7 +54,7 @@ struct PaginatedSymptomHistoryView: View {
             .navigationTitle("Symptom History")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Export") {
                         Task {
                             await viewModel.exportSymptoms()

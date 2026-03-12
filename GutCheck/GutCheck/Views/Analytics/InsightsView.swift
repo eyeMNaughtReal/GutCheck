@@ -46,7 +46,7 @@ struct InsightsView: View {
             }
             .navigationTitle("Insights")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     ProfileAvatarButton(user: authService.currentUser) {
                         router.presentSheet(.profile)
                     }

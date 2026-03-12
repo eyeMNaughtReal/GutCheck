@@ -44,11 +44,11 @@ struct ServerStatusSheet: View {
             .navigationTitle("Server Status")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Image(systemName: "icloud.slash")
                         .foregroundStyle(ColorTheme.warning)
                 }
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(ColorTheme.secondaryText)

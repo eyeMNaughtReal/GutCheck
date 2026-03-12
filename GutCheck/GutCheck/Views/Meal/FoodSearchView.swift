@@ -121,7 +121,7 @@ struct FoodSearchView: View {
             .navigationBarTitleDisplayMode(.inline)
             // Remove navigationDestination - will use sheet instead
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         HapticManager.shared.light()
                         dismiss()

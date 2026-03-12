@@ -50,7 +50,7 @@ struct SymptomHistoryView: View {
         .navigationTitle("Symptom History")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Menu {
                     Button(action: { showingDatePicker = true }) {
                         Label("Select Date Range", systemImage: "calendar")
@@ -64,7 +64,7 @@ struct SymptomHistoryView: View {
                 }
             }
             
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 ProfileAvatarButton(user: authService.currentUser) {
                     router.showProfile()
                 }
@@ -229,7 +229,7 @@ private struct DateRangePickerView: View {
             .navigationTitle("Select Date Range")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         isPresented = false
                     }

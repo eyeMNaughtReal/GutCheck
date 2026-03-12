@@ -81,7 +81,7 @@ struct MealDetailView: View {
         .navigationTitle("Meal Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 editMenuButton
             }
         }
