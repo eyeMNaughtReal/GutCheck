@@ -212,13 +212,14 @@ struct DailyMedicationCard: View {
 
                 // Medication name pills
                 if !uniqueMedNames.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
+                    ScrollView(.horizontal) {
                         HStack(spacing: 8) {
                             ForEach(uniqueMedNames, id: \.self) { name in
                                 MedNamePill(name: name)
                             }
                         }
                     }
+                    .scrollIndicators(.hidden)
                 }
             }
         }

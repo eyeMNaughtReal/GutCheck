@@ -42,7 +42,7 @@ struct MealBuilderView: View {
                 
                 VStack(spacing: 12) {
                     // Meal type pills
-                    ScrollView(.horizontal, showsIndicators: false) {
+                    ScrollView(.horizontal) {
                         HStack(spacing: 8) {
                             ForEach(MealType.allCases, id: \.self) { type in
                                 let isSelected = mealService.mealType == type
@@ -70,6 +70,7 @@ struct MealBuilderView: View {
                         .padding(.horizontal)
                         .padding(.vertical, 8)
                     }
+                    .scrollIndicators(.hidden)
                     .background(ColorTheme.surface)
                     .clipShape(.rect(cornerRadius: 12))
                     .overlay(

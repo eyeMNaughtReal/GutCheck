@@ -69,7 +69,7 @@ struct InsightsView: View {
                 .font(.title2.bold())
                 .foregroundStyle(ColorTheme.primaryText)
             
-            ScrollView(.horizontal, showsIndicators: false) {
+            ScrollView(.horizontal) {
                 HStack(spacing: 16) {
                     ForEach(viewModel.recentInsights) { insight in
                         AnalyticsInsightCard(insight: insight)
@@ -77,6 +77,7 @@ struct InsightsView: View {
                     }
                 }
             }
+            .scrollIndicators(.hidden)
         }
     }
     
