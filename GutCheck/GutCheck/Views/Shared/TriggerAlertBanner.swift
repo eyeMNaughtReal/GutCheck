@@ -16,7 +16,7 @@ struct TriggerAlertBanner: View {
         .frame(maxWidth: .infinity)
         .padding()
         .background(RoundedRectangle(cornerRadius: 12).fill(Color.red.opacity(0.1)))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.red, lineWidth: 1))
+        .overlay { RoundedRectangle(cornerRadius: 12).stroke(Color.red, lineWidth: 1) }
 
     }
 }
