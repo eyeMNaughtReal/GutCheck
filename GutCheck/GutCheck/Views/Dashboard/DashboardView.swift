@@ -228,12 +228,12 @@ struct HealthScoreCard: View {
                     Rectangle()
                         .fill(ColorTheme.border.opacity(0.3))
                         .frame(height: 6)
-                        .cornerRadius(3)
+                        .clipShape(.rect(cornerRadius: 3))
                     
                     Rectangle()
                         .fill(scoreColor)
                         .frame(width: geometry.size.width * CGFloat(score) / 10.0, height: 6)
-                        .cornerRadius(3)
+                        .clipShape(.rect(cornerRadius: 3))
                         .animation(.spring(response: 0.6, dampingFraction: 0.8), value: score)
                 }
             }
@@ -267,7 +267,7 @@ struct DashboardInsightCard: View {
                     .foregroundStyle(iconColor)
                     .frame(width: 32, height: 32)
                     .background(iconColor.opacity(0.15))
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
                     .accessibleDecorative()
                 
                 Text(title)
@@ -401,13 +401,13 @@ struct DashboardInsightsView: View {
                         Rectangle()
                             .fill(index <= healthScore ? healthScoreColor : ColorTheme.border)
                             .frame(height: 8)
-                            .cornerRadius(4)
+                            .clipShape(.rect(cornerRadius: 4))
                     }
                 }
             }
             .padding()
             .background(ColorTheme.surface)
-            .cornerRadius(12)
+            .clipShape(.rect(cornerRadius: 12))
             
             // Today's Focus Section
             // Provides actionable health advice based on current symptoms
@@ -428,7 +428,7 @@ struct DashboardInsightsView: View {
             }
             .padding()
             .background(ColorTheme.surface)
-            .cornerRadius(12)
+            .clipShape(.rect(cornerRadius: 12))
             
             // Avoidance Tip Section
             // Warns about potential food triggers based on recent patterns
@@ -449,7 +449,7 @@ struct DashboardInsightsView: View {
             }
             .padding()
             .background(ColorTheme.surface)
-            .cornerRadius(12)
+            .clipShape(.rect(cornerRadius: 12))
         }
     }
     

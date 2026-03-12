@@ -71,7 +71,7 @@ struct UnifiedNutritionBadge: View {
         .padding(style.padding)
         .background(color.opacity(0.2))
         .foregroundStyle(color)
-        .cornerRadius(style == .large ? 6 : 4)
+        .clipShape(.rect(cornerRadius: style == .large ? 6 : 4))
     }
 }
 
@@ -166,7 +166,7 @@ struct UnifiedNutritionSummary: View {
         }
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
     }
     

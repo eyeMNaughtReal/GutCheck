@@ -35,7 +35,7 @@ struct RegisterView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 80, height: 80)
-                            .cornerRadius(20)
+                            .clipShape(.rect(cornerRadius: 20))
                         
                         Text("Create Your Account")
                             .font(.title2)
@@ -128,7 +128,7 @@ struct RegisterView: View {
                     .padding()
                     .background(isFormValid ? ColorTheme.primary : Color.gray)
                     .foregroundStyle(.white)
-                    .cornerRadius(10)
+                    .clipShape(.rect(cornerRadius: 10))
                     .padding(.horizontal)
                     .disabled(!isFormValid || isLoading)
                     

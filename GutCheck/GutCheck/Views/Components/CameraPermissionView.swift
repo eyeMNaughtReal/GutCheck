@@ -51,7 +51,7 @@ struct CameraPermissionView: View {
         }
         .padding(24)
         .background(ColorTheme.cardBackground)
-        .cornerRadius(16)
+        .clipShape(.rect(cornerRadius: 16))
         .onAppear {
             permissionManager.updateAllPermissionStates()
         }
@@ -120,7 +120,7 @@ struct CameraPermissionView: View {
         }
         .padding(16)
         .background(permissionManager.cameraStatus.statusColor.opacity(0.1))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private var actionButtons: some View {
@@ -143,7 +143,7 @@ struct CameraPermissionView: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.primary)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 .disabled(isRequesting)
             } else if permissionManager.cameraStatus.canOpenSettings {
                 Button("Open Settings") {
@@ -154,7 +154,7 @@ struct CameraPermissionView: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.primary)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
             } else if permissionManager.cameraStatus.isGranted {
                 Button("Continue") {
                     onPermissionGranted()
@@ -164,7 +164,7 @@ struct CameraPermissionView: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.success)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
             }
             
             // Additional info button

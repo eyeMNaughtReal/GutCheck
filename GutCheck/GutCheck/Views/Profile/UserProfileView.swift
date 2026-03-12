@@ -337,7 +337,7 @@ struct ProfileInfoCard: View {
         .frame(maxWidth: .infinity)
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(16)
+        .clipShape(.rect(cornerRadius: 16))
         .shadow(color: ColorTheme.shadowColor.opacity(0.08), radius: 4, x: 0, y: 2)
     }
 }
@@ -363,7 +363,7 @@ struct ProfileActionRow: View {
         }
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(16)
+        .clipShape(.rect(cornerRadius: 16))
         .shadow(color: ColorTheme.shadowColor.opacity(0.08), radius: 4, x: 0, y: 2)
     }
 }

@@ -48,7 +48,7 @@ struct CategoryInsightsView: View {
         .padding()
         .frame(maxWidth: .infinity)
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private var activeInsightsSection: some View {
@@ -97,7 +97,7 @@ struct CategoryInsightsView: View {
         .padding()
         .frame(maxWidth: .infinity)
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 }
 
@@ -142,7 +142,7 @@ private struct ActiveInsightRow: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 }
 
@@ -174,7 +174,7 @@ private struct HistoricalInsightRow: View {
         }
         .padding()
         .background(ColorTheme.surface.opacity(0.5))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 }
 

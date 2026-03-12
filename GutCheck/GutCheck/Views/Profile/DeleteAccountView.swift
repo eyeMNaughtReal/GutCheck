@@ -54,7 +54,7 @@ struct DeleteAccountView: View {
                 }
                 .padding()
                 .background(Color.red.opacity(0.1))
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 
                 // Data Summary
                 VStack(alignment: .leading, spacing: 16) {
@@ -71,7 +71,7 @@ struct DeleteAccountView: View {
                 }
                 .padding()
                 .background(Color.orange.opacity(0.1))
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 
                 // Action Buttons
                 VStack(spacing: 16) {
@@ -84,7 +84,7 @@ struct DeleteAccountView: View {
                         .padding()
                         .background(Color.red)
                         .foregroundStyle(.white)
-                        .cornerRadius(12)
+                        .clipShape(.rect(cornerRadius: 12))
                     }
                     .disabled(isDeleting)
                     

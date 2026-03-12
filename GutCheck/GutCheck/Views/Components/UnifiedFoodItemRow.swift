@@ -73,7 +73,7 @@ struct UnifiedFoodItemRow: View {
         }
         .padding(config.padding)
         .background(ColorTheme.cardBackground)
-        .cornerRadius(config.cornerRadius)
+        .clipShape(.rect(cornerRadius: config.cornerRadius))
         .shadow(color: ColorTheme.shadowColor, radius: config.shadowRadius, x: 0, y: 1)
     }
     
@@ -193,7 +193,7 @@ struct UnifiedFoodItemRow: View {
                     .padding(.vertical, 2)
                     .background(ColorTheme.error.opacity(0.2))
                     .foregroundStyle(ColorTheme.error)
-                    .cornerRadius(4)
+                    .clipShape(.rect(cornerRadius: 4))
             }
             if item.allergens.count > config.maxAllergens {
                 Text("+\(item.allergens.count - config.maxAllergens)")
@@ -254,7 +254,7 @@ struct NutritionBadge: View {
             .padding(.vertical, size.verticalPadding)
             .background(color.opacity(0.2))
             .foregroundStyle(color)
-            .cornerRadius(size.cornerRadius)
+            .clipShape(.rect(cornerRadius: size.cornerRadius))
     }
 }
 

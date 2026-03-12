@@ -60,7 +60,7 @@ struct OnboardingPermissionsStep: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.primary)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 
                 Button("Skip for Now") {
                     currentStep += 1
@@ -108,7 +108,7 @@ struct OnboardingPermissionsStep: View {
         }
         .padding(16)
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private var privacyCommitmentView: some View {
@@ -134,7 +134,7 @@ struct OnboardingPermissionsStep: View {
         }
         .padding(16)
         .background(ColorTheme.success.opacity(0.1))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private func privacyPoint(_ title: String, _ description: String) -> some View {

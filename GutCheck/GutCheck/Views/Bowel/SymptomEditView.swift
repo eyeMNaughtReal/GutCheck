@@ -102,7 +102,7 @@ struct SymptomEditView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private var notesSection: some View {
@@ -116,7 +116,7 @@ struct SymptomEditView: View {
                 .frame(minHeight: 100)
                 .padding(12)
                 .background(ColorTheme.cardBackground)
-                .cornerRadius(8)
+                .clipShape(.rect(cornerRadius: 8))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(ColorTheme.border.opacity(0.3), lineWidth: 1)
@@ -124,7 +124,7 @@ struct SymptomEditView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private var actionButtonsSection: some View {
@@ -179,7 +179,7 @@ struct SymptomEditView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private var isFormValid: Bool {

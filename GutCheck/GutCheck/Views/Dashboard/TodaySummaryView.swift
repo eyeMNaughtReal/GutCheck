@@ -20,7 +20,7 @@ struct TodaySummaryView: View {
         }
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
     }
 }

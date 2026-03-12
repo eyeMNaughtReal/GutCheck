@@ -44,7 +44,7 @@ struct WeekSelector: View {
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
                             .background(ColorTheme.accent.opacity(0.1))
-                            .cornerRadius(8)
+                            .clipShape(.rect(cornerRadius: 8))
                     }
                 }
                 
@@ -90,7 +90,7 @@ struct WeekSelector: View {
                             RoundedRectangle(cornerRadius: 10)
                                 .stroke(date.isSameDay(as: Date.now) ? ColorTheme.accent : Color.clear, lineWidth: 2)
                         )
-                        .cornerRadius(10)
+                        .clipShape(.rect(cornerRadius: 10))
                         .shadow(color: selectedDate.isSameDay(as: date) ? ColorTheme.shadowColor : .clear, radius: 4, x: 0, y: 2)
                     }
                 }

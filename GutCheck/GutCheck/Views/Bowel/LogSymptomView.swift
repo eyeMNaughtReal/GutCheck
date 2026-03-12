@@ -76,7 +76,7 @@ struct BristolScaleSelectionView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     private func bristolColor(for type: StoolType) -> Color {
         switch type {
@@ -165,7 +165,7 @@ struct PainLevelSliderView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     private func painColor(for level: Int) -> Color {
         switch level {
@@ -239,7 +239,7 @@ struct UrgencyLevelSelectionView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private func urgencyColor(for level: UrgencyLevel) -> Color {
@@ -305,7 +305,7 @@ struct TagSelectionView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 }
 
@@ -432,7 +432,7 @@ struct SectionHeader: View {
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.surface)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(ColorTheme.border, lineWidth: 1)
@@ -446,7 +446,7 @@ struct SectionHeader: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private var notesSection: some View {
@@ -461,7 +461,7 @@ struct SectionHeader: View {
                 .frame(minHeight: 100)
                 .padding(12)
                 .background(ColorTheme.cardBackground)
-                .cornerRadius(8)
+                .clipShape(.rect(cornerRadius: 8))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(ColorTheme.border.opacity(0.3), lineWidth: 1)
@@ -472,7 +472,7 @@ struct SectionHeader: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private var actionButtonsSection: some View {
@@ -575,7 +575,7 @@ struct SectionHeader: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 
     private var datePickerSheet: some View {

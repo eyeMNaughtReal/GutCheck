@@ -138,7 +138,7 @@ struct UserRemindersView: View {
                     .padding()
                     .background(ColorTheme.accent)
                     .foregroundStyle(.white)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                 }
                 .disabled(reminderService.isLoading)
             }
@@ -274,7 +274,7 @@ struct ReminderSection<Content: View>: View {
             }
             .padding()
             .background(ColorTheme.cardBackground)
-            .cornerRadius(12)
+            .clipShape(.rect(cornerRadius: 12))
             .shadow(color: ColorTheme.shadowColor.opacity(0.06), radius: 2, x: 0, y: 1)
         }
     }

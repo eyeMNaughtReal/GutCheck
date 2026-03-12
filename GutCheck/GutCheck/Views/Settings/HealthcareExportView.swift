@@ -95,7 +95,7 @@ struct HealthcareExportView: View {
         }
         .padding()
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     // MARK: - Export Options Section
@@ -133,7 +133,7 @@ struct HealthcareExportView: View {
             }
             .padding()
             .background(Color(.systemBackground))
-            .cornerRadius(8)
+            .clipShape(.rect(cornerRadius: 8))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(Color(.systemGray4), lineWidth: 1)
@@ -180,7 +180,7 @@ struct HealthcareExportView: View {
             }
             .padding()
             .background(Color(.systemBackground))
-            .cornerRadius(8)
+            .clipShape(.rect(cornerRadius: 8))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(Color(.systemGray4), lineWidth: 1)
@@ -212,7 +212,7 @@ struct HealthcareExportView: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.blue)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                 }
                 .disabled(exportService.isExporting)
             }
@@ -255,7 +255,7 @@ struct HealthcareExportView: View {
             }
             .padding()
             .background(Color(.systemBackground))
-            .cornerRadius(8)
+            .clipShape(.rect(cornerRadius: 8))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(Color(.systemGray4), lineWidth: 1)

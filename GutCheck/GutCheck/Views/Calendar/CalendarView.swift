@@ -887,7 +887,7 @@ private struct MacroPill: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(color.opacity(0.12))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 
@@ -977,7 +977,7 @@ private struct SymptomStatPill: View {
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(color.opacity(0.12))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 

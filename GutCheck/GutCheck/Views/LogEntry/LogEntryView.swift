@@ -55,7 +55,7 @@ struct LogOptionButton: View {
             }
             .frame(width: 120, height: 120)
             .background(color.opacity(0.1))
-            .cornerRadius(20)
+            .clipShape(.rect(cornerRadius: 20))
         }
     }
 }

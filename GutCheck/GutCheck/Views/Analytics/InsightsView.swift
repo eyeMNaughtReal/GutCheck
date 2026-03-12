@@ -182,7 +182,7 @@ struct InsightsView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
     }
 
@@ -221,7 +221,7 @@ struct InsightsView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
     }
 
@@ -264,7 +264,7 @@ struct InsightsView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
     }
 
@@ -303,7 +303,7 @@ private struct WeeklyStatPill: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 }
@@ -343,7 +343,7 @@ private struct AnalyticsInsightCard: View {
             }
             .padding()
             .background(ColorTheme.surface)
-            .cornerRadius(12)
+            .clipShape(.rect(cornerRadius: 12))
             .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
         }
     }
@@ -374,7 +374,7 @@ private struct CategoryCard: View {
             .padding()
             .frame(maxWidth: .infinity, minHeight: 140, maxHeight: 140)
             .background(ColorTheme.surface)
-            .cornerRadius(12)
+            .clipShape(.rect(cornerRadius: 12))
             .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
         }
     }
@@ -407,7 +407,7 @@ private struct PatternRow: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 }
 
@@ -442,7 +442,7 @@ private struct RecommendationCard: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 }
 

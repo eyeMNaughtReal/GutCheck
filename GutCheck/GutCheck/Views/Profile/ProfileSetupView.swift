@@ -31,7 +31,7 @@ struct ProfileSetupView: View {
                             .padding()
                             .background(ColorTheme.accent)
                             .foregroundStyle(.white)
-                            .cornerRadius(10)
+                            .clipShape(.rect(cornerRadius: 10))
                     }
                 }
                 .disabled(isSaving || firstName.isEmpty || lastName.isEmpty)

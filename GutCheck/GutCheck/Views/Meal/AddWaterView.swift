@@ -23,7 +23,7 @@ struct AddWaterView: View {
                     .keyboardType(.decimalPad)
                     .padding()
                     .background(ColorTheme.surface)
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
                             .stroke(ColorTheme.primary.opacity(0.3), lineWidth: 1)
@@ -45,7 +45,7 @@ struct AddWaterView: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.blue)
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
             }
             .disabled(cups <= 0)
             .opacity(cups <= 0 ? 0.6 : 1)

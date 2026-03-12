@@ -5,7 +5,7 @@ extension View {
         self
             .padding()
             .background(ColorTheme.cardBackground)
-            .cornerRadius(10)
+            .clipShape(.rect(cornerRadius: 10))
             .shadow(radius: 2)
     }
     
@@ -14,7 +14,7 @@ extension View {
             .padding()
             .background(ColorTheme.buttonPrimary)
             .foregroundStyle(.white)
-            .cornerRadius(8)
+            .clipShape(.rect(cornerRadius: 8))
     }
     
     func secondaryButton() -> some View {
@@ -22,13 +22,13 @@ extension View {
             .padding()
             .background(ColorTheme.buttonSecondary)
             .foregroundStyle(ColorTheme.text)
-            .cornerRadius(8)
+            .clipShape(.rect(cornerRadius: 8))
     }
     
     func inputField() -> some View {
         self
             .padding()
             .background(ColorTheme.inputBackground)
-            .cornerRadius(8)
+            .clipShape(.rect(cornerRadius: 8))
     }
 }

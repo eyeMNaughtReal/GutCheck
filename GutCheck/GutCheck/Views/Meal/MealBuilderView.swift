@@ -31,7 +31,7 @@ struct MealBuilderView: View {
                     .typography(Typography.headline)
                     .padding()
                     .background(ColorTheme.surface)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(ColorTheme.border, lineWidth: 1)
@@ -56,7 +56,7 @@ struct MealBuilderView: View {
                                         .padding(.vertical, 8)
                                         .background(isSelected ? ColorTheme.primary : ColorTheme.surface)
                                         .foregroundStyle(isSelected ? .white : ColorTheme.primaryText)
-                                        .cornerRadius(20)
+                                        .clipShape(.rect(cornerRadius: 20))
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 20)
                                                 .stroke(isSelected ? Color.clear : ColorTheme.border, lineWidth: 1)
@@ -71,7 +71,7 @@ struct MealBuilderView: View {
                         .padding(.vertical, 8)
                     }
                     .background(ColorTheme.surface)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(ColorTheme.border, lineWidth: 1)
@@ -94,7 +94,7 @@ struct MealBuilderView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(ColorTheme.surface)
-                        .cornerRadius(12)
+                        .clipShape(.rect(cornerRadius: 12))
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(ColorTheme.border, lineWidth: 1)
@@ -164,7 +164,7 @@ struct MealBuilderView: View {
                             .frame(minHeight: 100)
                             .padding(8)
                             .background(ColorTheme.surface)
-                            .cornerRadius(12)
+                            .clipShape(.rect(cornerRadius: 12))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
                                     .stroke(ColorTheme.border, lineWidth: 1)
@@ -196,7 +196,7 @@ struct MealBuilderView: View {
                     .padding()
                     .background(ColorTheme.primary.opacity(0.9))
                     .foregroundStyle(.white)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                 }
                 .accessibleButton(
                     label: "Add Food Item",
@@ -220,7 +220,7 @@ struct MealBuilderView: View {
                             .padding()
                             .background(ColorTheme.surface)
                             .foregroundStyle(ColorTheme.primaryText)
-                            .cornerRadius(12)
+                            .clipShape(.rect(cornerRadius: 12))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
                                     .stroke(ColorTheme.border, lineWidth: 1)
@@ -258,7 +258,7 @@ struct MealBuilderView: View {
                             .padding()
                             .background(ColorTheme.accent)
                             .foregroundStyle(ColorTheme.text)
-                            .cornerRadius(12)
+                            .clipShape(.rect(cornerRadius: 12))
                     }
                     .disabled(mealService.currentMeal.isEmpty)
                     .opacity(mealService.currentMeal.isEmpty ? 0.6 : 1)
@@ -356,7 +356,7 @@ struct MealBuilderView: View {
         .padding()
         .frame(maxWidth: .infinity)
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .accessibleGroup(
             label: "No food items yet. Tap Add Food Item button to start building your meal",
             hint: nil
@@ -393,7 +393,7 @@ struct NutritionSummaryCard: View {
         }
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
         .accessibleGroup(
             label: AccessibilityText.nutritionSummary(

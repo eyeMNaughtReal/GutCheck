@@ -60,7 +60,7 @@ struct BristolStoolInfoView: View {
                     }
                     .padding()
                     .background(ColorTheme.cardBackground)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                     .padding(.horizontal)
                     
                     // Detailed guide
@@ -343,7 +343,7 @@ struct BristolQuickCard: View {
         .frame(maxWidth: .infinity)
         .padding(8)
         .background(ColorTheme.cardBackground)
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 
@@ -377,7 +377,7 @@ struct BristolDetailCard: View {
         }
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 
@@ -430,7 +430,7 @@ struct PainRangeCard: View {
         .padding(.horizontal)
         .padding(.vertical, 8)
         .background(ColorTheme.cardBackground)
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 
@@ -461,7 +461,7 @@ struct UrgencyCard: View {
         .padding(.horizontal)
         .padding(.vertical, 8)
         .background(ColorTheme.cardBackground)
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 

@@ -43,7 +43,7 @@ struct RecentActivityListView: View {
         }
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
         .onAppear {
             viewModel.loadRecentActivity(for: selectedDate, authService: authService)
@@ -117,7 +117,7 @@ struct ActivityRowView: View {
             .padding(.vertical, 8)
             .padding(.horizontal, 12)
             .background(ColorTheme.surface)
-            .cornerRadius(8)
+            .clipShape(.rect(cornerRadius: 8))
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -181,7 +181,7 @@ struct LoadingStateView: View {
                 .padding(.vertical, 8)
                 .padding(.horizontal, 12)
                 .background(ColorTheme.surface)
-                .cornerRadius(8)
+                .clipShape(.rect(cornerRadius: 8))
             }
         }
         .redacted(reason: .placeholder)

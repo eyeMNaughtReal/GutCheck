@@ -114,7 +114,7 @@ struct MealConfirmationView: View {
                     .padding()
                     .background(ColorTheme.primary)
                     .foregroundStyle(.white)
-                    .cornerRadius(10)
+                    .clipShape(.rect(cornerRadius: 10))
                     
                     Button("Edit Meal") {
                         router.navigateBack()
@@ -123,7 +123,7 @@ struct MealConfirmationView: View {
                     .padding()
                     .background(ColorTheme.background)
                     .foregroundStyle(ColorTheme.primary)
-                    .cornerRadius(10)
+                    .clipShape(.rect(cornerRadius: 10))
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
                             .stroke(ColorTheme.primary, lineWidth: 1)

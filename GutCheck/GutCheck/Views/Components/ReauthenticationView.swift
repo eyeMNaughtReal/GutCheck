@@ -86,7 +86,7 @@ struct ReauthenticationView: View {
                         .padding()
                         .background(Color.red)
                         .foregroundStyle(.white)
-                        .cornerRadius(12)
+                        .clipShape(.rect(cornerRadius: 12))
                     }
                     .disabled(authService.isLoading || email.isEmpty || password.isEmpty)
                     
@@ -203,7 +203,7 @@ struct PhoneReauthenticationView: View {
                             .padding()
                             .background(Color.blue)
                             .foregroundStyle(.white)
-                            .cornerRadius(12)
+                            .clipShape(.rect(cornerRadius: 12))
                         }
                         .disabled(authService.isLoading || phoneNumber.isEmpty)
                     } else {
@@ -233,7 +233,7 @@ struct PhoneReauthenticationView: View {
                             .padding()
                             .background(Color.green)
                             .foregroundStyle(.white)
-                            .cornerRadius(12)
+                            .clipShape(.rect(cornerRadius: 12))
                         }
                         .disabled(authService.isLoading || verificationCode.isEmpty)
                         
