@@ -146,8 +146,6 @@ class LocalStorageService {
             throw error
         } catch {
             #if DEBUG
-            if let cryptoError = error as? CryptoKitError {
-            }
             #endif
             throw LocalStorageError.encryptionFailed
         }
@@ -199,8 +197,6 @@ class LocalStorageService {
             throw error
         } catch {
             #if DEBUG
-            if let cryptoError = error as? CryptoKitError {
-            }
             #endif
             throw LocalStorageError.decryptionFailed
         }

@@ -127,12 +127,6 @@ class LocalProfileImageStrategy: ProfileImageStrategy {
             "profileImageURL": imageURL,
             "updatedAt": Timestamp(date: Date.now)
         ])
-        
-        
-        let document = try await userRef.getDocument()
-        if let data = document.data(), let savedURL = data["profileImageURL"] as? String {
-        } else {
-        }
     }
     
     private func removeProfileImageURL(for userId: String) async throws {

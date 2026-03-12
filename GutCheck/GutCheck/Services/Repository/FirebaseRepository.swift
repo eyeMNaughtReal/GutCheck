@@ -397,9 +397,7 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
             }
             allSymptoms.append(contentsOf: filteredLocalSymptoms)
             
-            // Debug: Print details of each local symptom
-            for symptom in filteredLocalSymptoms {
-            }
+            
         } catch {
         }
         
@@ -413,9 +411,7 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
         }
         allSymptoms.append(contentsOf: firestoreSymptoms)
         
-        // Debug: Print details of each Firestore symptom
-        for symptom in firestoreSymptoms {
-        }
+        
         
         // Sort all symptoms by date
         let sortedSymptoms = allSymptoms.sorted { $0.date < $1.date }
@@ -424,12 +420,6 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
         let symptomIds = sortedSymptoms.map { $0.id }
         let uniqueIds = Set(symptomIds)
         if symptomIds.count != uniqueIds.count {
-            
-            // Find duplicates
-            let duplicateIds = symptomIds.filter { id in
-                symptomIds.filter { $0 == id }.count > 1
-            }
-            
             // Remove duplicates by keeping only the first occurrence of each ID
             var deduplicatedSymptoms: [Symptom] = []
             var seenIds = Set<String>()

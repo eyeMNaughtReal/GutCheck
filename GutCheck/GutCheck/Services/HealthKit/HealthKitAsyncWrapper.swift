@@ -51,37 +51,21 @@ class HealthKitAsyncWrapper {
         }
     }
     
-    // MARK: - Convenience Methods with Logging
+    // MARK: - Convenience Methods
     func writeMealWithLogging(_ meal: Meal) async {
-        let (success, error) = await writeMeal(meal)
-        if success {
-        } else if let error = error {
-        }
+        _ = await writeMeal(meal)
     }
     
     func writeSymptomWithLogging(_ symptom: Symptom) async {
-        let (success, error) = await writeSymptom(symptom)
-        if success {
-        } else if let error = error {
-        }
+        _ = await writeSymptom(symptom)
     }
     
     func requestAuthorizationWithLogging() async -> Bool {
-        let (granted, error) = await requestAuthorization()
-        if granted {
-        } else {
-            if let error = error {
-            } else {
-            }
-        }
+        let (granted, _) = await requestAuthorization()
         return granted
     }
     
     func fetchUserHealthDataWithLogging() async -> UserHealthData? {
-        let healthData = await fetchUserHealthData()
-        if healthData != nil {
-        } else {
-        }
-        return healthData
+        return await fetchUserHealthData()
     }
 }

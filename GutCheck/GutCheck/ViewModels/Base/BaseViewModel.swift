@@ -69,8 +69,6 @@ open class BaseViewModel: ObservableObject {
     /// Handle success consistently
     func handleSuccess(message: String? = nil) {
         errorMessage = nil
-        if let message = message {
-        }
     }
     
     /// Reset all state

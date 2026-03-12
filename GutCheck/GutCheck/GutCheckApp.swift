@@ -23,7 +23,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // Configure Firebase - try automatic configuration first
         if FirebaseApp.app() == nil {
             // Check if GoogleService-Info.plist exists
-            if let plistPath = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") {
+            if Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil {
                 FirebaseApp.configure()
             } else {
                 // TEMPORARY: Manual configuration if plist is missing

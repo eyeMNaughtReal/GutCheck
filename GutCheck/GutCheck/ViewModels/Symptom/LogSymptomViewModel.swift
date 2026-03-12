@@ -175,11 +175,7 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(interval * 60), repeats: false)
         let request = UNNotificationRequest(identifier: "symptomReminder_\(UUID().uuidString)", content: content, trigger: trigger)
         
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-            } else {
-            }
-        }
+        UNUserNotificationCenter.current().add(request)
     }
     
     func resetForm() {
