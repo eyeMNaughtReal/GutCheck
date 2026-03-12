@@ -98,7 +98,7 @@ class HealthKitMedicationService: ObservableObject {
         
         // Create observer query that triggers on any medication record change
         let query = HKObserverQuery(sampleType: medicationType, predicate: nil) { [weak self] _, completion, error in
-            if let error = error {
+            if error != nil {
                 completion()
                 return
             }

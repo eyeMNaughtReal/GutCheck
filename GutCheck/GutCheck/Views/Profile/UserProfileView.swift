@@ -146,7 +146,7 @@ struct ProfileImageView: View {
     private func uploadProfileImage(_ image: UIImage) {
         Task {
             do {
-                let imageURL = try await profileImageService.uploadProfileImage(image, for: user.id)
+                _ = try await profileImageService.uploadProfileImage(image, for: user.id)
                 await MainActor.run {
                     // Update the local profile image immediately
                     self.profileImage = image

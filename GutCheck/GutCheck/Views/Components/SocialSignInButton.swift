@@ -158,14 +158,7 @@ struct AppleSignInButtonView: UIViewRepresentable {
         func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
             NSLog("🍎 [SocialSignInButton] Apple Sign-In succeeded")
             
-            // Examine the authorization details (DEBUG only — user identifiers are PII)
-            #if DEBUG
-            if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
-                if let identityToken = appleIDCredential.identityToken {
-                } else {
-                }
-            }
-            #endif
+            
             
             parent.onCompletion(.success(authorization))
         }
