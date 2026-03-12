@@ -20,13 +20,15 @@ struct UnifiedCalendarView: View {
                 // Calendar Grid
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: daysInWeek), spacing: 0) {
                     ForEach(viewModel.calendarDays) { day in
-                        DayCell(
-                            day: day,
-                            isSelected: calendar.isDate(day.date, inSameDayAs: selectedDate)
-                        )
-                        .onTapGesture {
+                        Button {
                             selectedDate = day.date
+                        } label: {
+                            DayCell(
+                                day: day,
+                                isSelected: calendar.isDate(day.date, inSameDayAs: selectedDate)
+                            )
                         }
+                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.horizontal)

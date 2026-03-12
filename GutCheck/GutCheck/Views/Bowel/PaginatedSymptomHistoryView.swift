@@ -203,69 +203,70 @@ struct SymptomRowView: View {
     }()
     
     var body: some View {
-        HStack(spacing: 12) {
-            // Time
-            Text(timeFormatter.string(from: symptom.date))
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundStyle(ColorTheme.primary)
-                .frame(width: 60, alignment: .leading)
-            
-            // Stool type indicator
-            Circle()
-                .fill(stoolTypeColor)
-                .frame(width: 12, height: 12)
-            
-            // Details
-            VStack(alignment: .leading, spacing: 2) {
-                HStack {
-                    Text("Type \(symptom.stoolType.typeNumber)")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    
-                    if symptom.painLevel != .none {
-                        SimpleIndicator(
-                            icon: "exclamationmark.triangle.fill",
-                            text: symptom.painLevel.displayName,
-                            color: symptom.painLevel.color
-                        )
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                // Time
+                Text(timeFormatter.string(from: symptom.date))
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(ColorTheme.primary)
+                    .frame(width: 60, alignment: .leading)
+                
+                // Stool type indicator
+                Circle()
+                    .fill(stoolTypeColor)
+                    .frame(width: 12, height: 12)
+                
+                // Details
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack {
+                        Text("Type \(symptom.stoolType.typeNumber)")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        
+                        if symptom.painLevel != .none {
+                            SimpleIndicator(
+                                icon: "exclamationmark.triangle.fill",
+                                text: symptom.painLevel.displayName,
+                                color: symptom.painLevel.color
+                            )
+                        }
+                        
+                        if symptom.urgencyLevel != .none {
+                            SimpleIndicator(
+                                icon: "timer",
+                                text: symptom.urgencyLevel.displayName,
+                                color: symptom.urgencyLevel.color
+                            )
+                        }
+                        
+                        Spacer()
                     }
                     
-                    if symptom.urgencyLevel != .none {
-                        SimpleIndicator(
-                            icon: "timer",
-                            text: symptom.urgencyLevel.displayName,
-                            color: symptom.urgencyLevel.color
-                        )
+                    if let notes = symptom.notes, !notes.isEmpty {
+                        Text(notes)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
                     }
-                    
-                    Spacer()
                 }
                 
-                if let notes = symptom.notes, !notes.isEmpty {
-                    Text(notes)
+                // Delete button
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
+                        .foregroundStyle(.red)
+                        .padding(8)
+                        .background(Circle().fill(Color.red.opacity(0.1)))
                 }
             }
-            
-            // Delete button
-            Button(action: onDelete) {
-                Image(systemName: "trash")
-                    .font(.caption)
-                    .foregroundStyle(.red)
-                    .padding(8)
-                    .background(Circle().fill(Color.red.opacity(0.1)))
-            }
         }
+        .buttonStyle(.plain)
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color(.secondarySystemBackground))
         )
-        .contentShape(Rectangle())
-        .onTapGesture(perform: onTap)
     }
     
     private var stoolTypeColor: Color {
