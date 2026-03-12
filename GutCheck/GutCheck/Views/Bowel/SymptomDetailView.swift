@@ -446,7 +446,7 @@ extension Symptom {
     static func sampleSymptom() -> Symptom {
         return Symptom(
             id: "sample-id",
-            date: Date(),
+            date: Date.now,
             stoolType: .type4,
             painLevel: .none,
             urgencyLevel: .none,

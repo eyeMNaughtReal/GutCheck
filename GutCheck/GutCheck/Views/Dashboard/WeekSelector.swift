@@ -11,7 +11,7 @@ struct WeekSelector: View {
 
     private var weekDates: [Date] {
         // Center today (or the navigated day) in the week: 3 days before, center, 3 days after
-        let baseDate = calendar.date(byAdding: .day, value: weekOffset * 7, to: Date()) ?? Date()
+        let baseDate = calendar.date(byAdding: .day, value: weekOffset * 7, to: Date.now) ?? Date.now
         let startDate = calendar.date(byAdding: .day, value: -3, to: baseDate) ?? baseDate
         return (0..<daysInWeek).compactMap { offset in
             calendar.date(byAdding: .day, value: offset, to: startDate)
@@ -79,7 +79,7 @@ struct WeekSelector: View {
                             Group {
                                 if selectedDate.isSameDay(as: date) {
                                     ColorTheme.accent
-                                } else if date.isSameDay(as: Date()) {
+                                } else if date.isSameDay(as: Date.now) {
                                     ColorTheme.accent.opacity(0.3)
                                 } else {
                                     ColorTheme.cardBackground
@@ -88,7 +88,7 @@ struct WeekSelector: View {
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
-                                .stroke(date.isSameDay(as: Date()) ? ColorTheme.accent : Color.clear, lineWidth: 2)
+                                .stroke(date.isSameDay(as: Date.now) ? ColorTheme.accent : Color.clear, lineWidth: 2)
                         )
                         .cornerRadius(10)
                         .shadow(color: selectedDate.isSameDay(as: date) ? ColorTheme.shadowColor : .clear, radius: 4, x: 0, y: 2)
@@ -100,7 +100,7 @@ struct WeekSelector: View {
                 updateWeekOffsetForSelectedDate()
             }
             .onChange(of: selectedDate) {
-                if selectedDate.isSameDay(as: Date()) {
+                if selectedDate.isSameDay(as: Date.now) {
                     weekOffset = 0
                 }
             }
@@ -144,14 +144,14 @@ struct WeekSelector: View {
         withAnimation(.easeInOut(duration: 0.3)) {
             weekOffset = 0
             // Update selected date to today
-            selectedDate = Date()
-            onDateSelected?(Date())
+            selectedDate = Date.now
+            onDateSelected?(Date.now)
         }
     }
     
     /// Update week offset to show the week containing the selected date
     private func updateWeekOffsetForSelectedDate() {
-        let today = calendar.startOfDay(for: Date())
+        let today = calendar.startOfDay(for: Date.now)
         let selected = calendar.startOfDay(for: selectedDate)
         let daysDifference = calendar.dateComponents([.day], from: today, to: selected).day ?? 0
         // Convert day difference to week offset (rounds toward zero)

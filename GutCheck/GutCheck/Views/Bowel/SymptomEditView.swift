@@ -11,7 +11,7 @@ struct SymptomEditView: View {
     @State private var selectedPainLevel: Int = 0
     @State private var selectedUrgencyLevel: UrgencyLevel = .none
     @State private var notes: String = ""
-    @State private var symptomDate: Date = Date()
+    @State private var symptomDate: Date = Date.now
     @State private var isSaving = false
     @State private var showingSuccessAlert = false
 
@@ -237,7 +237,7 @@ extension PainLevel {
 #Preview {
     SymptomEditView(
         symptom: Symptom(
-            date: Date(),
+            date: Date.now,
             stoolType: .type4,
             painLevel: .moderate,
             urgencyLevel: .mild,

@@ -54,7 +54,7 @@ class PrivacyPolicyManager: ObservableObject {
         
         // Update local status
         isPrivacyPolicyAccepted = true
-        privacyPolicyAcceptedDate = Date()
+        privacyPolicyAcceptedDate = Date.now
         savePrivacyPolicyStatus()
         
         // Update Firestore

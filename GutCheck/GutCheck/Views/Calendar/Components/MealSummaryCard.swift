@@ -28,7 +28,7 @@ struct MealSummaryCard: View {
     MealSummaryCard(meal: Meal(
         id: "1",
         name: "Breakfast",
-        date: Date(),
+        date: Date.now,
         type: .breakfast,
         source: .manual,
         foodItems: [

@@ -15,8 +15,8 @@ class PreviewAuthService: AuthenticationProtocol {
         firstName: "Preview",
         lastName: "User",
         signInMethod: .email,
-        createdAt: Date(),
-        updatedAt: Date()
+        createdAt: Date.now,
+        updatedAt: Date.now
     )
     
     // MARK: - Protocol Methods (Preview Implementation)

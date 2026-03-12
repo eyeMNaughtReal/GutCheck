@@ -87,7 +87,7 @@ struct LogMedicationDoseView: View {
                 DatePicker(
                     "Date & Time",
                     selection: $viewModel.dateTaken,
-                    in: ...Date(),
+                    in: ...Date.now,
                     displayedComponents: [.date, .hourAndMinute]
                 )
                 .datePickerStyle(.compact)

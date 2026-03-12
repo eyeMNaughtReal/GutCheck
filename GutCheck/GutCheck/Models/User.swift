@@ -46,7 +46,7 @@ struct User: Codable, Identifiable, Hashable, Equatable {
     var age: Int? {
         guard let dateOfBirth = dateOfBirth else { return nil }
         let calendar = Calendar.current
-        let ageComponents = calendar.dateComponents([.year], from: dateOfBirth, to: Date())
+        let ageComponents = calendar.dateComponents([.year], from: dateOfBirth, to: Date.now)
         return ageComponents.year
     }
     
@@ -127,7 +127,7 @@ struct User: Codable, Identifiable, Hashable, Equatable {
     }
     
     // Standard initializer
-    init(id: String, email: String, firstName: String, lastName: String, signInMethod: SignInMethod = .email, createdAt: Date = Date(), updatedAt: Date = Date(), privacyPolicyAccepted: Bool = false, privacyPolicyAcceptedDate: Date? = nil, privacyPolicyVersion: String = "1.0") {
+    init(id: String, email: String, firstName: String, lastName: String, signInMethod: SignInMethod = .email, createdAt: Date = Date.now, updatedAt: Date = Date.now, privacyPolicyAccepted: Bool = false, privacyPolicyAcceptedDate: Date? = nil, privacyPolicyVersion: String = "1.0") {
         self.id = id
         self.email = email
         self.firstName = firstName

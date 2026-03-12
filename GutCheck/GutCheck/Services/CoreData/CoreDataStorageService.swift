@@ -30,8 +30,8 @@ class CoreDataStorageService: ObservableObject {
             localMeal.source = meal.source.rawValue
             localMeal.notes = meal.notes
             localMeal.createdBy = meal.createdBy
-            localMeal.createdAt = Date()
-            localMeal.lastModified = Date()
+            localMeal.createdAt = Date.now
+            localMeal.lastModified = Date.now
             localMeal.syncStatus = "local"
             
             // Save food items
@@ -153,8 +153,8 @@ class CoreDataStorageService: ObservableObject {
             localSymptom.bloating = false
             localSymptom.notes = symptom.notes
             localSymptom.createdBy = symptom.createdBy
-            localSymptom.createdAt = Date()
-            localSymptom.lastModified = Date()
+            localSymptom.createdAt = Date.now
+            localSymptom.lastModified = Date.now
             localSymptom.syncStatus = "local"
             
             try context.save()
@@ -233,7 +233,7 @@ class CoreDataStorageService: ObservableObject {
             localUser.privacyPolicyAccepted = user.privacyPolicyAccepted
             localUser.privacyPolicyAcceptedDate = user.privacyPolicyAcceptedDate
             localUser.privacyPolicyVersion = user.privacyPolicyVersion
-            localUser.lastSync = Date()
+            localUser.lastSync = Date.now
             localUser.syncStatus = "synced"
             
             try context.save()
@@ -289,7 +289,7 @@ class CoreDataStorageService: ObservableObject {
             localSettings.remindMeLaterInterval = Int16(settings.remindMeLaterInterval)
             localSettings.weeklyInsightEnabled = settings.weeklyInsightEnabled
             localSettings.weeklyInsightTime = settings.weeklyInsightTime
-            localSettings.lastModified = Date()
+            localSettings.lastModified = Date.now
             localSettings.syncStatus = "local"
             
             try context.save()
@@ -316,10 +316,10 @@ class CoreDataStorageService: ObservableObject {
                 breakfastReminderEnabled: localSetting.mealReminderEnabled,
                 breakfastReminderTime: localSetting.mealReminderTime ?? ReminderSettings.defaultTime(hour: 7),
                 symptomReminderEnabled: localSetting.symptomReminderEnabled,
-                symptomReminderTime: localSetting.symptomReminderTime ?? Date(),
+                symptomReminderTime: localSetting.symptomReminderTime ?? Date.now,
                 remindMeLaterInterval: Int(localSetting.remindMeLaterInterval),
                 weeklyInsightEnabled: localSetting.weeklyInsightEnabled,
-                weeklyInsightTime: localSetting.weeklyInsightTime ?? Date()
+                weeklyInsightTime: localSetting.weeklyInsightTime ?? Date.now
             )
         }
     }
@@ -329,16 +329,16 @@ class CoreDataStorageService: ObservableObject {
     func markAsSynced<T: NSManagedObject>(_ entity: T, syncStatus: String = "synced") {
         if let localMeal = entity as? LocalMeal {
             localMeal.syncStatus = syncStatus
-            localMeal.lastModified = Date()
+            localMeal.lastModified = Date.now
         } else if let localSymptom = entity as? LocalSymptom {
             localSymptom.syncStatus = syncStatus
-            localSymptom.lastModified = Date()
+            localSymptom.lastModified = Date.now
         } else if let localUser = entity as? LocalUser {
             localUser.syncStatus = syncStatus
-            localUser.lastSync = Date()
+            localUser.lastSync = Date.now
         } else if let localSettings = entity as? LocalReminderSettings {
             localSettings.syncStatus = syncStatus
-            localSettings.lastModified = Date()
+            localSettings.lastModified = Date.now
         }
 
         guard let context = entity.managedObjectContext else { return }
@@ -378,7 +378,7 @@ class CoreDataStorageService: ObservableObject {
         do {
             try await coreDataStack.performBackgroundTask { context in
             // Remove data older than 90 days
-            let cutoffDate = Calendar.current.date(byAdding: .day, value: -90, to: Date()) ?? Date()
+            let cutoffDate = Calendar.current.date(byAdding: .day, value: -90, to: Date.now) ?? Date.now
             
             let mealFetchRequest: NSFetchRequest<LocalMeal> = LocalMeal.fetchRequest()
             mealFetchRequest.predicate = NSPredicate(format: "date < %@ AND syncStatus == %@", cutoffDate as CVarArg, "synced")

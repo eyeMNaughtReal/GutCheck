@@ -183,7 +183,7 @@ struct MedicationsView: View {
         guard let userId = AuthenticationManager.shared.currentUserId else { return }
         isLoadingDoses = true
         do {
-            todayDoses = try await MedicationDoseRepository.shared.fetchDosesForDate(Date(), userId: userId)
+            todayDoses = try await MedicationDoseRepository.shared.fetchDosesForDate(Date.now, userId: userId)
         } catch {
             print("⚠️ MedicationsView: failed to load today's doses: \(error)")
         }

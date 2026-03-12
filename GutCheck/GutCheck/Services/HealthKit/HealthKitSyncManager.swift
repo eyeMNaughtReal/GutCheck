@@ -46,7 +46,7 @@ class HealthKitSyncManager: ObservableObject {
         }
         guard HKHealthStore.isHealthDataAvailable() else { return }
 
-        let now = Date().timeIntervalSince1970
+        let now = Date.now.timeIntervalSince1970
         let lastSync = UserDefaults.standard.double(forKey: lastSyncKey)
 
         guard now - lastSync >= syncInterval else {

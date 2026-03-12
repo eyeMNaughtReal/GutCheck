@@ -218,7 +218,7 @@ final class RemindersKitService: ObservableObject {
         // We use today's date as the anchor; the recurrence rule handles repeating.
         let cal = Calendar.current
         let timeComponents = cal.dateComponents([.hour, .minute], from: time)
-        var components = cal.dateComponents([.year, .month, .day], from: Date())
+        var components = cal.dateComponents([.year, .month, .day], from: Date.now)
         components.hour = timeComponents.hour
         components.minute = timeComponents.minute
         components.second = 0

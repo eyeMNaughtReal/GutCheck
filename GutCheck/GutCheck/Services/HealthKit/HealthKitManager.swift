@@ -379,7 +379,7 @@ final class HealthKitManager {
     }
     
     /// Write water intake to HealthKit
-    func writeWaterIntakeToHealthKit(amount: Double, date: Date = Date(), completion: @escaping (Bool, Error?) -> Void) {
+    func writeWaterIntakeToHealthKit(amount: Double, date: Date = Date.now, completion: @escaping (Bool, Error?) -> Void) {
         guard let waterType = HKQuantityType.quantityType(forIdentifier: .dietaryWater) else {
             completion(false, HealthKitError.invalidData)
             return

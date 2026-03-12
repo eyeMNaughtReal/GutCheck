@@ -21,8 +21,8 @@ struct HealthcareExportView: View {
     @State private var errorMessage = ""
     
     // Date range picker states
-    @State private var startDate = Calendar.current.date(byAdding: .month, value: -3, to: Date()) ?? Date()
-    @State private var endDate = Date()
+    @State private var startDate = Calendar.current.date(byAdding: .month, value: -3, to: Date.now) ?? Date.now
+    @State private var endDate = Date.now
     
     var body: some View {
         NavigationView {

@@ -17,7 +17,7 @@ struct SettingsView: View {
         let date = Date(timeIntervalSince1970: lastHealthKitSyncTimestamp)
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .abbreviated
-        return "Synced \(formatter.localizedString(for: date, relativeTo: Date()))"
+        return "Synced \(formatter.localizedString(for: date, relativeTo: Date.now))"
     }
 
     var body: some View {

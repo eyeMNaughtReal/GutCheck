@@ -38,7 +38,7 @@ class InsightsViewModel: ObservableObject {
             let userId = getCurrentUserId()
             
             // Calculate time range for last 30 days
-            let endDate = Date()
+            let endDate = Date.now
             let startDate = Calendar.current.date(byAdding: .day, value: -30, to: endDate) ?? endDate
             let timeRange = DateInterval(start: startDate, end: endDate)
             
@@ -131,7 +131,7 @@ class InsightsViewModel: ObservableObject {
                 priority: priority,
                 actionItems: insight.recommendations,
                 source: "AI Analysis",
-                dateCreated: Date()
+                dateCreated: Date.now
             )
         }
     }
@@ -149,7 +149,7 @@ class InsightsViewModel: ObservableObject {
 
     private func computeWeeklySummaries(meals: [Meal], symptoms: [Symptom]) {
         let calendar = Calendar.current
-        let now = Date()
+        let now = Date.now
         let weekAgo = calendar.date(byAdding: .day, value: -7, to: now) ?? now
 
         let weekMeals = meals.filter { $0.date >= weekAgo }
@@ -249,7 +249,7 @@ class InsightsViewModel: ObservableObject {
         var dayCounts: [Int: Int] = [:]  // weekday (1=Sun..7=Sat) → count
         var dayOccurrences: [Int: Int] = [:]  // how many of each weekday are in the 30-day range
 
-        let now = Date()
+        let now = Date.now
         let thirtyDaysAgo = calendar.date(byAdding: .day, value: -30, to: now) ?? now
 
         // Count occurrences of each weekday in the range

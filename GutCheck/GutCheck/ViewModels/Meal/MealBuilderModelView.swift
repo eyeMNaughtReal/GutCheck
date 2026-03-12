@@ -14,7 +14,7 @@ class MealBuilderViewModel: ObservableObject {
     // Meal properties
     @Published var mealName: String = ""
     @Published var mealType: MealType = .lunch
-    @Published var mealDate: Date = Date()
+    @Published var mealDate: Date = Date.now
     @Published var notes: String = ""
     @Published var foodItems: [FoodItem] = []
     @Published var isSaving: Bool = false
@@ -206,7 +206,7 @@ class MealBuilderViewModel: ObservableObject {
     private func resetForm() {
         mealName = ""
         mealType = .lunch
-        mealDate = Date()
+        mealDate = Date.now
         notes = ""
         foodItems = []
         editingFoodItem = nil

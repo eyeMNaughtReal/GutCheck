@@ -12,13 +12,13 @@ class TimeoutManager: ObservableObject {
     private init() {}
     
     func applicationDidEnterBackground() {
-        backgroundEnteredTime = Date()
+        backgroundEnteredTime = Date.now
     }
     
     func applicationWillEnterForeground() {
         guard let backgroundTime = backgroundEnteredTime else { return }
         
-        let timeInBackground = Date().timeIntervalSince(backgroundTime)
+        let timeInBackground = Date.now.timeIntervalSince(backgroundTime)
         if timeInBackground >= timeoutInterval {
             shouldResetToHome = true
         }

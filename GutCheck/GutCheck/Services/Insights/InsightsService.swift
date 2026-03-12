@@ -46,7 +46,7 @@ class InsightsService: ObservableObject {
     
     /// Generates insights for the last 30 days
     func generateRecentInsights() async {
-        let endDate = Date()
+        let endDate = Date.now
         let startDate = Calendar.current.date(byAdding: .day, value: -30, to: endDate) ?? endDate
         let timeRange = DateInterval(start: startDate, end: endDate)
         

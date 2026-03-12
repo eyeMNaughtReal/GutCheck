@@ -37,7 +37,7 @@ class DataSyncService: ObservableObject {
         defer {
             isSyncing = false
             syncProgress = 1.0
-            lastSyncDate = Date()
+            lastSyncDate = Date.now
         }
         
         do {
@@ -190,10 +190,10 @@ class DataSyncService: ObservableObject {
             breakfastReminderEnabled: localSettings.mealReminderEnabled,
             breakfastReminderTime: localSettings.mealReminderTime ?? ReminderSettings.defaultTime(hour: 7),
             symptomReminderEnabled: localSettings.symptomReminderEnabled,
-            symptomReminderTime: localSettings.symptomReminderTime ?? Date(),
+            symptomReminderTime: localSettings.symptomReminderTime ?? Date.now,
             remindMeLaterInterval: Int(localSettings.remindMeLaterInterval),
             weeklyInsightEnabled: localSettings.weeklyInsightEnabled,
-            weeklyInsightTime: localSettings.weeklyInsightTime ?? Date()
+            weeklyInsightTime: localSettings.weeklyInsightTime ?? Date.now
         )
         
         // Upload to Firestore

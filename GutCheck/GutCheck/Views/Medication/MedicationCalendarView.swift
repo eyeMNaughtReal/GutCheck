@@ -328,7 +328,7 @@ struct DoseCalendarRow: View {
 
 @MainActor
 class MedicationCalendarViewModel: ObservableObject {
-    @Published var selectedDate = Date()
+    @Published var selectedDate = Date.now
     @Published var doses: [MedicationDoseLog] = []
     @Published var isLoading = false
 

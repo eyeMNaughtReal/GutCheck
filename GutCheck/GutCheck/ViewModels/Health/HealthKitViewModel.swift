@@ -68,7 +68,7 @@ final class HealthKitViewModel: ObservableObject {
     func fetchHealthData() async {
         healthData = await HealthKitAsyncWrapper.shared.fetchUserHealthDataWithLogging()
         if healthData != nil {
-            lastSyncTimestamp = Date().timeIntervalSince1970
+            lastSyncTimestamp = Date.now.timeIntervalSince1970
         }
     }
 
@@ -132,7 +132,7 @@ final class HealthKitViewModel: ObservableObject {
     func formattedAge() -> String {
         guard let dob = healthData?.dateOfBirth else { return "-" }
         let calendar = Calendar.current
-        let ageComponents = calendar.dateComponents([.year], from: dob, to: Date())
+        let ageComponents = calendar.dateComponents([.year], from: dob, to: Date.now)
         if let years = ageComponents.year {
             return String(years)
         }

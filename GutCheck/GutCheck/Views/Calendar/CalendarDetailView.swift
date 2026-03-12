@@ -90,7 +90,7 @@ struct CalendarDetailView: View {
 
 #Preview {
     NavigationView {
-        CalendarDetailView(date: Date())
+        CalendarDetailView(date: Date.now)
     }
     .environmentObject(AuthService())
     .environmentObject(AppRouter.shared)

@@ -35,7 +35,7 @@ struct SymptomSummaryCard: View {
 #Preview {
     SymptomSummaryCard(symptom: Symptom(
         id: "1",
-        date: Date(),
+        date: Date.now,
         stoolType: .type4,
         painLevel: .moderate,
         urgencyLevel: .mild,
