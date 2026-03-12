@@ -300,7 +300,7 @@ struct SymptomDetailView: View {
                     .foregroundStyle(ColorTheme.primaryText)
             }
 
-            ScrollView(.horizontal, showsIndicators: false) {
+            ScrollView(.horizontal) {
                 HStack(spacing: 8) {
                     ForEach(viewModel.entity.tags, id: \.self) { tag in
                         Text(tag)
@@ -316,6 +316,7 @@ struct SymptomDetailView: View {
                 .padding(.leading, 40)
                 .padding(.trailing, 4)
             }
+            .scrollIndicators(.hidden)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)

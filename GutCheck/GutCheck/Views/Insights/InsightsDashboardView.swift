@@ -156,7 +156,7 @@ struct InsightsDashboardView: View {
     }
     
     private var categoryFilterSection: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        ScrollView(.horizontal) {
             HStack(spacing: 12) {
                 CategoryFilterButton(
                     title: "All",
@@ -174,6 +174,7 @@ struct InsightsDashboardView: View {
             }
             .padding(.horizontal)
         }
+        .scrollIndicators(.hidden)
     }
     
     // MARK: - Food Triggers Section

@@ -262,7 +262,7 @@ struct FilterBar<FilterType: RawRepresentable & CaseIterable & Equatable>: View 
     let onFilterChange: (FilterType) -> Void
     
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
+        ScrollView(.horizontal) {
             HStack(spacing: 12) {
                 ForEach(Array(FilterType.allCases), id: \.rawValue) { filter in
                     FilterChip(
@@ -276,6 +276,7 @@ struct FilterBar<FilterType: RawRepresentable & CaseIterable & Equatable>: View 
             }
             .padding(.horizontal)
         }
+        .scrollIndicators(.hidden)
         .padding(.vertical, 8)
     }
 }
