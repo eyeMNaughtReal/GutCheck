@@ -73,7 +73,7 @@ class DataSyncManager: ObservableObject {
     /// Trigger refresh with delay (useful for UI transitions)
     func triggerRefreshWithDelay(seconds: Double = 0.5, dataType: DataType = .dashboard) {
         Task {
-            try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            try? await Task.sleep(for: .seconds(seconds))
             await MainActor.run {
                 triggerRefresh(for: dataType)
             }
