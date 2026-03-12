@@ -38,7 +38,7 @@ struct SymptomEditView: View {
                     Text("Bristol Stool Scale")
                         .font(.title3)
                         .fontWeight(.semibold)
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                         .padding(.bottom, 2)
                     BristolScaleSelectionView(selectedStoolType: $selectedStoolType)
 
@@ -46,7 +46,7 @@ struct SymptomEditView: View {
                     Text("Pain Level")
                         .font(.title3)
                         .fontWeight(.semibold)
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                         .padding(.bottom, 2)
                     PainLevelSliderView(selectedPainLevel: $selectedPainLevel)
 
@@ -54,7 +54,7 @@ struct SymptomEditView: View {
                     Text("Urgency Level")
                         .font(.title3)
                         .fontWeight(.semibold)
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                         .padding(.bottom, 2)
                     UrgencyLevelSelectionView(selectedUrgencyLevel: $selectedUrgencyLevel)
 
@@ -91,7 +91,7 @@ struct SymptomEditView: View {
             Text("Symptom Time")
                 .font(.title3)
                 .fontWeight(.semibold)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             DatePicker(
                 "",
                 selection: $symptomDate,
@@ -110,7 +110,7 @@ struct SymptomEditView: View {
             Text("Notes")
                 .font(.title3)
                 .fontWeight(.semibold)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             TextEditor(text: $notes)
                 .frame(minHeight: 100)
@@ -147,7 +147,7 @@ struct SymptomEditView: View {
                         .font(.headline)
                         .fontWeight(.semibold)
                 }
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(
@@ -164,7 +164,7 @@ struct SymptomEditView: View {
                 Text("Cancel")
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
                     .background(

@@ -31,7 +31,7 @@ struct SettingsView: View {
                             Spacer()
                             Text(settingsVM.language.displayName)
                                 .typography(Typography.body)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .accessibilityLabel("Language: \(settingsVM.language.displayName)")
@@ -44,7 +44,7 @@ struct SettingsView: View {
                             Spacer()
                             Text(settingsVM.unitOfMeasure.displayName)
                                 .typography(Typography.body)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .accessibilityLabel("Units: \(settingsVM.unitOfMeasure.displayName)")
@@ -57,7 +57,7 @@ struct SettingsView: View {
                             Spacer()
                             Text(settingsVM.colorScheme.displayName)
                                 .typography(Typography.body)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .accessibilityLabel("Appearance: \(settingsVM.colorScheme.displayName)")
@@ -68,7 +68,7 @@ struct SettingsView: View {
                     NavigationLink(destination: UserRemindersView()) {
                         HStack {
                             Image(systemName: "bell.badge")
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                                 .accessibleDecorative()
                             Text("Reminders")
                                 .typography(Typography.body)
@@ -82,14 +82,14 @@ struct SettingsView: View {
                     NavigationLink(destination: MedicationListView()) {
                         HStack {
                             Image(systemName: "pills.fill")
-                                .foregroundColor(.purple)
+                                .foregroundStyle(.purple)
                                 .accessibleDecorative()
                             Text("My Medications")
                                 .typography(Typography.body)
                             Spacer()
                             Text("Manage your list")
                                 .typography(Typography.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .accessibilityLabel("My Medications")
@@ -100,15 +100,15 @@ struct SettingsView: View {
                     Button(action: { showAppleHealth = true }) {
                         HStack {
                             Image(systemName: "heart.fill")
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                                 .accessibleDecorative()
                             Text("Apple Health")
                                 .typography(Typography.body)
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
                             Spacer()
                             Text(appleHealthStatusText)
                                 .typography(Typography.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .accessibilityLabel("Apple Health: \(appleHealthStatusText)")
@@ -117,14 +117,14 @@ struct SettingsView: View {
                     NavigationLink(destination: HealthcareExportView()) {
                         HStack {
                             Image(systemName: "heart.text.square")
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                                 .accessibleDecorative()
                             Text("Export Health Data")
                                 .typography(Typography.body)
                             Spacer()
                             Text("For Healthcare Professionals")
                                 .typography(Typography.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .accessibilityLabel("Export Health Data for Healthcare Professionals")
@@ -135,7 +135,7 @@ struct SettingsView: View {
                     NavigationLink(destination: PrivacyPolicyView()) {
                         HStack {
                             Image(systemName: "lock.shield")
-                                .foregroundColor(.green)
+                                .foregroundStyle(.green)
                                 .accessibleDecorative()
                             Text("Privacy Policy")
                                 .typography(Typography.body)
@@ -147,14 +147,14 @@ struct SettingsView: View {
                     NavigationLink(destination: DataDeletionRequestView()) {
                         HStack {
                             Image(systemName: "trash.circle")
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                                 .accessibleDecorative()
                             Text("Request Data Deletion")
                                 .typography(Typography.body)
                             Spacer()
                             Text("GDPR Right")
                                 .typography(Typography.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .accessibilityLabel("Request Data Deletion")
@@ -162,18 +162,18 @@ struct SettingsView: View {
 
                     HStack {
                         Image(systemName: "checkmark.shield")
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
                             .accessibleDecorative()
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Privacy Policy Accepted")
                                 .font(.subheadline)
                             Text("Version 1.0 - August 18, 2025")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                         Spacer()
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
+                            .foregroundStyle(.green)
                             .accessibleDecorative()
                     }
                     .padding(.vertical, 4)
@@ -185,12 +185,12 @@ struct SettingsView: View {
                     NavigationLink(destination: LocalStorageSettingsView()) {
                         HStack {
                             Image(systemName: "internaldrive")
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                             Text("Local Storage")
                             Spacer()
                             Text("Core Data")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -200,7 +200,7 @@ struct SettingsView: View {
                     if let user = authService.currentUser {
                         HStack(spacing: 12) {
                             Image(systemName: user.signInMethod.icon)
-                                .foregroundColor(ColorTheme.primary)
+                                .foregroundStyle(ColorTheme.primary)
                                 .frame(width: 20)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Signed in with \(user.signInMethod.displayName)")
@@ -208,11 +208,11 @@ struct SettingsView: View {
                                     .fontWeight(.medium)
                                 Text(user.email)
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                             }
                             Spacer()
                             Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(ColorTheme.success)
+                                .foregroundStyle(ColorTheme.success)
                         }
                         .padding(.vertical, 4)
                         .accessibilityElement(children: .combine)
@@ -226,9 +226,9 @@ struct SettingsView: View {
                     } label: {
                         HStack {
                             Image(systemName: "rectangle.portrait.and.arrow.right")
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                             Text("Sign Out")
-                                .foregroundColor(ColorTheme.primaryText)
+                                .foregroundStyle(ColorTheme.primaryText)
                         }
                     }
                     .accessibilityLabel("Sign Out")
@@ -238,12 +238,12 @@ struct SettingsView: View {
                     NavigationLink(destination: DeleteAccountView()) {
                         HStack {
                             Image(systemName: "trash")
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                             Text("Delete Account")
                             Spacer()
                             Text("Permanent")
                                 .font(.caption)
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                         }
                     }
                 }
@@ -281,7 +281,7 @@ struct LanguageSelectionView: View {
                     Spacer()
                     if lang == settingsVM.language {
                         Image(systemName: "checkmark")
-                            .foregroundColor(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                             .accessibleDecorative()
                     }
                 }
@@ -312,7 +312,7 @@ struct UnitSelectionView: View {
                     Spacer()
                     if unit == settingsVM.unitOfMeasure {
                         Image(systemName: "checkmark")
-                            .foregroundColor(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                             .accessibleDecorative()
                     }
                 }
@@ -343,7 +343,7 @@ struct AppearanceSelectionView: View {
                     Spacer()
                     if scheme == settingsVM.colorScheme {
                         Image(systemName: "checkmark")
-                            .foregroundColor(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                             .accessibleDecorative()
                     }
                 }

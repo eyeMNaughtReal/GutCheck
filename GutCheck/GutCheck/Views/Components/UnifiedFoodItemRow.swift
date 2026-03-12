@@ -89,7 +89,7 @@ struct UnifiedFoodItemRow: View {
             .frame(width: config.iconSize, height: config.iconSize)
             .overlay(
                 Image(systemName: "fork.knife")
-                    .foregroundColor(ColorTheme.accent)
+                    .foregroundStyle(ColorTheme.accent)
                     .font(.system(size: config.iconSize * 0.4))
             )
     }
@@ -107,7 +107,7 @@ struct UnifiedFoodItemRow: View {
                     // Food name
                     Text(item.name)
                         .font(config.nameFont)
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                         .multilineTextAlignment(.leading)
                         .lineLimit(config.nameLineLimit)
                     
@@ -115,14 +115,14 @@ struct UnifiedFoodItemRow: View {
                     if config.showBrand, let brand = item.nutritionDetails["brand"] {
                         Text(brand)
                             .font(.subheadline)
-                            .foregroundColor(ColorTheme.accent)
+                            .foregroundStyle(ColorTheme.accent)
                             .lineLimit(1)
                     }
                     
                     // Quantity
                     Text(item.quantity)
                         .font(config.quantityFont)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                         .lineLimit(1)
                 }
                 
@@ -192,13 +192,13 @@ struct UnifiedFoodItemRow: View {
                     .padding(.horizontal, 4)
                     .padding(.vertical, 2)
                     .background(ColorTheme.error.opacity(0.2))
-                    .foregroundColor(ColorTheme.error)
+                    .foregroundStyle(ColorTheme.error)
                     .cornerRadius(4)
             }
             if item.allergens.count > config.maxAllergens {
                 Text("+\(item.allergens.count - config.maxAllergens)")
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
         }
     }
@@ -210,7 +210,7 @@ struct UnifiedFoodItemRow: View {
                 Button(action: onAdd) {
                     Image(systemName: "plus.circle.fill")
                         .font(config.actionButtonFont)
-                        .foregroundColor(ColorTheme.primary)
+                        .foregroundStyle(ColorTheme.primary)
                 }
                 .buttonStyle(PlainButtonStyle())
             }
@@ -220,7 +220,7 @@ struct UnifiedFoodItemRow: View {
                 Button(action: onEdit) {
                     Image(systemName: "pencil")
                         .font(config.actionButtonFont)
-                        .foregroundColor(ColorTheme.primary)
+                        .foregroundStyle(ColorTheme.primary)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .padding(.horizontal, 4)
@@ -231,7 +231,7 @@ struct UnifiedFoodItemRow: View {
                 Button(action: onDelete) {
                     Image(systemName: "trash")
                         .font(config.actionButtonFont)
-                        .foregroundColor(ColorTheme.error)
+                        .foregroundStyle(ColorTheme.error)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .padding(.horizontal, 4)
@@ -253,7 +253,7 @@ struct NutritionBadge: View {
             .padding(.horizontal, size.horizontalPadding)
             .padding(.vertical, size.verticalPadding)
             .background(color.opacity(0.2))
-            .foregroundColor(color)
+            .foregroundStyle(color)
             .cornerRadius(size.cornerRadius)
     }
 }

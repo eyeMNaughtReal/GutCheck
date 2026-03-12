@@ -40,7 +40,7 @@ struct MealDetailView: View {
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(mealTypeColor(type).opacity(0.2))
-            .foregroundColor(mealTypeColor(type))
+            .foregroundStyle(mealTypeColor(type))
             .cornerRadius(12)
     }
     
@@ -114,14 +114,14 @@ struct MealDetailView: View {
         VStack(spacing: 8) {
             Text(viewModel.meal.name)
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             HStack {
                 mealBadge(type: viewModel.meal.type)
                 
                 Text(viewModel.formattedDateTime)
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
         }
         .padding(.horizontal)
@@ -133,7 +133,7 @@ struct MealDetailView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Food Items")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                     .padding(.horizontal)
                 
                 ForEach(viewModel.meal.foodItems, id: \.id) { foodItem in
@@ -150,7 +150,7 @@ struct MealDetailView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Nutrition Summary")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                     .padding(.horizontal)
                 
                 nutritionSummaryCard(nutrition: totalNutrition)
@@ -165,7 +165,7 @@ struct MealDetailView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Notes")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                     .padding(.horizontal)
 
                 Text(notes)
@@ -204,11 +204,11 @@ struct MealDetailView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(foodItem.name)
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(foodItem.quantity)
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             
             Spacer()
@@ -216,7 +216,7 @@ struct MealDetailView: View {
             if let calories = foodItem.nutrition.calories {
                 Text("\(calories) calories")
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
         }
         .padding()
@@ -231,13 +231,13 @@ struct MealDetailView: View {
             HStack {
                 Text("Total Nutrition")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
                 
                 Text("\(nutrition.calories ?? 0) calories")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
             }
             
             Divider()
@@ -266,11 +266,11 @@ struct MealDetailView: View {
         VStack(spacing: 4) {
             Text(name)
                 .font(.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             
             Text("\(String(format: "%.1f", value ?? 0))\(unit)")
                 .font(.subheadline.bold())
-                .foregroundColor(color)
+                .foregroundStyle(color)
         }
         .frame(maxWidth: .infinity)
     }

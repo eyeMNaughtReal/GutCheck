@@ -195,7 +195,7 @@ private struct SymptomRow: View {
                     .font(.headline)
                 Spacer()
                 Text(symptom.date.formatted(.dateTime.hour().minute()))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             HStack {
@@ -204,7 +204,7 @@ private struct SymptomRow: View {
                 if let notes = symptom.notes, !notes.isEmpty {
                     Text(notes)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }

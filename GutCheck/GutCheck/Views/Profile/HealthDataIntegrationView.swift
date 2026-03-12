@@ -16,7 +16,7 @@ struct HealthDataIntegrationView: View {
                 Section(header: Text("Apple Health")) {
                     if healthKitVM.healthData != nil {
                         Label("Connected", systemImage: "checkmark.circle.fill")
-                            .foregroundColor(.green)
+                            .foregroundStyle(.green)
 
                         Button {
                             openHealthApp()
@@ -50,10 +50,10 @@ struct HealthDataIntegrationView: View {
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
                 }
 
                 // MARK: - What GutCheck reads
@@ -75,7 +75,7 @@ struct HealthDataIntegrationView: View {
                 ) {
                     NavigationLink(destination: MedicationListView()) {
                         Label("My Medications", systemImage: "pills.fill")
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                     }
                 }
 
@@ -113,7 +113,7 @@ struct HealthDataIntegrationView: View {
                         Button("Refresh Health Data") {
                             Task { await healthKitVM.fetchHealthData() }
                         }
-                        .foregroundColor(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                     }
                 }
 
@@ -205,7 +205,7 @@ struct HealthDataIntegrationView: View {
                                     Text("Request Write Permissions")
                                 }
                             }
-                            .foregroundColor(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                         }
 
                         if healthKitVM.hasDeniedWrites {
@@ -218,7 +218,7 @@ struct HealthDataIntegrationView: View {
                                     Text("Enable in Health App Settings")
                                 }
                             }
-                            .foregroundColor(.orange)
+                            .foregroundStyle(.orange)
                         }
                     }
                 }
@@ -249,7 +249,7 @@ struct HealthDataIntegrationView: View {
     private var writesFooter: some View {
         if healthKitVM.hasDeniedWrites {
             Text("Some write permissions are denied. Go to Health App → Privacy → Apps → GutCheck to re-enable them.")
-                .foregroundColor(.orange)
+                .foregroundStyle(.orange)
         } else if healthKitVM.hasUndeterminedWrites {
             Text("Tap \"Request Write Permissions\" below to grant write access for types not yet authorized.")
         } else {
@@ -275,7 +275,7 @@ struct HealthKitPermissionsGuideView: View {
                 Section {
                     Text("To adjust which data Apple Health and GutCheck share with each other, you'll need to manage permissions directly in the Health app.")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .padding(.vertical, 4)
                 }
 
@@ -334,7 +334,7 @@ struct HealthKitPermissionsGuideView: View {
                         dismiss()
                     } label: {
                         Image(systemName: "xmark")
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                     }
                 }
             }
@@ -360,7 +360,7 @@ private struct GuideStepRow: View {
                     .shadow(color: .black.opacity(0.08), radius: 2, x: 0, y: 1)
                 Image(systemName: icon)
                     .font(.system(size: 22))
-                    .foregroundColor(iconColor)
+                    .foregroundStyle(iconColor)
             }
 
             VStack(alignment: .leading, spacing: 2) {
@@ -369,7 +369,7 @@ private struct GuideStepRow: View {
                     .fontWeight(.semibold)
                 Text(detail)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, 4)
@@ -402,12 +402,12 @@ private struct WritePermissionRow: View {
 
             Text(name)
                 .font(.subheadline)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
 
             Spacer()
 
             Image(systemName: statusConfig.icon)
-                .foregroundColor(statusConfig.color)
+                .foregroundStyle(statusConfig.color)
                 .font(.system(size: 15))
                 .accessibilityLabel(statusConfig.label)
         }
@@ -426,7 +426,7 @@ private struct HealthTypeRow: View {
             Text(label)
         } icon: {
             Image(systemName: icon)
-                .foregroundColor(color)
+                .foregroundStyle(color)
         }
     }
 }
@@ -442,7 +442,7 @@ private struct HealthDataRow: View {
             Text(label)
             Spacer()
             Text(value)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")

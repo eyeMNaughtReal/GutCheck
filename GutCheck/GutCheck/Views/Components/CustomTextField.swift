@@ -29,7 +29,7 @@ struct CustomTextField: View {
             Text(title)
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(ColorTheme.text)
+                .foregroundStyle(ColorTheme.text)
             
             ZStack {
                 RoundedRectangle(cornerRadius: 12)

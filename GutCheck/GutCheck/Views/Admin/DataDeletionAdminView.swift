@@ -102,7 +102,7 @@ struct DeletionRequestRow: View {
                         
                         Text(request.userEmail)
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     
                     Spacer()
@@ -112,21 +112,21 @@ struct DeletionRequestRow: View {
                         
                         Text(request.formattedRequestDate)
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
                 
                 if let reason = request.reason, !reason.isEmpty {
                     Text("Reason: \(reason)")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
                 
                 HStack {
                     Text("Data to delete:")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                     
                     Spacer()
                     
@@ -170,7 +170,7 @@ struct StatusBadge: View {
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(Color(status.color).opacity(0.2))
-            .foregroundColor(Color(status.color))
+            .foregroundStyle(Color(status.color))
             .clipShape(Capsule())
     }
 }
@@ -188,7 +188,7 @@ struct DataTypeBadge: View {
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
             .background(color.opacity(0.2))
-            .foregroundColor(color)
+            .foregroundStyle(color)
             .clipShape(Capsule())
     }
 }
@@ -296,10 +296,10 @@ struct DataScopeRow: View {
             Spacer()
             if isSelected {
                 Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
             } else {
                 Image(systemName: "circle")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
         }
     }

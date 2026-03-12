@@ -15,7 +15,7 @@ struct ProfileSheetView: View {
                 VStack(spacing: 20) {
                     ProgressView()
                     Text("Loading profile...")
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(ColorTheme.background)

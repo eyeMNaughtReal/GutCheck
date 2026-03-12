@@ -262,7 +262,7 @@ struct CalendarMealsSectionHeader: View {
                 Text("Meals")
                     .font(.title3)
                     .fontWeight(.semibold)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 Spacer()
                 Button {
                     HapticManager.shared.medium()
@@ -278,7 +278,7 @@ struct CalendarMealsSectionHeader: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(Color.orange, in: Capsule())
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 }
                 .accessibleButton(label: "Log Meal", hint: "Tap to log a new meal")
             }
@@ -309,7 +309,7 @@ struct CalendarSymptomsSectionHeader: View {
                 Text("Symptoms")
                     .font(.title3)
                     .fontWeight(.semibold)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 Spacer()
                 Button {
                     HapticManager.shared.medium()
@@ -325,7 +325,7 @@ struct CalendarSymptomsSectionHeader: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(Color.orange, in: Capsule())
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 }
                 .accessibleButton(label: "Log Symptom", hint: "Tap to log a new symptom")
                 .accessibilityIdentifier(AccessibilityIdentifiers.Calendar.floatingActionButton)
@@ -347,15 +347,15 @@ struct EmptyStateCard: View {
         VStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 40))
-                .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
+                .foregroundStyle(ColorTheme.secondaryText.opacity(0.5))
             
             Text(title)
                 .font(.headline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             
             Text(message)
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText.opacity(0.8))
+                .foregroundStyle(ColorTheme.secondaryText.opacity(0.8))
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -597,7 +597,7 @@ struct MealCalendarRow: View {
                     
                     Image(systemName: mealIcon)
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(mealIconColor)
+                        .foregroundStyle(mealIconColor)
                 }
                 
                 // Content
@@ -605,19 +605,19 @@ struct MealCalendarRow: View {
                     HStack {
                         Text(meal.type.rawValue.capitalized)
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                         
                         Spacer()
                         
                         Text(formattedTime)
                             .font(.system(size: 15))
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                     
                     if !meal.foodItems.isEmpty {
                         Text(foodItemsPreview)
                             .font(.system(size: 15))
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                             .lineLimit(2)
                             .multilineTextAlignment(.leading)
                     }
@@ -626,7 +626,7 @@ struct MealCalendarRow: View {
                 // Chevron
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(ColorTheme.secondaryText.opacity(0.3))
+                    .foregroundStyle(ColorTheme.secondaryText.opacity(0.3))
             }
             .padding(16)
             .contentShape(Rectangle())
@@ -706,7 +706,7 @@ struct SymptomCalendarRow: View {
                     
                     Image(systemName: "waveform.path.ecg")
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                 }
                 
                 // Content
@@ -714,39 +714,39 @@ struct SymptomCalendarRow: View {
                     HStack {
                         Text("Type \(symptom.stoolType.rawValue)")
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                         
                         Spacer()
                         
                         Text(formattedTime)
                             .font(.system(size: 15))
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                     
                     HStack(spacing: 16) {
                         HStack(spacing: 6) {
                             Image(systemName: "bolt.fill")
                                 .font(.system(size: 12))
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                             Text(painLevelText)
                                 .font(.system(size: 14))
-                                .foregroundColor(ColorTheme.secondaryText)
+                                .foregroundStyle(ColorTheme.secondaryText)
                         }
                         
                         HStack(spacing: 6) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.system(size: 12))
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                             Text(urgencyLevelText)
                                 .font(.system(size: 14))
-                                .foregroundColor(ColorTheme.secondaryText)
+                                .foregroundStyle(ColorTheme.secondaryText)
                         }
                     }
                     
                     if let notes = symptom.notes, !notes.isEmpty {
                         Text(notes)
                             .font(.system(size: 15))
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                             .lineLimit(2)
                             .multilineTextAlignment(.leading)
                     }
@@ -755,7 +755,7 @@ struct SymptomCalendarRow: View {
                 // Chevron
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(ColorTheme.secondaryText.opacity(0.3))
+                    .foregroundStyle(ColorTheme.secondaryText.opacity(0.3))
             }
             .padding(16)
             .contentShape(Rectangle())
@@ -799,36 +799,36 @@ struct DailyNutritionCard: View {
             HStack {
                 Text("Daily Nutrition")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 Spacer()
                 if mealCount > 0 {
                     Text("See details")
                         .font(.caption)
-                        .foregroundColor(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                     Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundColor(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                 }
             }
 
             if mealCount == 0 {
                 Text("Log a meal to see your daily nutrition totals.")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 // Calorie count — prominent
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text("\(nutrition.calories ?? 0)")
                         .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                     Text("kcal")
                         .font(.subheadline)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                     Spacer()
                     Text("\(mealCount) meal\(mealCount == 1 ? "" : "s")")
                         .font(.caption)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                 }
 
                 // P / C / F pills
@@ -879,10 +879,10 @@ private struct MacroPill: View {
             Text(label)
                 .font(.caption)
                 .fontWeight(.semibold)
-                .foregroundColor(color)
+                .foregroundStyle(color)
             Text(value.map { String(format: "%.1fg", $0) } ?? "--")
                 .font(.caption)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -913,24 +913,24 @@ struct DailySymptomCard: View {
             HStack {
                 Text("Daily Summary")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 Spacer()
             }
 
             if symptoms.isEmpty {
                 Text("Log a symptom to see your daily summary.")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 // Symptom count — prominent
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text("\(symptoms.count)")
                         .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                     Text("symptom\(symptoms.count == 1 ? "" : "s")")
                         .font(.subheadline)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                     Spacer()
                 }
 
@@ -969,10 +969,10 @@ private struct SymptomStatPill: View {
             Text(label)
                 .font(.caption)
                 .fontWeight(.semibold)
-                .foregroundColor(color)
+                .foregroundStyle(color)
             Text(value)
                 .font(.caption)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -1134,14 +1134,14 @@ struct DailyNutritionDetailView: View {
                                 Spacer()
                                 Text("\(mealCalories) kcal")
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                                     .monospacedDigit()
                                     .textCase(nil)
                             }
                         ) {
                             if meal.foodItems.isEmpty {
                                 Text("No food items logged")
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                                     .font(.subheadline)
                             } else {
                                 ForEach(meal.foodItems) { item in
@@ -1155,7 +1155,7 @@ struct DailyNutritionDetailView: View {
                 if nutrition.calories == nil && details.isEmpty {
                     Section {
                         Text("No nutrition data for this day. Log a meal to see your breakdown.")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .font(.subheadline)
                     }
                 }
@@ -1191,10 +1191,10 @@ struct NutritionDetailRow: View {
                 .fill(color.opacity(0.2))
                 .frame(width: 8, height: 8)
             Text(label)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             Spacer()
             Text(formattedValue)
-                .foregroundColor(value != nil ? .primary : .secondary)
+                .foregroundStyle(value != nil ? .primary : .secondary)
                 .monospacedDigit()
         }
         .accessibilityElement(children: .combine)
@@ -1225,11 +1225,11 @@ private struct NutritionDetailFoodRow: View {
                     HStack(alignment: .top, spacing: 8) {
                         Text("Allergens")
                             .font(.subheadline)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         Spacer()
                         Text(item.allergens.joined(separator: ", "))
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .multilineTextAlignment(.trailing)
                     }
                     .padding(.top, 6)
@@ -1240,10 +1240,10 @@ private struct NutritionDetailFoodRow: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Ingredients")
                             .font(.subheadline)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         Text(item.ingredients.joined(separator: ", "))
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -1257,16 +1257,16 @@ private struct NutritionDetailFoodRow: View {
                     Text(item.name)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     Text(item.quantity)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 Spacer()
                 if let cal = item.nutrition.calories {
                     Text("\(cal) kcal")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
             }

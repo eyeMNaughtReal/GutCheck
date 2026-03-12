@@ -23,7 +23,7 @@ struct ReminderSettingsTestView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         if let settings = reminderService.reminderSettings {
                             Text("Settings loaded successfully!")
-                                .foregroundColor(.green)
+                                .foregroundStyle(.green)
                                 .font(.headline)
                             
                             Group {
@@ -39,12 +39,12 @@ struct ReminderSettingsTestView: View {
                             .padding(.horizontal)
                         } else {
                             Text("No settings loaded")
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                         }
                         
                         if let error = reminderService.errorMessage {
                             Text("Error: \(error)")
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                                 .padding()
                         }
                     }

@@ -18,7 +18,7 @@ struct AddWaterView: View {
             HStack {
                 TextField("0", value: $cups, format: .number)
                     .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                     .multilineTextAlignment(.center)
                     .keyboardType(.decimalPad)
                     .padding()
@@ -31,7 +31,7 @@ struct AddWaterView: View {
                 
                 Text("cup(s)")
                     .font(.title3)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             .padding(.horizontal)
             
@@ -41,7 +41,7 @@ struct AddWaterView: View {
             }) {
                 Text("Add Water")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.blue)

@@ -65,7 +65,7 @@ struct UnifiedCalendarView: View {
                     .font(.title2)
                     .bold()
                 Text(selectedDate.formatted(.dateTime.year()))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Spacer()
@@ -88,7 +88,7 @@ struct UnifiedCalendarView: View {
             ForEach(calendar.veryShortWeekdaySymbols, id: \.self) { symbol in
                 Text(symbol)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -125,7 +125,7 @@ private struct DayCell: View {
         VStack(spacing: 4) {
             Text("\(Calendar.current.component(.day, from: day.date))")
                 .font(.system(.body, design: .rounded))
-                .foregroundColor(isSelected ? .white : day.isCurrentMonth ? .primary : .secondary)
+                .foregroundStyle(isSelected ? .white : day.isCurrentMonth ? .primary : .secondary)
             
             if day.hasMeals || day.hasSymptoms {
                 HStack(spacing: 4) {
@@ -162,7 +162,7 @@ private struct DailySummaryCard: View {
             if day.hasMeals {
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Meals", systemImage: "fork.knife")
-                        .foregroundColor(ColorTheme.mealLogging)
+                        .foregroundStyle(ColorTheme.mealLogging)
                     ForEach(day.meals) { meal in
                         Text(meal.name)
                             .font(.subheadline)
@@ -173,7 +173,7 @@ private struct DailySummaryCard: View {
             if day.hasSymptoms {
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Symptoms", systemImage: "waveform.path.ecg")
-                        .foregroundColor(ColorTheme.bowelTracking)
+                        .foregroundStyle(ColorTheme.bowelTracking)
                     ForEach(day.symptoms) { symptom in
                         Text("Stool: \(symptom.stoolType.rawValue), Pain: \(symptom.painLevel.rawValue)")
                             .font(.subheadline)

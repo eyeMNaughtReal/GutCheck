@@ -29,7 +29,7 @@ struct LoadMoreButton: View {
                         .font(.subheadline)
                         .fontWeight(.medium)
                 }
-                .foregroundColor(ColorTheme.primary)
+                .foregroundStyle(ColorTheme.primary)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
                 .background(
@@ -93,7 +93,7 @@ struct LoadMoreTrigger: View {
                     .scaleEffect(0.8)
                 Text("Loading more...")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             } else {
                 Spacer()
             }
@@ -120,7 +120,7 @@ struct PaginationStatusBar: View {
             if let totalItems = totalItems {
                 Text("\(totalItems) items")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Spacer()
@@ -133,12 +133,12 @@ struct PaginationStatusBar: View {
                 
                 Text("Page \(currentPage)")
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 if hasMoreData {
                     Image(systemName: "ellipsis")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
@@ -228,7 +228,7 @@ struct PaginatedListView<Item: Identifiable, ItemView: View>: View {
                     } else if !items.isEmpty {
                         Text("No more items")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .padding()
                     }
                 }
@@ -248,7 +248,7 @@ struct LoadingView: View {
             
             Text("Loading...")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(ColorTheme.background)
@@ -299,7 +299,7 @@ struct FilterChip: View {
                         .fill(isSelected ? ColorTheme.primary : ColorTheme.background)
                         .stroke(ColorTheme.primary, lineWidth: 1)
                 )
-                .foregroundColor(isSelected ? .white : ColorTheme.primary)
+                .foregroundStyle(isSelected ? .white : ColorTheme.primary)
         }
     }
 }
@@ -330,7 +330,7 @@ struct DateRangePicker: View {
                     Text(dateRangeText)
                         .font(.subheadline)
                 }
-                .foregroundColor(ColorTheme.primary)
+                .foregroundStyle(ColorTheme.primary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(
@@ -346,7 +346,7 @@ struct DateRangePicker: View {
                     onRangeChange()
                 }
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             }
             
             Spacer()

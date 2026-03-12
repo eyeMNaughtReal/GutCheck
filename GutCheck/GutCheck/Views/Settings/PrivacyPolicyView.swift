@@ -13,7 +13,7 @@ struct PrivacyPolicyView: View {
                 Section {
                     Text("Last Updated: July 2025")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                     
                     Text("This Privacy Policy describes how GutCheck collects, uses, and protects your personal information.")
                         .font(.subheadline)
@@ -27,7 +27,7 @@ struct PrivacyPolicyView: View {
                                 .font(.headline)
                             Text(section.summary)
                                 .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                         .padding(.vertical, 4)
                     }
@@ -70,7 +70,7 @@ private struct PolicyDetailView: View {
                     
                     Text(section.summary)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 
                 // Section Content
@@ -97,7 +97,7 @@ private struct PolicyDetailSection: View {
             
             Text(detail.content)
                 .font(.body)
-                .foregroundColor(ColorTheme.text.opacity(0.8))
+                .foregroundStyle(ColorTheme.text.opacity(0.8))
             
             if !detail.bullets.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
@@ -107,7 +107,7 @@ private struct PolicyDetailSection: View {
                             Text(bullet)
                         }
                         .font(.body)
-                        .foregroundColor(ColorTheme.text.opacity(0.8))
+                        .foregroundStyle(ColorTheme.text.opacity(0.8))
                     }
                 }
                 .padding(.leading, 4)

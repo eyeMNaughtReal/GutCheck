@@ -81,7 +81,7 @@ struct HealthcareExportView: View {
         VStack(spacing: 16) {
             Image(systemName: "heart.text.square")
                 .font(.system(size: 48))
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
             
             Text("Healthcare Professional Export")
                 .font(.title2)
@@ -90,7 +90,7 @@ struct HealthcareExportView: View {
             
             Text("Generate comprehensive health reports for medical professionals, nutritionists, and healthcare providers.")
                 .font(.body)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
         .padding()
@@ -112,7 +112,7 @@ struct HealthcareExportView: View {
                         .fontWeight(.medium)
                     Spacer()
                     Text("\(startDate.formatted(date: .abbreviated, time: .omitted)) - \(endDate.formatted(date: .abbreviated, time: .omitted))")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 
                 HStack {
@@ -120,7 +120,7 @@ struct HealthcareExportView: View {
                         .fontWeight(.medium)
                     Spacer()
                     Text(exportOptions.format.displayName)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 
                 HStack {
@@ -128,7 +128,7 @@ struct HealthcareExportView: View {
                         .fontWeight(.medium)
                     Spacer()
                     Text(exportOptions.includePrivateData ? "Yes" : "No")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
             .padding()
@@ -199,7 +199,7 @@ struct HealthcareExportView: View {
                     
                     Text("Generating Report...")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             } else {
                 Button(action: generateExport) {
@@ -208,7 +208,7 @@ struct HealthcareExportView: View {
                         Text("Generate Healthcare Report")
                     }
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.blue)
@@ -320,7 +320,7 @@ struct DataPreviewRow: View {
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .foregroundColor(color)
+                .foregroundStyle(color)
                 .frame(width: 24)
             
             Text(title)
@@ -330,7 +330,7 @@ struct DataPreviewRow: View {
             
             Text(count)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
     }
 }
@@ -344,14 +344,14 @@ struct InstructionRow: View {
             Text(number)
                 .font(.caption)
                 .fontWeight(.bold)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(width: 20, height: 20)
                 .background(Color.blue)
                 .clipShape(Circle())
             
             Text(text)
                 .font(.body)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
         }
     }
 }
@@ -391,7 +391,7 @@ struct ExportOptionsSheet: View {
                 Section("Privacy Note") {
                     Text("Private data includes personal notes, detailed symptoms, and medication information. Only include if required for medical assessment.")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
             .navigationTitle("Export Options")

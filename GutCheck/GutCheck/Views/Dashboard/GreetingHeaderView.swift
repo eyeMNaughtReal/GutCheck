@@ -17,10 +17,10 @@ struct GreetingHeaderView: View {
                 Text(greeting)
                     .font(.title2)
                     .fontWeight(.semibold)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 Text("Here's how your day is going so far:")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             Spacer()
         }

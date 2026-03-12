@@ -16,10 +16,10 @@ struct UserRemindersView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "clock.fill")
                             .font(.caption)
-                            .foregroundColor(ColorTheme.accent)
+                            .foregroundStyle(ColorTheme.accent)
                         Text("Set your typical meal time. A reminder fires 15 minutes after to log what you ate.")
                             .font(.caption)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                     .padding(.bottom, 4)
 
@@ -100,11 +100,11 @@ struct UserRemindersView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "sparkles")
                             .font(.subheadline)
-                            .foregroundColor(ColorTheme.primary)
+                            .foregroundStyle(ColorTheme.primary)
                             .frame(width: 20)
                         Text("Sent automatically when GutCheck detects new insights or patterns in your data.")
                             .font(.caption)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                     .padding(.bottom, 4)
 
@@ -137,7 +137,7 @@ struct UserRemindersView: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(ColorTheme.accent)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .cornerRadius(12)
                 }
                 .disabled(reminderService.isLoading)
@@ -180,16 +180,16 @@ struct UserRemindersView: View {
             HStack(spacing: 12) {
                 Image(systemName: "checklist")
                     .font(.title3)
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
                     .frame(width: 28)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Sync with Apple Reminders")
                         .font(.body)
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                     Text("Add reminders to your Apple Reminders app")
                         .font(.caption)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                 }
 
                 Spacer()
@@ -211,18 +211,18 @@ struct UserRemindersView: View {
                         Task { await connectAppleReminders() }
                     }
                     .font(.subheadline.weight(.medium))
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
                 }
             }
 
             if remindersKit.isEnabled && remindersKit.isAuthorized {
                 HStack(spacing: 6) {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(ColorTheme.success)
+                        .foregroundStyle(ColorTheme.success)
                         .font(.subheadline)
                     Text("Your reminders will appear in the \"GutCheck\" list in Apple Reminders.")
                         .font(.caption)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                 }
             }
         }
@@ -268,7 +268,7 @@ struct ReminderSection<Content: View>: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(.headline)
-                .foregroundColor(color)
+                .foregroundStyle(color)
             VStack(spacing: 12) {
                 content()
             }

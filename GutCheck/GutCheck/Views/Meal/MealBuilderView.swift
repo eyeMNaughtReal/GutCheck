@@ -55,7 +55,7 @@ struct MealBuilderView: View {
                                         .padding(.horizontal, 16)
                                         .padding(.vertical, 8)
                                         .background(isSelected ? ColorTheme.primary : ColorTheme.surface)
-                                        .foregroundColor(isSelected ? .white : ColorTheme.primaryText)
+                                        .foregroundStyle(isSelected ? .white : ColorTheme.primaryText)
                                         .cornerRadius(20)
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 20)
@@ -85,11 +85,11 @@ struct MealBuilderView: View {
                     }) {
                         HStack {
                             Image(systemName: "calendar")
-                                .foregroundColor(ColorTheme.primary)
+                                .foregroundStyle(ColorTheme.primary)
                                 .accessibleDecorative()
                             Text(mealService.formattedDateTime)
                                 .typography(Typography.body)
-                                .foregroundColor(ColorTheme.primaryText)
+                                .foregroundStyle(ColorTheme.primaryText)
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -157,7 +157,7 @@ struct MealBuilderView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Notes")
                             .typography(Typography.subheadline)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                         
                         TextEditor(text: $mealService.notes)
                             .typography(Typography.body)
@@ -195,7 +195,7 @@ struct MealBuilderView: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(ColorTheme.primary.opacity(0.9))
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .cornerRadius(12)
                 }
                 .accessibleButton(
@@ -219,7 +219,7 @@ struct MealBuilderView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(ColorTheme.surface)
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
@@ -257,7 +257,7 @@ struct MealBuilderView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(ColorTheme.accent)
-                            .foregroundColor(ColorTheme.text)
+                            .foregroundStyle(ColorTheme.text)
                             .cornerRadius(12)
                     }
                     .disabled(mealService.currentMeal.isEmpty)
@@ -341,16 +341,16 @@ struct MealBuilderView: View {
         VStack(spacing: 12) {
             Image(systemName: "fork.knife")
                 .font(.system(size: 48))
-                .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
+                .foregroundStyle(ColorTheme.secondaryText.opacity(0.5))
                 .accessibleDecorative()
             
             Text("No food items yet")
                 .typography(Typography.headline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             
             Text("Tap \"Add Food Item\" to start building your meal")
                 .typography(Typography.caption)
-                .foregroundColor(ColorTheme.secondaryText.opacity(0.8))
+                .foregroundStyle(ColorTheme.secondaryText.opacity(0.8))
                 .multilineTextAlignment(.center)
         }
         .padding()
@@ -373,13 +373,13 @@ struct NutritionSummaryCard: View {
             HStack {
                 Text("Nutrition Summary")
                     .typography(Typography.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
                 
                 Text("\(Int(nutrition.calories ?? 0)) calories")
                     .typography(Typography.headline)
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
             }
             
             Divider()
@@ -417,11 +417,11 @@ struct NutrientLabel: View {
         VStack(spacing: 4) {
             Text(name)
                 .typography(Typography.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             
             Text("\(String(format: "%.1f", value ?? 0)) \(unit)")
                 .typography(Typography.headline)
-                .foregroundColor(color)
+                .foregroundStyle(color)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)

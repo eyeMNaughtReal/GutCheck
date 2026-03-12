@@ -27,22 +27,22 @@ struct DeleteAccountView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 64))
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                     
                     Text("Delete Your Account")
                         .font(.title.bold())
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                     
                     Text("This action cannot be undone")
                         .font(.headline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 
                 // Consequences Warning
                 VStack(alignment: .leading, spacing: 16) {
                     Text("What will happen:")
                         .font(.headline)
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                     
                     VStack(alignment: .leading, spacing: 8) {
                         WarningRow(icon: "trash", text: "All your health data will be permanently deleted")
@@ -83,7 +83,7 @@ struct DeleteAccountView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.red)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .cornerRadius(12)
                     }
                     .disabled(isDeleting)
@@ -91,7 +91,7 @@ struct DeleteAccountView: View {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal)
                 
@@ -161,7 +161,7 @@ struct WarningRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(.red)
+                .foregroundStyle(.red)
                 .frame(width: 20)
             
             Text(text)
@@ -179,7 +179,7 @@ struct DataRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(.orange)
+                .foregroundStyle(.orange)
                 .frame(width: 20)
             
             Text(text)

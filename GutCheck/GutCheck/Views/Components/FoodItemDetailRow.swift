@@ -11,7 +11,7 @@ struct FoodItemDetailRow: View {
             HStack {
                 Text(foodItem.name)
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
                 
@@ -19,7 +19,7 @@ struct FoodItemDetailRow: View {
                     if let onEdit = onEdit {
                         Button(action: onEdit) {
                             Image(systemName: "pencil")
-                                .foregroundColor(ColorTheme.primary)
+                                .foregroundStyle(ColorTheme.primary)
                         }
                         .padding(.horizontal, 4)
                     }
@@ -27,7 +27,7 @@ struct FoodItemDetailRow: View {
                     if let onDelete = onDelete {
                         Button(action: onDelete) {
                             Image(systemName: "trash")
-                                .foregroundColor(ColorTheme.error)
+                                .foregroundStyle(ColorTheme.error)
                         }
                         .padding(.horizontal, 4)
                     }
@@ -37,13 +37,13 @@ struct FoodItemDetailRow: View {
             // Quantity
             Text("\(foodItem.quantity)")
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             
             // Nutrition details
             if let calories = foodItem.nutrition.calories {
                 Text("\(calories) calories")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
             }
             
             HStack(spacing: 12) {

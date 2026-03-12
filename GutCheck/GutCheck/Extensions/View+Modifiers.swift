@@ -13,7 +13,7 @@ extension View {
         self
             .padding()
             .background(ColorTheme.buttonPrimary)
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .cornerRadius(8)
     }
     
@@ -21,7 +21,7 @@ extension View {
         self
             .padding()
             .background(ColorTheme.buttonSecondary)
-            .foregroundColor(ColorTheme.text)
+            .foregroundStyle(ColorTheme.text)
             .cornerRadius(8)
     }
     

@@ -70,7 +70,7 @@ struct UnifiedNutritionBadge: View {
         }
         .padding(style.padding)
         .background(color.opacity(0.2))
-        .foregroundColor(color)
+        .foregroundStyle(color)
         .cornerRadius(style == .large ? 6 : 4)
     }
 }
@@ -103,7 +103,7 @@ struct UnifiedMacroRow: View {
         HStack {
             Text(label)
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             Spacer()
             
@@ -111,11 +111,11 @@ struct UnifiedMacroRow: View {
                 Text(value)
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
                 
                 Text(unit)
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
         }
     }
@@ -143,13 +143,13 @@ struct UnifiedNutritionSummary: View {
                 HStack {
                     Text("Nutrition Facts")
                         .font(.headline)
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                     
                     Spacer()
                     
                     Text("\(calories) calories")
                         .font(.headline)
-                        .foregroundColor(ColorTheme.primary)
+                        .foregroundStyle(ColorTheme.primary)
                 }
             }
             
@@ -235,15 +235,15 @@ struct NutrientColumn: View {
         VStack(spacing: 4) {
             Text(name)
                 .font(.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             
             Text(String(format: "%.1f", value))
                 .font(.headline)
-                .foregroundColor(color)
+                .foregroundStyle(color)
             
             Text(unit)
                 .font(.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
         }
         .frame(maxWidth: .infinity)
     }

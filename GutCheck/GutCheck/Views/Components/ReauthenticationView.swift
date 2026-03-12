@@ -31,14 +31,14 @@ struct ReauthenticationView: View {
                 VStack(spacing: 12) {
                     Image(systemName: "lock.shield")
                         .font(.system(size: 48))
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                     
                     Text("Verify Your Identity")
                         .font(.title2.bold())
                     
                     Text("For security reasons, please verify your identity before \(operation.lowercased()).")
                         .font(.body)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                 }
@@ -85,7 +85,7 @@ struct ReauthenticationView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.red)
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                         .cornerRadius(12)
                     }
                     .disabled(authService.isLoading || email.isEmpty || password.isEmpty)
@@ -93,12 +93,12 @@ struct ReauthenticationView: View {
                     Button("Use Phone Verification") {
                         showPhoneAuth = true
                     }
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                     
                     Button("Cancel") {
                         onCancel()
                     }
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal)
                 
@@ -162,14 +162,14 @@ struct PhoneReauthenticationView: View {
                 VStack(spacing: 12) {
                     Image(systemName: "phone.circle")
                         .font(.system(size: 48))
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                     
                     Text("Phone Verification")
                         .font(.title2.bold())
                     
                     Text("Verify your identity using your phone number.")
                         .font(.body)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                 }
@@ -202,7 +202,7 @@ struct PhoneReauthenticationView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.blue)
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .cornerRadius(12)
                         }
                         .disabled(authService.isLoading || phoneNumber.isEmpty)
@@ -232,7 +232,7 @@ struct PhoneReauthenticationView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.green)
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .cornerRadius(12)
                         }
                         .disabled(authService.isLoading || verificationCode.isEmpty)
@@ -240,7 +240,7 @@ struct PhoneReauthenticationView: View {
                         Button("Resend Code") {
                             sendVerificationCode()
                         }
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                     }
                 }
                 .padding(.horizontal)
@@ -251,7 +251,7 @@ struct PhoneReauthenticationView: View {
                 Button("Cancel") {
                     onCancel()
                 }
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .padding(.horizontal)
             }
             .padding()

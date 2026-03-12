@@ -67,7 +67,7 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Recent Insights")
                 .font(.title2.bold())
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
@@ -84,7 +84,7 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Categories")
                 .font(.title2.bold())
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             LazyVGrid(columns: [
                 GridItem(.flexible()),
@@ -101,7 +101,7 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Patterns")
                 .font(.title2.bold())
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             ForEach(viewModel.patterns) { pattern in
                 PatternRow(pattern: pattern)
@@ -113,7 +113,7 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Recommendations")
                 .font(.title2.bold())
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             ForEach(viewModel.recommendations) { recommendation in
                 RecommendationCard(recommendation: recommendation)
@@ -150,12 +150,12 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Most Frequent Symptoms", systemImage: "chart.bar.fill")
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
 
             if viewModel.topSymptoms.isEmpty {
                 Text("No symptoms logged this week")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 4)
             } else {
@@ -163,19 +163,19 @@ struct InsightsView: View {
                     HStack(spacing: 12) {
                         Text("\(index + 1)")
                             .font(.caption.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .frame(width: 22, height: 22)
                             .background(Circle().fill(rankColor(index)))
 
                         Text(item.name)
                             .font(.subheadline)
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
 
                         Spacer()
 
                         Text("\(item.count)×")
                             .font(.subheadline.bold())
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                 }
             }
@@ -190,12 +190,12 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Top Triggering Foods", systemImage: "exclamationmark.triangle.fill")
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
 
             if viewModel.topTriggerFoods.isEmpty {
                 Text("Not enough data to identify triggers yet")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 4)
             } else {
@@ -203,18 +203,18 @@ struct InsightsView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.caption)
-                            .foregroundColor(rankColor(index))
+                            .foregroundStyle(rankColor(index))
 
                         Text(item.name)
                             .font(.subheadline)
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                             .lineLimit(1)
 
                         Spacer()
 
                         Text("\(item.count) correlation\(item.count == 1 ? "" : "s")")
                             .font(.caption)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                 }
             }
@@ -229,34 +229,34 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Best Days", systemImage: "checkmark.seal.fill")
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
 
             if viewModel.bestDays.isEmpty {
                 Text("Log symptoms for a week to see your best days")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 4)
             } else {
                 ForEach(Array(viewModel.bestDays.enumerated()), id: \.element.id) { index, item in
                     HStack(spacing: 12) {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(ColorTheme.success)
+                            .foregroundStyle(ColorTheme.success)
 
                         Text(item.name)
                             .font(.subheadline)
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
 
                         Spacer()
 
                         if item.count == 0 {
                             Text("Symptom-free")
                                 .font(.caption)
-                                .foregroundColor(ColorTheme.success)
+                                .foregroundStyle(ColorTheme.success)
                         } else {
                             Text("Low symptoms")
                                 .font(.caption)
-                                .foregroundColor(ColorTheme.secondaryText)
+                                .foregroundStyle(ColorTheme.secondaryText)
                         }
                     }
                 }
@@ -290,15 +290,15 @@ private struct WeeklyStatPill: View {
         VStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.title3)
-                .foregroundColor(color)
+                .foregroundStyle(color)
 
             Text(value)
                 .font(.title2.bold())
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
 
             Text(label)
                 .font(.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
@@ -317,29 +317,29 @@ private struct AnalyticsInsightCard: View {
                 HStack {
                     Image(systemName: insight.iconName)
                         .font(.title2)
-                        .foregroundColor(ColorTheme.accent)
+                        .foregroundStyle(ColorTheme.accent)
                     
                     Spacer()
                     
                     Text("\(insight.confidenceLevel)%")
                         .font(.caption)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                 }
                 
                 Text(insight.title)
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                     .lineLimit(1)
                     .truncationMode(.tail)
                 
                 Text(insight.summary)
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .lineLimit(2)
                 
                 Text(insight.dateRange)
                     .font(.caption)
-                    .foregroundColor(ColorTheme.accent)
+                    .foregroundStyle(ColorTheme.accent)
             }
             .padding()
             .background(ColorTheme.surface)
@@ -357,17 +357,17 @@ private struct CategoryCard: View {
             VStack(spacing: 12) {
                 Image(systemName: category.iconName)
                     .font(.title)
-                    .foregroundColor(category.accentColor)
+                    .foregroundStyle(category.accentColor)
                 
                 Text(category.title)
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                     .lineLimit(1)
                     .truncationMode(.tail)
                 
                 Text(category.description)
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
             }
@@ -387,23 +387,23 @@ private struct PatternRow: View {
         HStack(spacing: 16) {
             Image(systemName: pattern.iconName)
                 .font(.title2)
-                .foregroundColor(ColorTheme.accent)
+                .foregroundStyle(ColorTheme.accent)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(pattern.title)
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(pattern.description)
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .lineLimit(2)
             }
             
             Spacer()
             
             Image(systemName: "chevron.right")
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
         }
         .padding()
         .background(ColorTheme.surface)
@@ -419,23 +419,23 @@ private struct RecommendationCard: View {
             HStack {
                 Image(systemName: recommendation.iconName)
                     .font(.title2)
-                    .foregroundColor(ColorTheme.accent)
+                    .foregroundStyle(ColorTheme.accent)
                 
                 Text(recommendation.title)
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
             }
             
             Text(recommendation.description)
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             
             if !recommendation.actionItems.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(recommendation.actionItems, id: \.self) { action in
                         Label(action, systemImage: "checkmark.circle")
                             .font(.caption)
-                            .foregroundColor(ColorTheme.accent)
+                            .foregroundStyle(ColorTheme.accent)
                     }
                 }
             }

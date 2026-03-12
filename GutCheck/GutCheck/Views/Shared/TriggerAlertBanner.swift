@@ -7,7 +7,7 @@ struct TriggerAlertBanner: View {
         VStack(alignment: .leading, spacing: 8) {
             Label("Trigger Alert", systemImage: "exclamationmark.circle")
                 .font(.headline)
-                .foregroundColor(.red)
+                .foregroundStyle(.red)
             ForEach(alerts, id: \.self) { alert in
                 Text("• \(alert)")
                     .font(.subheadline)

@@ -48,7 +48,7 @@ struct FoodSearchView: View {
                                 Text("Search")
                                     .typography(Typography.button)
                             }
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
                             .background(ColorTheme.accent)
@@ -76,7 +76,7 @@ struct FoodSearchView: View {
                                 AccessibilityAnnouncement.announce("Search cleared")
                             }
                             .typography(Typography.caption)
-                            .foregroundColor(ColorTheme.accent)
+                            .foregroundStyle(ColorTheme.accent)
                             .accessibleButton(
                                 label: "Clear search",
                                 hint: "Clear the search field and results"
@@ -103,15 +103,15 @@ struct FoodSearchView: View {
                     VStack(spacing: 16) {
                         Image(systemName: "magnifyingglass")
                             .font(.system(size: 36))
-                            .foregroundColor(ColorTheme.accent.opacity(0.6))
+                            .foregroundStyle(ColorTheme.accent.opacity(0.6))
 
                         Text("Ready to Search")
                             .font(.headline)
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
 
                         Text("Tap the Search button to find foods")
                             .font(.subheadline)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                             .multilineTextAlignment(.center)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -158,15 +158,15 @@ struct FoodSearchView: View {
         VStack(spacing: 16) {
             Image(systemName: "wifi.slash")
                 .font(.system(size: 48))
-                .foregroundColor(ColorTheme.warning)
+                .foregroundStyle(ColorTheme.warning)
 
             Text("You're Offline")
                 .typography(Typography.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
 
             Text("Food search requires an internet connection.\nYou can still add food manually.")
                 .typography(Typography.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
                 .multilineTextAlignment(.center)
 
             Button {
@@ -183,7 +183,7 @@ struct FoodSearchView: View {
                     Text("Add Custom Food")
                         .typography(Typography.button)
                 }
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 12)
                 .background(ColorTheme.primary)
@@ -204,7 +204,7 @@ struct FoodSearchView: View {
                 .scaleEffect(1.5)
             Text("Searching...")
                 .typography(Typography.body)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .combine)
@@ -216,16 +216,16 @@ struct FoodSearchView: View {
         VStack(spacing: 16) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 48))
-                .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
+                .foregroundStyle(ColorTheme.secondaryText.opacity(0.5))
                 .accessibleDecorative()
             
             Text("No Results Found")
                 .typography(Typography.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             Text("Try searching with different keywords")
                 .typography(Typography.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
                 .multilineTextAlignment(.center)
             
             Button("Add Custom Food") {
@@ -285,7 +285,7 @@ struct FoodSearchView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Recent Searches")
                             .typography(Typography.headline)
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                             .accessibleHeader("Recent Searches")
                         ForEach(Array(viewModel.recentSearches.enumerated()), id: \.element) { index, searchTerm in
                             Button(action: {
@@ -295,15 +295,15 @@ struct FoodSearchView: View {
                             }) {
                                 HStack {
                                     Image(systemName: "clock")
-                                        .foregroundColor(ColorTheme.secondaryText)
+                                        .foregroundStyle(ColorTheme.secondaryText)
                                         .accessibleDecorative()
                                     Text(searchTerm)
                                         .typography(Typography.body)
-                                        .foregroundColor(ColorTheme.primaryText)
+                                        .foregroundStyle(ColorTheme.primaryText)
                                     Spacer()
                                     Image(systemName: "arrow.up.left")
                                         .font(.caption)
-                                        .foregroundColor(ColorTheme.secondaryText)
+                                        .foregroundStyle(ColorTheme.secondaryText)
                                         .accessibleDecorative()
                                 }
                                 .padding(.vertical, 8)
@@ -322,7 +322,7 @@ struct FoodSearchView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Common Categories")
                         .typography(Typography.headline)
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                         .accessibleHeader("Common Categories")
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                         ForEach(viewModel.foodCategories, id: \.self) { category in
@@ -334,7 +334,7 @@ struct FoodSearchView: View {
                                 HStack {
                                     Text(category)
                                         .typography(Typography.subheadline)
-                                        .foregroundColor(ColorTheme.primaryText)
+                                        .foregroundStyle(ColorTheme.primaryText)
                                         .multilineTextAlignment(.leading)
                                     Spacer()
                                 }
@@ -364,7 +364,7 @@ struct FoodSearchView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Recent Items")
                             .typography(Typography.headline)
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                             .accessibleHeader("Recent Items")
                         ForEach(viewModel.recentItems) { item in
                             SimpleRecentFoodRow(
@@ -409,7 +409,7 @@ struct FoodItemResultRow: View {
                 .frame(width: 60, height: 60)
                 .overlay(
                     Image(systemName: "fork.knife")
-                        .foregroundColor(ColorTheme.accent)
+                        .foregroundStyle(ColorTheme.accent)
                 )
                 .accessibleDecorative()
             
@@ -418,18 +418,18 @@ struct FoodItemResultRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.name)
                         .typography(Typography.headline)
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                         .multilineTextAlignment(.leading)
                     
                     if let brand = item.nutritionDetails["brand"] {
                         Text(brand)
                             .typography(Typography.subheadline)
-                            .foregroundColor(ColorTheme.accent)
+                            .foregroundStyle(ColorTheme.accent)
                     }
                     
                     Text(item.quantity)
                         .typography(Typography.subheadline)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                     
                     // Much cleaner with convenience initializers
                     item.nutrition.compactPreview()
@@ -443,13 +443,13 @@ struct FoodItemResultRow: View {
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
                                     .background(ColorTheme.error.opacity(0.2))
-                                    .foregroundColor(ColorTheme.error)
+                                    .foregroundStyle(ColorTheme.error)
                                     .cornerRadius(4)
                             }
                             if item.allergens.count > 3 {
                                 Text("+\(item.allergens.count - 3)")
                                     .font(.caption)
-                                    .foregroundColor(ColorTheme.secondaryText)
+                                    .foregroundStyle(ColorTheme.secondaryText)
                             }
                         }
                     }
@@ -466,7 +466,7 @@ struct FoodItemResultRow: View {
             Button(action: onAdd) {
                 Image(systemName: "plus.circle.fill")
                     .font(.title2)
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
             }
             .buttonStyle(PlainButtonStyle())
             .accessibleButton(
@@ -513,7 +513,7 @@ struct SimpleRecentFoodRow: View {
                 .frame(width: 50, height: 50)
                 .overlay(
                     Image(systemName: "fork.knife")
-                        .foregroundColor(ColorTheme.accent)
+                        .foregroundStyle(ColorTheme.accent)
                         .font(.system(size: 16))
                 )
                 .accessibleDecorative()
@@ -523,12 +523,12 @@ struct SimpleRecentFoodRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.name)
                         .typography(Typography.headline)
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                         .multilineTextAlignment(.leading)
                     
                     Text(item.quantity)
                         .typography(Typography.subheadline)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                     
                     // Nutrition preview - matching screenshot style
                     HStack(spacing: 8) {
@@ -538,7 +538,7 @@ struct SimpleRecentFoodRow: View {
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(ColorTheme.accent.opacity(0.2))
-                                .foregroundColor(ColorTheme.accent)
+                                .foregroundStyle(ColorTheme.accent)
                                 .cornerRadius(4)
                         }
                         
@@ -548,7 +548,7 @@ struct SimpleRecentFoodRow: View {
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(Color.blue.opacity(0.2))
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                                 .cornerRadius(4)
                         }
                         
@@ -558,7 +558,7 @@ struct SimpleRecentFoodRow: View {
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(Color.green.opacity(0.2))
-                                .foregroundColor(.green)
+                                .foregroundStyle(.green)
                                 .cornerRadius(4)
                         }
                         
@@ -568,7 +568,7 @@ struct SimpleRecentFoodRow: View {
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
                                 .background(Color.red.opacity(0.2))
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                                 .cornerRadius(4)
                         }
                     }
@@ -582,13 +582,13 @@ struct SimpleRecentFoodRow: View {
                                     .padding(.horizontal, 4)
                                     .padding(.vertical, 2)
                                     .background(ColorTheme.error.opacity(0.2))
-                                    .foregroundColor(ColorTheme.error)
+                                    .foregroundStyle(ColorTheme.error)
                                     .cornerRadius(4)
                             }
                             if item.allergens.count > 2 {
                                 Text("+\(item.allergens.count - 2)")
                                     .font(.caption)
-                                    .foregroundColor(ColorTheme.secondaryText)
+                                    .foregroundStyle(ColorTheme.secondaryText)
                             }
                         }
                     }
@@ -605,7 +605,7 @@ struct SimpleRecentFoodRow: View {
             Button(action: onAdd) {
                 Image(systemName: "plus.circle.fill")
                     .font(.title3)
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
             }
             .buttonStyle(PlainButtonStyle())
             .accessibleButton(
