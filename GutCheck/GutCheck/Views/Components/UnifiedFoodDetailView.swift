@@ -608,27 +608,29 @@ struct HealthIndicatorBadge: View {
     @State private var showingDetail = false
     
     var body: some View {
-        VStack(spacing: 4) {
-            HStack(spacing: 4) {
-                Text(indicator.icon)
-                    .font(.caption)
-                Text(indicator.text)
-                    .font(.caption)
-                    .fontWeight(.medium)
-            }
-            .foregroundStyle(indicator.color)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(indicator.color.opacity(0.1))
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(indicator.severity.borderColor.opacity(0.3), lineWidth: 1)
-        )
-        .clipShape(.rect(cornerRadius: 8))
-        .onTapGesture {
+        Button {
             showingDetail = true
+        } label: {
+            VStack(spacing: 4) {
+                HStack(spacing: 4) {
+                    Text(indicator.icon)
+                        .font(.caption)
+                    Text(indicator.text)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                }
+                .foregroundStyle(indicator.color)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(indicator.color.opacity(0.1))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(indicator.severity.borderColor.opacity(0.3), lineWidth: 1)
+            )
+            .clipShape(.rect(cornerRadius: 8))
         }
+        .buttonStyle(.plain)
         .alert(indicator.text, isPresented: $showingDetail) {
             Button("Got it") { }
         } message: {

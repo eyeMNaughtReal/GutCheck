@@ -275,21 +275,23 @@ struct LanguageSelectionView: View {
     var body: some View {
         List {
             ForEach(AppLanguage.allCases, id: \ .self) { lang in
-                HStack {
-                    Text(lang.displayName)
-                        .typography(Typography.body)
-                    Spacer()
-                    if lang == settingsVM.language {
-                        Image(systemName: "checkmark")
-                            .foregroundStyle(Color.accentColor)
-                            .accessibleDecorative()
-                    }
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
+                Button {
                     HapticManager.shared.selection()
                     settingsVM.language = lang
+                } label: {
+                    HStack {
+                        Text(lang.displayName)
+                            .typography(Typography.body)
+                        Spacer()
+                        if lang == settingsVM.language {
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(Color.accentColor)
+                                .accessibleDecorative()
+                        }
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
                 .accessibleSelectable(
                     label: lang.displayName,
                     isSelected: lang == settingsVM.language
@@ -306,21 +308,23 @@ struct UnitSelectionView: View {
     var body: some View {
         List {
             ForEach(UnitSystem.allCases, id: \ .self) { unit in
-                HStack {
-                    Text(unit.displayName)
-                        .typography(Typography.body)
-                    Spacer()
-                    if unit == settingsVM.unitOfMeasure {
-                        Image(systemName: "checkmark")
-                            .foregroundStyle(Color.accentColor)
-                            .accessibleDecorative()
-                    }
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
+                Button {
                     HapticManager.shared.selection()
                     settingsVM.unitOfMeasure = unit
+                } label: {
+                    HStack {
+                        Text(unit.displayName)
+                            .typography(Typography.body)
+                        Spacer()
+                        if unit == settingsVM.unitOfMeasure {
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(Color.accentColor)
+                                .accessibleDecorative()
+                        }
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
                 .accessibleSelectable(
                     label: unit.displayName,
                     isSelected: unit == settingsVM.unitOfMeasure
@@ -337,21 +341,23 @@ struct AppearanceSelectionView: View {
     var body: some View {
         List {
             ForEach(AppColorScheme.allCases, id: \ .self) { scheme in
-                HStack {
-                    Text(scheme.displayName)
-                        .typography(Typography.body)
-                    Spacer()
-                    if scheme == settingsVM.colorScheme {
-                        Image(systemName: "checkmark")
-                            .foregroundStyle(Color.accentColor)
-                            .accessibleDecorative()
-                    }
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
+                Button {
                     HapticManager.shared.selection()
                     settingsVM.colorScheme = scheme
+                } label: {
+                    HStack {
+                        Text(scheme.displayName)
+                            .typography(Typography.body)
+                        Spacer()
+                        if scheme == settingsVM.colorScheme {
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(Color.accentColor)
+                                .accessibleDecorative()
+                        }
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
                 .accessibleSelectable(
                     label: scheme.displayName,
                     isSelected: scheme == settingsVM.colorScheme
