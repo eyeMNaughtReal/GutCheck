@@ -77,7 +77,7 @@ struct ProfileImageView: View {
                     .scaledToFill()
                     .frame(width: 110, height: 110)
                     .clipShape(Circle())
-                    .overlay(Circle().stroke(ColorTheme.accent, lineWidth: 5))
+                    .overlay { Circle().stroke(ColorTheme.accent, lineWidth: 5) }
             } else {
                 Circle()
                     .strokeBorder(ColorTheme.accent, lineWidth: 5)

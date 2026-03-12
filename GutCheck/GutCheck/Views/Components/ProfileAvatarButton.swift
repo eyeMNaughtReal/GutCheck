@@ -25,7 +25,7 @@ struct ProfileAvatarButton: View {
                         .scaledToFill()
                         .frame(width: size, height: size)
                         .clipShape(Circle())
-                        .overlay(Circle().stroke(ColorTheme.accent, lineWidth: 2))
+                        .overlay { Circle().stroke(ColorTheme.accent, lineWidth: 2) }
                 } else if isLoadingImage {
                     // Loading state
                     Circle()
@@ -36,7 +36,7 @@ struct ProfileAvatarButton: View {
                                 .progressViewStyle(CircularProgressViewStyle(tint: ColorTheme.accent))
                                 .scaleEffect(0.7)
                         )
-                        .overlay(Circle().stroke(ColorTheme.accent, lineWidth: 2))
+                        .overlay { Circle().stroke(ColorTheme.accent, lineWidth: 2) }
                 } else {
                     // Default avatar with initials or fallback icon
                     Circle()
@@ -55,7 +55,7 @@ struct ProfileAvatarButton: View {
                                 }
                             }
                         )
-                        .overlay(Circle().stroke(ColorTheme.accent, lineWidth: 2))
+                        .overlay { Circle().stroke(ColorTheme.accent, lineWidth: 2) }
                 }
             }
         }

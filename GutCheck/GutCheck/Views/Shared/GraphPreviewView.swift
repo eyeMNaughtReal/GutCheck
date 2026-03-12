@@ -15,7 +15,7 @@ struct GraphPreviewView: View {
                 .fill(Color.gray.opacity(0.1))
                 .frame(height: 120)
                 .clipShape(.rect(cornerRadius: 8))
-                .overlay(Text("Graph Placeholder"))
+                .overlay { Text("Graph Placeholder") }
         }
     }
 }
