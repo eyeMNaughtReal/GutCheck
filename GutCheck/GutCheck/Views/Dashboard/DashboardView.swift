@@ -27,19 +27,19 @@ struct DashboardView: View {
     // MARK: - Environment Objects
     
     /// Authentication service for user management and data access
-    @EnvironmentObject var authService: AuthService
+    @Environment(AuthService.self) var authService
     
     /// Navigation router for programmatic navigation
-    @EnvironmentObject var router: AppRouter
+    @Environment(AppRouter.self) var router
     
     /// Data store containing dashboard-specific data and insights
-    @StateObject private var dashboardStore = DashboardDataStore(preview: false)
+    @State private var dashboardStore = DashboardDataStore(preview: false)
     
     /// View model for recent activity display
-    @StateObject private var recentActivityViewModel = RecentActivityViewModel()
+    @State private var recentActivityViewModel = RecentActivityViewModel()
 
     /// Manager for coordinating data refresh across the app
-    @EnvironmentObject private var refreshManager: RefreshManager
+    @Environment(RefreshManager.self) private var refreshManager
 
     var body: some View {
         VStack(spacing: 0) {
@@ -471,8 +471,8 @@ struct DashboardInsightsView: View {
 
 #Preview {
     DashboardView()
-        .environmentObject(PreviewAuthService())
-        .environmentObject(AppRouter.shared)
-        .environmentObject(RefreshManager.shared)
+        .environment(PreviewAuthService())
+        .environment(AppRouter.shared)
+        .environment(RefreshManager.shared)
 
 }

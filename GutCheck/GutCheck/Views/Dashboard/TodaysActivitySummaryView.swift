@@ -3,9 +3,9 @@ import FirebaseFirestore
 import FirebaseAuth
 
 struct TodaysActivitySummaryView: View {
-    @ObservedObject var viewModel: RecentActivityViewModel
-    @EnvironmentObject var router: AppRouter
-    @EnvironmentObject var authService: AuthService
+    var viewModel: RecentActivityViewModel
+    @Environment(AppRouter.self) var router
+    @Environment(AuthService.self) var authService
     let selectedDate: Date
     @State private var isExpanded = false
     
@@ -147,7 +147,7 @@ struct TodaysActivitySummaryView: View {
         viewModel: RecentActivityViewModel(),
         selectedDate: Date.now
     )
-    .environmentObject(AppRouter.shared)
-    .environmentObject(PreviewAuthService())
+    .environment(AppRouter.shared)
+    .environment(PreviewAuthService())
     .padding()
 }

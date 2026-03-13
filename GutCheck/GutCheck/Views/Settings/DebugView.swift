@@ -4,8 +4,8 @@ import Network
 
 struct DebugView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var authService: AuthService
-    @StateObject private var networkMonitor = NetworkMonitor()
+    @Environment(AuthService.self) private var authService
+    @State private var networkMonitor = NetworkMonitor()
     @State private var showingResetConfirmation = false
     @State private var isResetting = false
     @State private var resetError: Error?
@@ -139,7 +139,7 @@ private struct LogViewer: View {
 }
 
 private struct NetworkDebugger: View {
-    @StateObject private var viewModel = NetworkDebuggerViewModel()
+    @State private var viewModel = NetworkDebuggerViewModel()
     
     var body: some View {
         List(viewModel.requests) { request in
@@ -164,8 +164,8 @@ private struct NetworkDebugger: View {
 
 // MARK: - Supporting Types
 
-private class NetworkDebuggerViewModel: ObservableObject {
-    @Published var requests: [NetworkRequest] = []
+@Observable private class NetworkDebuggerViewModel {
+    var requests: [NetworkRequest] = []
     
     func loadRequests() {
         // Load network requests from debug storage

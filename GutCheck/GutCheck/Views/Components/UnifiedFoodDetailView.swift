@@ -11,7 +11,7 @@ struct UnifiedFoodDetailView: View {
     @State private var foodItem: FoodItem
     @State private var servingMultiplier: Double = 1.0
     @State private var customQuantity: String = ""
-    @StateObject private var detailService = FoodDetailService.shared
+    @State private var detailService = FoodDetailService.shared
     
     private let config: FoodDetailConfig
     private let baseNutrition: NutritionInfo

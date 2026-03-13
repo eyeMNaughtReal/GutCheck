@@ -8,7 +8,7 @@ struct ProfileImageView: View {
     let user: User
     @Binding var profileImage: UIImage?
     @Binding var showImagePicker: Bool
-    @StateObject private var profileImageService = UnifiedProfileImageService(strategy: LocalProfileImageStrategy())
+    @State private var profileImageService = UnifiedProfileImageService(strategy: LocalProfileImageStrategy())
     @State private var isLoadingImage = false
     @State private var showingUploadError = false
     
@@ -190,7 +190,7 @@ struct ImagePicker: UIViewControllerRepresentable {
 
 struct ProfileInfoSection: View {
     let user: User
-    @EnvironmentObject var settingsVM: SettingsViewModel
+    @Environment(SettingsViewModel.self) var settingsVM
     
     var body: some View {
         VStack(spacing: 24) {
@@ -247,13 +247,13 @@ import PhotosUI
 
 struct UserProfileView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var authService: AuthService
+    @Environment(AuthService.self) var authService
     let user: User
     
     @State private var profileImage: UIImage? = nil
     @State private var showImagePicker = false
     @State private var showSettings = false
-    @EnvironmentObject var settingsVM: SettingsViewModel
+    @Environment(SettingsViewModel.self) var settingsVM
 
     var body: some View {
         NavigationStack {
@@ -262,7 +262,7 @@ struct UserProfileView: View {
                     profileHeaderSection
                     
                     ProfileInfoSection(user: user)
-                        .environmentObject(settingsVM)
+                        .environment(settingsVM)
                     
                     ProfileActionSection(
                         showSettings: $showSettings,
@@ -285,8 +285,8 @@ struct UserProfileView: View {
             }
             .sheet(isPresented: $showSettings) {
                 SettingsView()
-                    .environmentObject(settingsVM)
-                    .environmentObject(authService)
+                    .environment(settingsVM)
+                    .environment(authService)
             }
         }
     }

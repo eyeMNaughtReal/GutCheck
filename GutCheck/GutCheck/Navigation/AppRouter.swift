@@ -30,16 +30,16 @@ enum SheetDestination: Identifiable {
 
 
 @MainActor
-class AppRouter: ObservableObject {
+@Observable class AppRouter {
     static let shared = AppRouter()
     
     // Per-tab navigation paths to prevent cross-tab state leakage
-    @Published var dashboardPath = NavigationPath()
-    @Published var mealsPath = NavigationPath()
-    @Published var symptomsPath = NavigationPath()
-    @Published var activeSheet: SheetDestination?
-    @Published var selectedTab: Tab = .dashboard
-    @Published private var isNavigating = false
+    var dashboardPath = NavigationPath()
+    var mealsPath = NavigationPath()
+    var symptomsPath = NavigationPath()
+    var activeSheet: SheetDestination?
+    var selectedTab: Tab = .dashboard
+    private var isNavigating = false
     
     /// The navigation path for the currently selected tab
     private var activePath: NavigationPath {

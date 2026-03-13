@@ -12,7 +12,7 @@ import SwiftUI
 
 struct DeleteAccountView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var authService: AuthService
+    @Environment(AuthService.self) var authService
     @State private var showingReauthentication = false
     @State private var showingFinalConfirmation = false
     @State private var showingAlert = false
@@ -193,6 +193,6 @@ struct DataRow: View {
 #Preview {
     NavigationStack {
         DeleteAccountView()
-            .environmentObject(AuthService())
+            .environment(AuthService())
     }
 }

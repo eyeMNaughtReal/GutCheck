@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct InsightsView: View {
-    @EnvironmentObject var authService: AuthService
-    @EnvironmentObject var router: AppRouter
-    @StateObject private var viewModel = InsightsViewModel()
+    @Environment(AuthService.self) var authService
+    @Environment(AppRouter.self) var router
+    @State private var viewModel = InsightsViewModel()
     
     var body: some View {
         NavigationStack {
@@ -451,11 +451,11 @@ private struct RecommendationCard: View {
 
 #Preview {
     InsightsView()
-        .environmentObject(AuthService())
-        .environmentObject(AppRouter.shared)
+        .environment(AuthService())
+        .environment(AppRouter.shared)
 }
 
 #Preview {
     InsightsView()
-        .environmentObject(AuthService())
+        .environment(AuthService())
 }

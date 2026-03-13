@@ -12,19 +12,19 @@ import SwiftUI
 // MARK: - Medication List ViewModel
 
 @MainActor
-class MedicationViewModel: ObservableObject, HasLoadingState {
+@Observable class MedicationViewModel: HasLoadingState {
 
     // MARK: - Published: List State
 
-    @Published var activeMedications: [MedicationRecord] = []
-    @Published var allMedications: [MedicationRecord] = []
+    var activeMedications: [MedicationRecord] = []
+    var allMedications: [MedicationRecord] = []
 
     // MARK: - Published: UI State
 
-    @Published var showingAddMedication = false
-    @Published var showingErrorAlert    = false
-    @Published var showingDeleteConfirmation = false
-    @Published var medicationToDelete: MedicationRecord?
+    var showingAddMedication = false
+    var showingErrorAlert    = false
+    var showingDeleteConfirmation = false
+    var medicationToDelete: MedicationRecord?
 
     // MARK: - Loading State (HasLoadingState)
 
@@ -90,24 +90,24 @@ class MedicationViewModel: ObservableObject, HasLoadingState {
 // MARK: - Add Medication ViewModel
 
 @MainActor
-class AddMedicationViewModel: ObservableObject, HasLoadingState {
+@Observable class AddMedicationViewModel: HasLoadingState {
 
     // MARK: - Form Fields
 
-    @Published var name:          String             = ""
-    @Published var dosageAmount:  String             = ""
-    @Published var dosageUnit:    String             = "mg"
-    @Published var frequency:     MedicationFrequency = .onceDaily
-    @Published var startDate:     Date               = Date.now
-    @Published var hasEndDate:    Bool               = false
-    @Published var endDate:       Date               = Date.now
-    @Published var isActive:      Bool               = true
-    @Published var notes:         String             = ""
+    var name:          String             = ""
+    var dosageAmount:  String             = ""
+    var dosageUnit:    String             = "mg"
+    var frequency:     MedicationFrequency = .onceDaily
+    var startDate:     Date               = Date.now
+    var hasEndDate:    Bool               = false
+    var endDate:       Date               = Date.now
+    var isActive:      Bool               = true
+    var notes:         String             = ""
 
     // MARK: - UI State
 
-    @Published var showingSuccessAlert = false
-    @Published var showingErrorAlert   = false
+    var showingSuccessAlert = false
+    var showingErrorAlert   = false
 
     // MARK: - Loading State (HasLoadingState)
 
@@ -198,24 +198,24 @@ class AddMedicationViewModel: ObservableObject, HasLoadingState {
 
 /// Handles the "Log a dose I just took" form.
 @MainActor
-class LogMedicationDoseViewModel: ObservableObject, HasLoadingState {
+@Observable class LogMedicationDoseViewModel: HasLoadingState {
 
     // MARK: - Published: Medication Picker
 
     /// Active medications the user can select from.
-    @Published var availableMedications: [MedicationRecord] = []
-    @Published var selectedMedication: MedicationRecord?
+    var availableMedications: [MedicationRecord] = []
+    var selectedMedication: MedicationRecord?
 
     // MARK: - Published: Form Fields
 
     /// Date and time the dose was taken (defaults to now).
-    @Published var dateTaken: Date = Date.now
-    @Published var notes: String   = ""
+    var dateTaken: Date = Date.now
+    var notes: String   = ""
 
     // MARK: - Published: UI State
 
-    @Published var showingSuccessAlert = false
-    @Published var showingErrorAlert   = false
+    var showingSuccessAlert = false
+    var showingErrorAlert   = false
 
     // MARK: - Loading State
 

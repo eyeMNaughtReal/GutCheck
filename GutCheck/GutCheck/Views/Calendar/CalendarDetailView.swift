@@ -2,9 +2,9 @@ import SwiftUI
 
 struct CalendarDetailView: View {
     let date: Date
-    @StateObject private var viewModel = CalendarDetailViewModel()
-    @EnvironmentObject private var authService: AuthService
-    @EnvironmentObject private var router: AppRouter
+    @State private var viewModel = CalendarDetailViewModel()
+    @Environment(AuthService.self) private var authService
+    @Environment(AppRouter.self) private var router
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
@@ -92,6 +92,6 @@ struct CalendarDetailView: View {
     NavigationStack {
         CalendarDetailView(date: Date.now)
     }
-    .environmentObject(AuthService())
-    .environmentObject(AppRouter.shared)
+    .environment(AuthService())
+    .environment(AppRouter.shared)
 }

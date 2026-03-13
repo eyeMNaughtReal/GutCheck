@@ -2,7 +2,7 @@ import SwiftUI
 
 struct CategoryInsightsView: View {
     let category: InsightCategory
-    @StateObject private var viewModel = CategoryInsightsViewModel()
+    @State private var viewModel = CategoryInsightsViewModel()
     
     var body: some View {
         ScrollView {

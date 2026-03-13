@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ProfileSetupView: View {
-    @EnvironmentObject var authService: AuthService
+    @Environment(AuthService.self) var authService
     @State private var firstName: String = ""
     @State private var lastName: String = ""
     @State private var isSaving = false

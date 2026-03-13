@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct LogMedicationDoseView: View {
-    @StateObject private var viewModel = LogMedicationDoseViewModel()
+    @State private var viewModel = LogMedicationDoseViewModel()
     @Environment(\.dismiss) private var dismiss
 
     var onSave: (() -> Void)?

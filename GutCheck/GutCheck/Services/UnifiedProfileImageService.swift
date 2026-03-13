@@ -8,10 +8,10 @@
 import UIKit
 
 @MainActor
-class UnifiedProfileImageService: ObservableObject {
-    @Published var isUploading = false
-    @Published var uploadProgress: Double = 0.0
-    @Published var errorMessage: String?
+@Observable class UnifiedProfileImageService {
+    var isUploading = false
+    var uploadProgress: Double = 0.0
+    var errorMessage: String?
     
     private let loadingState = UploadLoadingStateManager()
     

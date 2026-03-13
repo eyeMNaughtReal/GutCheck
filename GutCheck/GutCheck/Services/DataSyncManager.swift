@@ -8,17 +8,17 @@
 import Foundation
 import SwiftUI
 
-class DataSyncManager: ObservableObject {
+@Observable class DataSyncManager {
     static let shared = DataSyncManager()
     
-    @Published private(set) var lastRefreshTime: Date = Date.now
-    @Published private(set) var isRefreshing: Bool = false
+    private(set) var lastRefreshTime: Date = Date.now
+    private(set) var isRefreshing: Bool = false
     
     // Refresh triggers for different data types
-    @Published var shouldRefreshDashboard: Bool = false
-    @Published var shouldRefreshMeals: Bool = false
-    @Published var shouldRefreshSymptoms: Bool = false
-    @Published var shouldRefreshCalendar: Bool = false
+    var shouldRefreshDashboard: Bool = false
+    var shouldRefreshMeals: Bool = false
+    var shouldRefreshSymptoms: Bool = false
+    var shouldRefreshCalendar: Bool = false
     
     private init() {}
     

@@ -7,8 +7,8 @@
 import Foundation
 
 @MainActor
-class FoodSearchService: ObservableObject, HasLoadingState {
-    @Published var results: [FoodSearchResult] = []
+@Observable class FoodSearchService: HasLoadingState {
+    var results: [FoodSearchResult] = []
 
     let loadingState = LoadingStateManager()
 

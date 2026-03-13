@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct EmailVerificationView: View {
-    @ObservedObject var authService: AuthService
+    var authService: AuthService
     @State private var showResendSuccess = false
     
     var body: some View {

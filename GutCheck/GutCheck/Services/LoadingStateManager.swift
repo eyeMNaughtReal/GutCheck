@@ -6,11 +6,10 @@
 //
 
 import SwiftUI
-import Combine
 
 // MARK: - LoadingState Protocol
 @MainActor
-protocol LoadingStateManaging: ObservableObject {
+protocol LoadingStateManaging: AnyObject {
     var isLoading: Bool { get set }
     var isSaving: Bool { get set }
     var isLoadingMore: Bool { get set }
@@ -84,12 +83,12 @@ extension LoadingStateManaging {
 
 // MARK: - Concrete Implementation
 @MainActor
-class LoadingStateManager: ObservableObject, LoadingStateManaging {
-    @Published var isLoading: Bool = false
-    @Published var isSaving: Bool = false
-    @Published var isLoadingMore: Bool = false
-    @Published var uploadProgress: Double = 0.0
-    @Published var errorMessage: String? = nil
+@Observable class LoadingStateManager: LoadingStateManaging {
+    var isLoading: Bool = false
+    var isSaving: Bool = false
+    var isLoadingMore: Bool = false
+    var uploadProgress: Double = 0.0
+    var errorMessage: String? = nil
     
     nonisolated init() {}
 }
@@ -97,7 +96,7 @@ class LoadingStateManager: ObservableObject, LoadingStateManaging {
 // MARK: - Specialized Loading States
 @MainActor
 class UploadLoadingStateManager: LoadingStateManager {
-    @Published var isUploading: Bool = false
+    var isUploading: Bool = false
     
     override nonisolated init() {
         super.init()
@@ -120,12 +119,12 @@ class UploadLoadingStateManager: LoadingStateManager {
 }
 
 // MARK: - Loading State Mixins
-protocol HasLoadingState {
+protocol HasLoadingState: AnyObject {
     var loadingState: LoadingStateManager { get }
 }
 
 @MainActor
-extension HasLoadingState where Self: ObservableObject {
+extension HasLoadingState {
     var isLoading: Bool {
         get { loadingState.isLoading }
         set { loadingState.isLoading = newValue }

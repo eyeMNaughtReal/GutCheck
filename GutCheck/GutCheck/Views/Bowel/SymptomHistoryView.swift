@@ -1,11 +1,11 @@
 import SwiftUI
 
 struct SymptomHistoryView: View {
-    @StateObject private var viewModel = SymptomHistoryViewModel()
+    @State private var viewModel = SymptomHistoryViewModel()
     @State private var selectedFilter: SymptomFilter = .all
     @State private var showingDatePicker = false
-    @EnvironmentObject var router: AppRouter
-    @EnvironmentObject var authService: AuthService
+    @Environment(AppRouter.self) var router
+    @Environment(AuthService.self) var authService
     
     private var symptomsList: some View {
         let sortedDates = viewModel.groupedSymptoms.keys.sorted(by: >)

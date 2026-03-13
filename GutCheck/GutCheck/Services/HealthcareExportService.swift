@@ -50,15 +50,15 @@ struct ExportOptions {
 
 // MARK: - Healthcare Export Service
 
-class HealthcareExportService: ObservableObject {
+@Observable class HealthcareExportService {
     static let shared = HealthcareExportService()
     
     private let mealRepository = MealRepository.shared
     private let symptomRepository = SymptomRepository.shared
     private let localStorageService = LocalStorageService.shared
     
-    @Published var isExporting = false
-    @Published var exportProgress: Double = 0.0
+    var isExporting = false
+    var exportProgress: Double = 0.0
     
     private init() {}
     

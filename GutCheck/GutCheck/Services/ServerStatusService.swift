@@ -11,19 +11,19 @@ import Network
 import FirebaseFirestore
 
 @MainActor
-class ServerStatusService: ObservableObject {
+@Observable class ServerStatusService {
     static let shared = ServerStatusService()
 
     // MARK: - Published State
 
-    @Published private(set) var isFirebaseReachable: Bool = true
-    @Published private(set) var isNetworkAvailable: Bool = true
-    @Published private(set) var secondsUntilRecheck: Int = 0
-    @Published private(set) var isRechecking: Bool = false
-    @Published private(set) var pendingChangesCount: Int = 0
+    private(set) var isFirebaseReachable: Bool = true
+    private(set) var isNetworkAvailable: Bool = true
+    private(set) var secondsUntilRecheck: Int = 0
+    private(set) var isRechecking: Bool = false
+    private(set) var pendingChangesCount: Int = 0
 
     /// Toggle from debug views to simulate offline mode
-    @Published var isDebugOfflineMode: Bool = false
+    var isDebugOfflineMode: Bool = false
 
     /// Convenience: true when the app should show offline UI
     var isOffline: Bool {

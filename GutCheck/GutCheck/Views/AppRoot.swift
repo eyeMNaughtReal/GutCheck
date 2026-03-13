@@ -1,10 +1,10 @@
 import SwiftUI
 
 struct AppRoot: View {
-    @StateObject private var router = AppRouter.shared
-    @StateObject private var refreshManager = RefreshManager.shared
-    @EnvironmentObject var authService: AuthService
-    @EnvironmentObject var serverStatusService: ServerStatusService
+    @State private var router = AppRouter.shared
+    @State private var refreshManager = RefreshManager.shared
+    @Environment(AuthService.self) var authService
+    @Environment(ServerStatusService.self) var serverStatusService
     @State private var showingServerStatusSheet = false
     
     var body: some View {
@@ -52,7 +52,7 @@ struct AppRoot: View {
             // Server status sheet (separate from router sheets)
             .sheet(isPresented: $showingServerStatusSheet) {
                 ServerStatusSheet()
-                    .environmentObject(serverStatusService)
+                    .environment(serverStatusService)
             }
             
             // Handle the sheet presentations
@@ -62,45 +62,45 @@ struct AppRoot: View {
                     case .profile:
                         if let currentUser = authService.currentUser {
                             UserProfileView(user: currentUser)
-                                .environmentObject(authService)
+                                .environment(authService)
                         } else {
                             Text("User information unavailable")
-                                .environmentObject(authService)
+                                .environment(authService)
                         }
                     case .mealForm(let id):
                         MealBuilderView(mealId: id)
-                            .environmentObject(router)
-                            .environmentObject(refreshManager)
+                            .environment(router)
+                            .environment(refreshManager)
                     case .symptomForm(let id):
                         if id != nil {
                             // Edit existing symptom - need to create LogSymptomView_New with id support
                             LogSymptomView()
-                                .environmentObject(router)
-                                .environmentObject(refreshManager)
+                                .environment(router)
+                                .environment(refreshManager)
                         } else {
                             // Create new symptom
                             LogSymptomView()
-                                .environmentObject(router)
-                                .environmentObject(refreshManager)
+                                .environment(router)
+                                .environment(refreshManager)
                         }
                     case .logEntry:
                         LogEntryView()
-                            .environmentObject(router)
+                            .environment(router)
                     }
                 }
             }
         }
 
-        .environmentObject(router)
-        .environmentObject(refreshManager)
+        .environment(router)
+        .environment(refreshManager)
     }
 }
 
 // MARK: - Shared Navigation Destinations
 
 private struct AppNavigationDestinations: ViewModifier {
-    @ObservedObject var router: AppRouter
-    @ObservedObject var refreshManager: RefreshManager
+    var router: AppRouter
+    var refreshManager: RefreshManager
 
     func body(content: Content) -> some View {
         content
@@ -113,16 +113,16 @@ private struct AppNavigationDestinations: ViewModifier {
                 case .mealDetail(let id):
                     if let id = id {
                         MealDetailView(mealId: id)
-                            .environmentObject(router)
-                            .environmentObject(refreshManager)
+                            .environment(router)
+                            .environment(refreshManager)
                     } else {
                         Text("Invalid meal")
                     }
                 case .symptomDetail(let id):
                     if let id = id {
                         SymptomDetailView(symptomId: id)
-                            .environmentObject(router)
-                            .environmentObject(refreshManager)
+                            .environment(router)
+                            .environment(refreshManager)
                     } else {
                         Text("Invalid symptom")
                     }
@@ -143,5 +143,5 @@ extension View {
 
 #Preview {
     AppRoot()
-        .environmentObject(PreviewAuthService())
+        .environment(PreviewAuthService())
 }

@@ -116,12 +116,12 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 @main
 struct GutCheckApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @StateObject private var authService = AuthService()
-    @StateObject private var settingsVM = SettingsViewModel()
-    @StateObject private var coreDataStack = CoreDataStack.shared
-    @StateObject private var localStorage = CoreDataStorageService.shared
-    @StateObject private var dataSyncService = DataSyncService.shared
-    @StateObject private var serverStatusService = ServerStatusService.shared
+    @State private var authService = AuthService()
+    @State private var settingsVM = SettingsViewModel()
+    @State private var coreDataStack = CoreDataStack.shared
+    @State private var localStorage = CoreDataStorageService.shared
+    @State private var dataSyncService = DataSyncService.shared
+    @State private var serverStatusService = ServerStatusService.shared
     @Environment(\.scenePhase) private var scenePhase
     
     static func testFirebaseConnection() async {
@@ -145,13 +145,13 @@ struct GutCheckApp: App {
                     }
                 } else if authService.isAuthenticated {
                     AppRoot()
-                        .environmentObject(authService)
-                        .environmentObject(settingsVM)
-                        .environmentObject(TimeoutManager.shared)
-                        .environmentObject(coreDataStack)
-                        .environmentObject(localStorage)
-                        .environmentObject(dataSyncService)
-                        .environmentObject(serverStatusService)
+                        .environment(authService)
+                        .environment(settingsVM)
+                        .environment(TimeoutManager.shared)
+                        .environment(coreDataStack)
+                        .environment(localStorage)
+                        .environment(dataSyncService)
+                        .environment(serverStatusService)
                 } else if authService.isAwaitingEmailVerification {
                     EmailVerificationView(authService: authService)
                 } else {

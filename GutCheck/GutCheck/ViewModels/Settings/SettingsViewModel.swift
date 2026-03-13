@@ -1,14 +1,14 @@
 import SwiftUI
 
-class SettingsViewModel: ObservableObject {
-    @AppStorage("appLanguage") var languageRaw: String = AppLanguage.english.rawValue
-    @AppStorage("unitOfMeasure") var unitRaw: String = UnitSystem.metric.rawValue
-    @AppStorage("appColorScheme") var colorSchemeRaw: String = AppColorScheme.system.rawValue
+@Observable class SettingsViewModel {
+    @ObservationIgnored @AppStorage("appLanguage") var languageRaw: String = AppLanguage.english.rawValue
+    @ObservationIgnored @AppStorage("unitOfMeasure") var unitRaw: String = UnitSystem.metric.rawValue
+    @ObservationIgnored @AppStorage("appColorScheme") var colorSchemeRaw: String = AppColorScheme.system.rawValue
 
     // HealthKit write preferences
-    @AppStorage("healthKitSyncEnabled") var healthKitSyncEnabled: Bool = true
-    @AppStorage("healthKitWriteMeals") var healthKitWriteMeals: Bool = true
-    @AppStorage("healthKitWriteSymptoms") var healthKitWriteSymptoms: Bool = true
+    @ObservationIgnored @AppStorage("healthKitSyncEnabled") var healthKitSyncEnabled: Bool = true
+    @ObservationIgnored @AppStorage("healthKitWriteMeals") var healthKitWriteMeals: Bool = true
+    @ObservationIgnored @AppStorage("healthKitWriteSymptoms") var healthKitWriteSymptoms: Bool = true
 
     var language: AppLanguage {
         get { AppLanguage(rawValue: languageRaw) ?? .english }

@@ -2,12 +2,12 @@ import Foundation
 import Combine
 
 /// Service for generating and managing health insights
-class InsightsService: ObservableObject {
+@Observable class InsightsService {
     static let shared = InsightsService()
     
-    @Published var recentInsights: [HealthInsight] = []
-    @Published var isLoading = false
-    @Published var error: String?
+    var recentInsights: [HealthInsight] = []
+    var isLoading = false
+    var error: String?
     
     private let patternService = PatternRecognitionService.shared
     private var cancellables = Set<AnyCancellable>()

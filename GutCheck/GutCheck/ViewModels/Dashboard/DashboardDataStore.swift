@@ -18,32 +18,32 @@ import Combine
 /// Central data store for dashboard functionality
 /// Manages all dashboard-related data including health insights, meal/symptom data,
 /// and real-time calculations for health scoring and recommendations.
-final class DashboardDataStore: ObservableObject {
+@Observable final class DashboardDataStore {
     // MARK: - Published Properties
     
     /// Today's meals for the selected date
-    @Published var todaysMeals: [Meal] = []
+    var todaysMeals: [Meal] = []
     
     /// Today's symptoms for the selected date
-    @Published var todaysSymptoms: [Symptom] = []
+    var todaysSymptoms: [Symptom] = []
     
     /// Active trigger alerts that require immediate attention
-    @Published var triggerAlerts: [String] = []
+    var triggerAlerts: [String] = []
     
     /// Legacy insight message (deprecated - replaced by structured insights)
-    @Published var insightMessage: String? = nil
+    var insightMessage: String? = nil
     
     /// Current health score (1-10) calculated from symptoms and meals
-    @Published var todaysHealthScore: Int = 7
+    var todaysHealthScore: Int = 7
     
     /// Personalized health focus recommendation for the selected day
-    @Published var todaysFocus: String = ""
+    var todaysFocus: String = ""
     
     /// Smart avoidance tip based on recent symptom patterns
-    @Published var avoidanceTip: String = ""
+    var avoidanceTip: String = ""
     
     /// Currently selected date for dashboard data display
-    @Published var selectedDate: Date = Date.now
+    var selectedDate: Date = Date.now
     
     // MARK: - Private Properties
     

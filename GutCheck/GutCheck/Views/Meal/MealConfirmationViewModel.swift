@@ -1,11 +1,11 @@
 import SwiftUI
 
-class MealConfirmationViewModel: ObservableObject {
-    @Published private(set) var totalNutrition: NutritionInfo?
-    @Published private(set) var aiAnalysis: MealAnalysis?
-    @Published private(set) var errorMessage: String?
-    @Published var showError = false
-    @Published var isSaving = false
+@Observable class MealConfirmationViewModel {
+    private(set) var totalNutrition: NutritionInfo?
+    private(set) var aiAnalysis: MealAnalysis?
+    private(set) var errorMessage: String?
+    var showError = false
+    var isSaving = false
     
     @MainActor
     func analyzeMeal(_ meal: Meal) async {

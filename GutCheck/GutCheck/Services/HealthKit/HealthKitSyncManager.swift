@@ -11,10 +11,10 @@ import Foundation
 import HealthKit
 
 @MainActor
-class HealthKitSyncManager: ObservableObject {
+@Observable class HealthKitSyncManager {
     static let shared = HealthKitSyncManager()
 
-    @Published var latestHealthData: UserHealthData?
+    var latestHealthData: UserHealthData?
 
     private let syncInterval: TimeInterval = 15 * 60 // 15 minutes
     private let authorizedKey   = "healthKitEverAuthorized"

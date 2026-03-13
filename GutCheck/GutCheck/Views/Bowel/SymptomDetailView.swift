@@ -1,20 +1,20 @@
 import SwiftUI
 
 struct SymptomDetailView: View {
-    @StateObject private var viewModel: SymptomDetailViewModel
+    @State private var viewModel: SymptomDetailViewModel
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var router: AppRouter
-    @EnvironmentObject var refreshManager: RefreshManager
+    @Environment(AppRouter.self) var router
+    @Environment(RefreshManager.self) var refreshManager
     @State private var showingEditSheet = false
 
     // New initializer that takes a symptom ID
     init(symptomId: String) {
-        self._viewModel = StateObject(wrappedValue: SymptomDetailViewModel(symptomId: symptomId))
+        self._viewModel = State(wrappedValue: SymptomDetailViewModel(symptomId: symptomId))
     }
 
     // Keep the original initializer for backward compatibility
     init(symptom: Symptom) {
-        self._viewModel = StateObject(wrappedValue: SymptomDetailViewModel(entity: symptom))
+        self._viewModel = State(wrappedValue: SymptomDetailViewModel(entity: symptom))
     }
 
     var body: some View {
@@ -425,8 +425,8 @@ struct SymptomDetailView: View {
 
 #Preview {
     SymptomDetailView(symptom: Symptom.sampleSymptom())
-        .environmentObject(AppRouter.shared)
-        .environmentObject(RefreshManager.shared)
+        .environment(AppRouter.shared)
+        .environment(RefreshManager.shared)
 }
 
 // Add this if not available elsewhere

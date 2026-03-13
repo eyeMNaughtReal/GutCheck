@@ -2,11 +2,11 @@ import Foundation
 import FirebaseFirestore
 
 @MainActor
-class CalendarDetailViewModel: ObservableObject {
-    @Published var meals: [Meal] = []
-    @Published var symptoms: [Symptom] = []
-    @Published var patterns: [String]?
-    @Published var potentialTriggers: [String]?
+@Observable class CalendarDetailViewModel {
+    var meals: [Meal] = []
+    var symptoms: [Symptom] = []
+    var patterns: [String]?
+    var potentialTriggers: [String]?
     
     var hasAnalysis: Bool {
         (patterns != nil && !patterns!.isEmpty) || (potentialTriggers != nil && !potentialTriggers!.isEmpty)

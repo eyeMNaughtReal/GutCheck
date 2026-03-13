@@ -12,9 +12,9 @@ struct MealBuilderView: View {
     var mealId: String? = nil
 
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var router: AppRouter
-    @EnvironmentObject var refreshManager: RefreshManager
-    @StateObject private var mealService = MealBuilderService.shared
+    @Environment(AppRouter.self) var router
+    @Environment(RefreshManager.self) var refreshManager
+    @State private var mealService = MealBuilderService.shared
     @State private var showingDatePicker = false
     @State private var showingConfirmation = false
     @State private var showingDiscard = false
@@ -303,7 +303,7 @@ struct MealBuilderView: View {
                     MealBuilderService.shared.addFoodItem(foodItem)
                     showingFoodOptions = false
                 }
-                .environmentObject(router)
+                .environment(router)
             }
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)

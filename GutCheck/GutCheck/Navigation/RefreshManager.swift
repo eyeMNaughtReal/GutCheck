@@ -1,11 +1,11 @@
 import SwiftUI
 
 @MainActor
-class RefreshManager: ObservableObject {
+@Observable class RefreshManager {
     static let shared = RefreshManager()
     
-    @Published var refreshToken = UUID()
-    @Published var isRefreshing = false
+    var refreshToken = UUID()
+    var isRefreshing = false
     
     private init() {}
     

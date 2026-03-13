@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ReminderSettingsTestView: View {
-    @StateObject private var reminderService = ReminderSettingsService.shared
+    @State private var reminderService = ReminderSettingsService.shared
     
     var body: some View {
         NavigationStack {

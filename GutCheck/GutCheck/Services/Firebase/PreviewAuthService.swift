@@ -2,14 +2,14 @@ import Foundation
 import FirebaseAuth
 
 @MainActor
-class PreviewAuthService: AuthenticationProtocol {
-    @Published private(set) var isAuthStateResolved: Bool = true
-    @Published private(set) var isAuthenticated: Bool = true
-    @Published private(set) var isLoading: Bool = false
-    @Published var errorMessage: String?
-    @Published private(set) var isPhoneVerificationInProgress: Bool = false
-    @Published private(set) var isAwaitingEmailVerification: Bool = false
-    @Published private(set) var currentUser: User? = User(
+@Observable class PreviewAuthService: AuthenticationProtocol {
+    private(set) var isAuthStateResolved: Bool = true
+    private(set) var isAuthenticated: Bool = true
+    private(set) var isLoading: Bool = false
+    var errorMessage: String?
+    private(set) var isPhoneVerificationInProgress: Bool = false
+    private(set) var isAwaitingEmailVerification: Bool = false
+    private(set) var currentUser: User? = User(
         id: "preview",
         email: "preview@example.com",
         firstName: "Preview",

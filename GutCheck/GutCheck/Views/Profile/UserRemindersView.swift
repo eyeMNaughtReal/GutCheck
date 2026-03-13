@@ -3,8 +3,8 @@ import UserNotifications
 import EventKit
 
 struct UserRemindersView: View {
-    @StateObject private var reminderService = ReminderSettingsService.shared
-    @StateObject private var remindersKit = RemindersKitService.shared
+    @State private var reminderService = ReminderSettingsService.shared
+    @State private var remindersKit = RemindersKitService.shared
     @State private var localSettings = ReminderSettings()
     @State private var showingSaveConfirmation = false
     @State private var showingRemindersPermissionDeniedAlert = false

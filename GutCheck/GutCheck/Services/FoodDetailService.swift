@@ -8,17 +8,17 @@ import SwiftUI
 
 /// Unified service managing food detail presentation modes and configurations
 @MainActor
-class FoodDetailService: ObservableObject {
+@Observable class FoodDetailService {
     static let shared = FoodDetailService()
     
     /// Current food item being viewed
-    @Published var currentFoodItem: FoodItem?
+    var currentFoodItem: FoodItem?
     
     /// Navigation state for food detail flows
-    @Published var showingFoodDetail = false
-    @Published var showingNutritionDetails = false
-    @Published var showingIngredients = false
-    @Published var showingAllergens = false
+    var showingFoodDetail = false
+    var showingNutritionDetails = false
+    var showingIngredients = false
+    var showingAllergens = false
     
     private init() {}
     

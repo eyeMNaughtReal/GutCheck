@@ -311,8 +311,8 @@ struct TagSelectionView: View {
 
 struct LogSymptomView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var authService: AuthService
-    @StateObject private var coordinator = LogSymptomViewModel()
+    @Environment(AuthService.self) var authService
+    @State private var coordinator = LogSymptomViewModel()
     @State private var showProfileSheet = false
     @State private var infoTypeToShow: SymptomInfoType? = nil
     @State private var showingDatePicker = false
@@ -633,6 +633,6 @@ struct SectionHeader: View {
 #if DEBUG
 #Preview {
     LogSymptomView()
-        .environmentObject(AuthService())
+        .environment(AuthService())
 }
 #endif

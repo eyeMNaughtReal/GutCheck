@@ -1,20 +1,20 @@
 import Foundation
 
 @MainActor
-class InsightDetailViewModel: ObservableObject {
-    @Published var isLoading = false
-    @Published var error: String? = nil
+@Observable class InsightDetailViewModel {
+    var isLoading = false
+    var error: String? = nil
     
     // Additional properties for storing insight-related data
-    @Published var relatedMeals: [Meal] = []
-    @Published var relatedSymptoms: [Symptom] = []
-    @Published var confidenceLevel: Double = 0.0
-    @Published var recommendations: [String] = []
+    var relatedMeals: [Meal] = []
+    var relatedSymptoms: [Symptom] = []
+    var confidenceLevel: Double = 0.0
+    var recommendations: [String] = []
     
     // Properties expected by the view
-    @Published var chartData: [Double] = []
-    @Published var contributingFactors: [ContributingFactor] = []
-    @Published var relatedInsights: [HealthInsight] = []
+    var chartData: [Double] = []
+    var contributingFactors: [ContributingFactor] = []
+    var relatedInsights: [HealthInsight] = []
     
     /// Load detailed data for the insight
     func loadData(for insight: HealthInsight) async {

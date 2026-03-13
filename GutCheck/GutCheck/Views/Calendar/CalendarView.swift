@@ -18,10 +18,10 @@ import UIKit
 import Foundation // Required for Tab enum
 
 struct CalendarView: View {
-    @EnvironmentObject var router: AppRouter
-    @EnvironmentObject var authService: AuthService
-    @EnvironmentObject var refreshManager: RefreshManager
-    @StateObject private var viewModel = CalendarViewModel()
+    @Environment(AppRouter.self) var router
+    @Environment(AuthService.self) var authService
+    @Environment(RefreshManager.self) var refreshManager
+    @State private var viewModel = CalendarViewModel()
     @State private var isShowingActionMenu = false
     @State private var showNutritionDetail = false
 
@@ -237,8 +237,8 @@ struct CalendarView: View {
 // Static header for the meals section: DailyNutritionCard + Log Meal button + section title.
 // Kept as a separate view to reduce compiler complexity in CalendarView.
 struct CalendarMealsSectionHeader: View {
-    @ObservedObject var viewModel: CalendarViewModel
-    @EnvironmentObject var router: AppRouter
+    var viewModel: CalendarViewModel
+    @Environment(AppRouter.self) var router
     let onNutritionTap: () -> Void
 
     var body: some View {
@@ -289,8 +289,8 @@ struct CalendarMealsSectionHeader: View {
 // Static header for the symptoms section: DailySymptomCard + Log Symptom button + section title.
 // Kept as a separate view to reduce compiler complexity in CalendarView.
 struct CalendarSymptomsSectionHeader: View {
-    @ObservedObject var viewModel: CalendarViewModel
-    @EnvironmentObject var router: AppRouter
+    var viewModel: CalendarViewModel
+    @Environment(AppRouter.self) var router
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -364,13 +364,13 @@ struct EmptyStateCard: View {
 }
 
 // MARK: - ViewModel
-class CalendarViewModel: ObservableObject {
-    @Published var selectedDate = Date.now
-    @Published var meals: [Meal] = []
-    @Published var symptoms: [Symptom] = []
-    @Published var isLoadingMeals = false
-    @Published var isLoadingSymptoms = false
-    @Published var calendarDays: [CalendarDay] = []
+@Observable class CalendarViewModel {
+    var selectedDate = Date.now
+    var meals: [Meal] = []
+    var symptoms: [Symptom] = []
+    var isLoadingMeals = false
+    var isLoadingSymptoms = false
+    var calendarDays: [CalendarDay] = []
     
 
     
@@ -1263,6 +1263,6 @@ private struct NutritionDetailFoodRow: View {
 // MARK: - Preview
 #Preview {
     CalendarView(selectedTab: Tab.meals)
-        .environmentObject(AppRouter())
-        .environmentObject(AuthService())
+        .environment(AppRouter())
+        .environment(AuthService())
 }

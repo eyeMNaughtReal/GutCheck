@@ -3,9 +3,9 @@ import FirebaseFirestore
 import FirebaseAuth
 
 struct RecentActivityListView: View {
-    @StateObject private var viewModel = RecentActivityViewModel()
-    @EnvironmentObject var router: AppRouter
-    @EnvironmentObject var authService: AuthService
+    @State private var viewModel = RecentActivityViewModel()
+    @Environment(AppRouter.self) var router
+    @Environment(AuthService.self) var authService
     let selectedDate: Date
     
     var body: some View {

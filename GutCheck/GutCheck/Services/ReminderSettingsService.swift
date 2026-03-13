@@ -11,12 +11,12 @@ import FirebaseFirestore
 import UserNotifications
 
 @MainActor
-class ReminderSettingsService: ObservableObject {
+@Observable class ReminderSettingsService {
     static let shared = ReminderSettingsService()
     
-    @Published var reminderSettings: ReminderSettings?
-    @Published var isLoading = false
-    @Published var errorMessage: String?
+    var reminderSettings: ReminderSettings?
+    var isLoading = false
+    var errorMessage: String?
     
     private let reminderRepository = ReminderSettingsRepository.shared
     
