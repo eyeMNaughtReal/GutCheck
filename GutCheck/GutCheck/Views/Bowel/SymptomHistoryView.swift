@@ -221,7 +221,7 @@ private struct DateRangePickerView: View {
     @Binding var isPresented: Bool
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 DatePicker("Start Date", selection: $startDate, displayedComponents: [.date])
                 DatePicker("End Date", selection: $endDate, displayedComponents: [.date])
@@ -242,7 +242,7 @@ private struct DateRangePickerView: View {
 // MARK: - Supporting Types
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         SymptomHistoryView()
     }
 }

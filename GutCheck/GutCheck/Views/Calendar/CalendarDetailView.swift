@@ -89,7 +89,7 @@ struct CalendarDetailView: View {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         CalendarDetailView(date: Date.now)
     }
     .environmentObject(AuthService())

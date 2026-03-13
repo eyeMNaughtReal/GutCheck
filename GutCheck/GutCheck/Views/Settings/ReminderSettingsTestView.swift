@@ -11,7 +11,7 @@ struct ReminderSettingsTestView: View {
     @StateObject private var reminderService = ReminderSettingsService.shared
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 20) {
                 Text("Reminder Settings Test")
                     .font(.title)

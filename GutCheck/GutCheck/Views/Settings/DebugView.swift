@@ -11,7 +11,7 @@ struct DebugView: View {
     @State private var resetError: Error?
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 // App Info
                 Section("App Information") {

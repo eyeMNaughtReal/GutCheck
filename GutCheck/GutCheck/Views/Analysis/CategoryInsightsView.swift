@@ -181,7 +181,7 @@ private struct HistoricalInsightRow: View {
 // MARK: - Preview
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         CategoryInsightsView(category: .foodTriggers)
     }
 }

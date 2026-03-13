@@ -173,7 +173,7 @@ struct LocalStorageSettingsView: View {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         LocalStorageSettingsView()
             .environmentObject(DataSyncService.shared)
             .environmentObject(CoreDataStorageService.shared)

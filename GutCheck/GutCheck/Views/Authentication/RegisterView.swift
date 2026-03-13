@@ -26,7 +26,7 @@ struct RegisterView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     // Logo/Welcome Section

@@ -277,7 +277,7 @@ struct MealAnalysis {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         MealConfirmationView(meal: Meal(
             name: "Lunch",
             date: Date.now,

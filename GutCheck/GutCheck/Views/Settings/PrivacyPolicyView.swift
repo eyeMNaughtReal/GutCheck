@@ -7,7 +7,7 @@ struct PrivacyPolicyView: View {
     private let sections = PolicySection.allSections
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 // Introduction Section
                 Section {

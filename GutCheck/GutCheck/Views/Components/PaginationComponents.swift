@@ -387,7 +387,7 @@ struct DateRangePickerSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 20) {
                 DatePicker("Start Date", selection: Binding(
                     get: { startDate ?? Date.now },

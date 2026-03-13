@@ -25,7 +25,7 @@ struct HealthcareExportView: View {
     @State private var endDate = Date.now
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     // Header
@@ -363,7 +363,7 @@ struct ExportOptionsSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section("Date Range") {
                     DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
