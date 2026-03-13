@@ -106,8 +106,8 @@ struct MedicationCalendarView: View {
                 }
             }
         }
-        .onAppear {
-            Task { await viewModel.loadDoses() }
+        .task {
+            await viewModel.loadDoses()
         }
         .onChange(of: viewModel.selectedDate) { _, _ in
             Task { await viewModel.loadDoses() }

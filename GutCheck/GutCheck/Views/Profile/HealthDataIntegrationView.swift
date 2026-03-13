@@ -237,8 +237,10 @@ struct HealthDataIntegrationView: View {
             }
             .onAppear {
                 healthKitVM.updateDependencies(settingsViewModel: settingsVM, authService: authService)
-                Task { await healthKitVM.fetchHealthData() }
                 healthKitVM.refreshWriteStatuses()
+            }
+            .task {
+                await healthKitVM.fetchHealthData()
             }
         }
     }

@@ -83,10 +83,8 @@ struct ReminderSettingsTestView: View {
                 .padding()
             }
             .navigationTitle("Test View")
-            .onAppear {
-                Task {
-                    await reminderService.loadReminderSettings()
-                }
+            .task {
+                await reminderService.loadReminderSettings()
             }
         }
     }

@@ -25,14 +25,9 @@ struct SymptomDetailView: View {
                 contentView
             }
         }
-        .onAppear {
-            #if DEBUG
-            #endif
-
+        .task {
             if viewModel.symptomId != nil && viewModel.entity.id.isEmpty {
-                Task {
-                    await viewModel.loadEntity()
-                }
+                await viewModel.loadEntity()
             }
         }
         .onChange(of: viewModel.entity) { _, newEntity in
