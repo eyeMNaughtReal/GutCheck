@@ -14,7 +14,7 @@ struct PaginatedSymptomHistoryView: View {
     @State private var optionalEndDate: Date? = nil
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 // Filter bar
                 FilterBar(selectedFilter: $viewModel.selectedFilter) { filter in

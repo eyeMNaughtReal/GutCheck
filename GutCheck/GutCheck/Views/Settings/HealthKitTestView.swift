@@ -15,7 +15,7 @@ struct HealthKitTestView: View {
     @State private var testResults: [String] = []
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 20) {
                 Text("HealthKit Integration Test")
                     .font(.title)

@@ -212,7 +212,7 @@ struct ContributingFactor: Identifiable {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         InsightDetailView(insight: HealthInsight(
             title: "Dairy Sensitivity Pattern",
             summary: "Strong correlation between dairy consumption and bloating",

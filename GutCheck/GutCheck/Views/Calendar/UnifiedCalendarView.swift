@@ -9,7 +9,7 @@ struct UnifiedCalendarView: View {
     private let daysInWeek = 7
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 // Month Header
                 monthHeader
@@ -194,7 +194,7 @@ private struct DatePickerView: View {
     @Binding var isPresented: Bool
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             DatePicker(
                 "Select Date",
                 selection: $selectedDate,

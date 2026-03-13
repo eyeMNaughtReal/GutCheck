@@ -267,7 +267,7 @@ struct AuthenticationView: View {
     // MARK: - Forgot Password Sheet
     
     private var forgotPasswordSheet: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 24) {
                 VStack(spacing: 8) {
                     Text("Reset Password")
