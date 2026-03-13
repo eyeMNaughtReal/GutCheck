@@ -116,14 +116,26 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 @main
 struct GutCheckApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @State private var authService = AuthService()
+    @State private var authService: AuthService
     @State private var settingsVM = SettingsViewModel()
     @State private var coreDataStack = CoreDataStack.shared
     @State private var localStorage = CoreDataStorageService.shared
     @State private var dataSyncService = DataSyncService.shared
     @State private var serverStatusService = ServerStatusService.shared
     @Environment(\.scenePhase) private var scenePhase
-    
+
+    init() {
+        // Firebase must be configured before AuthService is created,
+        // since AuthService.init() calls Auth.auth() which requires
+        // a configured FirebaseApp instance.
+        if FirebaseApp.app() == nil {
+            if Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil {
+                FirebaseApp.configure()
+            }
+        }
+        _authService = State(wrappedValue: AuthService())
+    }
+
     static func testFirebaseConnection() async {
         do {
             let testDoc = FirebaseManager.shared.testDocument("connection")
