@@ -56,10 +56,8 @@ struct InsightsDashboardView: View {
             .refreshable {
                 await refreshInsights()
             }
-            .onAppear {
-                Task {
-                    await refreshInsights()
-                }
+            .task {
+                await refreshInsights()
             }
             .onChange(of: selectedTimeRange) { _, _ in
                 Task {

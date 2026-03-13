@@ -25,11 +25,9 @@ struct MealDetailView: View {
                 mealContentView
             }
         }
-        .onAppear {
+        .task {
             if viewModel.mealId != nil {
-                Task {
-                    await viewModel.loadMeal()
-                }
+                await viewModel.loadMeal()
             }
         }
     }
