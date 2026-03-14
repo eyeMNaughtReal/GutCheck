@@ -17,25 +17,23 @@ struct AuthenticationView: View {
     }
     
     var body: some View {
-        GeometryReader { geometry in
-            ScrollView {
-                VStack(spacing: 30) {
-                    // Header
-                    headerSection
-                    
-                    // Form
-                    if viewModel.isShowingSignUp {
-                        signUpForm
-                    } else {
-                        signInForm
-                    }
-                    
-                    // Toggle Auth Mode
-                    authToggleSection
+        ScrollView {
+            VStack(spacing: 30) {
+                // Header
+                headerSection
+                
+                // Form
+                if viewModel.isShowingSignUp {
+                    signUpForm
+                } else {
+                    signInForm
                 }
-                .padding(.horizontal, 24)
-                .frame(minHeight: geometry.size.height)
+                
+                // Toggle Auth Mode
+                authToggleSection
             }
+            .padding(.horizontal, 24)
+            .containerRelativeFrame(.vertical, alignment: .center)
         }
         .background(ColorTheme.background)
         .alert("Success", isPresented: $viewModel.showingSuccessAlert) {

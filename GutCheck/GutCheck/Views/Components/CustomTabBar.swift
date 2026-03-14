@@ -15,17 +15,12 @@ struct CustomTabBar: View {
     // Using shared Tab enum from Models/Core/Tab.swift
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                // Tab Bar (always fixed to bottom)
-                VStack {
-                    Spacer()
-                    CustomTabBarContent(
-                        selectedTab: selectedTab,
-                        onTabSelected: { handleTabSelection($0) }
-                    )
-                }
-            }
+        VStack {
+            Spacer()
+            CustomTabBarContent(
+                selectedTab: selectedTab,
+                onTabSelected: { handleTabSelection($0) }
+            )
         }
     }
     
