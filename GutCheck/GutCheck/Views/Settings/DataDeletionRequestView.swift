@@ -104,11 +104,6 @@ struct DataDeletionRequestView: View {
             }
             .navigationTitle("Data Deletion")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
-                }
-            }
             .alert("Confirm Deletion Request", isPresented: $showingConfirmation) {
                 Button("Cancel", role: .cancel) { }
                 Button("Submit Request", role: .destructive) {
