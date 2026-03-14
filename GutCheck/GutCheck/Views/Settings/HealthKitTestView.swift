@@ -81,7 +81,7 @@ struct HealthKitTestView: View {
         statusMessage = "Requesting HealthKit authorization..."
         
         HealthKitManager.shared.requestAuthorization { success, error in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 isLoading = false
                 if success {
                     isAuthorized = true
@@ -127,7 +127,7 @@ struct HealthKitTestView: View {
         )
         
         HealthKitManager.shared.writeMealToHealthKit(testMeal) { success, error in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 isLoading = false
                 if success {
                     statusMessage = "✅ Test meal written to HealthKit successfully!"
@@ -156,7 +156,7 @@ struct HealthKitTestView: View {
         )
         
         HealthKitManager.shared.writeSymptomToHealthKit(testSymptom) { success, error in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 isLoading = false
                 if success {
                     statusMessage = "✅ Test symptom written to HealthKit successfully!"
@@ -176,7 +176,7 @@ struct HealthKitTestView: View {
         let waterAmount = 500.0 // 500ml
         
         HealthKitManager.shared.writeWaterIntakeToHealthKit(amount: waterAmount) { success, error in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 isLoading = false
                 if success {
                     statusMessage = "✅ Test water intake written to HealthKit successfully!"

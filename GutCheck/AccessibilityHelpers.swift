@@ -173,7 +173,10 @@ class AccessibilityAnnouncement {
     ///   - message: The message to announce
     ///   - delay: Optional delay before announcement
     static func announce(_ message: String, after delay: TimeInterval = 0) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+        Task { @MainActor in
+            if delay > 0 {
+                try? await Task.sleep(for: .seconds(delay))
+            }
             UIAccessibility.post(notification: .announcement, argument: message)
         }
     }

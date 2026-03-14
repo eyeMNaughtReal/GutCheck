@@ -567,7 +567,8 @@ struct MealCalendarRow: View {
             isNavigating = true
             
             // Debounce the navigation
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            Task {
+                try? await Task.sleep(for: .milliseconds(500))
                 isNavigating = false
             }
             
@@ -676,7 +677,8 @@ struct SymptomCalendarRow: View {
             isNavigating = true
             
             // Debounce the navigation
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            Task {
+                try? await Task.sleep(for: .milliseconds(500))
                 isNavigating = false
             }
             

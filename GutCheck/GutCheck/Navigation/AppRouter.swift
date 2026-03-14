@@ -139,7 +139,8 @@ enum SheetDestination: Identifiable {
         activePath.append(destination)
         
         // Reset navigation flag after a short delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(100))
             self.isNavigating = false
         }
     }
