@@ -34,6 +34,7 @@ struct AppRoot: View {
                 SwiftUI.Tab("Meds", systemImage: "pills.fill", value: GutCheck.Tab.medications) {
                     NavigationStack {
                         MedicationCalendarView()
+                            .withAppNavigationDestinations(router: router, refreshManager: refreshManager)
                     }
                 }
 
@@ -130,6 +131,10 @@ private struct AppNavigationDestinations: ViewModifier {
                     SettingsView()
                 case .analytics:
                     InsightsView()
+                case .symptomHistory(let symptom):
+                    SymptomDetailView(symptom: symptom)
+                case .medicationList:
+                    MedicationListView()
                 }
             }
     }

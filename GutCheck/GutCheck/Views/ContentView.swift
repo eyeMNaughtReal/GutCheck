@@ -80,6 +80,10 @@ struct ContentView: View {
             SettingsView()
         case .analytics:
             InsightsView()
+        case .symptomHistory(let symptom):
+            SymptomDetailView(symptom: symptom)
+        case .medicationList:
+            MedicationListView()
         }
     }
     

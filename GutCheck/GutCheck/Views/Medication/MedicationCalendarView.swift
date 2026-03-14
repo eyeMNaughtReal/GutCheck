@@ -100,7 +100,7 @@ struct MedicationCalendarView: View {
                 }
             }
             ToolbarItem(placement: .topBarLeading) {
-                NavigationLink(destination: MedicationListView()) {
+                NavigationLink(value: AppDestination.medicationList) {
                     Image(systemName: "list.bullet")
                         .accessibilityLabel("Manage medications")
                 }

@@ -74,7 +74,7 @@ struct HealthDataIntegrationView: View {
                     header: Text("Medications"),
                     footer: Text("Track your medications manually within GutCheck to help surface insights about how they affect your gut health.")
                 ) {
-                    NavigationLink(destination: MedicationListView()) {
+                    NavigationLink(value: SettingsRoute.medications) {
                         Label("My Medications", systemImage: "pills.fill")
                             .foregroundStyle(.primary)
                     }
@@ -225,6 +225,14 @@ struct HealthDataIntegrationView: View {
                 }
             }
             .navigationTitle("Apple Health")
+            .navigationDestination(for: SettingsRoute.self) { route in
+                switch route {
+                case .medications:
+                    MedicationListView()
+                default:
+                    EmptyView()
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Close") { dismiss() }

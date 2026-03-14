@@ -35,7 +35,7 @@ struct UnifiedCalendarView: View {
                 
                 // Daily Summary
                 if let selectedDay = viewModel.calendarDays.first(where: { calendar.isDate($0.date, inSameDayAs: selectedDate) }) {
-                    NavigationLink(destination: CalendarDetailView(date: selectedDate)) {
+                    NavigationLink(value: CalendarRoute.dayDetail(selectedDate)) {
                         DailySummaryCard(day: selectedDay)
                             .padding()
                     }
@@ -44,6 +44,14 @@ struct UnifiedCalendarView: View {
                 Spacer()
             }
             .navigationTitle("Calendar")
+            .navigationDestination(for: CalendarRoute.self) { route in
+                switch route {
+                case .dayDetail(let date):
+                    CalendarDetailView(date: date)
+                case .fullCalendar(let date):
+                    CalendarView(selectedDate: date)
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: { showingDatePicker = true }) {

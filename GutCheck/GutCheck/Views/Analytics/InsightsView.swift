@@ -13,51 +13,57 @@ struct InsightsView: View {
     @State private var viewModel = InsightsViewModel()
     
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Weekly Stats Row
-                    weeklyStatsRow
+        ScrollView {
+            VStack(spacing: 24) {
+                // Weekly Stats Row
+                weeklyStatsRow
 
-                    // Top Summary Cards
-                    topSymptomsCard
-                    triggerFoodsCard
-                    bestDaysCard
+                // Top Summary Cards
+                topSymptomsCard
+                triggerFoodsCard
+                bestDaysCard
 
-                    // Recent Insights Section
-                    if !viewModel.recentInsights.isEmpty {
-                        recentInsightsSection
-                    }
-                    
-                    // Categories Section
-                    insightCategoriesSection
-                    
-                    // Patterns Section
-                    if !viewModel.patterns.isEmpty {
-                        patternsSection
-                    }
-                    
-                    // Recommendations Section
-                    if !viewModel.recommendations.isEmpty {
-                        recommendationsSection
-                    }
+                // Recent Insights Section
+                if !viewModel.recentInsights.isEmpty {
+                    recentInsightsSection
                 }
-                .padding()
-            }
-            .navigationTitle("Insights")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    ProfileAvatarButton(user: authService.currentUser) {
-                        router.presentSheet(.profile)
-                    }
+                
+                // Categories Section
+                insightCategoriesSection
+                
+                // Patterns Section
+                if !viewModel.patterns.isEmpty {
+                    patternsSection
+                }
+                
+                // Recommendations Section
+                if !viewModel.recommendations.isEmpty {
+                    recommendationsSection
                 }
             }
-            .refreshable {
-                await viewModel.loadInsights()
+            .padding()
+        }
+        .navigationTitle("Insights")
+        .navigationDestination(for: InsightsRoute.self) { route in
+            switch route {
+            case .insightDetail(let insight):
+                InsightDetailView(insight: insight)
+            case .categoryInsights(let category):
+                CategoryInsightsView(category: category)
             }
-            .task {
-                await viewModel.loadInsights()
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                ProfileAvatarButton(user: authService.currentUser) {
+                    router.presentSheet(.profile)
+                }
             }
+        }
+        .refreshable {
+            await viewModel.loadInsights()
+        }
+        .task {
+            await viewModel.loadInsights()
         }
     }
     
@@ -313,7 +319,7 @@ private struct AnalyticsInsightCard: View {
     let insight: HealthInsight
     
     var body: some View {
-        NavigationLink(destination: InsightDetailView(insight: insight)) {
+        NavigationLink(value: InsightsRoute.insightDetail(insight)) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Image(systemName: insight.iconName)
@@ -354,7 +360,7 @@ private struct CategoryCard: View {
     let category: InsightCategory
     
     var body: some View {
-        NavigationLink(destination: CategoryInsightsView(category: category)) {
+        NavigationLink(value: InsightsRoute.categoryInsights(category)) {
             VStack(spacing: 12) {
                 Image(systemName: category.iconName)
                     .font(.title)

@@ -1,6 +1,6 @@
 import SwiftUI
 
-// Main navigation destinations
+// Main navigation destinations (used by AppRoot tab NavigationStacks)
 enum AppDestination: Hashable {
     case dashboard
     case calendar(Date)
@@ -8,6 +8,45 @@ enum AppDestination: Hashable {
     case symptomDetail(String? = nil) // nil for new symptom, String ID for existing
     case settings
     case analytics
+    case symptomHistory(Symptom)
+    case medicationList
+}
+
+// Settings sub-screen navigation
+enum SettingsRoute: Hashable {
+    case language
+    case units
+    case appearance
+    case reminders
+    case medications
+    case healthcareExport
+    case privacyPolicy
+    case dataDeletion
+    case localStorage
+    case deleteAccount
+}
+
+// Insights navigation
+enum InsightsRoute: Hashable {
+    case insightDetail(HealthInsight)
+    case categoryInsights(InsightCategory)
+}
+
+// Privacy policy navigation
+enum PrivacyPolicyRoute: Hashable {
+    case sectionDetail(PolicySection)
+}
+
+// Profile menu navigation
+enum ProfileMenuRoute: Hashable {
+    case settings
+    case reminders
+}
+
+// Calendar navigation
+enum CalendarRoute: Hashable {
+    case dayDetail(Date)
+    case fullCalendar(Date)
 }
 
 // Sheet presentations
