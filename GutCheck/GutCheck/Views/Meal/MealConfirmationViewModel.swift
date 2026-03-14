@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 @Observable class MealConfirmationViewModel {
     private(set) var totalNutrition: NutritionInfo?
     private(set) var aiAnalysis: MealAnalysis?

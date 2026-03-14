@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 
+@MainActor
 @Observable class DataSyncManager {
     static let shared = DataSyncManager()
     
@@ -25,7 +26,6 @@ import SwiftUI
     // MARK: - Main Refresh Methods
     
     /// Trigger a dashboard refresh after data changes
-    @MainActor
     func triggerRefresh() {
         updateRefreshStates()
         
@@ -34,7 +34,6 @@ import SwiftUI
     }
     
     /// Trigger a specific data type refresh
-    @MainActor
     func triggerRefresh(for dataType: DataType) {
         
         switch dataType {
@@ -59,12 +58,10 @@ import SwiftUI
     
     /// Trigger refresh after successful save operation
     func triggerRefreshAfterSave(operation: String, dataType: DataType = .dashboard) {
-        Task { @MainActor in
-            triggerRefresh(for: dataType)
-            
-            // Also trigger RefreshManager to ensure all views are updated
-            RefreshManager.shared.triggerRefresh()
-        }
+        triggerRefresh(for: dataType)
+        
+        // Also trigger RefreshManager to ensure all views are updated
+        RefreshManager.shared.triggerRefresh()
     }
     
     /// Trigger refresh with delay (useful for UI transitions)
@@ -80,13 +77,11 @@ import SwiftUI
     // MARK: - Batch Operations
     
     /// Start a batch operation that will trigger refresh when completed
-    @MainActor
     func startBatchOperation() {
         isRefreshing = true
     }
     
     /// Complete a batch operation and trigger refresh
-    @MainActor
     func completeBatchOperation(dataType: DataType = .all) {
         defer { isRefreshing = false }
         triggerRefresh(for: dataType)
@@ -94,13 +89,11 @@ import SwiftUI
     
     // MARK: - Private Helpers
     
-    @MainActor
     private func updateRefreshStates() {
         shouldRefreshDashboard.toggle()
         lastRefreshTime = Date.now
     }
     
-    @MainActor
     private func updateAllRefreshStates() {
         shouldRefreshDashboard.toggle()
         shouldRefreshMeals.toggle()
@@ -112,7 +105,6 @@ import SwiftUI
     // MARK: - Reset Methods
     
     /// Reset all refresh states (useful for testing or state cleanup)
-    @MainActor
     func resetRefreshStates() {
         shouldRefreshDashboard = false
         shouldRefreshMeals = false
@@ -162,23 +154,17 @@ extension DataSyncManager {
 extension DataSyncManager {
     /// Convenience method for meal-related operations
     func triggerMealRefresh() {
-        Task { @MainActor in
-            triggerRefresh(for: .meals)
-        }
+        triggerRefresh(for: .meals)
     }
     
     /// Convenience method for symptom-related operations
     func triggerSymptomRefresh() {
-        Task { @MainActor in
-            triggerRefresh(for: .symptoms)
-        }
+        triggerRefresh(for: .symptoms)
     }
     
     /// Convenience method for calendar-related operations
     func triggerCalendarRefresh() {
-        Task { @MainActor in
-            triggerRefresh(for: .calendar)
-        }
+        triggerRefresh(for: .calendar)
     }
 }
 
@@ -189,9 +175,8 @@ protocol DataSyncCapable {
 }
 
 extension DataSyncCapable {
+    @MainActor
     func triggerDataRefresh() {
-        Task { @MainActor in
-            DataSyncManager.shared.triggerRefresh()
-        }
+        DataSyncManager.shared.triggerRefresh()
     }
 }

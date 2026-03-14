@@ -164,6 +164,7 @@ private struct NetworkDebugger: View {
 
 // MARK: - Supporting Types
 
+@MainActor
 @Observable private class NetworkDebuggerViewModel {
     var requests: [NetworkRequest] = []
     
