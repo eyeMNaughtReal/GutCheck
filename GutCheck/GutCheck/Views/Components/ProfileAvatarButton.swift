@@ -5,7 +5,7 @@ struct ProfileAvatarButton: View {
     let size: CGFloat
     let action: () -> Void
     
-    @StateObject private var profileImageService = UnifiedProfileImageService(strategy: LocalProfileImageStrategy())
+    @State private var profileImageService = UnifiedProfileImageService(strategy: LocalProfileImageStrategy())
     @State private var profileImage: UIImage?
     @State private var isLoadingImage = false
     

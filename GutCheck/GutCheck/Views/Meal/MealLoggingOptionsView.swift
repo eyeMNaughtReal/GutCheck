@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MealLoggingOptionsView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var router: AppRouter
+    @Environment(AppRouter.self) var router
     @State private var showingSearchView = false
     
     var body: some View {
@@ -80,7 +80,7 @@ struct MealLoggingOptionsView: View {
                     // Close the search sheet to return to MealBuilderView
                     showingSearchView = false
                 }
-                .environmentObject(router)
+                .environment(router)
             }
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
@@ -91,6 +91,6 @@ struct MealLoggingOptionsView: View {
 // Preview
 #Preview {
     MealLoggingOptionsView()
-        .environmentObject(AppRouter.shared)
+        .environment(AppRouter.shared)
 }
 

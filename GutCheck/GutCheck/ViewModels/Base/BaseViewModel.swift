@@ -11,12 +11,12 @@ import SwiftUI
 // MARK: - Base ViewModel Class
 
 @MainActor
-open class BaseViewModel: ObservableObject {
-    @Published var isLoading: Bool = false
-    @Published var isSaving: Bool = false
-    @Published var errorMessage: String? = nil
-    @Published var showingErrorAlert: Bool = false
-    @Published var shouldDismiss: Bool = false
+@Observable open class BaseViewModel {
+    var isLoading: Bool = false
+    var isSaving: Bool = false
+    var errorMessage: String? = nil
+    var showingErrorAlert: Bool = false
+    var shouldDismiss: Bool = false
     
     public init() {}
     
@@ -86,11 +86,11 @@ open class BaseViewModel: ObservableObject {
 /// Base ViewModel for detail views (editing single entities)
 @MainActor
 open class DetailViewModel<T>: BaseViewModel {
-    @Published var isEditing = false
-    @Published var showingDeleteConfirmation = false
+    var isEditing = false
+    var showingDeleteConfirmation = false
     
     /// The entity being viewed/edited
-    @Published var entity: T
+    var entity: T
     
     public init(entity: T) {
         self.entity = entity
@@ -140,8 +140,8 @@ open class DetailViewModel<T>: BaseViewModel {
 /// Base ViewModel for list views (displaying collections)
 @MainActor
 open class ListViewModel<T>: BaseViewModel {
-    @Published var items: [T] = []
-    @Published var hasMoreData: Bool = false
+    var items: [T] = []
+    var hasMoreData: Bool = false
     
     /// Override this to implement data loading
     open func loadItems() async {

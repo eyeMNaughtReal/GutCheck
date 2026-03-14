@@ -3,7 +3,7 @@ import SwiftUI
 struct InsightDetailView: View {
     let insight: HealthInsight
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var viewModel = InsightDetailViewModel()
+    @State private var viewModel = InsightDetailViewModel()
     
     var body: some View {
         ScrollView {

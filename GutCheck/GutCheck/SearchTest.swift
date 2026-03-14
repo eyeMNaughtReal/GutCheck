@@ -3,8 +3,8 @@ import SwiftUI
 
 // Simple test to verify search functionality
 struct SearchTestView: View {
-    @StateObject private var searchService = FoodSearchService()
-    @StateObject private var viewModel = FoodSearchViewModel()
+    @State private var searchService = FoodSearchService()
+    @State private var viewModel = FoodSearchViewModel()
     @State private var testResults: [NutritionixFood] = []
     @State private var isLoading = false
     @State private var errorMessage = ""

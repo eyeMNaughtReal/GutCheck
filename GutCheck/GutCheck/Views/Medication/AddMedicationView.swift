@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AddMedicationView: View {
-    @StateObject private var viewModel = AddMedicationViewModel()
+    @State private var viewModel = AddMedicationViewModel()
     @Environment(\.dismiss) private var dismiss
 
     /// Called after a successful save so the parent list can refresh.

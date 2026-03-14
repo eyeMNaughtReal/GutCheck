@@ -2,15 +2,15 @@ import SwiftUI
 import FirebaseFirestore
 
 @MainActor
-class SymptomHistoryViewModel: ObservableObject {
-    @Published var groupedSymptoms: [Date: [Symptom]] = [:]
-    @Published var isLoading = false
-    @Published var isLoadingMore = false
-    @Published var hasMoreData = true
-    @Published var error: Error?
-    @Published var startDate = Date.distantPast
-    @Published var endDate = Date.now
-    @Published var selectedFilter: SymptomFilter = .all
+@Observable class SymptomHistoryViewModel {
+    var groupedSymptoms: [Date: [Symptom]] = [:]
+    var isLoading = false
+    var isLoadingMore = false
+    var hasMoreData = true
+    var error: Error?
+    var startDate = Date.distantPast
+    var endDate = Date.now
+    var selectedFilter: SymptomFilter = .all
     
     private let firebaseManager = FirebaseManager.shared
     private var lastDocument: DocumentSnapshot?

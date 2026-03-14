@@ -11,19 +11,19 @@ import FirebaseAuth
 import UserNotifications
 
 @MainActor
-class LogSymptomViewModel: ObservableObject, HasLoadingState {
+@Observable class LogSymptomViewModel: HasLoadingState {
     // Form state (unchanged)
-    @Published var symptomDate = Date.now
-    @Published var selectedStoolType: StoolType?
-    @Published var selectedPainLevel: Int = 0
-    @Published var selectedUrgencyLevel: UrgencyLevel = .none
-    @Published var selectedTags: Set<String> = []
-    @Published var customTag: String = ""
-    @Published var notes: String = ""
+    var symptomDate = Date.now
+    var selectedStoolType: StoolType?
+    var selectedPainLevel: Int = 0
+    var selectedUrgencyLevel: UrgencyLevel = .none
+    var selectedTags: Set<String> = []
+    var customTag: String = ""
+    var notes: String = ""
     
     // UI state (unchanged)
-    @Published var showingSuccessAlert = false
-    @Published var showingErrorAlert = false
+    var showingSuccessAlert = false
+    var showingErrorAlert = false
     
     let loadingState = LoadingStateManager()
     

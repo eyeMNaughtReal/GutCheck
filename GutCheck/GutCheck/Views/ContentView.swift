@@ -1,7 +1,7 @@
 #Preview {
     ContentView()
-        .environmentObject(AuthService())
-        .environmentObject(AppRouter.shared)
+        .environment(AuthService())
+        .environment(AppRouter.shared)
 }
 //
 //  ContentView.swift
@@ -13,8 +13,8 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject var authService: AuthService
-    @ObservedObject var router = AppRouter.shared
+    @Environment(AuthService.self) var authService
+    @Bindable var router = AppRouter.shared
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -44,7 +44,7 @@ struct ContentView: View {
                 handleTabBarAction(action)
             }
         }
-        .environmentObject(router)
+        .environment(router)
         .background(ColorTheme.background.ignoresSafeArea())
 
     }
@@ -94,13 +94,13 @@ struct ContentView: View {
             }
         case .mealForm(_):
             MealBuilderView()
-                .environmentObject(router)
+                .environment(router)
         case .symptomForm(_):
             LogSymptomView()
-                .environmentObject(router)
+                .environment(router)
         case .logEntry:
             LogEntryView()
-                .environmentObject(router)
+                .environment(router)
         }
     }
     

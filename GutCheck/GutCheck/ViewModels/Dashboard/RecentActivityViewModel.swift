@@ -3,10 +3,10 @@ import FirebaseFirestore
 import HealthKit
 
 @MainActor
-class RecentActivityViewModel: ObservableObject {
-    @Published var recentEntries: [ActivityEntry] = []
-    @Published var isLoading = false
-    @Published var errorMessage: String?
+@Observable class RecentActivityViewModel {
+    var recentEntries: [ActivityEntry] = []
+    var isLoading = false
+    var errorMessage: String?
     
     // Repository dependencies
     private let mealRepository: MealRepository

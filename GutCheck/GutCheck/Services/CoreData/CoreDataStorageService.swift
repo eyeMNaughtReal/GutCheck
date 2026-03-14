@@ -11,7 +11,7 @@ import Foundation
 import CoreData
 
 @MainActor
-class CoreDataStorageService: ObservableObject {
+@Observable class CoreDataStorageService {
     static let shared = CoreDataStorageService()
     
     private let coreDataStack = CoreDataStack.shared

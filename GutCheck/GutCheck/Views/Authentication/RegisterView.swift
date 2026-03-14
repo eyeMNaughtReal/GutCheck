@@ -2,7 +2,7 @@ import SwiftUI
 import FirebaseAuth
 
 struct RegisterView: View {
-    @EnvironmentObject var authService: AuthService
+    @Environment(AuthService.self) var authService
     @Environment(\.dismiss) private var dismiss
     
     @State private var email = ""
@@ -171,5 +171,5 @@ struct RegisterView: View {
 
 #Preview {
     RegisterView()
-        .environmentObject(AuthService())
+        .environment(AuthService())
 }

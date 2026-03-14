@@ -13,12 +13,12 @@ import CryptoKit
 import Security
 
 @MainActor
-class CoreDataStack: ObservableObject {
+@Observable class CoreDataStack {
     static let shared = CoreDataStack()
     
     // MARK: - Core Data Stack
     
-    lazy var persistentContainer: NSPersistentContainer = {
+    @ObservationIgnored lazy var persistentContainer: NSPersistentContainer = {
         let container = NSPersistentContainer(name: "GutCheck")
         
         // Configure persistent store with encryption

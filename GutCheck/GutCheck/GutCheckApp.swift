@@ -116,14 +116,26 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 @main
 struct GutCheckApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @StateObject private var authService = AuthService()
-    @StateObject private var settingsVM = SettingsViewModel()
-    @StateObject private var coreDataStack = CoreDataStack.shared
-    @StateObject private var localStorage = CoreDataStorageService.shared
-    @StateObject private var dataSyncService = DataSyncService.shared
-    @StateObject private var serverStatusService = ServerStatusService.shared
+    @State private var authService: AuthService
+    @State private var settingsVM = SettingsViewModel()
+    @State private var coreDataStack = CoreDataStack.shared
+    @State private var localStorage = CoreDataStorageService.shared
+    @State private var dataSyncService = DataSyncService.shared
+    @State private var serverStatusService = ServerStatusService.shared
     @Environment(\.scenePhase) private var scenePhase
-    
+
+    init() {
+        // Firebase must be configured before AuthService is created,
+        // since AuthService.init() calls Auth.auth() which requires
+        // a configured FirebaseApp instance.
+        if FirebaseApp.app() == nil {
+            if Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil {
+                FirebaseApp.configure()
+            }
+        }
+        _authService = State(wrappedValue: AuthService())
+    }
+
     static func testFirebaseConnection() async {
         do {
             let testDoc = FirebaseManager.shared.testDocument("connection")
@@ -145,13 +157,13 @@ struct GutCheckApp: App {
                     }
                 } else if authService.isAuthenticated {
                     AppRoot()
-                        .environmentObject(authService)
-                        .environmentObject(settingsVM)
-                        .environmentObject(TimeoutManager.shared)
-                        .environmentObject(coreDataStack)
-                        .environmentObject(localStorage)
-                        .environmentObject(dataSyncService)
-                        .environmentObject(serverStatusService)
+                        .environment(authService)
+                        .environment(settingsVM)
+                        .environment(TimeoutManager.shared)
+                        .environment(coreDataStack)
+                        .environment(localStorage)
+                        .environment(dataSyncService)
+                        .environment(serverStatusService)
                 } else if authService.isAwaitingEmailVerification {
                     EmailVerificationView(authService: authService)
                 } else {

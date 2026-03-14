@@ -12,26 +12,26 @@ import CryptoKit
 import AuthenticationServices
 
 @MainActor
-class AuthService: AuthenticationProtocol, HasLoadingState {
-    @Published private(set) var authUser: FirebaseAuth.User?
-    @Published private(set) var currentUser: User?
-    @Published private(set) var isAuthStateResolved = false
-    @Published private(set) var isAuthenticated = false
-    @Published private(set) var isAwaitingEmailVerification = false
-    private var verificationId: String?
-    @Published private(set) var isPhoneVerificationInProgress = false
+@Observable class AuthService: AuthenticationProtocol, HasLoadingState {
+    private(set) var authUser: FirebaseAuth.User?
+    private(set) var currentUser: User?
+    private(set) var isAuthStateResolved = false
+    private(set) var isAuthenticated = false
+    private(set) var isAwaitingEmailVerification = false
+    @ObservationIgnored private var verificationId: String?
+    private(set) var isPhoneVerificationInProgress = false
     /// Temporarily holds the email for resending verification when the user is signed out
-    private var pendingVerificationEmail: String?
-    private var pendingVerificationPassword: String?
-    private var currentNonce: String?
+    @ObservationIgnored private var pendingVerificationEmail: String?
+    @ObservationIgnored private var pendingVerificationPassword: String?
+    @ObservationIgnored private var currentNonce: String?
     
     let loadingState = LoadingStateManager()
     
-    private let auth = Auth.auth()
-    private lazy var firestore = Firestore.firestore()
+    @ObservationIgnored private let auth = Auth.auth()
+    @ObservationIgnored private lazy var firestore = Firestore.firestore()
     
     // Auth state listener handle
-    private var authStateListenerHandle: AuthStateDidChangeListenerHandle?
+    @ObservationIgnored private var authStateListenerHandle: AuthStateDidChangeListenerHandle?
     
     init() {
         // Listen for auth state changes

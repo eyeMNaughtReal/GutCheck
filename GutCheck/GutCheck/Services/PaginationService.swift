@@ -51,9 +51,9 @@ struct PaginatedResult<T> {
 // MARK: - Pagination Service
 
 @MainActor
-class PaginationService<T: Codable & Identifiable>: ObservableObject {
-    @Published var items: [T] = []
-    @Published var paginationState = PaginationState.initial
+@Observable class PaginationService<T: Codable & Identifiable> {
+    var items: [T] = []
+    var paginationState = PaginationState.initial
     
     internal let collection: String
     internal let config: PaginationConfig

@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct PaginatedSymptomHistoryView: View {
-    @StateObject private var viewModel = SymptomHistoryViewModel()
-    @EnvironmentObject var authService: AuthService
+    @State private var viewModel = SymptomHistoryViewModel()
+    @Environment(AuthService.self) var authService
     @State private var optionalStartDate: Date? = nil
     @State private var optionalEndDate: Date? = nil
     
@@ -367,5 +367,5 @@ extension StoolType {
 
 #Preview {
     PaginatedSymptomHistoryView()
-        .environmentObject(AuthService())
+        .environment(AuthService())
 }

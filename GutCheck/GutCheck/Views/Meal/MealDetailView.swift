@@ -2,19 +2,19 @@ import SwiftUI
 import FirebaseFirestore
 
 struct MealDetailView: View {
-    @StateObject private var viewModel: MealDetailViewModel
+    @State private var viewModel: MealDetailViewModel
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var router: AppRouter
-    @EnvironmentObject var refreshManager: RefreshManager
+    @Environment(AppRouter.self) var router
+    @Environment(RefreshManager.self) var refreshManager
     
     // New initializer that takes a meal ID
     init(mealId: String) {
-        self._viewModel = StateObject(wrappedValue: MealDetailViewModel(mealId: mealId))
+        self._viewModel = State(wrappedValue: MealDetailViewModel(mealId: mealId))
     }
     
     // Keep the original initializer for backward compatibility
     init(meal: Meal) {
-        self._viewModel = StateObject(wrappedValue: MealDetailViewModel(meal: meal))
+        self._viewModel = State(wrappedValue: MealDetailViewModel(meal: meal))
     }
     
     var body: some View {
@@ -296,6 +296,6 @@ struct MealDetailView: View {
 
 #Preview {
     MealDetailView(meal: Meal.sampleMeal)
-        .environmentObject(AppRouter.shared)
-        .environmentObject(RefreshManager.shared)
+        .environment(AppRouter.shared)
+        .environment(RefreshManager.shared)
 }

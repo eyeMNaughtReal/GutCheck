@@ -11,23 +11,23 @@ import SwiftUI
 import Combine
 
 @MainActor
-class MealBuilderService: ObservableObject {
+@Observable class MealBuilderService {
     static let shared = MealBuilderService()
     
     // MARK: - Published Properties
-    @Published var currentMeal: [FoodItem] = []
-    @Published var mealType: MealType = .lunch
-    @Published var mealDate: Date = Date.now
-    @Published var mealName: String = ""
-    @Published var notes: String = ""
-    @Published var isBuilding: Bool = false
+    var currentMeal: [FoodItem] = []
+    var mealType: MealType = .lunch
+    var mealDate: Date = Date.now
+    var mealName: String = ""
+    var notes: String = ""
+    var isBuilding: Bool = false
     
     // Navigation state
-    @Published var shouldNavigateToBuilder: Bool = false
-    @Published var shouldDismissModal: Bool = false
+    var shouldNavigateToBuilder: Bool = false
+    var shouldDismissModal: Bool = false
 
     // Edit state — non-nil when editing an existing meal
-    @Published var editingMealId: String? = nil
+    var editingMealId: String? = nil
     
     // MARK: - Dependencies
     

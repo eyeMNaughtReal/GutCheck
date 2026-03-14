@@ -21,31 +21,31 @@ import UIKit
 /// Provides real-time medication tracking without requiring daily polling.
 /// All medication data is processed locally for privacy compliance.
 @MainActor
-class HealthKitMedicationService: ObservableObject {
+@Observable class HealthKitMedicationService {
     // MARK: - Private Properties
     
     /// HealthKit store for accessing health data
-    private let healthStore = HKHealthStore()
+    @ObservationIgnored private let healthStore = HKHealthStore()
     
     /// Active medication observers for real-time updates
-    private var medicationObservers: [HKObserverQuery] = []
+    @ObservationIgnored private var medicationObservers: [HKObserverQuery] = []
     
     /// Background delivery observers for continuous monitoring
-    private var backgroundDeliveryObservers: [HKObserverQuery] = []
+    @ObservationIgnored private var backgroundDeliveryObservers: [HKObserverQuery] = []
     
     // MARK: - Published Properties
     
     /// Currently active medications from HealthKit
-    @Published var currentMedications: [MedicationRecord] = []
+    var currentMedications: [MedicationRecord] = []
     
     /// Complete medication history for analysis
-    @Published var medicationHistory: [MedicationRecord] = []
+    var medicationHistory: [MedicationRecord] = []
     
     /// Whether HealthKit medication access is authorized
-    @Published var isAuthorized = false
+    var isAuthorized = false
     
     /// Timestamp of last medication data update
-    @Published var lastUpdateTime: Date?
+    var lastUpdateTime: Date?
     
     // MARK: - Authorization
     

@@ -3,18 +3,18 @@ import FirebaseFirestore
 import SwiftUI
 
 @MainActor
-class MealDetailViewModel: ObservableObject {
-    @Published var meal: Meal
-    @Published var mealId: String?
-    @Published var notes: String = ""
-    @Published var isEditing = false
-    @Published var isSaving = false
-    @Published var isLoading = false
-    @Published var editingFoodItem: FoodItem?
-    @Published var showingDeleteConfirmation = false
-    @Published var showingErrorAlert = false
-    @Published var errorMessage = ""
-    @Published var shouldDismiss = false
+@Observable class MealDetailViewModel {
+    var meal: Meal
+    var mealId: String?
+    var notes: String = ""
+    var isEditing = false
+    var isSaving = false
+    var isLoading = false
+    var editingFoodItem: FoodItem?
+    var showingDeleteConfirmation = false
+    var showingErrorAlert = false
+    var errorMessage = ""
+    var shouldDismiss = false
     
     // Repository dependency
     private let mealRepository: MealRepository

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct UnifiedCalendarView: View {
-    @StateObject private var viewModel = CalendarViewModel()
+    @State private var viewModel = CalendarViewModel()
     @State private var selectedDate = Date.now
     @State private var showingDatePicker = false
     

@@ -10,8 +10,8 @@ import Combine
 
 struct FoodSearchView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var serverStatus: ServerStatusService
-    @StateObject private var viewModel = FoodSearchViewModel()
+    @Environment(ServerStatusService.self) private var serverStatus
+    @State private var viewModel = FoodSearchViewModel()
     @State private var navigationPath = NavigationPath()
     @State private var selectedFoodItem: FoodItem?
     var onSelect: ((FoodItem) -> Void)?

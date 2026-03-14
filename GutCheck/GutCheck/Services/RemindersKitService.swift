@@ -19,7 +19,7 @@ import EventKit
 import Foundation
 
 @MainActor
-final class RemindersKitService: ObservableObject {
+@Observable final class RemindersKitService {
 
     // MARK: - Singleton
 
@@ -28,12 +28,12 @@ final class RemindersKitService: ObservableObject {
     // MARK: - Published State
 
     /// Whether the user has opted in to Apple Reminders sync.
-    @Published var isEnabled: Bool {
+    var isEnabled: Bool {
         didSet { UserDefaults.standard.set(isEnabled, forKey: Keys.isEnabled) }
     }
 
     /// Current EventKit authorization status, kept in sync with the system.
-    @Published var authorizationStatus: EKAuthorizationStatus = .notDetermined
+    var authorizationStatus: EKAuthorizationStatus = .notDetermined
 
     // MARK: - Private
 

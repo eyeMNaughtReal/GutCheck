@@ -1,7 +1,7 @@
 import Foundation
 
 @MainActor
-protocol AuthenticationProtocol: ObservableObject {
+protocol AuthenticationProtocol: AnyObject {
     var isAuthStateResolved: Bool { get }
     var isAuthenticated: Bool { get }
     var isLoading: Bool { get }

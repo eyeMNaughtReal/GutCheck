@@ -9,11 +9,11 @@ import UIKit
 import Photos
 
 @MainActor
-class PhotoSavingService: ObservableObject {
+@Observable class PhotoSavingService {
     static let shared = PhotoSavingService()
     
-    @Published var isSaving = false
-    @Published var lastSaveResult: SaveResult?
+    var isSaving = false
+    var lastSaveResult: SaveResult?
     
     enum SaveResult {
         case success

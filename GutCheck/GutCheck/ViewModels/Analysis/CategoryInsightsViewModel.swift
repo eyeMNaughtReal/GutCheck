@@ -1,11 +1,11 @@
 import Foundation
 
 @MainActor
-class CategoryInsightsViewModel: ObservableObject {
-    @Published var activeInsights: [HealthInsight] = []
-    @Published var historicalInsights: [HealthInsight] = []
-    @Published var isLoading = false
-    @Published var error: String?
+@Observable class CategoryInsightsViewModel {
+    var activeInsights: [HealthInsight] = []
+    var historicalInsights: [HealthInsight] = []
+    var isLoading = false
+    var error: String?
     
     private let insightsService = InsightsService.shared
     private let mealRepository = MealRepository.shared

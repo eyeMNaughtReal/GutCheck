@@ -8,15 +8,15 @@ import Foundation
 import Combine
 
 @MainActor
-class FoodSearchViewModel: ObservableObject {
+@Observable class FoodSearchViewModel {
     // Search state
-    @Published var searchQuery: String = ""
-    @Published var isSearching: Bool = false
-    @Published var hasSearched: Bool = false
-    @Published var searchResults: [FoodItem] = []
-    @Published var selectedFoodItem: FoodItem?
-    @Published var recentSearches: [String] = ["Oatmeal", "Chicken breast", "Greek yogurt"]
-    @Published var recentItems: [FoodItem] = []
+    var searchQuery: String = ""
+    var isSearching: Bool = false
+    var hasSearched: Bool = false
+    var searchResults: [FoodItem] = []
+    var selectedFoodItem: FoodItem?
+    var recentSearches: [String] = ["Oatmeal", "Chicken breast", "Greek yogurt"]
+    var recentItems: [FoodItem] = []
     
     let foodCategories = [
         "Fruits", "Vegetables", "Meat", "Dairy",

@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct OfflineBannerView: View {
-    @EnvironmentObject private var serverStatus: ServerStatusService
+    @Environment(ServerStatusService.self) private var serverStatus
     @Binding var showingStatusSheet: Bool
 
     var body: some View {

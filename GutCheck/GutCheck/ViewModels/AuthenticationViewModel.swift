@@ -10,20 +10,20 @@ import SwiftUI
 import AuthenticationServices
 
 @MainActor
-class AuthenticationViewModel: ObservableObject {
-    @Published var email = ""
-    @Published var password = ""
-    @Published var confirmPassword = ""
-    @Published var firstName = ""
-    @Published var lastName = ""
-    @Published var phoneNumber = ""
-    @Published var verificationCode = ""
+@Observable class AuthenticationViewModel {
+    var email = ""
+    var password = ""
+    var confirmPassword = ""
+    var firstName = ""
+    var lastName = ""
+    var phoneNumber = ""
+    var verificationCode = ""
     
-    @Published var isShowingSignUp = false
-    @Published var isShowingForgotPassword = false
-    @Published var isShowingPhoneAuth = false
-    @Published var showingSuccessAlert = false
-    @Published var successMessage = ""
+    var isShowingSignUp = false
+    var isShowingForgotPassword = false
+    var isShowingPhoneAuth = false
+    var showingSuccessAlert = false
+    var successMessage = ""
     
     private let authService: AuthService
     

@@ -11,9 +11,9 @@ import SwiftUI
 import CoreData
 
 struct LocalStorageSettingsView: View {
-    @EnvironmentObject private var dataSyncService: DataSyncService
-    @EnvironmentObject private var localStorage: CoreDataStorageService
-    @EnvironmentObject private var coreDataStack: CoreDataStack
+    @Environment(DataSyncService.self) private var dataSyncService
+    @Environment(CoreDataStorageService.self) private var localStorage
+    @Environment(CoreDataStack.self) private var coreDataStack
     
     @State private var showingSyncAlert = false
     @State private var showingClearDataAlert = false
@@ -175,8 +175,8 @@ struct LocalStorageSettingsView: View {
 #Preview {
     NavigationStack {
         LocalStorageSettingsView()
-            .environmentObject(DataSyncService.shared)
-            .environmentObject(CoreDataStorageService.shared)
-            .environmentObject(CoreDataStack.shared)
+            .environment(DataSyncService.shared)
+            .environment(CoreDataStorageService.shared)
+            .environment(CoreDataStack.shared)
     }
 }

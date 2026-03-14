@@ -13,16 +13,16 @@ import FirebaseFirestore
 import FirebaseAuth
 
 @MainActor
-class DataSyncService: ObservableObject {
+@Observable class DataSyncService {
     static let shared = DataSyncService()
     
     private let localStorage = CoreDataStorageService.shared
     private let coreDataStack = CoreDataStack.shared
-    private lazy var firestore = Firestore.firestore()
+    @ObservationIgnored private lazy var firestore = Firestore.firestore()
     
-    @Published var isSyncing = false
-    @Published var lastSyncDate: Date?
-    @Published var syncProgress: Double = 0.0
+    var isSyncing = false
+    var lastSyncDate: Date?
+    var syncProgress: Double = 0.0
     
     private init() {}
     

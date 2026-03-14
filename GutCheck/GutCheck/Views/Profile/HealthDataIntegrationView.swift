@@ -2,13 +2,14 @@ import SwiftUI
 import HealthKit
 
 struct HealthDataIntegrationView: View {
-    @EnvironmentObject var settingsVM: SettingsViewModel
-    @EnvironmentObject var authService: AuthService
-    @StateObject private var healthKitVM = HealthKitViewModel()
+    @Environment(SettingsViewModel.self) var settingsVM
+    @Environment(AuthService.self) var authService
+    @State private var healthKitVM = HealthKitViewModel()
     @Environment(\.dismiss) private var dismiss
     @State private var showPermissionsGuide = false
 
     var body: some View {
+        @Bindable var settingsVM = settingsVM
         NavigationStack {
             Form {
 

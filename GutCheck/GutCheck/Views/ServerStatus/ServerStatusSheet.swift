@@ -9,8 +9,8 @@
 import SwiftUI
 
 struct ServerStatusSheet: View {
-    @EnvironmentObject private var serverStatus: ServerStatusService
-    @ObservedObject private var syncService = DataSyncService.shared
+    @Environment(ServerStatusService.self) private var serverStatus
+    private var syncService = DataSyncService.shared
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -284,5 +284,5 @@ struct ServerStatusSheet: View {
 
 #Preview {
     ServerStatusSheet()
-        .environmentObject(ServerStatusService.shared)
+        .environment(ServerStatusService.shared)
 }

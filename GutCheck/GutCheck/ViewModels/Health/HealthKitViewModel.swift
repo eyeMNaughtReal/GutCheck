@@ -2,15 +2,15 @@ import SwiftUI
 import HealthKit
 
 @MainActor
-final class HealthKitViewModel: ObservableObject {
-    @Published var healthData: UserHealthData?
-    @Published var isAuthorized = false
-    @Published var showPermissionError = false
-    @AppStorage("lastHealthKitSyncTimestamp") private var lastSyncTimestamp: Double = 0
+@Observable final class HealthKitViewModel {
+    var healthData: UserHealthData?
+    var isAuthorized = false
+    var showPermissionError = false
+    @ObservationIgnored @AppStorage("lastHealthKitSyncTimestamp") private var lastSyncTimestamp: Double = 0
 
     // MARK: - Write authorization statuses (keyed by identifier rawValue for Codable-free storage)
-    @Published var mealWriteStatuses:    [HKQuantityTypeIdentifier:  HKAuthorizationStatus] = [:]
-    @Published var symptomWriteStatuses: [HKCategoryTypeIdentifier:  HKAuthorizationStatus] = [:]
+    var mealWriteStatuses:    [HKQuantityTypeIdentifier:  HKAuthorizationStatus] = [:]
+    var symptomWriteStatuses: [HKCategoryTypeIdentifier:  HKAuthorizationStatus] = [:]
 
     /// True if any write type is not yet authorized (not determined or denied).
     var hasWriteIssues: Bool {

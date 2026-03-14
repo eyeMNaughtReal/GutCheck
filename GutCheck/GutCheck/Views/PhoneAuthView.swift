@@ -8,13 +8,13 @@
 import SwiftUI
 
 struct PhoneAuthView: View {
-    @StateObject private var viewModel: AuthenticationViewModel
-    @ObservedObject private var authService: AuthService
+    @State private var viewModel: AuthenticationViewModel
+    private var authService: AuthService
     @Environment(\.dismiss) private var dismiss
     
     init(authService: AuthService) {
         self.authService = authService
-        self._viewModel = StateObject(wrappedValue: AuthenticationViewModel(authService: authService))
+        self._viewModel = State(wrappedValue: AuthenticationViewModel(authService: authService))
     }
     
     var body: some View {

@@ -3,9 +3,9 @@ import SwiftUI
 struct MealConfirmationView: View {
     let meal: Meal
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var router: AppRouter
-    @EnvironmentObject private var serverStatus: ServerStatusService
-    @StateObject private var viewModel = MealConfirmationViewModel()
+    @Environment(AppRouter.self) private var router
+    @Environment(ServerStatusService.self) private var serverStatus
+    @State private var viewModel = MealConfirmationViewModel()
     
     var body: some View {
         ScrollView {
@@ -298,7 +298,7 @@ struct MealAnalysis {
             notes: "Quick lunch at home",
             createdBy: "preview-user"
         ))
-        .environmentObject(AppRouter.shared)
-        .environmentObject(ServerStatusService.shared)
+        .environment(AppRouter.shared)
+        .environment(ServerStatusService.shared)
     }
 }

@@ -2,10 +2,10 @@ import Foundation
 import SwiftUI
 
 @MainActor
-class TimeoutManager: ObservableObject {
+@Observable class TimeoutManager {
     static let shared = TimeoutManager()
     
-    @Published private(set) var shouldResetToHome = false
+    private(set) var shouldResetToHome = false
     private var backgroundEnteredTime: Date?
     private let timeoutInterval: TimeInterval = 300 // 5 minutes in seconds
     

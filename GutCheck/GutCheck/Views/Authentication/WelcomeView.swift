@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct WelcomeView: View {
-    @EnvironmentObject var authViewModel: AuthenticationViewModel
+    @Environment(AuthenticationViewModel.self) var authViewModel
     @State private var currentPage = 0
     
     private let pages = [
@@ -103,19 +103,19 @@ private struct WelcomePageView: View {
 
 #Preview {
     WelcomeView()
-        .environmentObject(AuthenticationViewModel(authService: AuthService()))
+        .environment(AuthenticationViewModel(authService: AuthService()))
 }
 
 // MARK: - Preview Helpers
 
-private class MockAuthService: AuthenticationProtocol {
-    @Published var isAuthStateResolved = true
-    @Published var isAuthenticated = false
-    @Published var isLoading = false
-    @Published var errorMessage: String?
-    @Published var isPhoneVerificationInProgress = false
-    @Published var isAwaitingEmailVerification = false
-    @Published var currentUser: User?
+@Observable private class MockAuthService: AuthenticationProtocol {
+    var isAuthStateResolved = true
+    var isAuthenticated = false
+    var isLoading = false
+    var errorMessage: String?
+    var isPhoneVerificationInProgress = false
+    var isAwaitingEmailVerification = false
+    var currentUser: User?
     
     func signIn(email: String, password: String) async throws {}
     func signUp(email: String, password: String, firstName: String, lastName: String, privacyPolicyAccepted: Bool) async throws {}

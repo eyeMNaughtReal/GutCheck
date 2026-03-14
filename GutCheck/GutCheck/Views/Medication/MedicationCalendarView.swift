@@ -11,10 +11,10 @@ import SwiftUI
 // MARK: - Main View
 
 struct MedicationCalendarView: View {
-    @EnvironmentObject var authService: AuthService
-    @EnvironmentObject var router: AppRouter
-    @EnvironmentObject var refreshManager: RefreshManager
-    @StateObject private var viewModel = MedicationCalendarViewModel()
+    @Environment(AuthService.self) var authService
+    @Environment(AppRouter.self) var router
+    @Environment(RefreshManager.self) var refreshManager
+    @State private var viewModel = MedicationCalendarViewModel()
     @State private var showingLogDose        = false
     @State private var showingAddMedication  = false
 
@@ -132,7 +132,7 @@ struct MedicationCalendarView: View {
 // MARK: - Medications Section Header
 
 struct CalendarMedicationsSectionHeader: View {
-    @ObservedObject var viewModel: MedicationCalendarViewModel
+    var viewModel: MedicationCalendarViewModel
     let onLogDose: () -> Void
 
     var body: some View {
@@ -328,10 +328,10 @@ struct DoseCalendarRow: View {
 // MARK: - ViewModel
 
 @MainActor
-class MedicationCalendarViewModel: ObservableObject {
-    @Published var selectedDate = Date.now
-    @Published var doses: [MedicationDoseLog] = []
-    @Published var isLoading = false
+@Observable class MedicationCalendarViewModel {
+    var selectedDate = Date.now
+    var doses: [MedicationDoseLog] = []
+    var isLoading = false
 
     private let doseRepo: MedicationDoseRepository
 
@@ -368,7 +368,7 @@ class MedicationCalendarViewModel: ObservableObject {
 // MARK: - Preview
 #Preview {
     MedicationCalendarView()
-        .environmentObject(AuthService())
-        .environmentObject(AppRouter.shared)
-        .environmentObject(RefreshManager.shared)
+        .environment(AuthService())
+        .environment(AppRouter.shared)
+        .environment(RefreshManager.shared)
 }

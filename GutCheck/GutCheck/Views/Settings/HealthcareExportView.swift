@@ -12,7 +12,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct HealthcareExportView: View {
-    @StateObject private var exportService = HealthcareExportService.shared
+    @State private var exportService = HealthcareExportService.shared
     @State private var exportOptions = ExportOptions.default
     @State private var showingExportOptions = false
     @State private var showingShareSheet = false

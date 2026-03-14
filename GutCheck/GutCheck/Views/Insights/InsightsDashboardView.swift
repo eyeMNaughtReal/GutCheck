@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Comprehensive insights dashboard showing food triggers, patterns, and recommendations
 struct InsightsDashboardView: View {
-    @StateObject private var insightsService = InsightsService.shared
+    @State private var insightsService = InsightsService.shared
     @State private var selectedTimeRange: TimeRange = .last30Days
     @State private var selectedCategory: InsightCategory? = nil
     

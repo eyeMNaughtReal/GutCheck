@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct MedicationsView: View {
-    @StateObject private var viewModel   = MedicationViewModel()
+    @State private var viewModel   = MedicationViewModel()
     @State private var showingLogDose    = false
     @State private var showingAddMed     = false
     @State private var todayDoses: [MedicationDoseLog] = []

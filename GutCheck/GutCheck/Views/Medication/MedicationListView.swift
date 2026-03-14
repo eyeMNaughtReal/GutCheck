@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct MedicationListView: View {
-    @StateObject private var viewModel = MedicationViewModel()
+    @State private var viewModel = MedicationViewModel()
 
     // MARK: - Body
 

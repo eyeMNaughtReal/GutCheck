@@ -10,7 +10,7 @@ import SwiftUI
 struct CustomTabBar: View {
     @Binding var selectedTab: Tab
     let actionHandler: (TabBarAction) -> Void
-    @EnvironmentObject var router: AppRouter
+    @Environment(AppRouter.self) var router
     
     // Using shared Tab enum from Models/Core/Tab.swift
 

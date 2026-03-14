@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct GreetingHeaderView: View {
-    @EnvironmentObject var authService: AuthService
+    @Environment(AuthService.self) var authService
     
     private var greeting: String {
         if let user = authService.currentUser {

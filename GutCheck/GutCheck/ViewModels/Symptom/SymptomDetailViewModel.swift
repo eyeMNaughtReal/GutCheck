@@ -2,7 +2,7 @@ import Foundation
 
 @MainActor
 class SymptomDetailViewModel: DetailViewModel<Symptom> {
-    @Published var symptomId: String?
+    var symptomId: String?
     
     private let repository: SymptomRepository
     

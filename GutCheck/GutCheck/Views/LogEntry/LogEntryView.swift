@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct LogEntryView: View {
-    @EnvironmentObject var router: AppRouter
+    @Environment(AppRouter.self) var router
     
     var body: some View {
         VStack(spacing: 40) {
@@ -62,5 +62,5 @@ struct LogOptionButton: View {
 
 #Preview {
     LogEntryView()
-        .environmentObject(AppRouter.shared)
+        .environment(AppRouter.shared)
 }

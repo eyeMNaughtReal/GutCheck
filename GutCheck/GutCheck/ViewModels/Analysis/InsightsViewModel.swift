@@ -8,20 +8,20 @@ struct RankedItem: Identifiable {
 }
 
 @MainActor
-class InsightsViewModel: ObservableObject {
-    @Published var recentInsights: [HealthInsight] = []
-    @Published var patterns: [HealthPattern] = []
-    @Published var recommendations: [HealthRecommendation] = []
-    @Published var isLoading = false
-    @Published var error: String?
+@Observable class InsightsViewModel {
+    var recentInsights: [HealthInsight] = []
+    var patterns: [HealthPattern] = []
+    var recommendations: [HealthRecommendation] = []
+    var isLoading = false
+    var error: String?
 
     // MARK: - Weekly Summary Data
 
-    @Published var weeklyMealCount: Int = 0
-    @Published var weeklySymptomCount: Int = 0
-    @Published var topSymptoms: [RankedItem] = []
-    @Published var topTriggerFoods: [RankedItem] = []
-    @Published var bestDays: [RankedItem] = []
+    var weeklyMealCount: Int = 0
+    var weeklySymptomCount: Int = 0
+    var topSymptoms: [RankedItem] = []
+    var topTriggerFoods: [RankedItem] = []
+    var bestDays: [RankedItem] = []
 
     private let insightsService = InsightsService.shared
     private let mealRepository = MealRepository.shared

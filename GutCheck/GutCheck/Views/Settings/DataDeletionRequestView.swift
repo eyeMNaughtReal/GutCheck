@@ -11,8 +11,8 @@ import SwiftUI
 
 struct DataDeletionRequestView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var authService: AuthService
-    @StateObject private var deletionService = DataDeletionService.shared
+    @Environment(AuthService.self) var authService
+    @State private var deletionService = DataDeletionService.shared
     
     @State private var reason = ""
     @State private var deleteUserProfile = true
@@ -171,5 +171,5 @@ struct DataDeletionRequestView: View {
 
 #Preview {
     DataDeletionRequestView()
-        .environmentObject(AuthService())
+        .environment(AuthService())
 }

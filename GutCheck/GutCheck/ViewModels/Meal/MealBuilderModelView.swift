@@ -10,20 +10,20 @@ import FirebaseFirestore
 import FirebaseAuth
 
 @MainActor
-class MealBuilderViewModel: ObservableObject {
+@Observable class MealBuilderViewModel {
     // Meal properties
-    @Published var mealName: String = ""
-    @Published var mealType: MealType = .lunch
-    @Published var mealDate: Date = Date.now
-    @Published var notes: String = ""
-    @Published var foodItems: [FoodItem] = []
-    @Published var isSaving: Bool = false
+    var mealName: String = ""
+    var mealType: MealType = .lunch
+    var mealDate: Date = Date.now
+    var notes: String = ""
+    var foodItems: [FoodItem] = []
+    var isSaving: Bool = false
     
     // Error state
-    @Published var errorMessage: String?
+    var errorMessage: String?
     
     // Food item being edited
-    @Published var editingFoodItem: FoodItem?
+    var editingFoodItem: FoodItem?
     
     // Repository dependency
     private let mealRepository: MealRepository

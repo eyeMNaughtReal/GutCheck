@@ -10,7 +10,7 @@
 import SwiftUI
 
 struct DataDeletionAdminView: View {
-    @StateObject private var deletionService = DataDeletionService.shared
+    @State private var deletionService = DataDeletionService.shared
     @State private var deletionRequests: [DataDeletionRequest] = []
     @State private var selectedRequest: DataDeletionRequest?
     @State private var showingRequestDetail = false

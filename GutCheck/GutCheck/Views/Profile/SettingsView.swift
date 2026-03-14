@@ -6,8 +6,8 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @EnvironmentObject var settingsVM: SettingsViewModel
-    @EnvironmentObject var authService: AuthService
+    @Environment(SettingsViewModel.self) var settingsVM
+    @Environment(AuthService.self) var authService
     @Environment(\.dismiss) private var dismiss
     @AppStorage("lastHealthKitSyncTimestamp") private var lastHealthKitSyncTimestamp: Double = 0
     @State private var showAppleHealth = false
@@ -263,15 +263,15 @@ struct SettingsView: View {
             }
             .sheet(isPresented: $showAppleHealth) {
                 HealthDataIntegrationView()
-                    .environmentObject(settingsVM)
-                    .environmentObject(authService)
+                    .environment(settingsVM)
+                    .environment(authService)
             }
         }
     }
 }
 
 struct LanguageSelectionView: View {
-    @EnvironmentObject var settingsVM: SettingsViewModel
+    @Environment(SettingsViewModel.self) var settingsVM
     var body: some View {
         List {
             ForEach(AppLanguage.allCases, id: \ .self) { lang in
@@ -304,7 +304,7 @@ struct LanguageSelectionView: View {
 }
 
 struct UnitSelectionView: View {
-    @EnvironmentObject var settingsVM: SettingsViewModel
+    @Environment(SettingsViewModel.self) var settingsVM
     var body: some View {
         List {
             ForEach(UnitSystem.allCases, id: \ .self) { unit in
@@ -337,7 +337,7 @@ struct UnitSelectionView: View {
 }
 
 struct AppearanceSelectionView: View {
-    @EnvironmentObject var settingsVM: SettingsViewModel
+    @Environment(SettingsViewModel.self) var settingsVM
     var body: some View {
         List {
             ForEach(AppColorScheme.allCases, id: \ .self) { scheme in

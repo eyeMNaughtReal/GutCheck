@@ -22,7 +22,7 @@ protocol DataClassifiable {
 
 /// Unified data service that automatically routes data to appropriate storage
 /// based on privacy classification and user preferences
-class UnifiedDataService: ObservableObject {
+@Observable class UnifiedDataService {
     static let shared = UnifiedDataService()
     
     // MARK: - Private Properties
