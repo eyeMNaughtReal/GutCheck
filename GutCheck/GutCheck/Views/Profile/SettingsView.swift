@@ -249,28 +249,7 @@ struct SettingsView: View {
             }
         .navigationTitle("Settings")
         .navigationDestination(for: SettingsRoute.self) { route in
-            switch route {
-            case .language:
-                LanguageSelectionView()
-            case .units:
-                UnitSelectionView()
-            case .appearance:
-                AppearanceSelectionView()
-            case .reminders:
-                UserRemindersView()
-            case .medications:
-                MedicationListView()
-            case .healthcareExport:
-                HealthcareExportView()
-            case .privacyPolicy:
-                PrivacyPolicyView()
-            case .dataDeletion:
-                DataDeletionRequestView()
-            case .localStorage:
-                LocalStorageSettingsView()
-            case .deleteAccount:
-                DeleteAccountView()
-            }
+            SettingsRoute.destinationView(for: route)
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {

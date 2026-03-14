@@ -24,6 +24,32 @@ enum SettingsRoute: Hashable {
     case dataDeletion
     case localStorage
     case deleteAccount
+
+    @ViewBuilder
+    static func destinationView(for route: SettingsRoute) -> some View {
+        switch route {
+        case .language:
+            LanguageSelectionView()
+        case .units:
+            UnitSelectionView()
+        case .appearance:
+            AppearanceSelectionView()
+        case .reminders:
+            UserRemindersView()
+        case .medications:
+            MedicationListView()
+        case .healthcareExport:
+            HealthcareExportView()
+        case .privacyPolicy:
+            PrivacyPolicyView()
+        case .dataDeletion:
+            DataDeletionRequestView()
+        case .localStorage:
+            LocalStorageSettingsView()
+        case .deleteAccount:
+            DeleteAccountView()
+        }
+    }
 }
 
 // Insights navigation

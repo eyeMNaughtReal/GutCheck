@@ -34,6 +34,9 @@ struct ContentView: View {
                 .navigationDestination(for: AppDestination.self) { destination in
                     destinationView(for: destination)
                 }
+                .navigationDestination(for: SettingsRoute.self) { route in
+                    SettingsRoute.destinationView(for: route)
+                }
                 .sheet(item: $router.activeSheet) { sheet in
                     sheetView(for: sheet)
                 }

@@ -40,6 +40,9 @@ struct ProfileMenuSheet: View {
                     UserRemindersView()
                 }
             }
+            .navigationDestination(for: SettingsRoute.self) { route in
+                SettingsRoute.destinationView(for: route)
+            }
         }
     }
 }

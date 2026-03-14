@@ -137,6 +137,9 @@ private struct AppNavigationDestinations: ViewModifier {
                     MedicationListView()
                 }
             }
+            .navigationDestination(for: SettingsRoute.self) { route in
+                SettingsRoute.destinationView(for: route)
+            }
     }
 }
 
