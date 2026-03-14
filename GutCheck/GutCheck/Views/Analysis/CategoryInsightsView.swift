@@ -58,7 +58,7 @@ struct CategoryInsightsView: View {
                 .foregroundStyle(ColorTheme.primaryText)
             
             ForEach(viewModel.activeInsights) { insight in
-                NavigationLink(destination: InsightDetailView(insight: insight)) {
+                NavigationLink(value: InsightsRoute.insightDetail(insight)) {
                     ActiveInsightRow(insight: insight)
                 }
             }
@@ -72,7 +72,7 @@ struct CategoryInsightsView: View {
                 .foregroundStyle(ColorTheme.primaryText)
             
             ForEach(viewModel.historicalInsights) { insight in
-                NavigationLink(destination: InsightDetailView(insight: insight)) {
+                NavigationLink(value: InsightsRoute.insightDetail(insight)) {
                     HistoricalInsightRow(insight: insight)
                 }
             }

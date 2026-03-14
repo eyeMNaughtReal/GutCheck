@@ -177,7 +177,7 @@ private struct RelatedInsightRow: View {
     let insight: HealthInsight
     
     var body: some View {
-        NavigationLink(destination: InsightDetailView(insight: insight)) {
+        NavigationLink(value: InsightsRoute.insightDetail(insight)) {
             HStack {
                 Label(insight.title, systemImage: insight.iconName)
                     .font(.subheadline)
@@ -193,7 +193,7 @@ private struct RelatedInsightRow: View {
 
 // MARK: - Supporting Types
 
-struct HealthInsight: Identifiable {
+struct HealthInsight: Identifiable, Hashable {
     let id = UUID()
     let title: String
     let summary: String

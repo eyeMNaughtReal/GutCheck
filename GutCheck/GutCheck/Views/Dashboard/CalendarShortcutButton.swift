@@ -2,7 +2,7 @@ import SwiftUI
 
 struct CalendarShortcutButton: View {
     var body: some View {
-        NavigationLink(destination: CalendarView(selectedDate: Date.now)) {
+        NavigationLink(value: AppDestination.calendar(Date.now)) {
             HStack {
                 Image(systemName: "calendar")
                     .foregroundStyle(ColorTheme.accent)

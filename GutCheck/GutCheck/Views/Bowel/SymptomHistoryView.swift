@@ -26,13 +26,9 @@ struct SymptomHistoryView: View {
     }
     
     private func symptomNavigationLink(for symptom: Symptom) -> some View {
-        NavigationLink(destination: symptomDetailView(for: symptom)) {
+        NavigationLink(value: AppDestination.symptomHistory(symptom)) {
             SymptomRow(symptom: symptom)
         }
-    }
-    
-    private func symptomDetailView(for symptom: Symptom) -> some View {
-        SymptomDetailView(symptom: symptom)
     }
     
     var body: some View {

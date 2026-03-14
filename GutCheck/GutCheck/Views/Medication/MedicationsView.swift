@@ -168,7 +168,7 @@ struct MedicationsView: View {
             }
 
             // Link to full catalog
-            NavigationLink(destination: MedicationListView()) {
+            NavigationLink(value: AppDestination.medicationList) {
                 Text("Manage all medications…")
                     .font(.subheadline)
                     .foregroundStyle(.purple)

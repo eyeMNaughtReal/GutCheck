@@ -21,10 +21,9 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            List {
+        List {
                 Section("Preferences") {
-                    NavigationLink(destination: LanguageSelectionView()) {
+                    NavigationLink(value: SettingsRoute.language) {
                         HStack {
                             Text("Language")
                                 .typography(Typography.body)
@@ -37,7 +36,7 @@ struct SettingsView: View {
                     .accessibilityLabel("Language: \(settingsVM.language.displayName)")
                     .accessibilityHint("Tap to change app language")
                     
-                    NavigationLink(destination: UnitSelectionView()) {
+                    NavigationLink(value: SettingsRoute.units) {
                         HStack {
                             Text("Units")
                                 .typography(Typography.body)
@@ -50,7 +49,7 @@ struct SettingsView: View {
                     .accessibilityLabel("Units: \(settingsVM.unitOfMeasure.displayName)")
                     .accessibilityHint("Tap to change measurement units")
 
-                    NavigationLink(destination: AppearanceSelectionView()) {
+                    NavigationLink(value: SettingsRoute.appearance) {
                         HStack {
                             Text("Appearance")
                                 .typography(Typography.body)
@@ -65,7 +64,7 @@ struct SettingsView: View {
                 }
                 
                 Section("Notifications") {
-                    NavigationLink(destination: UserRemindersView()) {
+                    NavigationLink(value: SettingsRoute.reminders) {
                         HStack {
                             Image(systemName: "bell.badge")
                                 .foregroundStyle(.orange)
@@ -79,7 +78,7 @@ struct SettingsView: View {
                 }
 
                 Section("Medications") {
-                    NavigationLink(destination: MedicationListView()) {
+                    NavigationLink(value: SettingsRoute.medications) {
                         HStack {
                             Image(systemName: "pills.fill")
                                 .foregroundStyle(.purple)
@@ -114,7 +113,7 @@ struct SettingsView: View {
                     .accessibilityLabel("Apple Health: \(appleHealthStatusText)")
                     .accessibilityHint("Tap to manage Apple Health sync")
 
-                    NavigationLink(destination: HealthcareExportView()) {
+                    NavigationLink(value: SettingsRoute.healthcareExport) {
                         HStack {
                             Image(systemName: "heart.text.square")
                                 .foregroundStyle(.blue)
@@ -132,7 +131,7 @@ struct SettingsView: View {
                 }
                 
                 Section("Privacy & Security") {
-                    NavigationLink(destination: PrivacyPolicyView()) {
+                    NavigationLink(value: SettingsRoute.privacyPolicy) {
                         HStack {
                             Image(systemName: "lock.shield")
                                 .foregroundStyle(.green)
@@ -144,7 +143,7 @@ struct SettingsView: View {
                     .accessibilityLabel("Privacy Policy")
                     .accessibilityHint("Tap to read the privacy policy")
 
-                    NavigationLink(destination: DataDeletionRequestView()) {
+                    NavigationLink(value: SettingsRoute.dataDeletion) {
                         HStack {
                             Image(systemName: "trash.circle")
                                 .foregroundStyle(.orange)
@@ -182,7 +181,7 @@ struct SettingsView: View {
                 }
                 
                 Section("Data & Storage") {
-                    NavigationLink(destination: LocalStorageSettingsView()) {
+                    NavigationLink(value: SettingsRoute.localStorage) {
                         HStack {
                             Image(systemName: "internaldrive")
                                 .foregroundStyle(.blue)
@@ -235,7 +234,7 @@ struct SettingsView: View {
                     .accessibilityHint("Tap to sign out of your account")
                     
                     // Delete account
-                    NavigationLink(destination: DeleteAccountView()) {
+                    NavigationLink(value: SettingsRoute.deleteAccount) {
                         HStack {
                             Image(systemName: "trash")
                                 .foregroundStyle(.red)
@@ -248,24 +247,26 @@ struct SettingsView: View {
                     }
                 }
             }
-            .navigationTitle("Settings")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") {
-                        HapticManager.shared.light()
-                        dismiss()
-                    }
-                    .accessibleButton(
-                        label: "Close",
-                        hint: "Close settings"
-                    )
+        .navigationTitle("Settings")
+        .navigationDestination(for: SettingsRoute.self) { route in
+            SettingsRoute.destinationView(for: route)
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Close") {
+                    HapticManager.shared.light()
+                    dismiss()
                 }
+                .accessibleButton(
+                    label: "Close",
+                    hint: "Close settings"
+                )
             }
-            .sheet(isPresented: $showAppleHealth) {
-                HealthDataIntegrationView()
-                    .environment(settingsVM)
-                    .environment(authService)
-            }
+        }
+        .sheet(isPresented: $showAppleHealth) {
+            HealthDataIntegrationView()
+                .environment(settingsVM)
+                .environment(authService)
         }
     }
 }

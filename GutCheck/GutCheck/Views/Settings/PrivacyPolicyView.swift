@@ -1,56 +1,52 @@
 import SwiftUI
 
 struct PrivacyPolicyView: View {
-    @Environment(\.dismiss) private var dismiss
-    @State private var selectedSection: PolicySection?
-    
     private let sections = PolicySection.allSections
     
     var body: some View {
-        NavigationStack {
-            List {
-                // Introduction Section
-                Section {
-                    Text("Last Updated: July 2025")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    
-                    Text("This Privacy Policy describes how GutCheck collects, uses, and protects your personal information.")
-                        .font(.subheadline)
-                }
+        List {
+            // Introduction Section
+            Section {
+                Text("Last Updated: July 2025")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
                 
-                // Main Policy Sections
-                ForEach(sections) { section in
-                    NavigationLink(destination: PolicyDetailView(section: section)) {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(section.title)
-                                .font(.headline)
-                            Text(section.summary)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.vertical, 4)
-                    }
-                }
-                
-                // Contact Section
-                Section {
+                Text("This Privacy Policy describes how GutCheck collects, uses, and protects your personal information.")
+                    .font(.subheadline)
+            }
+            
+            // Main Policy Sections
+            ForEach(sections) { section in
+                NavigationLink(value: PrivacyPolicyRoute.sectionDetail(section)) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Questions or Concerns?")
+                        Text(section.title)
                             .font(.headline)
-                        Text("Contact us at privacy@gutcheck.app")
+                        Text(section.summary)
                             .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 4)
                 }
             }
-            .navigationTitle("Privacy Policy")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
+            
+            // Contact Section
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Questions or Concerns?")
+                        .font(.headline)
+                    Text("Contact us at privacy@gutcheck.app")
+                        .font(.subheadline)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 8)
+            }
+        }
+        .navigationTitle("Privacy Policy")
+        .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(for: PrivacyPolicyRoute.self) { route in
+            switch route {
+            case .sectionDetail(let section):
+                PolicyDetailView(section: section)
             }
         }
     }
@@ -120,7 +116,13 @@ private struct PolicyDetailSection: View {
 
 // MARK: - Supporting Types
 
-struct PolicySection: Identifiable {
+struct PolicySection: Identifiable, Hashable {
+    static func == (lhs: PolicySection, rhs: PolicySection) -> Bool {
+        lhs.id == rhs.id
+    }
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
     let id = UUID()
     let title: String
     let summary: String

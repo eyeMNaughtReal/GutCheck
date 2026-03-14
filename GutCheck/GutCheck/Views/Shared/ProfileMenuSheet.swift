@@ -7,7 +7,7 @@ struct ProfileMenuSheet: View {
         NavigationStack {
             List {
                 Section {
-                    NavigationLink(destination: SettingsView()) {
+                    NavigationLink(value: ProfileMenuRoute.settings) {
                         Text("Settings")
                     }
                     Button("Privacy Policy") {
@@ -18,7 +18,7 @@ struct ProfileMenuSheet: View {
                         // TODO: Trigger export
                         dismiss()
                     }
-                    NavigationLink(destination: UserRemindersView()) {
+                    NavigationLink(value: ProfileMenuRoute.reminders) {
                         Label("Reminders", systemImage: "bell.badge")
                     }
                 }
@@ -32,6 +32,17 @@ struct ProfileMenuSheet: View {
             }
             .navigationTitle("Account")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationDestination(for: ProfileMenuRoute.self) { route in
+                switch route {
+                case .settings:
+                    SettingsView()
+                case .reminders:
+                    UserRemindersView()
+                }
+            }
+            .navigationDestination(for: SettingsRoute.self) { route in
+                SettingsRoute.destinationView(for: route)
+            }
         }
     }
 }
