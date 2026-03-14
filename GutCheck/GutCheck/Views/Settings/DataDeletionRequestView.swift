@@ -26,8 +26,7 @@ struct DataDeletionRequestView: View {
     @State private var showingSuccess = false
     
     var body: some View {
-        NavigationStack {
-            Form {
+        Form {
                 Section {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
@@ -125,7 +124,6 @@ struct DataDeletionRequestView: View {
             } message: {
                 Text("Your data deletion request has been submitted successfully. You will receive an email confirmation within 24 hours.")
             }
-        }
     }
     
     // MARK: - Computed Properties
