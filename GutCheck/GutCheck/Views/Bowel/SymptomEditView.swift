@@ -32,7 +32,7 @@ struct SymptomEditView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     // Symptom Time
-                    symptomTimeSection
+                    SymptomEditTimeSection(symptomDate: $symptomDate)
 
                     // Bristol Stool Scale
                     Text("Bristol Stool Scale")
@@ -59,10 +59,15 @@ struct SymptomEditView: View {
                     UrgencyLevelSelectionView(selectedUrgencyLevel: $selectedUrgencyLevel)
 
                     // Notes
-                    notesSection
+                    SymptomEditNotesSection(notes: $notes)
 
                     // Action buttons
-                    actionButtonsSection
+                    SymptomEditActionButtons(
+                        isSaving: isSaving,
+                        isFormValid: isFormValid,
+                        onSave: { saveChanges() },
+                        onCancel: { dismiss() }
+                    )
                 }
                 .padding()
             }
@@ -82,104 +87,6 @@ struct SymptomEditView: View {
                 Text("Your symptom has been successfully updated.")
             }
         }
-    }
-    
-    // MARK: - View Components
-    
-    private var symptomTimeSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Symptom Time")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundStyle(ColorTheme.primaryText)
-            DatePicker(
-                "",
-                selection: $symptomDate,
-                displayedComponents: [.date, .hourAndMinute]
-            )
-            .datePickerStyle(.compact)
-            .accentColor(ColorTheme.primary)
-        }
-        .padding()
-        .background(ColorTheme.surface)
-        .clipShape(.rect(cornerRadius: 12))
-    }
-    
-    private var notesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Notes")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundStyle(ColorTheme.primaryText)
-            
-            TextEditor(text: $notes)
-                .frame(minHeight: 100)
-                .padding(12)
-                .background(ColorTheme.cardBackground)
-                .clipShape(.rect(cornerRadius: 8))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(ColorTheme.border.opacity(0.3), lineWidth: 1)
-                )
-        }
-        .padding()
-        .background(ColorTheme.surface)
-        .clipShape(.rect(cornerRadius: 12))
-    }
-    
-    private var actionButtonsSection: some View {
-        VStack(spacing: 12) {
-            // Save button
-            Button(action: {
-                saveChanges()
-            }) {
-                HStack(spacing: 8) {
-                    if isSaving {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            .scaleEffect(0.9)
-                    } else {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.title3)
-                    }
-                    
-                    Text(isSaving ? "Saving..." : "Save Changes")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(isFormValid ? ColorTheme.primary : ColorTheme.disabled)
-                )
-            }
-            .disabled(!isFormValid || isSaving)
-            
-            // Cancel button
-            Button(action: {
-                dismiss()
-            }) {
-                Text("Cancel")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(ColorTheme.secondaryText)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(ColorTheme.cardBackground)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(ColorTheme.border.opacity(0.3), lineWidth: 1)
-                    )
-            }
-        }
-        .padding()
-        .background(ColorTheme.surface)
-        .clipShape(.rect(cornerRadius: 12))
     }
     
     private var isFormValid: Bool {
@@ -208,6 +115,115 @@ struct SymptomEditView: View {
             isSaving = false
             showingSuccessAlert = true
         }
+    }
+}
+
+// MARK: - Extracted Subviews
+
+struct SymptomEditTimeSection: View {
+    @Binding var symptomDate: Date
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Symptom Time")
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundStyle(ColorTheme.primaryText)
+            DatePicker(
+                "",
+                selection: $symptomDate,
+                displayedComponents: [.date, .hourAndMinute]
+            )
+            .datePickerStyle(.compact)
+            .accentColor(ColorTheme.primary)
+        }
+        .padding()
+        .background(ColorTheme.surface)
+        .clipShape(.rect(cornerRadius: 12))
+    }
+}
+
+struct SymptomEditNotesSection: View {
+    @Binding var notes: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Notes")
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundStyle(ColorTheme.primaryText)
+            
+            TextEditor(text: $notes)
+                .frame(minHeight: 100)
+                .padding(12)
+                .background(ColorTheme.cardBackground)
+                .clipShape(.rect(cornerRadius: 8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(ColorTheme.border.opacity(0.3), lineWidth: 1)
+                )
+        }
+        .padding()
+        .background(ColorTheme.surface)
+        .clipShape(.rect(cornerRadius: 12))
+    }
+}
+
+struct SymptomEditActionButtons: View {
+    let isSaving: Bool
+    let isFormValid: Bool
+    let onSave: () -> Void
+    let onCancel: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            // Save button
+            Button(action: onSave) {
+                HStack(spacing: 8) {
+                    if isSaving {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(0.9)
+                    } else {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.title3)
+                    }
+                    
+                    Text(isSaving ? "Saving..." : "Save Changes")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isFormValid ? ColorTheme.primary : ColorTheme.disabled)
+                )
+            }
+            .disabled(!isFormValid || isSaving)
+            
+            // Cancel button
+            Button(action: onCancel) {
+                Text("Cancel")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(ColorTheme.secondaryText)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(ColorTheme.cardBackground)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(ColorTheme.border.opacity(0.3), lineWidth: 1)
+                    )
+            }
+        }
+        .padding()
+        .background(ColorTheme.surface)
+        .clipShape(.rect(cornerRadius: 12))
     }
 }
 

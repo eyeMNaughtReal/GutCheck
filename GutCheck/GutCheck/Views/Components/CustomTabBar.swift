@@ -20,35 +20,14 @@ struct CustomTabBar: View {
                 // Tab Bar (always fixed to bottom)
                 VStack {
                     Spacer()
-                    tabBarView
+                    CustomTabBarContent(
+                        selectedTab: selectedTab,
+                        onTabSelected: { handleTabSelection($0) }
+                    )
                 }
             }
         }
     }
-    
-    private var tabBarView: some View {
-        HStack {
-            ForEach(Array(Tab.allCases), id: \.self) { tab in
-                TabBarItem(
-                    icon: tab.icon,
-                    label: tab.title,
-                    isSelected: selectedTab == tab
-                ) {
-                    handleTabSelection(tab)
-                }
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.top, 4)
-        .padding(.bottom, 8)
-        .background(
-            ColorTheme.cardBackground
-                .shadow(color: ColorTheme.shadowColor, radius: 8, x: 0, y: -2)
-                .edgesIgnoringSafeArea(.bottom)
-        )
-    }
-    
-    
     
     private func handleTabSelection(_ tab: Tab) {
         
@@ -62,5 +41,32 @@ struct CustomTabBar: View {
                 router.navigateToRoot()
             }
         }
+    }
+}
+
+struct CustomTabBarContent: View {
+    let selectedTab: Tab
+    let onTabSelected: (Tab) -> Void
+    
+    var body: some View {
+        HStack {
+            ForEach(Array(Tab.allCases), id: \.self) { tab in
+                TabBarItem(
+                    icon: tab.icon,
+                    label: tab.title,
+                    isSelected: selectedTab == tab
+                ) {
+                    onTabSelected(tab)
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 4)
+        .padding(.bottom, 8)
+        .background(
+            ColorTheme.cardBackground
+                .shadow(color: ColorTheme.shadowColor, radius: 8, x: 0, y: -2)
+                .edgesIgnoringSafeArea(.bottom)
+        )
     }
 }

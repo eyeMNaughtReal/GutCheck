@@ -37,17 +37,16 @@ struct InsightsDashboardView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // Header
-                    headerSection
+                    InsightsDashboardHeaderSection()
                     
-                    // Time range selector
-                    timeRangeSelector
+                    InsightsDashboardTimeRangeSelector(selectedTimeRange: $selectedTimeRange)
                     
-                    // Summary statistics
-                    summaryStatsSection
+                    InsightsDashboardSummaryStats(insights: insightsService.recentInsights)
                     
-                    // Insights content
-                    insightsContent
+                    InsightsDashboardContent(
+                        insights: insightsService.recentInsights,
+                        selectedCategory: $selectedCategory
+                    )
                 }
                 .padding()
             }
@@ -67,9 +66,15 @@ struct InsightsDashboardView: View {
         }
     }
     
-    // MARK: - Header Section
-    
-    private var headerSection: some View {
+    private func refreshInsights() async {
+        await insightsService.generateRecentInsights()
+    }
+}
+
+// MARK: - Header Section
+
+struct InsightsDashboardHeaderSection: View {
+    var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Discover patterns in your health data")
                 .font(.title2)
@@ -81,79 +86,109 @@ struct InsightsDashboardView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
+}
+
+// MARK: - Time Range Selector
+
+struct InsightsDashboardTimeRangeSelector: View {
+    @Binding var selectedTimeRange: InsightsDashboardView.TimeRange
     
-    // MARK: - Time Range Selector
-    
-    private var timeRangeSelector: some View {
+    var body: some View {
         Picker("Time Range", selection: $selectedTimeRange) {
-            ForEach(TimeRange.allCases) { timeRange in
+            ForEach(InsightsDashboardView.TimeRange.allCases) { timeRange in
                 Text(timeRange.displayName).tag(timeRange)
             }
         }
         .pickerStyle(.segmented)
     }
+}
+
+// MARK: - Summary Statistics
+
+struct InsightsDashboardSummaryStats: View {
+    let insights: [HealthInsight]
     
-    // MARK: - Summary Statistics
-    
-    private var summaryStatsSection: some View {
+    var body: some View {
         HStack(spacing: 16) {
             StatCard(
                 title: "Total Insights",
-                value: "\(insightsService.recentInsights.count)",
+                value: "\(insights.count)",
                 icon: "lightbulb.fill",
                 color: .blue
             )
             
             StatCard(
                 title: "Food Triggers",
-                value: "\(insightsService.recentInsights.filter { $0.title.lowercased().contains("food") || $0.title.lowercased().contains("dairy") || $0.title.lowercased().contains("gluten") }.count)",
+                value: "\(insights.filter { $0.title.lowercased().contains("food") || $0.title.lowercased().contains("dairy") || $0.title.lowercased().contains("gluten") }.count)",
                 icon: "exclamationmark.triangle.fill",
                 color: .red
             )
             
             StatCard(
                 title: "Patterns",
-                value: "\(insightsService.recentInsights.filter { $0.title.lowercased().contains("pattern") || $0.title.lowercased().contains("correlation") }.count)",
+                value: "\(insights.filter { $0.title.lowercased().contains("pattern") || $0.title.lowercased().contains("correlation") }.count)",
                 icon: "chart.bar.fill",
                 color: .green
             )
         }
     }
+}
+
+// MARK: - Insights Content
+
+struct InsightsDashboardContent: View {
+    let insights: [HealthInsight]
+    @Binding var selectedCategory: InsightCategory?
     
-    // MARK: - Insights Content
+    private var foodTriggerInsights: [HealthInsight] {
+        insights.filter { $0.title.lowercased().contains("food") || $0.title.lowercased().contains("dairy") || $0.title.lowercased().contains("gluten") }
+    }
     
-    private var insightsContent: some View {
+    private var temporalPatternInsights: [HealthInsight] {
+        insights.filter { $0.title.lowercased().contains("pattern") || $0.title.lowercased().contains("timing") }
+    }
+    
+    private var lifestyleCorrelationInsights: [HealthInsight] {
+        insights.filter { $0.title.lowercased().contains("correlation") || $0.title.lowercased().contains("activity") }
+    }
+    
+    private var nutritionTrendInsights: [HealthInsight] {
+        insights.filter { $0.title.lowercased().contains("nutrition") || $0.title.lowercased().contains("trend") }
+    }
+    
+    var body: some View {
         VStack(spacing: 24) {
-            if insightsService.recentInsights.isEmpty {
-                emptyStateSection
+            if insights.isEmpty {
+                InsightsDashboardEmptyState()
             } else {
-                // Category filter
-                categoryFilterSection
+                InsightsDashboardCategoryFilter(selectedCategory: $selectedCategory)
                 
-                // Food triggers section
                 if !foodTriggerInsights.isEmpty {
-                    foodTriggersSection
+                    InsightsDashboardFoodTriggers(insights: foodTriggerInsights)
                 }
                 
-                // Temporal patterns section
                 if !temporalPatternInsights.isEmpty {
-                    temporalPatternsSection
+                    InsightsDashboardTemporalPatterns(insights: temporalPatternInsights)
                 }
                 
-                // Lifestyle correlations section
                 if !lifestyleCorrelationInsights.isEmpty {
-                    lifestyleCorrelationsSection
+                    InsightsDashboardLifestyleCorrelations(insights: lifestyleCorrelationInsights)
                 }
                 
-                // Nutrition trends section
                 if !nutritionTrendInsights.isEmpty {
-                    nutritionTrendsSection
+                    InsightsDashboardNutritionTrends(insights: nutritionTrendInsights)
                 }
             }
         }
     }
+}
+
+// MARK: - Category Filter
+
+struct InsightsDashboardCategoryFilter: View {
+    @Binding var selectedCategory: InsightCategory?
     
-    private var categoryFilterSection: some View {
+    var body: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 12) {
                 CategoryFilterButton(
@@ -174,14 +209,14 @@ struct InsightsDashboardView: View {
         }
         .scrollIndicators(.hidden)
     }
+}
+
+// MARK: - Section Views
+
+struct InsightsDashboardFoodTriggers: View {
+    let insights: [HealthInsight]
     
-    // MARK: - Food Triggers Section
-    
-    private var foodTriggerInsights: [HealthInsight] {
-        insightsService.recentInsights.filter { $0.title.lowercased().contains("food") || $0.title.lowercased().contains("dairy") || $0.title.lowercased().contains("gluten") }
-    }
-    
-    private var foodTriggersSection: some View {
+    var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             SectionHeader(
                 title: "Food Triggers",
@@ -190,19 +225,17 @@ struct InsightsDashboardView: View {
                 color: .red
             )
             
-            ForEach(foodTriggerInsights) { insight in
+            ForEach(insights) { insight in
                 FoodTriggerCard(insight: insight)
             }
         }
     }
+}
+
+struct InsightsDashboardTemporalPatterns: View {
+    let insights: [HealthInsight]
     
-    // MARK: - Temporal Patterns Section
-    
-    private var temporalPatternInsights: [HealthInsight] {
-        insightsService.recentInsights.filter { $0.title.lowercased().contains("pattern") || $0.title.lowercased().contains("timing") }
-    }
-    
-    private var temporalPatternsSection: some View {
+    var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             SectionHeader(
                 title: "Temporal Patterns",
@@ -211,19 +244,17 @@ struct InsightsDashboardView: View {
                 color: .blue
             )
             
-            ForEach(temporalPatternInsights) { insight in
+            ForEach(insights) { insight in
                 TemporalPatternCard(insight: insight)
             }
         }
     }
+}
+
+struct InsightsDashboardLifestyleCorrelations: View {
+    let insights: [HealthInsight]
     
-    // MARK: - Lifestyle Correlations Section
-    
-    private var lifestyleCorrelationInsights: [HealthInsight] {
-        insightsService.recentInsights.filter { $0.title.lowercased().contains("correlation") || $0.title.lowercased().contains("activity") }
-    }
-    
-    private var lifestyleCorrelationsSection: some View {
+    var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             SectionHeader(
                 title: "Lifestyle Correlations",
@@ -232,19 +263,17 @@ struct InsightsDashboardView: View {
                 color: .green
             )
             
-            ForEach(lifestyleCorrelationInsights) { insight in
+            ForEach(insights) { insight in
                 LifestyleCorrelationCard(insight: insight)
             }
         }
     }
+}
+
+struct InsightsDashboardNutritionTrends: View {
+    let insights: [HealthInsight]
     
-    // MARK: - Nutrition Trends Section
-    
-    private var nutritionTrendInsights: [HealthInsight] {
-        insightsService.recentInsights.filter { $0.title.lowercased().contains("nutrition") || $0.title.lowercased().contains("trend") }
-    }
-    
-    private var nutritionTrendsSection: some View {
+    var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             SectionHeader(
                 title: "Nutrition Trends",
@@ -253,15 +282,17 @@ struct InsightsDashboardView: View {
                 color: .purple
             )
             
-            ForEach(nutritionTrendInsights) { insight in
+            ForEach(insights) { insight in
                 NutritionTrendCard(insight: insight)
             }
         }
     }
-    
-    // MARK: - Loading & Error States
-    
-    private var loadingSection: some View {
+}
+
+// MARK: - State Views
+
+struct InsightsDashboardLoadingState: View {
+    var body: some View {
         VStack(spacing: 16) {
             ProgressView()
                 .scaleEffect(1.5)
@@ -271,8 +302,13 @@ struct InsightsDashboardView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.vertical, 60)
     }
+}
+
+struct InsightsDashboardErrorState: View {
+    let error: String
+    let onRetry: () -> Void
     
-    private func errorSection(_ error: String) -> some View {
+    var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 48))
@@ -286,18 +322,16 @@ struct InsightsDashboardView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             
-            Button("Try Again") {
-                Task {
-                    await refreshInsights()
-                }
-            }
-            .buttonStyle(.borderedProminent)
+            Button("Try Again", action: onRetry)
+                .buttonStyle(.borderedProminent)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.vertical, 60)
     }
-    
-    private var emptyStateSection: some View {
+}
+
+struct InsightsDashboardEmptyState: View {
+    var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "chart.bar.doc.horizontal")
                 .font(.system(size: 48))
@@ -313,12 +347,6 @@ struct InsightsDashboardView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.vertical, 60)
-    }
-    
-    // MARK: - Helper Methods
-    
-    private func refreshInsights() async {
-        await insightsService.generateRecentInsights()
     }
 }
 
