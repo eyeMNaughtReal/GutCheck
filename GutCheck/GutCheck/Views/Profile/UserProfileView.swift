@@ -284,9 +284,11 @@ struct UserProfileView: View {
                 }
             }
             .sheet(isPresented: $showSettings) {
-                SettingsView()
-                    .environment(settingsVM)
-                    .environment(authService)
+                NavigationStack {
+                    SettingsView()
+                        .environment(settingsVM)
+                        .environment(authService)
+                }
             }
         }
     }

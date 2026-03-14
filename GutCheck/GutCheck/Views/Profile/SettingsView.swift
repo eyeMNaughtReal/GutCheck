@@ -21,8 +21,7 @@ struct SettingsView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            List {
+        List {
                 Section("Preferences") {
                     NavigationLink(value: SettingsRoute.language) {
                         HStack {
@@ -248,48 +247,47 @@ struct SettingsView: View {
                     }
                 }
             }
-            .navigationTitle("Settings")
-            .navigationDestination(for: SettingsRoute.self) { route in
-                switch route {
-                case .language:
-                    LanguageSelectionView()
-                case .units:
-                    UnitSelectionView()
-                case .appearance:
-                    AppearanceSelectionView()
-                case .reminders:
-                    UserRemindersView()
-                case .medications:
-                    MedicationListView()
-                case .healthcareExport:
-                    HealthcareExportView()
-                case .privacyPolicy:
-                    PrivacyPolicyView()
-                case .dataDeletion:
-                    DataDeletionRequestView()
-                case .localStorage:
-                    LocalStorageSettingsView()
-                case .deleteAccount:
-                    DeleteAccountView()
+        .navigationTitle("Settings")
+        .navigationDestination(for: SettingsRoute.self) { route in
+            switch route {
+            case .language:
+                LanguageSelectionView()
+            case .units:
+                UnitSelectionView()
+            case .appearance:
+                AppearanceSelectionView()
+            case .reminders:
+                UserRemindersView()
+            case .medications:
+                MedicationListView()
+            case .healthcareExport:
+                HealthcareExportView()
+            case .privacyPolicy:
+                PrivacyPolicyView()
+            case .dataDeletion:
+                DataDeletionRequestView()
+            case .localStorage:
+                LocalStorageSettingsView()
+            case .deleteAccount:
+                DeleteAccountView()
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Close") {
+                    HapticManager.shared.light()
+                    dismiss()
                 }
+                .accessibleButton(
+                    label: "Close",
+                    hint: "Close settings"
+                )
             }
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Close") {
-                        HapticManager.shared.light()
-                        dismiss()
-                    }
-                    .accessibleButton(
-                        label: "Close",
-                        hint: "Close settings"
-                    )
-                }
-            }
-            .sheet(isPresented: $showAppleHealth) {
-                HealthDataIntegrationView()
-                    .environment(settingsVM)
-                    .environment(authService)
-            }
+        }
+        .sheet(isPresented: $showAppleHealth) {
+            HealthDataIntegrationView()
+                .environment(settingsVM)
+                .environment(authService)
         }
     }
 }
