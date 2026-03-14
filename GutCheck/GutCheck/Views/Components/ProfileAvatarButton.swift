@@ -73,7 +73,8 @@ struct ProfileAvatarButton: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .profileImageUpdated)) { _ in
             // Reload profile image when updated
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            Task {
+                try? await Task.sleep(for: .milliseconds(500))
                 loadProfileImage()
             }
         }

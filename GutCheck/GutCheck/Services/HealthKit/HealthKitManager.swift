@@ -275,12 +275,7 @@ final class HealthKitManager {
         }
         
         healthStore.save(samples) { success, error in
-            DispatchQueue.main.async {
-                #if DEBUG
-                if success {
-                } else {
-                }
-                #endif
+            Task { @MainActor in
                 completion(success, error)
             }
         }
@@ -360,12 +355,7 @@ final class HealthKitManager {
         }
 
         healthStore.save(samples) { success, error in
-            DispatchQueue.main.async {
-                #if DEBUG
-                if success {
-                } else {
-                }
-                #endif
+            Task { @MainActor in
                 completion(success, error)
             }
         }
@@ -382,10 +372,7 @@ final class HealthKitManager {
         let waterSample = HKQuantitySample(type: waterType, quantity: waterQuantity, start: date, end: date)
         
         healthStore.save(waterSample) { success, error in
-            DispatchQueue.main.async {
-                if success {
-                } else {
-                }
+            Task { @MainActor in
                 completion(success, error)
             }
         }

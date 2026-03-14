@@ -203,7 +203,8 @@ struct SymptomEditView: View {
         onSave(updatedSymptom)
         
         // Show success feedback and reset state
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(300))
             isSaving = false
             showingSuccessAlert = true
         }
