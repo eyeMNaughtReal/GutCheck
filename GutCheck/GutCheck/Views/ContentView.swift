@@ -124,12 +124,3 @@ struct ContentView: View {
         }
     }
 }
-
-// MARK: - Tab Bar Actions
-enum TabBarAction {
-    case logMeal
-    case logSymptom
-    case tabTapped(Tab)
-}
-
-
