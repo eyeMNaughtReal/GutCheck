@@ -364,6 +364,7 @@ struct EmptyStateCard: View {
 }
 
 // MARK: - ViewModel
+@MainActor
 @Observable class CalendarViewModel {
     var selectedDate = Date.now
     var meals: [Meal] = []

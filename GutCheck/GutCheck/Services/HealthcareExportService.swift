@@ -50,6 +50,7 @@ struct ExportOptions {
 
 // MARK: - Healthcare Export Service
 
+@MainActor
 @Observable class HealthcareExportService {
     static let shared = HealthcareExportService()
     
