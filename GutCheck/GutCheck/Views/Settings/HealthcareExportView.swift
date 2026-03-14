@@ -25,8 +25,7 @@ struct HealthcareExportView: View {
     @State private var endDate = Date.now
     
     var body: some View {
-        NavigationStack {
-            ScrollView {
+        ScrollView {
                 VStack(spacing: 24) {
                     // Header
                     headerSection
@@ -72,7 +71,6 @@ struct HealthcareExportView: View {
             } message: {
                 Text(errorMessage)
             }
-        }
     }
     
     // MARK: - Header Section
