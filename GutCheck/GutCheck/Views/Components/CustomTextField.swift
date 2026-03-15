@@ -45,6 +45,7 @@ struct CustomTextField: View {
                             .textFieldStyle(PlainTextFieldStyle())
                             .keyboardType(keyboardType)
                             .focused($isFocused)
+                            .accessibilityIdentifier("\(title)Field")
                     } else {
                         TextField(placeholder, text: $text)
                             .textFieldStyle(PlainTextFieldStyle())
@@ -52,6 +53,7 @@ struct CustomTextField: View {
                             .focused($isFocused)
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
+                            .accessibilityIdentifier("\(title)Field")
                     }
                 }
                 .padding(.horizontal, 16)

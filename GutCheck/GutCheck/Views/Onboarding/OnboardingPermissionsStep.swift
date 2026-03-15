@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct OnboardingPermissionsStep: View {
-    @StateObject private var permissionManager = PermissionManager.shared
+    @State private var permissionManager = PermissionManager.shared
     @Binding var currentStep: Int
     
     @State private var isRequestingPermissions = false

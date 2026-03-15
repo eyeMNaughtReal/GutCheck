@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CameraPermissionView: View {
-    @StateObject private var permissionManager = PermissionManager.shared
+    @State private var permissionManager = PermissionManager.shared
     @State private var isRequesting = false
     
     let title: String
@@ -196,7 +196,7 @@ struct CameraPermissionView: View {
 
 struct BarcodeCameraPermissionView: View {
     let onPermissionGranted: () -> Void
-    @StateObject private var permissionManager = PermissionManager.shared
+    @State private var permissionManager = PermissionManager.shared
     
     var body: some View {
         CameraPermissionView(

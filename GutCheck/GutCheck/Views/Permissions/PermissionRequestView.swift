@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct PermissionRequestView: View {
-    @StateObject private var permissionManager = PermissionManager.shared
+    @State private var permissionManager = PermissionManager.shared
     @Environment(\.dismiss) private var dismiss
     
     @State private var currentStep = 0
