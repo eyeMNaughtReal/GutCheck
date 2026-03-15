@@ -190,6 +190,8 @@ enum AccessibilityIdentifiers {
         static let timeRangeSelector = "insights.timeRange"
         static let filterButton = "insights.filter.button"
         static let insightCardsList = "insights.cards.list"
+        static let weeklyTriggerReportCard = "insights.weeklyTriggerReport.card"
+        static let weeklyTriggerReportView = "insights.weeklyTriggerReport.view"
         
         static func insightCard(_ index: Int) -> String {
             "insights.card.\(index)"
