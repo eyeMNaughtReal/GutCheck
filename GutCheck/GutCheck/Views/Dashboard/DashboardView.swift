@@ -91,6 +91,15 @@ struct DashboardView: View {
                         }
                     }
                     
+                    // AI Insights Card
+                    AIInsightsCard(
+                        summary: dashboardStore.aiInsightSummary,
+                        severity: dashboardStore.aiInsightSeverity
+                    )
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("AI Insights: \(dashboardStore.aiInsightSummary)")
+                    .accessibilityIdentifier(AccessibilityIdentifiers.Dashboard.aiInsightsCard)
+                    
                     // Trigger alerts with better styling
                     if !dashboardStore.triggerAlerts.isEmpty {
                         VStack(spacing: 12) {
