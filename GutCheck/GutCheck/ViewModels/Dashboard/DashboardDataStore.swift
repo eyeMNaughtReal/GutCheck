@@ -15,6 +15,29 @@ import Foundation
 import SwiftUI
 import Combine
 
+/// Severity level for AI-generated insight messages
+enum AIInsightSeverity {
+    case positive
+    case neutral
+    case warning
+    
+    var color: Color {
+        switch self {
+        case .positive: return ColorTheme.success
+        case .neutral: return ColorTheme.info
+        case .warning: return ColorTheme.warning
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .positive: return "checkmark.seal.fill"
+        case .neutral: return "sparkles"
+        case .warning: return "exclamationmark.triangle.fill"
+        }
+    }
+}
+
 /// Central data store for dashboard functionality
 /// Manages all dashboard-related data including health insights, meal/symptom data,
 /// and real-time calculations for health scoring and recommendations.
@@ -41,6 +64,12 @@ import Combine
     
     /// Smart avoidance tip based on recent symptom patterns
     var avoidanceTip: String = ""
+    
+    /// AI-generated insight summary for the selected day
+    var aiInsightSummary: String = ""
+    
+    /// Severity level of the current AI insight
+    var aiInsightSeverity: AIInsightSeverity = .neutral
     
     /// Currently selected date for dashboard data display
     var selectedDate: Date = Date.now
@@ -163,6 +192,34 @@ import Combine
         if todaysSymptoms.contains(where: { $0.painLevel.rawValue >= 8 }) {
             triggerAlerts.append("High pain level detected - consider consulting healthcare provider")
         }
+        
+        // Generate AI insight summary
+        generateAIInsight()
+    }
+    
+    /// Generate AI insight based on current meal and symptom data
+    /// Uses placeholder logic; future versions will integrate with AIAnalysisService
+    private func generateAIInsight() {
+        if todaysSymptoms.isEmpty && todaysMeals.count >= 2 {
+            aiInsightSummary = "No triggers detected today. Your digestion looks healthy!"
+            aiInsightSeverity = .positive
+        } else if todaysSymptoms.isEmpty && todaysMeals.isEmpty {
+            aiInsightSummary = "Start logging meals to get personalized insights about your gut health."
+            aiInsightSeverity = .neutral
+        } else if todaysSymptoms.isEmpty {
+            aiInsightSummary = "Looking good so far. Keep logging meals for better insights."
+            aiInsightSeverity = .neutral
+        } else if todaysSymptoms.contains(where: { $0.painLevel.rawValue >= 7 }) {
+            aiInsightSummary = "Elevated symptoms detected. Consider gentle, easy-to-digest foods."
+            aiInsightSeverity = .warning
+        } else if !todaysSymptoms.isEmpty && !todaysMeals.isEmpty {
+            let recentMealName = todaysMeals.last?.name ?? "your recent meal"
+            aiInsightSummary = "Possible trigger: \(recentMealName). Symptoms appeared after eating."
+            aiInsightSeverity = .warning
+        } else {
+            aiInsightSummary = "Keep logging to help identify patterns."
+            aiInsightSeverity = .neutral
+        }
     }
     
     // MARK: - Preview Support
@@ -198,6 +255,8 @@ import Combine
         self.todaysHealthScore = 8
         self.todaysFocus = "Focus on eating slowly and mindfully today. Try setting your fork down between bites."
         self.avoidanceTip = "Skip dairy products (milk, cheese, ice cream) - they've caused bloating 3 times this week"
+        self.aiInsightSummary = "No triggers detected today. Your digestion looks healthy!"
+        self.aiInsightSeverity = .positive
     }
     
     // MARK: - Private Load Logic
@@ -247,6 +306,8 @@ import Combine
                     self.insightMessage = nil
                     self.todaysFocus = "Unable to load data. Please try again."
                     self.avoidanceTip = "Check your connection and try refreshing."
+                    self.aiInsightSummary = "Unable to generate insights right now."
+                    self.aiInsightSeverity = .neutral
                 }
             }
         }

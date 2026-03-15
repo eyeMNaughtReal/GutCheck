@@ -36,6 +36,7 @@ enum AccessibilityIdentifiers {
         static let avoidanceTipCard = "dashboard.avoidanceTip.card"
         static let weekSelector = "dashboard.weekSelector"
         static let activitySummary = "dashboard.activitySummary"
+        static let aiInsightsCard = "dashboard.aiInsights.card"
     }
     
     // MARK: - Meal Builder

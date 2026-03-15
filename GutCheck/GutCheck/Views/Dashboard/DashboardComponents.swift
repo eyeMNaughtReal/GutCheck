@@ -150,6 +150,49 @@ struct DashboardInsightCard: View {
     }
 }
 
+/// AI Insights Card - Full-width card displaying AI-generated health insight
+struct AIInsightsCard: View {
+    let summary: String
+    let severity: AIInsightSeverity
+    
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: severity.icon)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(severity.color)
+                .frame(width: 36, height: 36)
+                .background(severity.color.opacity(0.15))
+                .clipShape(.rect(cornerRadius: 8))
+                .accessibleDecorative()
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text("AI Insights")
+                    .typography(Typography.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(ColorTheme.primaryText)
+                
+                Text(summary)
+                    .typography(Typography.caption)
+                    .foregroundStyle(ColorTheme.secondaryText)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            
+            Spacer(minLength: 0)
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(ColorTheme.cardBackground)
+                .shadow(color: ColorTheme.shadowColor.opacity(0.08), radius: 6, x: 0, y: 2)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(severity.color.opacity(0.3), lineWidth: 1)
+        )
+    }
+}
+
 /// Floating Action Button - Modern circular button with label
 struct FloatingActionButton: View {
     let icon: String
