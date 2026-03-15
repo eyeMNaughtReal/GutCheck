@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct NotificationPermissionView: View {
-    @StateObject private var permissionManager = PermissionManager.shared
+    @State private var permissionManager = PermissionManager.shared
     @State private var isRequesting = false
     
     let title: String

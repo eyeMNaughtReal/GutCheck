@@ -147,7 +147,10 @@ struct GutCheckApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if !authService.isAuthStateResolved {
+                if ProcessInfo.processInfo.arguments.contains("--uitesting") {
+                    // UI Testing mode: skip auth and show the auth screen directly
+                    AuthenticationView(authService: authService)
+                } else if !authService.isAuthStateResolved {
                     // Show loading while Firebase restores auth session
                     ZStack {
                         ColorTheme.background

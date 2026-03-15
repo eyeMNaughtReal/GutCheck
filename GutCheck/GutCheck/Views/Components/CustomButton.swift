@@ -82,6 +82,7 @@ struct CustomButton: View {
             .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
         }
         .disabled(isDisabled || isLoading)
+        .accessibilityIdentifier("\(title.replacingOccurrences(of: " ", with: ""))Button")
         .animation(.easeInOut(duration: 0.2), value: isLoading)
         .animation(.easeInOut(duration: 0.2), value: isDisabled)
     }
