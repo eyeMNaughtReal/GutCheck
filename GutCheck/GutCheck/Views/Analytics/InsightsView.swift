@@ -18,6 +18,11 @@ struct InsightsView: View {
                 // Weekly Stats Row
                 weeklyStatsRow
 
+                // Weekly Trigger Report Card
+                if let report = viewModel.weeklyTriggerReport {
+                    weeklyTriggerReportCard(report: report)
+                }
+
                 // Top Summary Cards
                 topSymptomsCard
                 triggerFoodsCard
@@ -50,6 +55,8 @@ struct InsightsView: View {
                 InsightDetailView(insight: insight)
             case .categoryInsights(let category):
                 CategoryInsightsView(category: category)
+            case .weeklyTriggerReport(let report):
+                WeeklyTriggerReportView(report: report)
             }
         }
         .toolbar {
@@ -151,6 +158,53 @@ struct InsightsView: View {
                 color: ColorTheme.accent
             )
         }
+    }
+
+    private func weeklyTriggerReportCard(report: WeeklyTriggerReport) -> some View {
+        NavigationLink(value: InsightsRoute.weeklyTriggerReport(report)) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .font(.title2)
+                        .foregroundStyle(ColorTheme.accent)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Weekly Trigger Report")
+                            .font(.headline)
+                            .foregroundStyle(ColorTheme.primaryText)
+                        Text(reportDateRange(report))
+                            .font(.caption)
+                            .foregroundStyle(ColorTheme.secondaryText)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(ColorTheme.secondaryText)
+                }
+
+                HStack(spacing: 12) {
+                    TriggerCountPill(count: report.newTriggers.count, label: "New", color: .red)
+                    TriggerCountPill(count: report.recurringTriggers.count, label: "Recurring", color: .orange)
+                    TriggerCountPill(count: report.resolvedTriggers.count, label: "Resolved", color: ColorTheme.success)
+                }
+            }
+            .padding()
+            .background(ColorTheme.surface)
+            .clipShape(.rect(cornerRadius: 12))
+            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
+        }
+        .accessibilityIdentifier(AccessibilityIdentifiers.Insights.weeklyTriggerReportCard)
+    }
+
+    private func reportDateRange(_ report: WeeklyTriggerReport) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        let start = formatter.string(from: report.weekStart)
+        let endFormatter = DateFormatter()
+        endFormatter.dateFormat = "MMM d, yyyy"
+        let end = endFormatter.string(from: report.weekEnd)
+        return "\(start) – \(end)"
     }
 
     private var topSymptomsCard: some View {
