@@ -23,6 +23,8 @@ struct RankedItem: Identifiable {
     var topTriggerFoods: [RankedItem] = []
     var bestDays: [RankedItem] = []
     var weeklyTriggerReport: WeeklyTriggerReport?
+    var triggerPatterns: [TriggerPattern] = []
+    var topTriggerPatterns: [TriggerPattern] = []
 
     private let insightsService = InsightsService.shared
     private let mealRepository = MealRepository.shared
@@ -79,6 +81,9 @@ struct RankedItem: Identifiable {
 
             // Compute weekly trigger report (week-over-week comparison)
             computeWeeklyTriggerReport(meals: meals, symptoms: symptoms)
+
+            // Compute trigger patterns with scoring and severity prediction
+            await computeTriggerPatterns(meals: meals, symptoms: symptoms)
 
         } catch {
             self.error = error.localizedDescription
@@ -288,6 +293,17 @@ struct RankedItem: Identifiable {
             currentWeekMealCount: currentWeekMeals.count,
             previousWeekMealCount: previousWeekMeals.count
         )
+    }
+
+    // MARK: - Trigger Pattern Computation
+
+    private func computeTriggerPatterns(meals: [Meal], symptoms: [Symptom]) async {
+        let patterns = await PatternRecognitionService.shared.analyzeTriggerPatterns(
+            meals: meals,
+            symptoms: symptoms
+        )
+        self.triggerPatterns = patterns
+        self.topTriggerPatterns = Array(patterns.prefix(3))
     }
 
     /// Compute trigger entries for a given set of meals and symptoms using 2-8 hour correlation.
