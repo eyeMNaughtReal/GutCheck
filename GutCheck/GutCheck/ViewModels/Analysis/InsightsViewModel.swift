@@ -25,6 +25,7 @@ struct RankedItem: Identifiable {
     var weeklyTriggerReport: WeeklyTriggerReport?
     var triggerPatterns: [TriggerPattern] = []
     var topTriggerPatterns: [TriggerPattern] = []
+    var mealSuggestions: [MealSuggestion] = []
 
     private let insightsService = InsightsService.shared
     private let mealRepository = MealRepository.shared
@@ -84,6 +85,9 @@ struct RankedItem: Identifiable {
 
             // Compute trigger patterns with scoring and severity prediction
             await computeTriggerPatterns(meals: meals, symptoms: symptoms)
+
+            // Compute safe meal suggestions using trigger pattern data
+            computeMealSuggestions(meals: meals, triggerPatterns: triggerPatterns)
 
         } catch {
             self.error = error.localizedDescription
@@ -376,6 +380,93 @@ struct RankedItem: Identifiable {
             )
         }
         return result
+    }
+
+    // MARK: - Meal Suggestions
+
+    /// Compute safe meal suggestions using constraint satisfaction:
+    /// hard filter out meals with high-trigger foods, score remaining by safety, apply variety penalty.
+    private func computeMealSuggestions(meals: [Meal], triggerPatterns: [TriggerPattern]) {
+        // Build trigger score lookup: lowercased food name → overall score (0-100)
+        var triggerScoreMap: [String: Int] = [:]
+        for pattern in triggerPatterns {
+            let key = pattern.foodName.lowercased().trimmingCharacters(in: .whitespaces)
+            triggerScoreMap[key] = pattern.triggerScore.overall
+        }
+
+        // Group meals by name (case-insensitive)
+        let grouped = Dictionary(grouping: meals) { $0.name.lowercased().trimmingCharacters(in: .whitespaces) }
+
+        let now = Date.now
+        let threeDaysAgo = Calendar.current.date(byAdding: .day, value: -3, to: now) ?? now
+        var suggestions: [MealSuggestion] = []
+
+        for (_, mealGroup) in grouped {
+            guard let representative = mealGroup.first else { continue }
+
+            // Collect unique food item names for this meal
+            let allFoodItems = representative.foodItems.map { $0.name }
+            guard !allFoodItems.isEmpty else { continue }
+
+            // Hard constraint: skip meals with any high-trigger food (score >= 60)
+            let hasHighTrigger = allFoodItems.contains { item in
+                let key = item.lowercased().trimmingCharacters(in: .whitespaces)
+                return (triggerScoreMap[key] ?? 0) >= 60
+            }
+            guard !hasHighTrigger else { continue }
+
+            // Compute safety score: average of (100 - triggerScore) per food item
+            let itemScores = allFoodItems.map { item -> Int in
+                let key = item.lowercased().trimmingCharacters(in: .whitespaces)
+                let triggerScore = triggerScoreMap[key] ?? 0
+                return 100 - triggerScore
+            }
+            var safetyScore = itemScores.reduce(0, +) / max(1, itemScores.count)
+
+            let timesEaten = mealGroup.count
+            let lastEaten = mealGroup.map(\.date).max() ?? now
+
+            // Soft boost: meals eaten 3+ times with no trigger correlation get +10
+            let hasTriggerCorrelation = allFoodItems.contains { item in
+                let key = item.lowercased().trimmingCharacters(in: .whitespaces)
+                return triggerScoreMap[key] != nil
+            }
+            if timesEaten >= 3 && !hasTriggerCorrelation {
+                safetyScore = min(100, safetyScore + 10)
+            }
+
+            // Variety penalty: if eaten in last 3 days, subtract 15
+            if lastEaten >= threeDaysAgo {
+                safetyScore = max(0, safetyScore - 15)
+            }
+
+            // Generate reasoning
+            let reasoning: String
+            if !hasTriggerCorrelation {
+                reasoning = "No symptom correlations detected across \(timesEaten) meal\(timesEaten == 1 ? "" : "s")"
+            } else if safetyScore >= 80 {
+                reasoning = "All items have low trigger scores"
+            } else {
+                reasoning = "Most items are well-tolerated based on your history"
+            }
+
+            suggestions.append(MealSuggestion(
+                id: UUID(),
+                mealName: representative.name,
+                mealType: representative.type,
+                foodItems: allFoodItems,
+                safetyScore: safetyScore,
+                timesEaten: timesEaten,
+                lastEaten: lastEaten,
+                reasoning: reasoning
+            ))
+        }
+
+        // Sort by safety score descending, take top 8
+        self.mealSuggestions = suggestions
+            .sorted { $0.safetyScore > $1.safetyScore }
+            .prefix(8)
+            .map { $0 }
     }
 
     /// Rank days of the week by lowest symptom count (last 30 days)

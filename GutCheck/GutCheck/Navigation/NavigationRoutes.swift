@@ -55,6 +55,7 @@ enum InsightsRoute: Hashable {
     case triggerPatternDetail(TriggerPattern)
     case symptomExplorer
     case symptomCharts
+    case mealSuggestions([MealSuggestion])
 }
 
 // Privacy policy navigation
