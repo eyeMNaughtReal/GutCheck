@@ -222,6 +222,13 @@ enum AccessibilityIdentifiers {
             "insights.symptomExplorer.meal.\(index)"
         }
         
+        // Meal Suggestions
+        static let mealSuggestionsCard = "insights.mealSuggestions.card"
+        static let mealSuggestionsView = "insights.mealSuggestions.view"
+        static func mealSuggestionRow(_ index: Int) -> String {
+            "insights.mealSuggestions.row.\(index)"
+        }
+
         // Symptom Charts
         static let symptomChartsCard = "insights.symptomCharts.card"
         static let symptomChartsView = "insights.symptomCharts.view"

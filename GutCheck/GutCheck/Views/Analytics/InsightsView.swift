@@ -28,6 +28,11 @@ struct InsightsView: View {
                     triggerPatternSummarySection
                 }
 
+                // Safe Meal Suggestions Card
+                if !viewModel.mealSuggestions.isEmpty {
+                    mealSuggestionsCard
+                }
+
                 // Top Summary Cards
                 topSymptomsCard
                 triggerFoodsCard
@@ -75,6 +80,8 @@ struct InsightsView: View {
                 SymptomExplorerView()
             case .symptomCharts:
                 SymptomChartsView()
+            case .mealSuggestions(let suggestions):
+                MealSuggestionsView(suggestions: suggestions)
             }
         }
         .toolbar {
@@ -279,6 +286,37 @@ struct InsightsView: View {
         if score >= 70 { return .red }
         if score >= 40 { return .orange }
         return .yellow
+    }
+
+    // MARK: - Meal Suggestions
+
+    private var mealSuggestionsCard: some View {
+        NavigationLink(value: InsightsRoute.mealSuggestions(viewModel.mealSuggestions)) {
+            HStack(spacing: 12) {
+                Image(systemName: "leaf.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(ColorTheme.success)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Safe Meal Ideas")
+                        .font(.headline)
+                        .foregroundStyle(ColorTheme.primaryText)
+                    Text("\(viewModel.mealSuggestions.count) suggestions based on your history")
+                        .font(.caption)
+                        .foregroundStyle(ColorTheme.secondaryText)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(ColorTheme.secondaryText)
+            }
+            .padding()
+            .background(ColorTheme.surface)
+            .clipShape(.rect(cornerRadius: 12))
+            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
+        }
+        .accessibilityIdentifier(AccessibilityIdentifiers.Insights.mealSuggestionsCard)
     }
 
     // MARK: - Symptom Charts
