@@ -202,6 +202,16 @@ enum AccessibilityIdentifiers {
         static func triggerPatternCard(_ index: Int) -> String {
             "insights.triggerPattern.card.\(index)"
         }
+        
+        // Symptom Explorer
+        static let symptomExplorerCard = "insights.symptomExplorer.card"
+        static let symptomExplorerView = "insights.symptomExplorer.view"
+        static let symptomExplorerPicker = "insights.symptomExplorer.picker"
+        static let symptomExplorerEmptyState = "insights.symptomExplorer.empty"
+        
+        static func suspectedMealCard(_ index: Int) -> String {
+            "insights.symptomExplorer.meal.\(index)"
+        }
     }
     
     // MARK: - Tab Bar
