@@ -553,6 +553,425 @@ class PatternRecognitionService {
         return recommendations
     }
     
+    // MARK: - Trigger Pattern Analysis
+
+    /// Produces rich TriggerPattern objects with composite scoring, severity prediction,
+    /// ingredient decomposition, and natural language summary insights.
+    func analyzeTriggerPatterns(meals: [Meal], symptoms: [Symptom]) async -> [TriggerPattern] {
+        // Build per-food correlation data using 2-8 hour window
+        var foodCorrelations: [String: (
+            meals: [Meal],
+            correlatedSymptoms: [Symptom],
+            onsetDelays: [TimeInterval],
+            foodItems: [FoodItem]
+        )] = [:]
+
+        // Count total occurrences of each food across all meals
+        var foodTotalOccurrences: [String: Int] = [:]
+        for meal in meals {
+            for item in meal.foodItems {
+                let key = item.name.lowercased().trimmingCharacters(in: .whitespaces)
+                foodTotalOccurrences[key, default: 0] += 1
+            }
+        }
+
+        for meal in meals {
+            // Find symptoms in 2-8 hour window after this meal
+            let relevantSymptoms = symptoms.filter { symptom in
+                guard symptom.painLevel != .none || symptom.urgencyLevel != .none
+                        || symptom.stoolType == .type1 || symptom.stoolType == .type2
+                        || symptom.stoolType == .type6 || symptom.stoolType == .type7 else {
+                    return false
+                }
+                let delay = symptom.date.timeIntervalSince(meal.date)
+                return delay >= 7200 && delay <= 28800
+            }
+
+            guard !relevantSymptoms.isEmpty else { continue }
+
+            for item in meal.foodItems {
+                let key = item.name.lowercased().trimmingCharacters(in: .whitespaces)
+                var entry = foodCorrelations[key] ?? (meals: [], correlatedSymptoms: [], onsetDelays: [], foodItems: [])
+                entry.meals.append(meal)
+                entry.correlatedSymptoms.append(contentsOf: relevantSymptoms)
+                for symptom in relevantSymptoms {
+                    entry.onsetDelays.append(symptom.date.timeIntervalSince(meal.date))
+                }
+                if entry.foodItems.isEmpty || entry.foodItems.first?.name != item.name {
+                    entry.foodItems.append(item)
+                }
+                foodCorrelations[key] = entry
+            }
+        }
+
+        // Build TriggerPattern for each food with sufficient data
+        var patterns: [TriggerPattern] = []
+
+        for (key, data) in foodCorrelations {
+            let triggeringCount = data.meals.count
+            let totalCount = foodTotalOccurrences[key] ?? triggeringCount
+            guard triggeringCount >= 2 else { continue }
+
+            let displayName = data.foodItems.first?.name ?? key
+            let ingredients = data.foodItems.first?.ingredients ?? []
+
+            // Compute components
+            let correlationStrength = computeCorrelationStrength(
+                triggeringCount: triggeringCount,
+                totalCount: totalCount,
+                symptomCount: data.correlatedSymptoms.count
+            )
+            let severityAvg = computeSeverityAverage(symptoms: data.correlatedSymptoms)
+            let recurrenceRate = Double(triggeringCount) / Double(max(1, totalCount))
+            let compoundRisk = computeCompoundRiskScore(foodName: displayName, ingredients: ingredients)
+
+            let score = computeTriggerScore(
+                correlation: correlationStrength,
+                severity: severityAvg,
+                recurrence: recurrenceRate,
+                compound: compoundRisk
+            )
+
+            let prediction = predictSeverity(correlatedSymptoms: data.correlatedSymptoms)
+            let timing = computeTimingProfile(onsetDelays: data.onsetDelays)
+            let ingredientBreakdown = decomposeIngredients(
+                foodName: displayName,
+                ingredients: ingredients,
+                allMeals: meals,
+                correlatedSymptoms: data.correlatedSymptoms
+            )
+            let summaries = generateSummaryInsights(
+                foodName: displayName,
+                symptoms: data.correlatedSymptoms,
+                timing: timing,
+                score: score
+            )
+            let symptomLabels = buildSymptomLabels(from: data.correlatedSymptoms)
+            let recommendations = buildTriggerRecommendations(
+                foodName: displayName,
+                score: score,
+                prediction: prediction,
+                ingredients: ingredientBreakdown
+            )
+
+            let sortedDates = data.meals.map(\.date).sorted()
+            let trend: TrendDirection = {
+                let midpoint = sortedDates.count / 2
+                guard midpoint > 0 else { return .stable }
+                let recentCount = sortedDates.suffix(midpoint).count
+                let earlyCount = sortedDates.prefix(midpoint).count
+                if recentCount > earlyCount { return .worsening }
+                if recentCount < earlyCount { return .improving }
+                return .stable
+            }()
+
+            patterns.append(TriggerPattern(
+                id: UUID(),
+                foodName: displayName,
+                triggerScore: score,
+                severityPrediction: prediction,
+                ingredientBreakdown: ingredientBreakdown,
+                timingProfile: timing,
+                summaryInsights: summaries,
+                associatedSymptomLabels: symptomLabels,
+                totalObservations: totalCount,
+                triggeringObservations: triggeringCount,
+                recommendations: recommendations,
+                lastOccurrence: sortedDates.last ?? .now,
+                firstOccurrence: sortedDates.first ?? .now,
+                trendDirection: trend
+            ))
+        }
+
+        return patterns.sorted { $0.triggerScore.overall > $1.triggerScore.overall }
+            .prefix(20).map { $0 }
+    }
+
+    // MARK: - Trigger Score Computation
+
+    private func computeTriggerScore(
+        correlation: Double,
+        severity: Double,
+        recurrence: Double,
+        compound: Double
+    ) -> TriggerScore {
+        let overall = Int(
+            (correlation * 0.35 + severity * 0.25 + recurrence * 0.25 + compound * 0.15) * 100
+        )
+        return TriggerScore(
+            overall: min(100, max(0, overall)),
+            correlationComponent: correlation,
+            severityComponent: severity,
+            recurrenceComponent: recurrence,
+            compoundRiskComponent: compound
+        )
+    }
+
+    private func computeCorrelationStrength(triggeringCount: Int, totalCount: Int, symptomCount: Int) -> Double {
+        let baseRate = Double(triggeringCount) / Double(max(1, totalCount))
+        let symptomFactor = min(1.0, Double(symptomCount) / 10.0)
+        return min(1.0, baseRate * 0.7 + symptomFactor * 0.3)
+    }
+
+    private func computeSeverityAverage(symptoms: [Symptom]) -> Double {
+        guard !symptoms.isEmpty else { return 0 }
+        let total = symptoms.reduce(0.0) { sum, symptom in
+            let painScore = Double(symptom.painLevel.rawValue) / 3.0 * 0.5
+            let urgencyScore = Double(symptom.urgencyLevel.rawValue) / 3.0 * 0.3
+            let stoolScore: Double = {
+                switch symptom.stoolType {
+                case .type1, .type2, .type6, .type7: return 0.2
+                default: return 0.0
+                }
+            }()
+            return sum + painScore + urgencyScore + stoolScore
+        }
+        return total / Double(symptoms.count)
+    }
+
+    private func computeCompoundRiskScore(foodName: String, ingredients: [String]) -> Double {
+        let compounds = FoodCompoundDatabase.shared.getCompoundsForFood(name: foodName, ingredients: ingredients)
+        guard !compounds.isEmpty else { return 0 }
+        let highCount = compounds.filter { $0.severity == .high }.count
+        let medCount = compounds.filter { $0.severity == .medium }.count
+        return min(1.0, Double(highCount) * 0.3 + Double(medCount) * 0.15)
+    }
+
+    // MARK: - Severity Prediction
+
+    private func predictSeverity(correlatedSymptoms: [Symptom]) -> SeverityPrediction {
+        guard !correlatedSymptoms.isEmpty else {
+            return SeverityPrediction(
+                mostLikelyPainLevel: .none,
+                mostLikelyUrgencyLevel: .none,
+                painDistribution: [:],
+                urgencyDistribution: [:],
+                stoolRisk: .normal,
+                confidence: 0
+            )
+        }
+
+        let total = Double(correlatedSymptoms.count)
+
+        // Pain distribution
+        var painCounts: [PainLevel: Int] = [:]
+        var urgencyCounts: [UrgencyLevel: Int] = [:]
+        var constipationCount = 0
+        var looseCount = 0
+
+        for symptom in correlatedSymptoms {
+            painCounts[symptom.painLevel, default: 0] += 1
+            urgencyCounts[symptom.urgencyLevel, default: 0] += 1
+            switch symptom.stoolType {
+            case .type1, .type2: constipationCount += 1
+            case .type6, .type7: looseCount += 1
+            default: break
+            }
+        }
+
+        let painDist = painCounts.mapValues { Double($0) / total }
+        let urgencyDist = urgencyCounts.mapValues { Double($0) / total }
+
+        let modePain = painCounts.max(by: { $0.value < $1.value })?.key ?? .none
+        let modeUrgency = urgencyCounts.max(by: { $0.value < $1.value })?.key ?? .none
+
+        let modeCount = max(painCounts[modePain] ?? 0, urgencyCounts[modeUrgency] ?? 0)
+        let confidence = Double(modeCount) / total
+
+        let stoolRisk: StoolRiskLevel = {
+            if constipationCount > 0 && looseCount > 0 { return .mixed }
+            if constipationCount > looseCount { return .constipation }
+            if looseCount > constipationCount { return .loose }
+            return .normal
+        }()
+
+        return SeverityPrediction(
+            mostLikelyPainLevel: modePain,
+            mostLikelyUrgencyLevel: modeUrgency,
+            painDistribution: painDist,
+            urgencyDistribution: urgencyDist,
+            stoolRisk: stoolRisk,
+            confidence: confidence
+        )
+    }
+
+    // MARK: - Ingredient Decomposition
+
+    private func decomposeIngredients(
+        foodName: String,
+        ingredients: [String],
+        allMeals: [Meal],
+        correlatedSymptoms: [Symptom]
+    ) -> [IngredientTriggerBreakdown] {
+        let db = FoodCompoundDatabase.shared
+        let compounds = db.getCompoundsForFood(name: foodName, ingredients: ingredients)
+
+        guard !compounds.isEmpty else { return [] }
+
+        // For each compound, check how many correlated symptoms match
+        return compounds.map { compound in
+            IngredientTriggerBreakdown(
+                id: UUID(),
+                ingredientName: compound.name,
+                compoundName: compound.name,
+                compoundCategory: compound.category.rawValue,
+                correlationScore: min(1.0, Double(correlatedSymptoms.count) / 10.0 + 0.2),
+                severity: compound.severity,
+                occurrenceCount: correlatedSymptoms.count
+            )
+        }
+        .sorted { $0.correlationScore > $1.correlationScore }
+    }
+
+    // MARK: - Timing Profile
+
+    private func computeTimingProfile(onsetDelays: [TimeInterval]) -> TimingProfile {
+        guard !onsetDelays.isEmpty else {
+            return TimingProfile(averageOnsetHours: 0, medianOnsetHours: 0, minOnsetHours: 0, maxOnsetHours: 0)
+        }
+
+        let hoursArray = onsetDelays.map { $0 / 3600.0 }.sorted()
+        let avg = hoursArray.reduce(0, +) / Double(hoursArray.count)
+        let median: Double = {
+            let mid = hoursArray.count / 2
+            if hoursArray.count.isMultiple(of: 2) {
+                return (hoursArray[mid - 1] + hoursArray[mid]) / 2.0
+            } else {
+                return hoursArray[mid]
+            }
+        }()
+
+        return TimingProfile(
+            averageOnsetHours: avg,
+            medianOnsetHours: median,
+            minOnsetHours: hoursArray.first ?? 0,
+            maxOnsetHours: hoursArray.last ?? 0
+        )
+    }
+
+    // MARK: - Summary Insight Generation
+
+    private func generateSummaryInsights(
+        foodName: String,
+        symptoms: [Symptom],
+        timing: TimingProfile,
+        score: TriggerScore
+    ) -> [TriggerSummaryInsight] {
+        var insights: [TriggerSummaryInsight] = []
+        let total = symptoms.count
+
+        // Severity pattern
+        let severePain = symptoms.filter { $0.painLevel == .severe }.count
+        let moderatePain = symptoms.filter { $0.painLevel == .moderate }.count
+        let significantPain = severePain + moderatePain
+
+        if significantPain > total / 2 {
+            let pct = Int(Double(significantPain) / Double(total) * 100)
+            let severityLabel = severePain > moderatePain ? "severe" : "moderate-severe"
+            insights.append(TriggerSummaryInsight(
+                id: UUID(),
+                headline: "\(foodName) frequently leads to \(severityLabel) pain",
+                detail: "In \(significantPain) of \(total) instances (\(pct)%), \(foodName) was followed by \(severityLabel) pain within \(String(format: "%.1f", timing.averageOnsetHours)) hours.",
+                dataPoints: total,
+                confidence: score.correlationComponent
+            ))
+        }
+
+        // Timing pattern
+        if timing.averageOnsetHours > 0 {
+            insights.append(TriggerSummaryInsight(
+                id: UUID(),
+                headline: "Symptoms typically appear \(String(format: "%.1f", timing.averageOnsetHours))h after \(foodName)",
+                detail: "Onset ranges from \(String(format: "%.1f", timing.minOnsetHours)) to \(String(format: "%.1f", timing.maxOnsetHours)) hours, with a median of \(String(format: "%.1f", timing.medianOnsetHours)) hours.",
+                dataPoints: total,
+                confidence: score.correlationComponent
+            ))
+        }
+
+        // Urgency pattern
+        let urgentCount = symptoms.filter { $0.urgencyLevel == .urgent || $0.urgencyLevel == .moderate }.count
+        if urgentCount > total / 3 {
+            let pct = Int(Double(urgentCount) / Double(total) * 100)
+            insights.append(TriggerSummaryInsight(
+                id: UUID(),
+                headline: "\(foodName) often causes urgent bowel movements",
+                detail: "\(pct)% of instances involved moderate or high urgency.",
+                dataPoints: total,
+                confidence: score.correlationComponent
+            ))
+        }
+
+        // Stool pattern
+        let looseCount = symptoms.filter { $0.stoolType == .type6 || $0.stoolType == .type7 }.count
+        if looseCount > total / 3 {
+            let pct = Int(Double(looseCount) / Double(total) * 100)
+            insights.append(TriggerSummaryInsight(
+                id: UUID(),
+                headline: "\(foodName) is associated with loose stools",
+                detail: "\(pct)% of correlated symptoms involved Bristol type 6-7 stool.",
+                dataPoints: total,
+                confidence: score.correlationComponent
+            ))
+        }
+
+        return insights
+    }
+
+    // MARK: - Trigger Pattern Helpers
+
+    private func buildSymptomLabels(from symptoms: [Symptom]) -> [String] {
+        var labels = Set<String>()
+        for symptom in symptoms {
+            switch symptom.painLevel {
+            case .mild: labels.insert("Mild Pain")
+            case .moderate: labels.insert("Moderate Pain")
+            case .severe: labels.insert("Severe Pain")
+            case .none: break
+            }
+            switch symptom.urgencyLevel {
+            case .mild: labels.insert("Mild Urgency")
+            case .moderate: labels.insert("Moderate Urgency")
+            case .urgent: labels.insert("High Urgency")
+            case .none: break
+            }
+            switch symptom.stoolType {
+            case .type1, .type2: labels.insert("Constipation")
+            case .type6, .type7: labels.insert("Loose Stool")
+            default: break
+            }
+        }
+        return labels.sorted()
+    }
+
+    private func buildTriggerRecommendations(
+        foodName: String,
+        score: TriggerScore,
+        prediction: SeverityPrediction,
+        ingredients: [IngredientTriggerBreakdown]
+    ) -> [String] {
+        var recs: [String] = []
+
+        if score.overall >= 60 {
+            recs.append("Consider eliminating \(foodName) for 2-4 weeks")
+        } else {
+            recs.append("Monitor \(foodName) intake and track symptoms")
+        }
+
+        if prediction.mostLikelyPainLevel == .severe || prediction.mostLikelyPainLevel == .moderate {
+            recs.append("Consult a healthcare professional about \(foodName) sensitivity")
+        }
+
+        let highRiskIngredients = ingredients.filter { $0.severity == .high }
+        if !highRiskIngredients.isEmpty {
+            let names = highRiskIngredients.prefix(2).map(\.ingredientName).joined(separator: ", ")
+            recs.append("High-risk compounds detected: \(names)")
+        }
+
+        recs.append("Reintroduce gradually to confirm sensitivity")
+
+        return recs
+    }
+
     private func findMealSymptomPairs(meals: [Meal], symptoms: [Symptom]) -> [MealSymptomPair] {
         var pairs: [MealSymptomPair] = []
         

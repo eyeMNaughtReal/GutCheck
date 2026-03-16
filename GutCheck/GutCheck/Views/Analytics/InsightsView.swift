@@ -23,6 +23,11 @@ struct InsightsView: View {
                     weeklyTriggerReportCard(report: report)
                 }
 
+                // Trigger Pattern Summaries
+                if !viewModel.topTriggerPatterns.isEmpty {
+                    triggerPatternSummarySection
+                }
+
                 // Top Summary Cards
                 topSymptomsCard
                 triggerFoodsCard
@@ -57,6 +62,8 @@ struct InsightsView: View {
                 CategoryInsightsView(category: category)
             case .weeklyTriggerReport(let report):
                 WeeklyTriggerReportView(report: report)
+            case .triggerPatternDetail(let pattern):
+                TriggerPatternDetailView(pattern: pattern)
             }
         }
         .toolbar {
@@ -205,6 +212,62 @@ struct InsightsView: View {
         endFormatter.dateFormat = "MMM d, yyyy"
         let end = endFormatter.string(from: report.weekEnd)
         return "\(start) – \(end)"
+    }
+
+    // MARK: - Trigger Pattern Summary
+
+    private var triggerPatternSummarySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Top Trigger Patterns", systemImage: "exclamationmark.triangle.fill")
+                .font(.headline)
+                .foregroundStyle(ColorTheme.primaryText)
+
+            ForEach(Array(viewModel.topTriggerPatterns.enumerated()), id: \.element.id) { index, pattern in
+                NavigationLink(value: InsightsRoute.triggerPatternDetail(pattern)) {
+                    HStack(spacing: 12) {
+                        // Score badge
+                        ZStack {
+                            Circle()
+                                .fill(triggerScoreColor(pattern.triggerScore.overall).opacity(0.15))
+                                .frame(width: 44, height: 44)
+                            Text("\(pattern.triggerScore.overall)")
+                                .font(.subheadline.bold().monospacedDigit())
+                                .foregroundStyle(triggerScoreColor(pattern.triggerScore.overall))
+                        }
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(pattern.foodName)
+                                .font(.subheadline.bold())
+                                .foregroundStyle(ColorTheme.primaryText)
+
+                            if let topInsight = pattern.summaryInsights.first {
+                                Text(topInsight.headline)
+                                    .font(.caption)
+                                    .foregroundStyle(ColorTheme.secondaryText)
+                                    .lineLimit(1)
+                            }
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(ColorTheme.secondaryText)
+                    }
+                    .padding(12)
+                    .background(ColorTheme.surface)
+                    .clipShape(.rect(cornerRadius: 12))
+                }
+                .accessibilityIdentifier(AccessibilityIdentifiers.Insights.triggerPatternCard(index))
+            }
+        }
+        .accessibilityIdentifier(AccessibilityIdentifiers.Insights.triggerPatternSummarySection)
+    }
+
+    private func triggerScoreColor(_ score: Int) -> Color {
+        if score >= 70 { return .red }
+        if score >= 40 { return .orange }
+        return .yellow
     }
 
     private var topSymptomsCard: some View {

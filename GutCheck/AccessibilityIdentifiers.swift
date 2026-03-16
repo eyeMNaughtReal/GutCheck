@@ -192,9 +192,15 @@ enum AccessibilityIdentifiers {
         static let insightCardsList = "insights.cards.list"
         static let weeklyTriggerReportCard = "insights.weeklyTriggerReport.card"
         static let weeklyTriggerReportView = "insights.weeklyTriggerReport.view"
+        static let triggerPatternSummarySection = "insights.triggerPattern.summary"
+        static let triggerPatternDetailView = "insights.triggerPattern.detail"
         
         static func insightCard(_ index: Int) -> String {
             "insights.card.\(index)"
+        }
+        
+        static func triggerPatternCard(_ index: Int) -> String {
+            "insights.triggerPattern.card.\(index)"
         }
     }
     
