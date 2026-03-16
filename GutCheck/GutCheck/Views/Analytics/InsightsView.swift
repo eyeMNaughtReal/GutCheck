@@ -35,6 +35,9 @@ struct InsightsView: View {
                 // Symptom Explorer Card
                 symptomExplorerCard
 
+                // Symptom Charts Card
+                symptomChartsCard
+
                 bestDaysCard
 
                 // Recent Insights Section
@@ -70,6 +73,8 @@ struct InsightsView: View {
                 TriggerPatternDetailView(pattern: pattern)
             case .symptomExplorer:
                 SymptomExplorerView()
+            case .symptomCharts:
+                SymptomChartsView()
             }
         }
         .toolbar {
@@ -274,6 +279,37 @@ struct InsightsView: View {
         if score >= 70 { return .red }
         if score >= 40 { return .orange }
         return .yellow
+    }
+
+    // MARK: - Symptom Charts
+
+    private var symptomChartsCard: some View {
+        NavigationLink(value: InsightsRoute.symptomCharts) {
+            HStack(spacing: 12) {
+                Image(systemName: "chart.xyaxis.line")
+                    .font(.title2)
+                    .foregroundStyle(ColorTheme.accent)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Symptom Charts")
+                        .font(.headline)
+                        .foregroundStyle(ColorTheme.primaryText)
+                    Text("Interactive graphs and trends")
+                        .font(.caption)
+                        .foregroundStyle(ColorTheme.secondaryText)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(ColorTheme.secondaryText)
+            }
+            .padding()
+            .background(ColorTheme.surface)
+            .clipShape(.rect(cornerRadius: 12))
+            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
+        }
+        .accessibilityIdentifier(AccessibilityIdentifiers.Insights.symptomChartsCard)
     }
 
     // MARK: - Symptom Explorer
