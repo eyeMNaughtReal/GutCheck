@@ -44,4 +44,28 @@ import FirebaseAuth
     func signOut() throws {
         // Preview implementation - no-op
     }
+    
+    func resendVerificationEmail() async throws {
+        // Preview implementation - no-op
+    }
+    
+    func checkEmailVerification() async throws {
+        // Preview implementation - no-op
+    }
+    
+    func cancelEmailVerification() throws {
+        // Preview implementation - no-op
+    }
+    
+    func deleteAuthenticatedAccount() async throws {
+        // Preview implementation - no-op
+    }
+    
+    func updateUserProfile(_ updatedUser: User) async throws {
+        // Preview implementation - no-op
+    }
+    
+    func refreshCurrentUser() async {
+        // Preview implementation - no-op
+    }
 }

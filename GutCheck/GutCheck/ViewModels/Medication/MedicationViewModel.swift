@@ -31,9 +31,9 @@ import SwiftUI
 
     // MARK: - Dependencies
 
-    private let medicationRepository: MedicationRepository
+    private let medicationRepository: any MedicationRepositoryProtocol
 
-    init(medicationRepository: MedicationRepository = MedicationRepository.shared) {
+    init(medicationRepository: any MedicationRepositoryProtocol = MedicationRepository.shared) {
         self.medicationRepository = medicationRepository
     }
 

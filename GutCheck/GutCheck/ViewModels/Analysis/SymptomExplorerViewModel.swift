@@ -14,10 +14,16 @@ import Foundation
 
     // MARK: - Dependencies
 
-    private let mealRepository = MealRepository.shared
-    private let symptomRepository = SymptomRepository.shared
+    private let mealRepository: any MealRepositoryProtocol
+    private let symptomRepository: any SymptomRepositoryProtocol
     private let authService = AuthService()
     private let compoundDatabase = FoodCompoundDatabase.shared
+    
+    init(mealRepository: any MealRepositoryProtocol = MealRepository.shared,
+         symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
+        self.mealRepository = mealRepository
+        self.symptomRepository = symptomRepository
+    }
 
     // Cached data for quick re-computation on symptom change
     private var triggerPatterns: [TriggerPattern] = []

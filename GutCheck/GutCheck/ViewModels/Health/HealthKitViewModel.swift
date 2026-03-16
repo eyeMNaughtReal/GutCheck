@@ -34,15 +34,18 @@ import HealthKit
     // Inject settings and auth service for unit preferences and profile updates
     private var settingsViewModel: SettingsViewModel
     private var authService: AuthService
+    private let healthKitManager: any HealthKitManagerProtocol
     
-    init() {
+    init(healthKitManager: any HealthKitManagerProtocol = HealthKitManager.shared) {
         self.settingsViewModel = SettingsViewModel()
         self.authService = AuthService()
+        self.healthKitManager = healthKitManager
     }
     
-    init(settingsViewModel: SettingsViewModel, authService: AuthService) {
+    init(settingsViewModel: SettingsViewModel, authService: AuthService, healthKitManager: any HealthKitManagerProtocol = HealthKitManager.shared) {
         self.settingsViewModel = settingsViewModel
         self.authService = authService
+        self.healthKitManager = healthKitManager
     }
     
     // Allow updating dependencies after initialization (for environment objects)
@@ -77,7 +80,7 @@ import HealthKit
     /// Reads the current authorization status for every write type from HealthKit.
     /// Call this on appear and after any authorization request.
     func refreshWriteStatuses() {
-        let manager = HealthKitManager.shared
+        let manager = healthKitManager
 
         let mealTypes: [HKQuantityTypeIdentifier] = [
             .dietaryEnergyConsumed,

@@ -82,11 +82,19 @@ enum AIInsightSeverity {
     /// Authentication service for getting current user ID
     private var authService: AuthService?
     
+    /// Repository dependencies
+    private let mealRepository: any MealRepositoryProtocol
+    private let symptomRepository: any SymptomRepositoryProtocol
+    
     // MARK: - Initialization
     
     /// Initialize the dashboard data store
     /// - Parameter preview: If true, loads mock data for SwiftUI previews
-    init(preview: Bool = false) {
+    init(preview: Bool = false,
+         mealRepository: any MealRepositoryProtocol = MealRepository.shared,
+         symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
+        self.mealRepository = mealRepository
+        self.symptomRepository = symptomRepository
         if preview {
             loadPreviewData()
         } else {
@@ -269,11 +277,11 @@ enum AIInsightSeverity {
         Task {
             do {
                 // Load today's symptoms
-                let symptoms = try await SymptomRepository.shared.getSymptoms(for: selectedDate)
+                let symptoms = try await symptomRepository.getSymptoms(for: selectedDate)
                 
                 // Load today's meals using the current user ID
                 if let currentUser = await authService?.currentUser {
-                    let userMeals = try await MealRepository.shared.fetchMealsForDate(
+                    let userMeals = try await mealRepository.fetchMealsForDate(
                         selectedDate,
                         userId: currentUser.id
                     )

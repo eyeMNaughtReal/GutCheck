@@ -123,4 +123,10 @@ private struct WelcomePageView: View {
     func verifyPhoneNumber(_ phoneNumber: String) async throws {}
     func signInWithPhone(verificationCode: String) async throws {}
     func signOut() throws {}
+    func resendVerificationEmail() async throws {}
+    func checkEmailVerification() async throws {}
+    func cancelEmailVerification() throws {}
+    func deleteAuthenticatedAccount() async throws {}
+    func updateUserProfile(_ updatedUser: User) async throws {}
+    func refreshCurrentUser() async {}
 }

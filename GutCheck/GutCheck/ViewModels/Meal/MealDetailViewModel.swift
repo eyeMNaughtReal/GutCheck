@@ -17,10 +17,10 @@ import SwiftUI
     var shouldDismiss = false
     
     // Repository dependency
-    private let mealRepository: MealRepository
+    private let mealRepository: any MealRepositoryProtocol
     
     // Initialize with a Meal object
-    init(meal: Meal, mealRepository: MealRepository = MealRepository.shared) {
+    init(meal: Meal, mealRepository: any MealRepositoryProtocol = MealRepository.shared) {
         self.meal = meal
         self.mealId = meal.id
         self.notes = meal.notes ?? ""
@@ -28,7 +28,7 @@ import SwiftUI
     }
     
     // Initialize with a meal ID
-    init(mealId: String, mealRepository: MealRepository = MealRepository.shared) {
+    init(mealId: String, mealRepository: any MealRepositoryProtocol = MealRepository.shared) {
         self.mealId = mealId
         self.meal = Meal.emptyMeal()
         self.mealRepository = mealRepository

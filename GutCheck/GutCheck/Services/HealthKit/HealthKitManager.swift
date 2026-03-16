@@ -13,7 +13,7 @@ struct UserHealthData {
     var heartRate: Double?               // bpm
 }
 
-final class HealthKitManager {
+final class HealthKitManager: HealthKitManagerProtocol {
     static let shared = HealthKitManager()
     private let healthStore = HKHealthStore()
 

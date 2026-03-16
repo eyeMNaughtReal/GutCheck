@@ -13,8 +13,13 @@ import FirebaseFirestore
     var selectedFilter: SymptomFilter = .all
     
     private let firebaseManager = FirebaseManager.shared
+    private let symptomRepository: any SymptomRepositoryProtocol
     private var lastDocument: DocumentSnapshot?
     private let pageSize = 20
+    
+    init(symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
+        self.symptomRepository = symptomRepository
+    }
     
     func loadSymptoms(filter: SymptomFilter = .all, refresh: Bool = false) async {
         if refresh {
@@ -129,7 +134,7 @@ import FirebaseFirestore
     
     func updateSymptom(_ updatedSymptom: Symptom) async {
         do {
-            try await SymptomRepository.shared.save(updatedSymptom)
+            try await symptomRepository.save(updatedSymptom)
             
             // Trigger dashboard refresh after successful update
             DataSyncManager.shared.triggerRefreshAfterSave(operation: "Symptom update", dataType: .symptoms)

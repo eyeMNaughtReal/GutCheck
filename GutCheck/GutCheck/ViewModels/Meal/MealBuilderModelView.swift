@@ -26,10 +26,10 @@ import FirebaseAuth
     var editingFoodItem: FoodItem?
     
     // Repository dependency
-    private let mealRepository: MealRepository
+    private let mealRepository: any MealRepositoryProtocol
     
     // Dependency injection for easier testing
-    init(mealRepository: MealRepository = MealRepository.shared) {
+    init(mealRepository: any MealRepositoryProtocol = MealRepository.shared) {
         self.mealRepository = mealRepository
     }
     
