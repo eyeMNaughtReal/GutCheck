@@ -142,6 +142,11 @@ struct UnifiedFoodItemRow: View {
             if config.showAllergens && !item.allergens.isEmpty {
                 allergenTags
             }
+            
+            // Dietary tags (mealBuilder style only)
+            if style == .mealBuilder {
+                dietaryTagsRow
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -200,6 +205,38 @@ struct UnifiedFoodItemRow: View {
                     .font(.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
+        }
+    }
+    
+    @ViewBuilder
+    private var dietaryTagsRow: some View {
+        let breakdown = IngredientBreakdownService.shared.analyzeFood(
+            name: item.name, existingIngredients: item.ingredients
+        )
+        if !breakdown.dietaryTags.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 4) {
+                    ForEach(breakdown.dietaryTags.prefix(5), id: \.self) { tag in
+                        HStack(spacing: 2) {
+                            Image(systemName: tag.icon)
+                                .font(.system(size: 8))
+                            Text(tag.displayName)
+                                .font(.caption2)
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(tag.color.opacity(0.15))
+                        .foregroundStyle(tag.color)
+                        .clipShape(.rect(cornerRadius: 4))
+                    }
+                    if breakdown.dietaryTags.count > 5 {
+                        Text("+\(breakdown.dietaryTags.count - 5)")
+                            .font(.caption2)
+                            .foregroundStyle(ColorTheme.secondaryText)
+                    }
+                }
+            }
+            .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.ingredientBreakdownTags)
         }
     }
     
@@ -376,8 +413,8 @@ struct StyleConfig {
                 showBrand: false,
                 showMacros: true,
                 compactMacros: false,
-                showAllergens: false,
-                maxAllergens: 0
+                showAllergens: true,
+                maxAllergens: 3
             )
             
         case .mealDetail:
