@@ -31,6 +31,10 @@ struct InsightsView: View {
                 // Top Summary Cards
                 topSymptomsCard
                 triggerFoodsCard
+
+                // Symptom Explorer Card
+                symptomExplorerCard
+
                 bestDaysCard
 
                 // Recent Insights Section
@@ -64,6 +68,8 @@ struct InsightsView: View {
                 WeeklyTriggerReportView(report: report)
             case .triggerPatternDetail(let pattern):
                 TriggerPatternDetailView(pattern: pattern)
+            case .symptomExplorer:
+                SymptomExplorerView()
             }
         }
         .toolbar {
@@ -268,6 +274,37 @@ struct InsightsView: View {
         if score >= 70 { return .red }
         if score >= 40 { return .orange }
         return .yellow
+    }
+
+    // MARK: - Symptom Explorer
+
+    private var symptomExplorerCard: some View {
+        NavigationLink(value: InsightsRoute.symptomExplorer) {
+            HStack(spacing: 12) {
+                Image(systemName: "magnifyingglass.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(ColorTheme.accent)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Symptom Explorer")
+                        .font(.headline)
+                        .foregroundStyle(ColorTheme.primaryText)
+                    Text("Investigate meals before symptoms")
+                        .font(.caption)
+                        .foregroundStyle(ColorTheme.secondaryText)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(ColorTheme.secondaryText)
+            }
+            .padding()
+            .background(ColorTheme.surface)
+            .clipShape(.rect(cornerRadius: 12))
+            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
+        }
+        .accessibilityIdentifier(AccessibilityIdentifiers.Insights.symptomExplorerCard)
     }
 
     private var topSymptomsCard: some View {
