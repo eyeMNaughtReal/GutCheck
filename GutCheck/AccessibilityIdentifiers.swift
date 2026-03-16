@@ -212,6 +212,13 @@ enum AccessibilityIdentifiers {
         static func suspectedMealCard(_ index: Int) -> String {
             "insights.symptomExplorer.meal.\(index)"
         }
+        
+        // Symptom Charts
+        static let symptomChartsCard = "insights.symptomCharts.card"
+        static let symptomChartsView = "insights.symptomCharts.view"
+        static let chartTimeRangePicker = "insights.symptomCharts.timeRange.picker"
+        static let chartSymptomFilterPicker = "insights.symptomCharts.symptomFilter.picker"
+        static let chartTabPicker = "insights.symptomCharts.tab.picker"
     }
     
     // MARK: - Tab Bar

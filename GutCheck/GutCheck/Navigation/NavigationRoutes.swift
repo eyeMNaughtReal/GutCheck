@@ -54,6 +54,7 @@ enum InsightsRoute: Hashable {
     case weeklyTriggerReport(WeeklyTriggerReport)
     case triggerPatternDetail(TriggerPattern)
     case symptomExplorer
+    case symptomCharts
 }
 
 // Privacy policy navigation
