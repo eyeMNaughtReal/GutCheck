@@ -9,14 +9,14 @@ import HealthKit
     var errorMessage: String?
     
     // Repository dependencies
-    private let mealRepository: MealRepository
-    private let symptomRepository: SymptomRepository
-    private let medicationDoseRepository: MedicationDoseRepository
+    private let mealRepository: any MealRepositoryProtocol
+    private let symptomRepository: any SymptomRepositoryProtocol
+    private let medicationDoseRepository: any MedicationDoseRepositoryProtocol
     private var medicationService: HealthKitMedicationService?
 
-    init(mealRepository: MealRepository = MealRepository.shared,
-         symptomRepository: SymptomRepository = SymptomRepository.shared,
-         medicationDoseRepository: MedicationDoseRepository = MedicationDoseRepository.shared) {
+    init(mealRepository: any MealRepositoryProtocol = MealRepository.shared,
+         symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared,
+         medicationDoseRepository: any MedicationDoseRepositoryProtocol = MedicationDoseRepository.shared) {
         self.mealRepository = mealRepository
         self.symptomRepository = symptomRepository
         self.medicationDoseRepository = medicationDoseRepository

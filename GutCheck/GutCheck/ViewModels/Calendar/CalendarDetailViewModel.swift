@@ -8,6 +8,15 @@ import FirebaseFirestore
     var patterns: [String]?
     var potentialTriggers: [String]?
     
+    private let mealRepository: any MealRepositoryProtocol
+    private let symptomRepository: any SymptomRepositoryProtocol
+    
+    init(mealRepository: any MealRepositoryProtocol = MealRepository.shared,
+         symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
+        self.mealRepository = mealRepository
+        self.symptomRepository = symptomRepository
+    }
+    
     var hasAnalysis: Bool {
         (patterns != nil && !patterns!.isEmpty) || (potentialTriggers != nil && !potentialTriggers!.isEmpty)
     }
@@ -19,13 +28,13 @@ import FirebaseFirestore
     func loadData(for date: Date, authService: AuthService) async {
         do {
             // Load meals for the day using MealRepository
-            meals = try await MealRepository.shared.fetchMealsForDate(
+            meals = try await mealRepository.fetchMealsForDate(
                 date, 
                 userId: authService.currentUser?.id ?? ""
             )
             
             // Load symptoms for the day using SymptomRepository
-            symptoms = try await SymptomRepository.shared.fetchSymptomsForDate(
+            symptoms = try await symptomRepository.fetchSymptomsForDate(
                 date,
                 userId: authService.currentUser?.id ?? ""
             )
@@ -40,7 +49,7 @@ import FirebaseFirestore
     
     func deleteSymptom(_ symptom: Symptom) async {
         do {
-            try await SymptomRepository.shared.delete(id: symptom.id)
+            try await symptomRepository.delete(id: symptom.id)
             // Remove from local array
             symptoms.removeAll { $0.id == symptom.id }
         } catch {
@@ -49,7 +58,7 @@ import FirebaseFirestore
     
     func updateSymptom(_ updatedSymptom: Symptom) async {
         do {
-            try await SymptomRepository.shared.save(updatedSymptom)
+            try await symptomRepository.save(updatedSymptom)
             // Update in local array
             if let index = symptoms.firstIndex(where: { $0.id == updatedSymptom.id }) {
                 symptoms[index] = updatedSymptom

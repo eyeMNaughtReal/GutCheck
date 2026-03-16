@@ -35,9 +35,9 @@ import UserNotifications
     ]
     
     // Repository dependency
-    private let symptomRepository: SymptomRepository
+    private let symptomRepository: any SymptomRepositoryProtocol
     
-    init(symptomRepository: SymptomRepository = SymptomRepository.shared) {
+    init(symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
         self.symptomRepository = symptomRepository
     }
     

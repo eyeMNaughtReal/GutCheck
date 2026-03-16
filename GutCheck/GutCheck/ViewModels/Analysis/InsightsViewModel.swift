@@ -28,10 +28,18 @@ struct RankedItem: Identifiable {
     var mealSuggestions: [MealSuggestion] = []
 
     private let insightsService = InsightsService.shared
-    private let mealRepository = MealRepository.shared
-    private let symptomRepository = SymptomRepository.shared
-    private let healthKitManager = HealthKitManager.shared
+    private let mealRepository: any MealRepositoryProtocol
+    private let symptomRepository: any SymptomRepositoryProtocol
+    private let healthKitManager: any HealthKitManagerProtocol
     private let authService = AuthService()
+    
+    init(mealRepository: any MealRepositoryProtocol = MealRepository.shared,
+         symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared,
+         healthKitManager: any HealthKitManagerProtocol = HealthKitManager.shared) {
+        self.mealRepository = mealRepository
+        self.symptomRepository = symptomRepository
+        self.healthKitManager = healthKitManager
+    }
     
     func loadInsights() async {
         isLoading = true

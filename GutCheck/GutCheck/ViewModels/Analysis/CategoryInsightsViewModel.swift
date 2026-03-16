@@ -8,9 +8,15 @@ import Foundation
     var error: String?
     
     private let insightsService = InsightsService.shared
-    private let mealRepository = MealRepository.shared
-    private let symptomRepository = SymptomRepository.shared
+    private let mealRepository: any MealRepositoryProtocol
+    private let symptomRepository: any SymptomRepositoryProtocol
     private let authService = AuthService()
+    
+    init(mealRepository: any MealRepositoryProtocol = MealRepository.shared,
+         symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
+        self.mealRepository = mealRepository
+        self.symptomRepository = symptomRepository
+    }
     
     func loadInsights(for category: InsightCategory) async {
         isLoading = true

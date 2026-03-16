@@ -280,7 +280,7 @@ class BaseFirebaseRepository<T: FirestoreModel & DataClassifiable>: FirebaseRepo
 
 // MARK: - Specific Repository Implementations
 
-class MealRepository: BaseFirebaseRepository<Meal> {
+class MealRepository: BaseFirebaseRepository<Meal>, MealRepositoryProtocol {
     static let shared = MealRepository()
     
     private init() {
@@ -358,7 +358,7 @@ class MealRepository: BaseFirebaseRepository<Meal> {
     }
 }
 
-class SymptomRepository: BaseFirebaseRepository<Symptom> {
+class SymptomRepository: BaseFirebaseRepository<Symptom>, SymptomRepositoryProtocol {
     static let shared = SymptomRepository()
     
     private init() {
@@ -480,7 +480,7 @@ class SymptomRepository: BaseFirebaseRepository<Symptom> {
     }
 }
 
-class MedicationRepository: BaseFirebaseRepository<MedicationRecord> {
+class MedicationRepository: BaseFirebaseRepository<MedicationRecord>, MedicationRepositoryProtocol {
     static let shared = MedicationRepository()
 
     private init() {
@@ -557,7 +557,7 @@ class MedicationRepository: BaseFirebaseRepository<MedicationRecord> {
     }
 }
 
-class MedicationDoseRepository: BaseFirebaseRepository<MedicationDoseLog> {
+class MedicationDoseRepository: BaseFirebaseRepository<MedicationDoseLog>, MedicationDoseRepositoryProtocol {
     static let shared = MedicationDoseRepository()
 
     private init() {
@@ -641,10 +641,10 @@ class RepositoryManager {
 
     private init() {}
 
-    lazy var mealRepository: MealRepository = MealRepository.shared
-    lazy var symptomRepository: SymptomRepository = SymptomRepository.shared
+    lazy var mealRepository: any MealRepositoryProtocol = MealRepository.shared
+    lazy var symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared
     lazy var reminderSettingsRepository: ReminderSettingsRepository = ReminderSettingsRepository.shared
-    lazy var medicationRepository: MedicationRepository = MedicationRepository.shared
-    lazy var medicationDoseRepository: MedicationDoseRepository = MedicationDoseRepository.shared
+    lazy var medicationRepository: any MedicationRepositoryProtocol = MedicationRepository.shared
+    lazy var medicationDoseRepository: any MedicationDoseRepositoryProtocol = MedicationDoseRepository.shared
 }
 

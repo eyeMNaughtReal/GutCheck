@@ -4,17 +4,17 @@ import Foundation
 class SymptomDetailViewModel: DetailViewModel<Symptom> {
     var symptomId: String?
     
-    private let repository: SymptomRepository
+    private let repository: any SymptomRepositoryProtocol
     
     // Initialize with a Symptom object
-    init(entity: Symptom, repository: SymptomRepository = SymptomRepository.shared) {
+    init(entity: Symptom, repository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
         self.symptomId = entity.id
         self.repository = repository
         super.init(entity: entity)
     }
     
     // Initialize with a symptom ID
-    init(symptomId: String, repository: SymptomRepository = SymptomRepository.shared) {
+    init(symptomId: String, repository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
         self.symptomId = symptomId
         self.repository = repository
         super.init(entity: Symptom.emptySymptom())
