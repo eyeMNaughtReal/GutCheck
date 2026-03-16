@@ -21,6 +21,7 @@ struct MealBuilderView: View {
     @State private var showingFoodOptions = false
     @State private var editingFoodItem: FoodItem?
 @State private var loadError: String? = nil
+    @State private var riskService = MealRiskPredictionService.shared
     
     var body: some View {
         VStack(spacing: 0) {
@@ -124,6 +125,13 @@ struct MealBuilderView: View {
                         .padding(.horizontal)
                         .padding(.top)
                         .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.nutritionSummary)
+                    
+                    // Risk assessment card
+                    if !mealService.currentMeal.isEmpty,
+                       let assessment = riskService.predictRisk(for: mealService.currentMeal) {
+                        MealRiskAssessmentCard(assessment: assessment)
+                            .padding(.horizontal)
+                    }
                     
                     // Food items
                     if mealService.currentMeal.isEmpty {
@@ -282,12 +290,14 @@ struct MealBuilderView: View {
         .navigationTitle(mealId == nil ? "Build Your Meal" : "Edit Meal")
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            guard let id = mealId else { return }
-            do {
-                try await mealService.loadMeal(id: id)
-            } catch {
-                loadError = error.localizedDescription
+            if let id = mealId {
+                do {
+                    try await mealService.loadMeal(id: id)
+                } catch {
+                    loadError = error.localizedDescription
+                }
             }
+            await riskService.loadHistoricalData()
         }
         .alert("Failed to Load Meal", isPresented: .constant(loadError != nil)) {
             Button("OK") { loadError = nil; dismiss() }

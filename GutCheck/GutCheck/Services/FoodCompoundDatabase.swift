@@ -23,7 +23,7 @@ enum HealthSeverity: Int, CaseIterable {
     }
 }
 
-struct FoodCompound {
+struct FoodCompound: Hashable {
     let name: String
     let category: CompoundCategory
     let severity: HealthSeverity

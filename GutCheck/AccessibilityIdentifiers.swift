@@ -61,6 +61,11 @@ enum AccessibilityIdentifiers {
         static func deleteFoodItem(_ index: Int) -> String {
             "mealBuilder.foodItem.\(index).delete"
         }
+        
+        // Risk Assessment
+        static let riskAssessmentCard = "mealBuilder.riskAssessment.card"
+        static let riskAssessmentHeader = "mealBuilder.riskAssessment.header"
+        static let riskAssessmentNoHistory = "mealBuilder.riskAssessment.noHistory"
     }
     
     // MARK: - Food Search
