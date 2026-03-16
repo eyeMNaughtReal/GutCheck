@@ -150,7 +150,7 @@ import Combine
             sodium: nfood.sodium
         )
         
-        return FoodItem(
+        let foodItem = FoodItem(
             id: nfood.id,
             name: nfood.name,
             quantity: quantityString,
@@ -162,6 +162,9 @@ import Combine
             isUserEdited: false,
             nutritionDetails: nutritionDict
         )
+        
+        // Enrich with ingredient breakdown analysis
+        return IngredientBreakdownService.shared.enrichFoodItem(foodItem)
     }
     
     private func detectAllergens(from foodName: String, brand: String?, ingredients: [String]) -> [String] {
@@ -207,11 +210,12 @@ import Combine
 
 
     func createCustomFoodItem() {
-        let customItem = FoodItem(
+        var customItem = FoodItem(
             name: searchQuery.isEmpty ? "New Food Item" : searchQuery,
             quantity: "1 serving",
             nutrition: NutritionInfo(calories: 0, protein: 0, carbs: 0, fat: 0)
         )
+        customItem = IngredientBreakdownService.shared.enrichFoodItem(customItem)
         selectedFoodItem = customItem
     }
 
