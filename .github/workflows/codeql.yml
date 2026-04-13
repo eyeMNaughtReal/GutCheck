@@ -34,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # ── Swift-only setup ────────────────────────────────────────────────────
       - name: Set up Xcode
@@ -98,7 +98,7 @@ jobs:
           xcodebuild build \
             -project GutCheck.xcodeproj \
             -scheme GutCheck \
-            -destination "generic/platform=iOS Simulator" \
+            -destination "platform=iOS Simulator,name=iPhone 16,OS=latest" \
             CODE_SIGNING_ALLOWED=NO \
             ONLY_ACTIVE_ARCH=NO
 
