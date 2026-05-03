@@ -44,7 +44,15 @@ struct RankedItem: Identifiable {
     func loadInsights() async {
         isLoading = true
         error = nil
-        
+
+        // Load cached insights for instant display on fresh launch
+        if recentInsights.isEmpty,
+           let cached = BackgroundTaskService.shared.loadCachedInsights() {
+            recentInsights = cached
+            patterns = convertInsightsToPatterns(cached)
+            recommendations = convertInsightsToRecommendations(cached)
+        }
+
         do {
             // Get current user ID
             let userId = getCurrentUserId()

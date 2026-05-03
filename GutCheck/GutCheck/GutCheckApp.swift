@@ -8,6 +8,7 @@
 import SwiftUI
 import UIKit
 import UserNotifications
+import BackgroundTasks
 import FirebaseCore
 import FirebaseFirestore
 
@@ -56,6 +57,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // Register as the notification delegate so banners appear while the
         // app is in the foreground and taps can be routed to the right screen
         UNUserNotificationCenter.current().delegate = self
+
+        // Register background task handlers for pre-computed insights and data sync
+        BackgroundTaskService.shared.registerBackgroundTasks()
 
         // Test basic Firebase connectivity
         Task {
@@ -193,6 +197,7 @@ struct GutCheckApp: App {
                 case .background:
                     TimeoutManager.shared.applicationDidEnterBackground()
                     serverStatusService.stopMonitoring()
+                    BackgroundTaskService.shared.scheduleAllTasks()
                 case .active:
                     TimeoutManager.shared.applicationWillEnterForeground()
                     Task { await HealthKitSyncManager.shared.syncIfNeeded() }

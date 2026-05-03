@@ -8,5 +8,15 @@
 	<string>GutCheck sends you helpful reminders to log meals and symptoms so you can maintain consistent tracking for better health insights.</string>
 	<key>NSRemindersUsageDescription</key>
 	<string>GutCheck can add your meal and symptom logging reminders to the Apple Reminders app so you can manage them alongside your other tasks.</string>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.gutcheck.insights-refresh</string>
+		<string>com.gutcheck.data-sync</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
 </dict>
 </plist>
