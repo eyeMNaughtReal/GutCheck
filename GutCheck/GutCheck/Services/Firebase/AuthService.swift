@@ -10,6 +10,7 @@ import FirebaseAuth
 import FirebaseFirestore
 import CryptoKit
 import AuthenticationServices
+import os.log
 
 @MainActor
 @Observable class AuthService: AuthenticationProtocol, HasLoadingState {
@@ -26,9 +27,10 @@ import AuthenticationServices
     @ObservationIgnored private var currentNonce: String?
     
     let loadingState = LoadingStateManager()
-    
+
     @ObservationIgnored private let auth = Auth.auth()
     @ObservationIgnored private lazy var firestore = Firestore.firestore()
+    @ObservationIgnored private let rateLimiter = RateLimitingService.shared
     
     // Auth state listener handle
     @ObservationIgnored private var authStateListenerHandle: AuthStateDidChangeListenerHandle?
@@ -72,15 +74,18 @@ import AuthenticationServices
     // MARK: - Authentication Methods
     
     func signIn(email: String, password: String) async throws {
+        try rateLimiter.checkLimit(for: .login)
+
         isLoading = true
         errorMessage = nil
-        
+
         defer { isLoading = false }
-        
+
         do {
             let result = try await auth.signIn(withEmail: email, password: password)
             authUser = result.user
-            
+            rateLimiter.reset(for: .login)
+
             // Block unverified email users
             if !result.user.isEmailVerified {
                 pendingVerificationEmail = email
@@ -89,10 +94,11 @@ import AuthenticationServices
                 isAuthenticated = false
                 return
             }
-            
+
             isAuthenticated = true
             await loadCurrentUser(userId: result.user.uid)
         } catch {
+            rateLimiter.recordFailure(for: .login)
             errorMessage = handleAuthError(error)
             throw error
         }
@@ -146,11 +152,13 @@ import AuthenticationServices
     }
     
     func sendPasswordReset(email: String) async throws {
+        try rateLimiter.checkLimit(for: .passwordReset)
+
         isLoading = true
         errorMessage = nil
-        
+
         defer { isLoading = false }
-        
+
         do {
             try await auth.sendPasswordReset(withEmail: email)
         } catch {
@@ -160,12 +168,14 @@ import AuthenticationServices
     }
     
     func verifyPhoneNumber(_ phoneNumber: String) async throws {
+        try rateLimiter.checkLimit(for: .phoneVerification)
+
         isLoading = true
         errorMessage = nil
         isPhoneVerificationInProgress = true
-        
+
         defer { isLoading = false }
-        
+
         do {
             let verificationID = try await PhoneAuthProvider.provider()
                 .verifyPhoneNumber(phoneNumber, uiDelegate: nil)
@@ -209,6 +219,8 @@ import AuthenticationServices
     // MARK: - Email Verification
     
     func resendVerificationEmail() async throws {
+        try rateLimiter.checkLimit(for: .resendVerificationEmail)
+
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
@@ -423,12 +435,14 @@ import AuthenticationServices
     // MARK: - Phone Sign In
     
     func sendPhoneVerification(phoneNumber: String) async throws {
+        try rateLimiter.checkLimit(for: .phoneVerification)
+
         isLoading = true
         isPhoneVerificationInProgress = true
         errorMessage = nil
-        
+
         defer { isLoading = false }
-        
+
         do {
             let verificationID = try await PhoneAuthProvider.provider().verifyPhoneNumber(phoneNumber, uiDelegate: nil)
             verificationId = verificationID
@@ -724,6 +738,9 @@ import AuthenticationServices
     }
     
     private func handleAuthError(_ error: Error) -> String {
+        if let rateLimitError = error as? RateLimitError {
+            return rateLimitError.localizedDescription
+        }
         if let authError = error as NSError? {
             switch authError.code {
             case AuthErrorCode.invalidEmail.rawValue:

@@ -24,6 +24,20 @@ import SwiftUI
         didSet { Self.defaults.set(healthKitWriteSymptoms, forKey: "healthKitWriteSymptoms") }
     }
 
+    // MARK: - Developer / Beta Toggles (DEBUG only)
+
+    #if DEBUG
+    var testMealModeEnabled: Bool {
+        didSet { Self.defaults.set(testMealModeEnabled, forKey: "dev.testMealMode") }
+    }
+    var experimentalAIEnabled: Bool {
+        didSet { Self.defaults.set(experimentalAIEnabled, forKey: "dev.experimentalAI") }
+    }
+    var showSyncDebugInfo: Bool {
+        didSet { Self.defaults.set(showSyncDebugInfo, forKey: "dev.showSyncDebugInfo") }
+    }
+    #endif
+
     // MARK: - Init (read current values from UserDefaults)
 
     init() {
@@ -34,6 +48,12 @@ import SwiftUI
         self.healthKitSyncEnabled = defaults.object(forKey: "healthKitSyncEnabled") as? Bool ?? true
         self.healthKitWriteMeals = defaults.object(forKey: "healthKitWriteMeals") as? Bool ?? true
         self.healthKitWriteSymptoms = defaults.object(forKey: "healthKitWriteSymptoms") as? Bool ?? true
+
+        #if DEBUG
+        self.testMealModeEnabled = defaults.object(forKey: "dev.testMealMode") as? Bool ?? false
+        self.experimentalAIEnabled = defaults.object(forKey: "dev.experimentalAI") as? Bool ?? false
+        self.showSyncDebugInfo = defaults.object(forKey: "dev.showSyncDebugInfo") as? Bool ?? false
+        #endif
     }
 
     // MARK: - Computed convenience properties
