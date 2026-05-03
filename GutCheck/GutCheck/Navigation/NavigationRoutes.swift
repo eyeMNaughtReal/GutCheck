@@ -19,6 +19,7 @@ enum SettingsRoute: Hashable {
     case dataDeletion
     case localStorage
     case deleteAccount
+    case debugMenu
 
     @ViewBuilder
     static func destinationView(for route: SettingsRoute) -> some View {
@@ -43,6 +44,8 @@ enum SettingsRoute: Hashable {
             LocalStorageSettingsView()
         case .deleteAccount:
             DeleteAccountView()
+        case .debugMenu:
+            DebugView()
         }
     }
 }
