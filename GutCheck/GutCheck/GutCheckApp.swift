@@ -9,6 +9,7 @@ import SwiftUI
 import UIKit
 import UserNotifications
 import BackgroundTasks
+import CoreSpotlight
 import FirebaseCore
 import FirebaseFirestore
 
@@ -190,6 +191,22 @@ struct GutCheckApp: App {
                     serverStatusService.startMonitoring()
                 } else {
                     serverStatusService.stopMonitoring()
+                    // Clear Spotlight index when user signs out
+                    SpotlightIndexingService.shared.removeAllItems()
+                }
+            }
+            .onContinueUserActivity(CSSearchableItemActionType) { activity in
+                guard let identifier = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String,
+                      let parsed = SpotlightIndexingService.parseIdentifier(identifier) else {
+                    return
+                }
+                switch parsed.type {
+                case "meal":
+                    AppRouter.shared.viewMealDetails(id: parsed.id)
+                case "symptom":
+                    AppRouter.shared.viewSymptomDetails(id: parsed.id)
+                default:
+                    break
                 }
             }
             .onChange(of: scenePhase) { oldPhase, newPhase in

@@ -116,7 +116,8 @@ import FirebaseFirestore
     func deleteSymptom(_ symptom: Symptom) async {
         do {
             try await firebaseManager.deleteDocument(from: "symptoms", documentId: symptom.id)
-            
+            SpotlightIndexingService.shared.removeSymptom(id: symptom.id)
+
             // Remove from grouped symptoms
             for (date, symptoms) in groupedSymptoms {
                 if let index = symptoms.firstIndex(where: { $0.id == symptom.id }) {
@@ -135,7 +136,8 @@ import FirebaseFirestore
     func updateSymptom(_ updatedSymptom: Symptom) async {
         do {
             try await symptomRepository.save(updatedSymptom)
-            
+            SpotlightIndexingService.shared.indexSymptom(updatedSymptom)
+
             // Trigger dashboard refresh after successful update
             DataSyncManager.shared.triggerRefreshAfterSave(operation: "Symptom update", dataType: .symptoms)
             
