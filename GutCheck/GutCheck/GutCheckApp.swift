@@ -221,6 +221,8 @@ struct GutCheckApp: App {
                     if authService.isAuthenticated {
                         serverStatusService.startMonitoring()
                         Task { try? await dataSyncService.performFullSync() }
+                        // Re-evaluate notifications in case Focus Filter state changed
+                        Task { await ReminderSettingsService.shared.rescheduleNotificationsForFocusChange() }
                     }
                 default:
                     break
