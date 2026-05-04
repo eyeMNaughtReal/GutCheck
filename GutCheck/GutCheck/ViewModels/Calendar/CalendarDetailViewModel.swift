@@ -50,6 +50,7 @@ import FirebaseFirestore
     func deleteSymptom(_ symptom: Symptom) async {
         do {
             try await symptomRepository.delete(id: symptom.id)
+            SpotlightIndexingService.shared.removeSymptom(id: symptom.id)
             // Remove from local array
             symptoms.removeAll { $0.id == symptom.id }
         } catch {
@@ -59,6 +60,7 @@ import FirebaseFirestore
     func updateSymptom(_ updatedSymptom: Symptom) async {
         do {
             try await symptomRepository.save(updatedSymptom)
+            SpotlightIndexingService.shared.indexSymptom(updatedSymptom)
             // Update in local array
             if let index = symptoms.firstIndex(where: { $0.id == updatedSymptom.id }) {
                 symptoms[index] = updatedSymptom

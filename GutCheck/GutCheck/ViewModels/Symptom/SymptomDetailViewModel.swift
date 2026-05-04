@@ -51,6 +51,7 @@ class SymptomDetailViewModel: DetailViewModel<Symptom> {
         await executeWithSaving {
             try await self.repository.save(self.entity)
         } onSuccess: { _ in
+            SpotlightIndexingService.shared.indexSymptom(self.entity)
             self.isEditing = false
         } onError: { _ in
             // Error already handled by base class
@@ -64,6 +65,7 @@ class SymptomDetailViewModel: DetailViewModel<Symptom> {
         await executeWithLoading {
             try await self.repository.delete(id: self.entity.id)
         } onSuccess: { _ in
+            SpotlightIndexingService.shared.removeSymptom(id: self.entity.id)
             self.shouldDismiss = true
         }
         
