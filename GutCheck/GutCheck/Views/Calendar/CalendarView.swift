@@ -373,7 +373,9 @@ struct EmptyStateCard: View {
     var isLoadingSymptoms = false
     var calendarDays: [CalendarDay] = []
     
-
+    // Month-wide data for pattern overlay correlations
+    private var monthMeals: [Meal] = []
+    private var monthSymptoms: [Symptom] = []
     
     // Computed property for formatted date string
     var formattedDate: String {
@@ -475,6 +477,123 @@ struct EmptyStateCard: View {
             self.loadMeals()
             self.loadSymptoms()
             self.generateCalendarDays(for: date)
+        }
+        await loadMonthData(for: date)
+    }
+    
+    // MARK: - Month-Wide Pattern Overlay
+    
+    /// Fetch all meals and symptoms for the visible month, then compute correlations
+    private func loadMonthData(for date: Date) async {
+        let calendar = Calendar.current
+        guard let userId = AuthenticationManager.shared.currentUserId,
+              let monthInterval = calendar.dateInterval(of: .month, for: date) else {
+            return
+        }
+        
+        let startDate = monthInterval.start
+        let endDate = monthInterval.end
+        
+        do {
+            async let mealsTask = MealRepository.shared.fetchMealsForDateRange(
+                startDate: startDate, endDate: endDate, userId: userId
+            )
+            async let symptomsTask = SymptomRepository.shared.fetchSymptomsForDateRange(
+                startDate: startDate, endDate: endDate, userId: userId
+            )
+            
+            let (loadedMeals, loadedSymptoms) = try await (mealsTask, symptomsTask)
+            
+            self.monthMeals = loadedMeals
+            self.monthSymptoms = loadedSymptoms
+            
+            computeCorrelations()
+        } catch {
+            // Correlation overlay is non-critical; fail silently
+        }
+    }
+    
+    /// Compute lightweight meal-to-symptom correlations for each calendar day
+    private func computeCorrelations() {
+        let calendar = Calendar.current
+        
+        // Group meals and symptoms by day
+        let mealsByDay = Dictionary(grouping: monthMeals) { meal in
+            calendar.startOfDay(for: meal.date)
+        }
+        let symptomsByDay = Dictionary(grouping: monthSymptoms) { symptom in
+            calendar.startOfDay(for: symptom.date)
+        }
+        
+        for index in calendarDays.indices {
+            let dayStart = calendar.startOfDay(for: calendarDays[index].date)
+            
+            // Update entry type indicators from month-wide data
+            let dayMeals = mealsByDay[dayStart] ?? []
+            let daySymptoms = symptomsByDay[dayStart] ?? []
+            
+            if !dayMeals.isEmpty || !daySymptoms.isEmpty {
+                var entryTypes: Set<CalendarDay.EntryType> = []
+                if !dayMeals.isEmpty { entryTypes.insert(.meals) }
+                if !daySymptoms.isEmpty { entryTypes.insert(.symptom) }
+                if !dayMeals.isEmpty && !daySymptoms.isEmpty { entryTypes.insert(.both) }
+                
+                calendarDays[index] = CalendarDay(
+                    date: calendarDays[index].date,
+                    isCurrentMonth: calendarDays[index].isCurrentMonth,
+                    hasEntries: true,
+                    entryTypes: entryTypes,
+                    meals: calendarDays[index].meals,
+                    symptoms: calendarDays[index].symptoms,
+                    correlation: nil
+                )
+            }
+            
+            // Find meals on this day that were followed by symptoms within 2-8 hours
+            guard !dayMeals.isEmpty else { continue }
+            
+            // Collect all symptoms that could be correlated (same day + next day for late meals)
+            let nextDayStart = calendar.date(byAdding: .day, value: 1, to: dayStart)!
+            let candidateSymptoms = daySymptoms + (symptomsByDay[nextDayStart] ?? [])
+            guard !candidateSymptoms.isEmpty else { continue }
+            
+            var triggerFoods: Set<String> = []
+            var correlatedSymptoms: [Symptom] = []
+            
+            for meal in dayMeals {
+                let related = candidateSymptoms.filter { symptom in
+                    let hours = symptom.date.timeIntervalSince(meal.date) / 3600
+                    return hours >= 2 && hours <= 8
+                }
+                
+                if !related.isEmpty {
+                    for foodItem in meal.foodItems {
+                        triggerFoods.insert(foodItem.name)
+                    }
+                    correlatedSymptoms.append(contentsOf: related)
+                }
+            }
+            
+            guard !triggerFoods.isEmpty else { continue }
+            
+            // Deduplicate symptoms by id
+            let uniqueSymptoms = Dictionary(grouping: correlatedSymptoms, by: \.id)
+                .compactMap { $0.value.first }
+            
+            // Compute max severity
+            let maxSeverity = uniqueSymptoms.reduce(CorrelationSeverity.low) { current, symptom in
+                let severity = CorrelationSeverity.from(
+                    painLevel: symptom.painLevel,
+                    urgencyLevel: symptom.urgencyLevel
+                )
+                return max(current, severity)
+            }
+            
+            calendarDays[index].correlation = DayCorrelation(
+                triggerFoodNames: Array(triggerFoods).sorted(),
+                symptomCount: uniqueSymptoms.count,
+                severity: maxSeverity
+            )
         }
     }
     
