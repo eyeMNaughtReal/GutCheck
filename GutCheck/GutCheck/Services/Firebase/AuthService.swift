@@ -504,8 +504,8 @@ import os.log
     
     /// Prepares the Apple Sign-In request by generating and storing a nonce.
     /// Returns the SHA256-hashed nonce to include in the ASAuthorizationAppleIDRequest.
-    func prepareAppleSignIn() -> String {
-        let nonce = randomNonceString()
+    func prepareAppleSignIn() throws -> String {
+        let nonce = try randomNonceString()
         currentNonce = nonce
         return sha256(nonce)
     }
@@ -573,12 +573,12 @@ import os.log
         }
     }
     
-    private func randomNonceString(length: Int = 32) -> String {
+    private func randomNonceString(length: Int = 32) throws -> String {
         precondition(length > 0)
         var randomBytes = [UInt8](repeating: 0, count: length)
         let errorCode = SecRandomCopyBytes(kSecRandomDefault, randomBytes.count, &randomBytes)
-        if errorCode != errSecSuccess {
-            fatalError("Unable to generate nonce. SecRandomCopyBytes failed with OSStatus \(errorCode)")
+        guard errorCode == errSecSuccess else {
+            throw AuthError.custom("Failed to generate secure nonce (OSStatus \(errorCode))")
         }
         
         let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
