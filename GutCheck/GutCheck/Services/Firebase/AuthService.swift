@@ -95,6 +95,8 @@ import os.log
                 return
             }
 
+            pendingVerificationEmail = nil
+            pendingVerificationPassword = nil
             isAuthenticated = true
             await loadCurrentUser(userId: result.user.uid)
         } catch {
@@ -145,6 +147,11 @@ import os.log
             self.currentUser = nil
             self.isAuthenticated = false
             self.errorMessage = nil
+            // Clear sensitive credentials from memory
+            self.pendingVerificationEmail = nil
+            self.pendingVerificationPassword = nil
+            self.currentNonce = nil
+            self.verificationId = nil
         } catch {
             self.errorMessage = "Failed to sign out: \(error.localizedDescription)"
             throw error
@@ -198,6 +205,7 @@ import os.log
         defer { 
             isLoading = false
             isPhoneVerificationInProgress = false
+            self.verificationId = nil
         }
         
         do {
@@ -464,6 +472,7 @@ import os.log
         defer {
             isLoading = false
             isPhoneVerificationInProgress = false
+            self.verificationId = nil
         }
         
         do {
@@ -505,7 +514,10 @@ import os.log
     func signInWithApple(_ authorization: ASAuthorization) async throws {
         isLoading = true
         errorMessage = nil
-        defer { isLoading = false }
+        defer {
+            isLoading = false
+            currentNonce = nil
+        }
         
         guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential else {
             throw AuthError.custom("Invalid Apple credential type")
@@ -554,10 +566,8 @@ import os.log
             // Apple users are pre-verified — skip email verification
             isAuthenticated = true
             isAwaitingEmailVerification = false
-            currentNonce = nil
             
         } catch {
-            currentNonce = nil
             errorMessage = handleAuthError(error)
             throw error
         }
