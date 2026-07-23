@@ -37,16 +37,20 @@ The differentiator is the **clarification loop**: the app never silently guesses
 
 ## 3. iOS 27 platform capabilities to leverage
 
-> These build on APIs Apple introduced in iOS 26 (2025) and are expected to mature in iOS 27. Treat exact API shapes as provisional until the iOS 27 SDK ships; validate at WWDC 2026.
+> These are **first-party Swift APIs that ship in the SDK** (`import FoundationModels`, `import Vision`, etc.), introduced in the iOS 26 / Xcode 26 cycle (2025) and maturing in iOS 27. AI is available natively — no API keys, no per-call cost, no network. Minor API refinements are expected at WWDC 2026, so keep implementations behind our own protocols; the capability itself is not provisional.
 
-- **Foundation Models framework** — Apple's on-device LLM. Use for the clarifying-question dialog, natural-language meal parsing, and structured extraction. Private (data never leaves device), free (no per-call cost), works offline. Use **guided generation / `@Generable` structured output** to decode directly into our `FoodItem` / `NutritionInfo` models.
+- **Foundation Models framework** — Apple's on-device LLM, called directly from Swift. This is the core of the reasoning layer, and it is native — not a cloud dependency:
+  - **`LanguageModelSession`** — create a session, call `session.respond(to:)`; this drives the clarifying-question dialog and natural-language meal parsing.
+  - **`@Generable` + `@Guide` macros** — annotate a Swift struct and the model returns *that type*, guaranteed-decoded. The model emits a `FoodItem` / `NutritionInfo` value directly instead of free text we have to parse (guided generation).
+  - **`Tool` protocol** — the on-device model can call *our* Swift functions. Register `FoodSearchService` / `OpenFoodFactsService` / `USDAFoodService` as tools so the model looks up real nutrition data while reasoning, grounding answers instead of hallucinating numbers.
+  - Private (data stays on device), free, works offline. Availability is checked via `SystemLanguageModel.default` before use.
 - **Visual Intelligence / Vision framework** — improved image classification and the newer food-aware requests; multiple-object detection for multi-item plates.
 - **VisionKit `DataScannerViewController`** — live camera OCR + barcode in one component. Drives both label reading and barcode capture.
 - **LiDAR depth + ARKit** — real-world portion/volume estimation on Pro devices; graceful fallback to reference-object sizing (utensil, hand, plate) on non-LiDAR devices.
 - **App Intents / Visual Intelligence entry points** — "log a meal" from the camera/lock-screen without opening the app.
 - **Speech framework (`SpeechAnalyzer`)** — on-device dictation for spoken food entries.
 
-**Cloud fallback:** for reasoning the on-device model can't handle (dense nutrition panels, obscure branded items, low-confidence multi-item plates), fall back to a cloud LLM (Claude) behind a user-consent, privacy-gated path. On-device first, cloud only when needed and permitted.
+**Native on-device is the default and primary path.** The Foundation Models framework handles the reasoning, dialog, and structured extraction entirely on-device. A cloud LLM (Claude) is an **optional, opt-in fallback** for the rare case the on-device model can't handle (dense/blurry nutrition panels, obscure branded items, low-confidence multi-item plates) — user-consented and privacy-gated, and removable entirely if we choose to stay 100% on-device.
 
 ---
 
@@ -89,7 +93,7 @@ A new **Smart Food** subsystem layered on top of existing services. Proposed loc
 
 - **`SmartFoodCandidate`** — intermediate model: recognized name, confidence (0–1), estimated portion (+ method: LiDAR / reference / default), source (photo/label/voice/text), and a list of `MissingAttribute`s (e.g. `.sodiumVariant`, `.brand`, `.breadType`, `.cheeseType`).
 - **`ClarificationEngine`** — decides *when* to ask. Rule: if a missing attribute would shift a tracked metric (sodium, added sugar, fat, calories, portion) beyond a threshold, generate a question. Prioritizes questions by nutritional impact; caps at N questions per item to avoid fatigue.
-- **`SmartFoodReasoner`** — wraps Foundation Models with a strict schema so output always decodes into our models; owns the cloud-fallback decision and consent gating.
+- **`SmartFoodReasoner`** — wraps a `LanguageModelSession` and uses `@Generable` output types so results always decode into our models; registers `FoodSearchService`/`OpenFoodFactsService`/`USDAFoodService` as `Tool`s so the on-device model grounds its answers in real data. Owns the optional cloud-fallback decision and consent gating. Sits behind a protocol so the implementation can evolve with the SDK.
 - **Provenance & confidence on `FoodItem`** — extend `Models/FoodItem.swift` (and `Models/Nutrition/`) with `source`, `confidence`, `estimationMethod`, and `userConfirmed` so the UI can show "AI estimated" vs "from label" vs "you confirmed".
 
 ---
@@ -163,8 +167,8 @@ Phases 1–2 (reasoning + clarification) and 3 (label/barcode) can proceed in pa
 
 ## 9. Open questions / risks
 
-- **iOS 27 API stability** — Foundation Models APIs may change at WWDC 2026; keep the reasoner behind our own protocol so we can swap implementations.
-- **On-device model limits** — small on-device LLMs may struggle with dense panels or obscure brands; the cloud fallback must be robust and clearly consented.
+- **API refinement, not availability** — the Foundation Models Swift API ships in the SDK today; expect minor refinements in the iOS 27 cycle. Keep the reasoner behind our own protocol so we track SDK changes without churn. The AI capability itself is not a risk item.
+- **On-device model limits** — the on-device LLM is small and may struggle with dense panels or obscure brands; grounding it with `Tool` calls to USDA/OpenFoodFacts mitigates most of this, and the optional cloud fallback covers the rest (clearly consented).
 - **Device fragmentation** — LiDAR is Pro-only; non-LiDAR portion estimation accuracy needs validation.
 - **Deployment target** — smart features gate on iOS 26/27; the app must degrade gracefully to the current manual flow on iOS 15–25.
 - **Food-model sourcing** — decide between a licensed food classifier, a custom-trained Core ML model, or Apple's built-in food recognition once its coverage is known.
@@ -177,6 +181,6 @@ Phases 1–2 (reasoning + clarification) and 3 (label/barcode) can proceed in pa
 Work that de-risks the above and is valuable today, before the iOS 27 SDK lands:
 
 1. Define `SmartFoodCandidate` + provenance/confidence fields and thread them through `FoodItem` / `MealBuilderService` (no OS dependency).
-2. Extract a `SmartFoodReasoner` **protocol** now, backed by the existing heuristic `AIAnalysisService`, so the Foundation Models implementation is a drop-in later.
+2. Extract a `SmartFoodReasoner` **protocol** now, backed by the existing heuristic `AIAnalysisService`, so the native `FoundationModels` implementation (`LanguageModelSession` + `@Generable`) is a drop-in once the team is on Xcode 26+/iOS 26+ — no need to wait for iOS 27 to start.
 3. Wire `DataScannerViewController` barcode scanning to `OpenFoodFactsService` — shippable on current iOS.
 4. Prototype the clarifying-question UX with static rules (no LLM) to validate the interaction before wiring real reasoning.
