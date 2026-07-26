@@ -31,9 +31,7 @@ struct MedicationCalendarView: View {
             // Content List
             List {
                 // ── Medications static header ──
-                CalendarMedicationsSectionHeader(viewModel: viewModel) {
-                    showingLogDose = true
-                }
+                CalendarMedicationsSectionHeader(viewModel: viewModel)
                 .listRowInsets(EdgeInsets())
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
@@ -51,7 +49,7 @@ struct MedicationCalendarView: View {
                     EmptyStateCard(
                         icon: "pills.fill",
                         title: "No doses logged",
-                        message: "Tap Log Dose above to record a medication"
+                        message: "Tap Log Dose below to record a medication"
                     )
                     .padding(.horizontal, 16)
                     .padding(.bottom, 16)
@@ -91,6 +89,16 @@ struct MedicationCalendarView: View {
             .scrollContentBackground(.hidden)
         }
         .background(ColorTheme.background)
+        // Primary action pinned full-width at the bottom, in the thumb zone.
+        .safeAreaInset(edge: .bottom) {
+            BottomLogButton(
+                title: "Log Dose",
+                systemImage: "plus.circle.fill",
+                accessibilityHint: "Tap to log a medication dose"
+            ) {
+                showingLogDose = true
+            }
+        }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -133,7 +141,6 @@ struct MedicationCalendarView: View {
 
 struct CalendarMedicationsSectionHeader: View {
     var viewModel: MedicationCalendarViewModel
-    let onLogDose: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -143,34 +150,16 @@ struct CalendarMedicationsSectionHeader: View {
                 .padding(.top, 16)
                 .padding(.bottom, 8)
 
-            // Section title + Log Dose button on the same row
-            HStack {
-                Text("Medications")
-                    .typography(Typography.title3)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(ColorTheme.primaryText)
-                Spacer()
-                Button {
-                    HapticManager.shared.medium()
-                    onLogDose()
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.subheadline.weight(.semibold))
-                        Text("Log Dose")
-                            .font(.subheadline.weight(.semibold))
-                    }
-                    .frame(minWidth: 148)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(Color.orange, in: Capsule())
-                    .foregroundStyle(.white)
-                }
-                .accessibleButton(label: "Log Dose", hint: "Tap to log a medication dose")
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
-            .padding(.bottom, 12)
+            // Section title. The Log Dose action now lives in a pinned
+            // full-width button at the bottom of the screen.
+            Text("Medications")
+                .typography(Typography.title3)
+                .fontWeight(.semibold)
+                .foregroundStyle(ColorTheme.primaryText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 12)
         }
     }
 }
@@ -226,7 +215,7 @@ struct DailyMedicationCard: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(ColorTheme.cardBackground)
+                .fill(ColorTheme.tintedCard(ColorTheme.primary))
                 .shadow(color: ColorTheme.shadowColor, radius: 3, x: 0, y: 1)
         )
         .accessibilityElement(children: .combine)

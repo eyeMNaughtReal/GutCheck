@@ -114,6 +114,13 @@ struct ColorTheme {
     /// the two appearances — so this stays fixed dark in both.
     static let onFixedLightSurface = Color(red: 0.07, green: 0.09, blue: 0.15)
 
+    /// Soft tinted surface for a summary card, keyed to what the screen tracks.
+    /// Sits between `cardBackground` and a fully saturated fill — enough to
+    /// distinguish the three tabs at a glance without competing with content.
+    static func tintedCard(_ tint: Color) -> Color {
+        tint.opacity(0.14)
+    }
+
     // MARK: - Severity Encoding
 
     /// Maps a 0-3 severity scale to a consistent color ramp.

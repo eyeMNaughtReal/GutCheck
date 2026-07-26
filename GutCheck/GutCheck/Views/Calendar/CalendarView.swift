@@ -67,7 +67,7 @@ struct CalendarView: View {
                         EmptyStateCard(
                             icon: "fork.knife",
                             title: "No meals logged",
-                            message: "Tap Log Meal above to get started"
+                            message: "Tap Log Meal below to get started"
                         )
                         .padding(.horizontal, 16)
                         .padding(.bottom, 16)
@@ -135,7 +135,7 @@ struct CalendarView: View {
                         EmptyStateCard(
                             icon: "heart.text.square",
                             title: "No symptoms logged",
-                            message: "Tap Log Symptom above to get started"
+                            message: "Tap Log Symptom below to get started"
                         )
                         .padding(.horizontal, 16)
                         .padding(.bottom, 16)
@@ -193,6 +193,28 @@ struct CalendarView: View {
             }
         }
         .background(ColorTheme.background)
+        // Primary action pinned full-width at the bottom, in the thumb zone.
+        // Stacks above the tab bar, which is itself a safeAreaInset in ContentView.
+        .safeAreaInset(edge: .bottom) {
+            if selectedTab == .symptoms {
+                BottomLogButton(
+                    title: "Log Symptom",
+                    systemImage: "plus.circle.fill",
+                    accessibilityHint: "Tap to log a new symptom"
+                ) {
+                    router.startSymptomLogging()
+                }
+                .accessibilityIdentifier(AccessibilityIdentifiers.Calendar.floatingActionButton)
+            } else {
+                BottomLogButton(
+                    title: "Log Meal",
+                    systemImage: "plus.circle.fill",
+                    accessibilityHint: "Tap to log a new meal"
+                ) {
+                    router.startMealLogging()
+                }
+            }
+        }
         // The tab bar already names this screen, and each section carries its own
         // header — a large title here just duplicates both and costs ~100pt above the fold.
         .navigationTitle("")
@@ -255,34 +277,16 @@ struct CalendarMealsSectionHeader: View {
             .padding(.top, 16)
             .padding(.bottom, 8)
 
-            // Section title + Log Meal button on the same row
-            HStack {
-                Text("Meals")
-                    .typography(Typography.title3)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(ColorTheme.primaryText)
-                Spacer()
-                Button {
-                    HapticManager.shared.medium()
-                    router.startMealLogging()
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.subheadline.weight(.semibold))
-                        Text("Log Meal")
-                            .font(.subheadline.weight(.semibold))
-                    }
-                    .frame(minWidth: 148)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(ColorTheme.accent, in: Capsule())
-                    .foregroundStyle(.white)
-                }
-                .accessibleButton(label: "Log Meal", hint: "Tap to log a new meal")
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
-            .padding(.bottom, 12)
+            // Section title. The Log Meal action now lives in a pinned
+            // full-width button at the bottom of the screen.
+            Text("Meals")
+                .typography(Typography.title3)
+                .fontWeight(.semibold)
+                .foregroundStyle(ColorTheme.primaryText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 12)
         }
     }
 }
@@ -302,35 +306,16 @@ struct CalendarSymptomsSectionHeader: View {
                 .padding(.top, 16)
                 .padding(.bottom, 8)
 
-            // Section title + Log Symptom button on the same row
-            HStack {
-                Text("Symptoms")
-                    .typography(Typography.title3)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(ColorTheme.primaryText)
-                Spacer()
-                Button {
-                    HapticManager.shared.medium()
-                    router.startSymptomLogging()
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.subheadline.weight(.semibold))
-                        Text("Log Symptom")
-                            .font(.subheadline.weight(.semibold))
-                    }
-                    .frame(minWidth: 148)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(ColorTheme.accent, in: Capsule())
-                    .foregroundStyle(.white)
-                }
-                .accessibleButton(label: "Log Symptom", hint: "Tap to log a new symptom")
-                .accessibilityIdentifier(AccessibilityIdentifiers.Calendar.floatingActionButton)
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
-            .padding(.bottom, 12)
+            // Section title. The Log Symptom action now lives in a pinned
+            // full-width button at the bottom of the screen.
+            Text("Symptoms")
+                .typography(Typography.title3)
+                .fontWeight(.semibold)
+                .foregroundStyle(ColorTheme.primaryText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 12)
         }
     }
 }
@@ -677,6 +662,34 @@ struct EmptyStateCard: View {
 
 }
 
+// MARK: - Meal Macro Label
+/// One macro on a meal row: name, grams, and a colored underline keying it to
+/// the same colors the Daily Nutrition card uses.
+private struct MealMacroLabel: View {
+    let name: String
+    let grams: Double?
+    let color: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 4) {
+                Text(name)
+                    .typography(Typography.caption)
+                    .foregroundStyle(ColorTheme.secondaryText)
+                Text(grams.map { "\($0.formatted(.number.precision(.fractionLength(0))))g" } ?? "--")
+                    .typography(Typography.caption)
+                    .foregroundStyle(ColorTheme.primaryText)
+            }
+            Capsule()
+                .fill(color)
+                .frame(height: 2)
+        }
+        .fixedSize()
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(name) \(grams.map { "\(Int($0)) grams" } ?? "not recorded")")
+    }
+}
+
 // MARK: - Meal Row
 struct MealCalendarRow: View {
     let meal: Meal
@@ -710,24 +723,40 @@ struct MealCalendarRow: View {
                 
                 // Content
                 VStack(alignment: .leading, spacing: 6) {
-                    HStack {
+                    HStack(alignment: .firstTextBaseline) {
                         Text(meal.type.rawValue.capitalized)
-                            .font(.system(size: 17, weight: .semibold))
+                            .typography(Typography.headline)
                             .foregroundStyle(ColorTheme.primaryText)
-                        
+
+                        if let calories = meal.nutrition.calories {
+                            Text("\(calories) kcal")
+                                .typography(Typography.subheadline)
+                                .foregroundStyle(ColorTheme.success)
+                        }
+
                         Spacer()
-                        
+
                         Text(formattedTime)
-                            .font(.system(size: 15))
+                            .typography(Typography.subheadline)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
-                    
+
                     if !meal.foodItems.isEmpty {
                         Text(foodItemsPreview)
-                            .font(.system(size: 15))
+                            .typography(Typography.subheadline)
                             .foregroundStyle(ColorTheme.secondaryText)
                             .lineLimit(2)
                             .multilineTextAlignment(.leading)
+                    }
+
+                    // Per-meal macro breakdown, shown only when there's data.
+                    if meal.nutrition.protein != nil || meal.nutrition.carbs != nil || meal.nutrition.fat != nil {
+                        HStack(spacing: 14) {
+                            MealMacroLabel(name: "Protein", grams: meal.nutrition.protein, color: .blue)
+                            MealMacroLabel(name: "Carbs",   grams: meal.nutrition.carbs,   color: .green)
+                            MealMacroLabel(name: "Fat",     grams: meal.nutrition.fat,     color: .red)
+                        }
+                        .padding(.top, 2)
                     }
                 }
                 
@@ -948,7 +977,7 @@ struct DailyNutritionCard: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(ColorTheme.cardBackground)
+                .fill(ColorTheme.tintedCard(ColorTheme.accent))
                 .shadow(color: ColorTheme.shadowColor, radius: 3, x: 0, y: 1)
         )
     }
@@ -1051,7 +1080,7 @@ struct DailySymptomCard: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 14)
-                .fill(ColorTheme.cardBackground)
+                .fill(ColorTheme.tintedCard(ColorTheme.secondary))
                 .shadow(color: ColorTheme.shadowColor, radius: 3, x: 0, y: 1)
         )
         .accessibilityElement(children: .combine)
