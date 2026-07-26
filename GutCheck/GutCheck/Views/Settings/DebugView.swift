@@ -5,91 +5,94 @@ import Network
 struct DebugView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AuthService.self) private var authService
+    @Environment(SettingsViewModel.self) private var settingsVM
     @State private var networkMonitor = NetworkMonitor()
     @State private var showingResetConfirmation = false
     @State private var isResetting = false
     @State private var resetError: Error?
     
     var body: some View {
-        NavigationStack {
-            List {
-                // App Info
-                Section("App Information") {
-                    LabeledContent("Version", value: Constants.appVersion)
-                    LabeledContent("Build", value: Bundle.main.buildNumber)
-                    LabeledContent("Environment", value: Constants.API.baseURL.contains("production") ? "Production" : "Development")
+        List {
+            // App Info
+            Section("App Information") {
+                LabeledContent("Version", value: Constants.appVersion)
+                LabeledContent("Build", value: Bundle.main.buildNumber)
+                LabeledContent("Environment", value: Constants.API.baseURL.contains("production") ? "Production" : "Development")
+            }
+
+            // Network Status
+            Section("Network Status") {
+                LabeledContent("Connected", value: networkMonitor.isConnected ? "Yes" : "No")
+            }
+
+            // User Info
+            if let user = authService.currentUser {
+                Section("User Information") {
+                    LabeledContent("User ID", value: user.id)
+                    LabeledContent("Email", value: user.email)
+                    LabeledContent("Name", value: user.fullName)
                 }
-                
-                // Network Status
-                Section("Network Status") {
-                    LabeledContent("Connected", value: networkMonitor.isConnected ? "Yes" : "No")
-                }
-                
-                // User Info
-                if let user = authService.currentUser {
-                    Section("User Information") {
-                        LabeledContent("User ID", value: user.id)
-                        LabeledContent("Email", value: user.email)
-                        LabeledContent("Name", value: user.fullName)
-                    }
-                }
-                
-                // Firebase Auth Info
-                if let firebaseUser = authService.authUser {
-                    Section("Firebase Auth") {
-                        LabeledContent("UID", value: firebaseUser.uid)
-                        if let lastSignIn = firebaseUser.metadata.lastSignInDate {
-                            LabeledContent("Last Sign In", value: lastSignIn.formattedDateTime)
-                        }
-                    }
-                }
-                
-                // Feature Flags
-                Section("Feature Flags") {
-                    Toggle("HealthKit Integration", isOn: .constant(Constants.Features.enableHealthKit))
-                        .disabled(true)
-                    Toggle("LiDAR Scanning", isOn: .constant(Constants.Features.enableLiDAR))
-                        .disabled(true)
-                    Toggle("AI Analysis", isOn: .constant(Constants.Features.enableAIAnalysis))
-                        .disabled(true)
-                }
-                
-                // Debug Actions
-                Section("Debug Actions") {
-                    Button("Clear Local Cache", role: .destructive) {
-                        showingResetConfirmation = true
-                    }
-                    
-                    NavigationLink("View Logs") {
-                        LogViewer()
-                    }
-                    
-                    NavigationLink("Network Requests") {
-                        NetworkDebugger()
+            }
+
+            // Firebase Auth Info
+            if let firebaseUser = authService.authUser {
+                Section("Firebase Auth") {
+                    LabeledContent("UID", value: firebaseUser.uid)
+                    if let lastSignIn = firebaseUser.metadata.lastSignInDate {
+                        LabeledContent("Last Sign In", value: lastSignIn.formattedDateTime)
                     }
                 }
             }
-            .navigationTitle("Debug Menu")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
+
+            // Feature Flags
+            Section("Feature Flags") {
+                Toggle("HealthKit Integration", isOn: .constant(Constants.Features.enableHealthKit))
+                    .disabled(true)
+                Toggle("LiDAR Scanning", isOn: .constant(Constants.Features.enableLiDAR))
+                    .disabled(true)
+                Toggle("AI Analysis", isOn: .constant(Constants.Features.enableAIAnalysis))
+                    .disabled(true)
+            }
+
+            // Developer Toggles (read-only snapshot)
+            #if DEBUG
+            Section("Developer Toggles") {
+                LabeledContent("Test Meal Mode", value: settingsVM.testMealModeEnabled ? "On" : "Off")
+                LabeledContent("Experimental AI", value: settingsVM.experimentalAIEnabled ? "On" : "Off")
+                LabeledContent("Sync/Debug Info", value: settingsVM.showSyncDebugInfo ? "On" : "Off")
+            }
+            #endif
+
+            // Debug Actions
+            Section("Debug Actions") {
+                Button("Clear Local Cache", role: .destructive) {
+                    showingResetConfirmation = true
+                }
+
+                NavigationLink("View Logs") {
+                    LogViewer()
+                }
+
+                NavigationLink("Network Requests") {
+                    NetworkDebugger()
                 }
             }
-            .alert("Reset Application", isPresented: $showingResetConfirmation) {
-                Button("Cancel", role: .cancel) { }
-                Button("Reset", role: .destructive) {
-                    Task { await resetApplication() }
-                }
-            } message: {
-                Text("This will clear all local data. This action cannot be undone.")
+        }
+        .navigationTitle("Debug Menu")
+        .navigationBarTitleDisplayMode(.inline)
+        .alert("Reset Application", isPresented: $showingResetConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Reset", role: .destructive) {
+                Task { await resetApplication() }
             }
-            .alert("Reset Error", isPresented: .constant(resetError != nil)) {
-                Button("OK") { resetError = nil }
-            } message: {
-                if let error = resetError {
-                    Text(error.localizedDescription)
-                }
+        } message: {
+            Text("This will clear all local data. This action cannot be undone.")
+        }
+        .alert("Reset Error", isPresented: .constant(resetError != nil)) {
+            Button("OK") { resetError = nil }
+        } message: {
+            if let error = resetError {
+                Text(error.localizedDescription)
             }
         }
     }

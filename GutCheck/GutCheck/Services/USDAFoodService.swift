@@ -9,6 +9,7 @@ import Foundation
 class USDAFoodService {
     static let shared = USDAFoodService()
     private let baseURL = "https://api.nal.usda.gov/fdc/v1"
+    private let rateLimiter = RateLimitingService.shared
 
     private var apiKey: String { Secrets.usdaAPIKey }
 
@@ -17,6 +18,8 @@ class USDAFoodService {
     // MARK: - Search
 
     func searchFoods(query: String, pageSize: Int = 25) async throws -> [USDAFood] {
+        try rateLimiter.checkLimit(for: .foodSearchUSDA)
+
         let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
         let urlString = "\(baseURL)/foods/search?query=\(encodedQuery)&pageSize=\(pageSize)"
 

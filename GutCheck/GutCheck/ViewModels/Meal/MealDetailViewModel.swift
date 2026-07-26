@@ -88,6 +88,7 @@ import SwiftUI
         
         do {
             try await mealRepository.save(meal)
+            SpotlightIndexingService.shared.indexMeal(meal)
             isSaving = false
             isEditing = false
             return true
@@ -102,6 +103,7 @@ import SwiftUI
     func deleteMeal() async -> Bool {
         do {
             try await mealRepository.delete(id: meal.id)
+            SpotlightIndexingService.shared.removeMeal(id: meal.id)
             return true
         } catch {
             errorMessage = "Failed to delete meal: \(error.localizedDescription)"

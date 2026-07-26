@@ -176,7 +176,8 @@ enum MealFilter: String, CaseIterable {
     func deleteMeal(_ meal: Meal) async {
         do {
             try await firebaseManager.deleteDocument(from: "meals", documentId: meal.id)
-            
+            SpotlightIndexingService.shared.removeMeal(id: meal.id)
+
             // Remove from grouped meals
             for (date, meals) in groupedMeals {
                 if let index = meals.firstIndex(where: { $0.id == meal.id }) {

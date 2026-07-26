@@ -10,6 +10,7 @@ import FirebaseAuth
 import FirebaseFirestore
 import CryptoKit
 import AuthenticationServices
+import os.log
 
 @MainActor
 @Observable class AuthService: AuthenticationProtocol, HasLoadingState {
@@ -26,9 +27,10 @@ import AuthenticationServices
     @ObservationIgnored private var currentNonce: String?
     
     let loadingState = LoadingStateManager()
-    
+
     @ObservationIgnored private let auth = Auth.auth()
     @ObservationIgnored private lazy var firestore = Firestore.firestore()
+    @ObservationIgnored private let rateLimiter = RateLimitingService.shared
     
     // Auth state listener handle
     @ObservationIgnored private var authStateListenerHandle: AuthStateDidChangeListenerHandle?
@@ -72,15 +74,18 @@ import AuthenticationServices
     // MARK: - Authentication Methods
     
     func signIn(email: String, password: String) async throws {
+        try rateLimiter.checkLimit(for: .login)
+
         isLoading = true
         errorMessage = nil
-        
+
         defer { isLoading = false }
-        
+
         do {
             let result = try await auth.signIn(withEmail: email, password: password)
             authUser = result.user
-            
+            rateLimiter.reset(for: .login)
+
             // Block unverified email users
             if !result.user.isEmailVerified {
                 pendingVerificationEmail = email
@@ -89,10 +94,13 @@ import AuthenticationServices
                 isAuthenticated = false
                 return
             }
-            
+
+            pendingVerificationEmail = nil
+            pendingVerificationPassword = nil
             isAuthenticated = true
             await loadCurrentUser(userId: result.user.uid)
         } catch {
+            rateLimiter.recordFailure(for: .login)
             errorMessage = handleAuthError(error)
             throw error
         }
@@ -139,6 +147,11 @@ import AuthenticationServices
             self.currentUser = nil
             self.isAuthenticated = false
             self.errorMessage = nil
+            // Clear sensitive credentials from memory
+            self.pendingVerificationEmail = nil
+            self.pendingVerificationPassword = nil
+            self.currentNonce = nil
+            self.verificationId = nil
         } catch {
             self.errorMessage = "Failed to sign out: \(error.localizedDescription)"
             throw error
@@ -146,11 +159,13 @@ import AuthenticationServices
     }
     
     func sendPasswordReset(email: String) async throws {
+        try rateLimiter.checkLimit(for: .passwordReset)
+
         isLoading = true
         errorMessage = nil
-        
+
         defer { isLoading = false }
-        
+
         do {
             try await auth.sendPasswordReset(withEmail: email)
         } catch {
@@ -160,12 +175,14 @@ import AuthenticationServices
     }
     
     func verifyPhoneNumber(_ phoneNumber: String) async throws {
+        try rateLimiter.checkLimit(for: .phoneVerification)
+
         isLoading = true
         errorMessage = nil
         isPhoneVerificationInProgress = true
-        
+
         defer { isLoading = false }
-        
+
         do {
             let verificationID = try await PhoneAuthProvider.provider()
                 .verifyPhoneNumber(phoneNumber, uiDelegate: nil)
@@ -188,6 +205,7 @@ import AuthenticationServices
         defer { 
             isLoading = false
             isPhoneVerificationInProgress = false
+            self.verificationId = nil
         }
         
         do {
@@ -209,6 +227,8 @@ import AuthenticationServices
     // MARK: - Email Verification
     
     func resendVerificationEmail() async throws {
+        try rateLimiter.checkLimit(for: .resendVerificationEmail)
+
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
@@ -423,12 +443,14 @@ import AuthenticationServices
     // MARK: - Phone Sign In
     
     func sendPhoneVerification(phoneNumber: String) async throws {
+        try rateLimiter.checkLimit(for: .phoneVerification)
+
         isLoading = true
         isPhoneVerificationInProgress = true
         errorMessage = nil
-        
+
         defer { isLoading = false }
-        
+
         do {
             let verificationID = try await PhoneAuthProvider.provider().verifyPhoneNumber(phoneNumber, uiDelegate: nil)
             verificationId = verificationID
@@ -450,6 +472,7 @@ import AuthenticationServices
         defer {
             isLoading = false
             isPhoneVerificationInProgress = false
+            self.verificationId = nil
         }
         
         do {
@@ -481,8 +504,8 @@ import AuthenticationServices
     
     /// Prepares the Apple Sign-In request by generating and storing a nonce.
     /// Returns the SHA256-hashed nonce to include in the ASAuthorizationAppleIDRequest.
-    func prepareAppleSignIn() -> String {
-        let nonce = randomNonceString()
+    func prepareAppleSignIn() throws -> String {
+        let nonce = try randomNonceString()
         currentNonce = nonce
         return sha256(nonce)
     }
@@ -491,7 +514,10 @@ import AuthenticationServices
     func signInWithApple(_ authorization: ASAuthorization) async throws {
         isLoading = true
         errorMessage = nil
-        defer { isLoading = false }
+        defer {
+            isLoading = false
+            currentNonce = nil
+        }
         
         guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential else {
             throw AuthError.custom("Invalid Apple credential type")
@@ -540,21 +566,19 @@ import AuthenticationServices
             // Apple users are pre-verified — skip email verification
             isAuthenticated = true
             isAwaitingEmailVerification = false
-            currentNonce = nil
             
         } catch {
-            currentNonce = nil
             errorMessage = handleAuthError(error)
             throw error
         }
     }
     
-    private func randomNonceString(length: Int = 32) -> String {
+    private func randomNonceString(length: Int = 32) throws -> String {
         precondition(length > 0)
         var randomBytes = [UInt8](repeating: 0, count: length)
         let errorCode = SecRandomCopyBytes(kSecRandomDefault, randomBytes.count, &randomBytes)
-        if errorCode != errSecSuccess {
-            fatalError("Unable to generate nonce. SecRandomCopyBytes failed with OSStatus \(errorCode)")
+        guard errorCode == errSecSuccess else {
+            throw AuthError.custom("Failed to generate secure nonce (OSStatus \(errorCode))")
         }
         
         let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
@@ -724,6 +748,9 @@ import AuthenticationServices
     }
     
     private func handleAuthError(_ error: Error) -> String {
+        if let rateLimitError = error as? RateLimitError {
+            return rateLimitError.localizedDescription
+        }
         if let authError = error as NSError? {
             switch authError.code {
             case AuthErrorCode.invalidEmail.rawValue:

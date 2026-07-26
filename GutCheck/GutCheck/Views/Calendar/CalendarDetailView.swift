@@ -82,9 +82,6 @@ struct CalendarDetailView: View {
         }
         .navigationTitle(date.formatted(.dateTime.month().day().weekday()))
         .navigationBarTitleDisplayMode(.inline)
-        .task {
-            await viewModel.loadData(for: date, authService: authService)
-        }
     }
 }
 
