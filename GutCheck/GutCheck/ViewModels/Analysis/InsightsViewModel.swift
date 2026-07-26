@@ -113,11 +113,19 @@ struct RankedItem: Identifiable {
     }
     
     private func fetchHealthData(for timeRange: DateInterval) async -> GutHealthData? {
+        // HealthKit's callback is not guaranteed to fire exactly once, and if the
+        // enclosing Task is cancelled the completion can still arrive afterwards.
+        // Resuming a checked continuation twice traps, so the guard below makes
+        // the resume idempotent. `hasResumed` is only touched inside the callback,
+        // which HealthKit delivers serially.
         return await withCheckedContinuation { continuation in
+            var hasResumed = false
             healthKitManager.fetchGutHealthData(
                 from: timeRange.start,
                 to: timeRange.end
             ) { healthData in
+                guard !hasResumed else { return }
+                hasResumed = true
                 continuation.resume(returning: healthData)
             }
         }

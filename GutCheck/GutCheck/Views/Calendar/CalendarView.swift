@@ -427,10 +427,18 @@ struct EmptyStateCard: View {
         return details
     }
 
+    // In-flight load tasks. loadMeals/loadSymptoms are driven by onAppear, two
+    // onChange handlers and refreshable, so without cancellation a burst of date
+    // taps leaves several fetches racing — and a slow earlier one can resolve
+    // after a newer one, leaving the list showing another day's data.
+    private var mealsLoadTask: Task<Void, Never>?
+    private var symptomsLoadTask: Task<Void, Never>?
+
     // Public method to load meals from Firebase
     func loadMeals() {
+        mealsLoadTask?.cancel()
         isLoadingMeals = true
-        Task {
+        mealsLoadTask = Task {
             do {
                 guard let userId = AuthenticationManager.shared.currentUserId else {
                     await MainActor.run {
@@ -440,11 +448,13 @@ struct EmptyStateCard: View {
                     return
                 }
                 let loadedMeals = try await MealRepository.shared.fetchMealsForDate(selectedDate, userId: userId)
+                guard !Task.isCancelled else { return }
                 await MainActor.run {
                     self.meals = loadedMeals
                     self.isLoadingMeals = false
                 }
             } catch {
+                guard !Task.isCancelled else { return }
                 await MainActor.run {
                     self.meals = []
                     self.isLoadingMeals = false
@@ -455,15 +465,18 @@ struct EmptyStateCard: View {
 
     // Public method to load symptoms from Firebase
     func loadSymptoms() {
+        symptomsLoadTask?.cancel()
         isLoadingSymptoms = true
-        Task {
+        symptomsLoadTask = Task {
             do {
                 let loadedSymptoms = try await SymptomRepository.shared.getSymptoms(for: selectedDate)
+                guard !Task.isCancelled else { return }
                 await MainActor.run {
                     self.symptoms = loadedSymptoms
                     self.isLoadingSymptoms = false
                 }
             } catch {
+                guard !Task.isCancelled else { return }
                 await MainActor.run {
                     self.symptoms = []
                     self.isLoadingSymptoms = false

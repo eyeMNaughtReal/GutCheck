@@ -29,7 +29,12 @@ struct Meal: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
     var notes: String?
     var tags: [String] = []
     var createdBy: String = ""
-    
+
+    /// When the record was written, as distinct from `date` (when the meal was
+    /// eaten). Sync conflict resolution orders on these, matching Symptom.
+    var createdAt: Date = Date.now
+    var updatedAt: Date = Date.now
+
     // MARK: - Privacy Classification
     
     /// Determines the privacy level of this meal data
@@ -122,8 +127,13 @@ struct Meal: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
         } else {
             self.foodItems = []
         }
+
+        // Records written before these fields existed fall back to `date`, so
+        // conflict resolution has a usable ordering rather than nil.
+        self.createdAt = (data["createdAt"] as? Timestamp)?.dateValue() ?? self.date
+        self.updatedAt = (data["updatedAt"] as? Timestamp)?.dateValue() ?? self.createdAt
     }
-    
+
     func toFirestoreData() -> [String: Any] {
         var data: [String: Any] = [
             "name": name,
@@ -131,16 +141,20 @@ struct Meal: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
             "type": type.rawValue,
             "source": source.rawValue,
             "createdBy": createdBy,
-            "tags": tags
+            "tags": tags,
+            // `date` is when the meal was eaten; these are when the record was
+            // written. Sync conflict resolution needs the latter to pick a winner.
+            "createdAt": Timestamp(date: createdAt),
+            "updatedAt": Timestamp(date: Date.now)
         ]
-        
+
         if let notes = notes {
             data["notes"] = notes
         }
-        
+
         // Convert food items to dictionaries
         data["foodItems"] = foodItems.map { $0.toDictionary() }
-        
+
         return data
     }
 }
