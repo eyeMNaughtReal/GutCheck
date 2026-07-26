@@ -94,6 +94,8 @@ struct InsightDetailView: View {
             }
             .padding()
         }
+        .scrollContentBackground(.hidden)
+        .background(ColorTheme.background)
         .navigationTitle("Insight Details")
         .navigationBarTitleDisplayMode(.inline)
         .task {

@@ -80,6 +80,8 @@ struct CalendarDetailView: View {
             }
             .padding(.vertical)
         }
+        .scrollContentBackground(.hidden)
+        .background(ColorTheme.background)
         .navigationTitle(date.formatted(.dateTime.month().day().weekday()))
         .navigationBarTitleDisplayMode(.inline)
     }

@@ -301,6 +301,8 @@ struct SettingsView: View {
                     }
                 }
             }
+        .scrollContentBackground(.hidden)
+        .background(ColorTheme.background)
         .navigationTitle("Settings")
         .navigationDestination(for: SettingsRoute.self) { route in
             SettingsRoute.destinationView(for: route)

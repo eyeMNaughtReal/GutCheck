@@ -50,6 +50,8 @@ struct InsightsDashboardView: View {
                 }
                 .padding()
             }
+            .scrollContentBackground(.hidden)
+            .background(ColorTheme.background)
             .navigationTitle("Health Insights")
             .navigationBarTitleDisplayMode(.large)
             .refreshable {

@@ -102,6 +102,8 @@ struct DataDeletionRequestView: View {
                     .tint(.red)
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(ColorTheme.background)
             .navigationTitle("Data Deletion")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

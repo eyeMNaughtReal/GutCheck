@@ -82,6 +82,8 @@ struct SymptomExplanationView: View {
                 }
                 .padding()
             }
+            .scrollContentBackground(.hidden)
+            .background(ColorTheme.background)
             .navigationTitle(symptomType.rawValue)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

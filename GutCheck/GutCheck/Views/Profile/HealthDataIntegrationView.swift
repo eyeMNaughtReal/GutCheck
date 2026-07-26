@@ -224,6 +224,8 @@ struct HealthDataIntegrationView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(ColorTheme.background)
             .navigationTitle("Apple Health")
             .navigationDestination(for: SettingsRoute.self) { route in
                 switch route {

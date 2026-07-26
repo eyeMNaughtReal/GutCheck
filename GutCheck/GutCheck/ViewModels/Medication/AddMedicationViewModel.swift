@@ -32,12 +32,49 @@ import SwiftUI
 
     let loadingState = LoadingStateManager()
 
+    // MARK: - Edit Mode
+
+    /// The record being edited, or nil when adding a new one. Held so the save
+    /// can reuse its id (writing the same id updates rather than duplicates) and
+    /// preserve fields the form doesn't expose, like `source` and `healthKitUUID`.
+    private(set) var editingMedication: MedicationRecord?
+
+    var isEditing: Bool { editingMedication != nil }
+
+    /// HealthKit-sourced records are owned by Apple Health. Editing them here
+    /// would be overwritten on the next sync, so the form stays read-only for
+    /// them and the UI hides the edit affordance.
+    var isEditable: Bool {
+        editingMedication.map { $0.source != .healthKit } ?? true
+    }
+
     // MARK: - Dependencies
 
     private let medicationRepository: any MedicationRepositoryProtocol
 
     init(medicationRepository: any MedicationRepositoryProtocol = MedicationRepository.shared) {
         self.medicationRepository = medicationRepository
+    }
+
+    /// Populates the form from an existing record so it can be edited in place.
+    func load(_ medication: MedicationRecord) {
+        editingMedication = medication
+        name         = medication.name
+        dosageAmount = medication.dosage.amount > 0 ? trimmedAmount(medication.dosage.amount) : ""
+        dosageUnit   = medication.dosage.unit
+        frequency    = medication.dosage.frequency
+        startDate    = medication.startDate
+        hasEndDate   = medication.endDate != nil
+        endDate      = medication.endDate ?? Date.now
+        isActive     = medication.isActive
+        notes        = medication.notes ?? ""
+    }
+
+    /// "20" rather than "20.0" so the field round-trips what the user typed.
+    private func trimmedAmount(_ value: Double) -> String {
+        value == value.rounded()
+            ? String(Int(value))
+            : value.formatted(.number.precision(.fractionLength(1)))
     }
 
     // MARK: - Validation
@@ -65,16 +102,25 @@ import SwiftUI
 
         let amount  = Double(dosageAmount) ?? 0.0
         let dosage  = MedicationDosage(amount: amount, unit: dosageUnit, frequency: frequency)
+        let existing = editingMedication
+
+        // Reusing the existing id makes this an update rather than a duplicate.
+        // `source`, `healthKitUUID` and `createdAt` are carried over because the
+        // form doesn't expose them and they'd otherwise be reset on every edit.
         let medication = MedicationRecord(
-            createdBy:    userId,
-            name:         name.trimmingCharacters(in: .whitespacesAndNewlines),
-            dosage:       dosage,
-            startDate:    startDate,
-            endDate:      hasEndDate ? endDate : nil,
-            isActive:     isActive,
-            notes:        notes.isEmpty ? nil : notes,
-            source:       .manual,
-            privacyLevel: .private
+            id:            existing?.id ?? UUID().uuidString,
+            createdBy:     existing?.createdBy ?? userId,
+            name:          name.trimmingCharacters(in: .whitespacesAndNewlines),
+            dosage:        dosage,
+            startDate:     startDate,
+            endDate:       hasEndDate ? endDate : nil,
+            isActive:      isActive,
+            notes:         notes.isEmpty ? nil : notes,
+            source:        existing?.source ?? .manual,
+            privacyLevel:  existing?.privacyLevel ?? .private,
+            healthKitUUID: existing?.healthKitUUID,
+            createdAt:     existing?.createdAt ?? Date.now,
+            updatedAt:     Date.now
         )
 
         Task {

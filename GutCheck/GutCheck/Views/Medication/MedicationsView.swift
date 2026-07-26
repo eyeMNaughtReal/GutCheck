@@ -28,6 +28,8 @@ struct MedicationsView: View {
             .padding(.top, 8)
             .padding(.bottom, 100) // clear tab bar
         }
+        .scrollContentBackground(.hidden)
+        .background(ColorTheme.background)
         .navigationTitle("Medications")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
