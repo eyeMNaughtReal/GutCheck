@@ -87,7 +87,7 @@ jobs:
         xcodebuild clean build \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
-          -destination "generic/platform=iOS Simulator" \
+          -sdk iphonesimulator \
           -derivedDataPath ~/Library/Developer/Xcode/DerivedData \
           CODE_SIGNING_ALLOWED=NO \
           ONLY_ACTIVE_ARCH=NO
