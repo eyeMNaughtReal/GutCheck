@@ -374,50 +374,108 @@ import os.log
         defer { isLoading = false }
         
         do {
-            // Step 1: Re-authenticate before deletion
+            // Re-authenticate up front so an invalid credential fails before any
+            // data is touched. performAccountDeletion re-authenticates again
+            // immediately before removing the account.
             try await currentFirebaseUser.reauthenticate(with: credential)
-            
-            // Step 2: Delete user data from Firestore
-            try await deleteUserData(userId: currentFirebaseUser.uid)
-            
-            // Step 3: Delete the Firebase Auth account
-            try await currentFirebaseUser.delete()
-            
-            // Step 4: Clear local state
-            authUser = nil
-            currentUser = nil
-            isAuthenticated = false
-            
+            try await performAccountDeletion(user: currentFirebaseUser, credential: credential)
         } catch {
             errorMessage = error.localizedDescription
             throw error
         }
     }
-    
+
     /// Delete the account after the user has already been re-authenticated.
     /// Call this after ReauthenticationView succeeds.
     func deleteAuthenticatedAccount() async throws {
         guard let currentFirebaseUser = authUser else {
             throw AuthError.noUser
         }
-        
+
         isLoading = true
         errorMessage = nil
-        
+
         defer { isLoading = false }
-        
+
         do {
-            try await deleteUserData(userId: currentFirebaseUser.uid)
-            
-            try await currentFirebaseUser.delete()
-            
-            authUser = nil
-            currentUser = nil
-            isAuthenticated = false
-            
+            try await performAccountDeletion(user: currentFirebaseUser, credential: nil)
         } catch {
             errorMessage = error.localizedDescription
             throw error
+        }
+    }
+
+    /// Key recording that data was removed but the auth account survived, so the
+    /// app can offer to finish the job on next launch.
+    private static let incompleteDeletionKey = "auth.accountDeletionIncomplete"
+
+    /// True when a previous deletion removed the user's data but failed to remove
+    /// the account. The user still has a working sign-in over an empty account.
+    var hasIncompleteAccountDeletion: Bool {
+        UserDefaults.standard.bool(forKey: Self.incompleteDeletionKey)
+    }
+
+    /// Deletes user data, then the auth account.
+    ///
+    /// Order matters and is deliberate. Deleting the auth account first would be
+    /// worse: if the data deletion then failed, the user's health records would be
+    /// stranded in Firestore with no credential left to authenticate a retry —
+    /// personal data retained after a deletion request, which is the outcome GDPR
+    /// actually cares about. An account that outlives its data is recoverable;
+    /// data that outlives its account is not.
+    ///
+    /// The remaining risk is the auth deletion failing after data is gone, usually
+    /// with `requiresRecentLogin`. Two things mitigate it: the credential is
+    /// refreshed immediately before the delete (data deletion is many Firestore
+    /// round-trips and can easily age a token past the freshness window), and a
+    /// failure is recorded so the user can be prompted to finish rather than left
+    /// with a silently half-deleted account.
+    private func performAccountDeletion(user: FirebaseAuth.User, credential: AuthCredential?) async throws {
+        let userId = user.uid
+
+        try await deleteUserData(userId: userId)
+
+        // Data is gone from this point on — any failure below is partial.
+        do {
+            if let credential {
+                // Refresh right before the delete; the data pass above may have
+                // taken long enough to push the sign-in outside Firebase's
+                // recent-login window.
+                try await user.reauthenticate(with: credential)
+            }
+            try await user.delete()
+        } catch {
+            UserDefaults.standard.set(true, forKey: Self.incompleteDeletionKey)
+            throw AuthError.accountDeletionIncomplete(underlying: error)
+        }
+
+        UserDefaults.standard.removeObject(forKey: Self.incompleteDeletionKey)
+        authUser = nil
+        currentUser = nil
+        isAuthenticated = false
+    }
+
+    /// Retries removing the auth account after a partial deletion. The data is
+    /// already gone, so this only needs the account itself.
+    func retryIncompleteAccountDeletion(credential: AuthCredential? = nil) async throws {
+        guard let user = authUser else { throw AuthError.noUser }
+
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        do {
+            if let credential {
+                try await user.reauthenticate(with: credential)
+            }
+            try await user.delete()
+            UserDefaults.standard.removeObject(forKey: Self.incompleteDeletionKey)
+            authUser = nil
+            currentUser = nil
+            isAuthenticated = false
+        } catch {
+            errorMessage = error.localizedDescription
+            throw AuthError.accountDeletionIncomplete(underlying: error)
         }
     }
     
@@ -795,14 +853,20 @@ import os.log
 enum AuthError: LocalizedError {
     case noUser
     case noVerificationID
+    /// Data was deleted but removing the auth account failed. Distinguished from
+    /// a generic failure so the UI can say what actually happened and offer a retry.
+    case accountDeletionIncomplete(underlying: Error)
     case custom(String)
-    
+
     var errorDescription: String? {
         switch self {
         case .noUser:
             return "No user is currently signed in"
         case .noVerificationID:
             return "No verification ID available for phone authentication"
+        case .accountDeletionIncomplete:
+            return "Your data has been deleted, but your sign-in account could not be removed. "
+                 + "Sign in again and retry deletion to finish removing your account."
         case .custom(let message):
             return message
         }
