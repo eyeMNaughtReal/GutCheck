@@ -1193,9 +1193,19 @@ struct DailyNutritionDetailView: View {
     var body: some View {
         NavigationStack {
             List {
+                // MARK: Hero — calories and macro split
+                if nutrition.calories != nil || nutrition.protein != nil
+                    || nutrition.carbs != nil || nutrition.fat != nil {
+                    Section {
+                        NutritionSummaryHeader(nutrition: nutrition, mealCount: meals.count)
+                            .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16))
+                            .listRowBackground(Color.clear)
+                    }
+                }
+
                 // MARK: Macronutrients
                 Section(header: Text("Macronutrients")) {
-                    NutritionDetailRow(label: "Calories",     value: nutrition.calories.map { Double($0) }, unit: "kcal",  color: .orange)
+                    // Calories are shown in the header above, so they're not repeated here.
                     NutritionDetailRow(label: "Protein",      value: nutrition.protein,   unit: "g",    color: .blue)
                     NutritionDetailRow(label: "Carbohydrates",value: nutrition.carbs,     unit: "g",    color: .green)
                     NutritionDetailRow(label: "Total Fat",    value: nutrition.fat,       unit: "g",    color: .red)
@@ -1293,6 +1303,11 @@ struct DailyNutritionDetailView: View {
                     }
                 }
             }
+            // Without this the sheet falls through to the system background and
+            // renders black instead of the app's navy — same gap that affected
+            // InsightsView.
+            .scrollContentBackground(.hidden)
+            .background(ColorTheme.background)
             .navigationTitle(dateTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -1413,4 +1428,107 @@ private struct NutritionDetailFoodRow: View {
     CalendarView(selectedTab: Tab.meals)
         .environment(AppRouter())
         .environment(AuthService())
+}
+
+// MARK: - Nutrition Summary Header
+
+/// Hero for the nutrition detail sheet: total calories, and a bar showing how
+/// the day's energy splits across protein, carbs and fat.
+///
+/// Grams alone don't convey balance — 9g protein next to 17g fat reads as
+/// "less fat" when by energy it's the opposite. The bar is weighted by calories
+/// (4/4/9 per gram) so proportion reflects what actually drove the total.
+private struct NutritionSummaryHeader: View {
+    let nutrition: NutritionInfo
+    let mealCount: Int
+
+    private struct Macro: Identifiable {
+        let id = UUID()
+        let name: String
+        let grams: Double
+        let calories: Double
+        let color: Color
+    }
+
+    private var macros: [Macro] {
+        [
+            Macro(name: "Protein", grams: nutrition.protein ?? 0,
+                  calories: (nutrition.protein ?? 0) * 4, color: .blue),
+            Macro(name: "Carbs", grams: nutrition.carbs ?? 0,
+                  calories: (nutrition.carbs ?? 0) * 4, color: .green),
+            Macro(name: "Fat", grams: nutrition.fat ?? 0,
+                  calories: (nutrition.fat ?? 0) * 9, color: .red)
+        ].filter { $0.grams > 0 }
+    }
+
+    private var macroCalorieTotal: Double {
+        macros.reduce(0) { $0 + $1.calories }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Calories — the headline figure, not just another row.
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                Text("\(nutrition.calories ?? 0)")
+                    .font(.system(size: 44, weight: .bold, design: .rounded))
+                    .foregroundStyle(ColorTheme.primaryText)
+                Text("kcal")
+                    .typography(Typography.headline)
+                    .foregroundStyle(ColorTheme.secondaryText)
+
+                Spacer()
+
+                Text("\(mealCount) meal\(mealCount == 1 ? "" : "s")")
+                    .typography(Typography.subheadline)
+                    .foregroundStyle(ColorTheme.secondaryText)
+            }
+
+            if macroCalorieTotal > 0 {
+                // Proportional split bar
+                GeometryReader { geo in
+                    HStack(spacing: 2) {
+                        ForEach(macros) { macro in
+                            Capsule()
+                                .fill(macro.color)
+                                .frame(width: max(2, geo.size.width * (macro.calories / macroCalorieTotal)))
+                        }
+                    }
+                }
+                .frame(height: 10)
+
+                // Legend: grams plus share of energy, so the bar is readable
+                // without having to interpret color alone.
+                HStack(spacing: 16) {
+                    ForEach(macros) { macro in
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(macro.color)
+                                .frame(width: 8, height: 8)
+                            Text(macro.name)
+                                .typography(Typography.caption)
+                                .foregroundStyle(ColorTheme.secondaryText)
+                            Text("\(Int(macro.grams.rounded()))g")
+                                .typography(Typography.caption)
+                                .foregroundStyle(ColorTheme.primaryText)
+                            Text("\(Int((macro.calories / macroCalorieTotal * 100).rounded()))%")
+                                .typography(Typography.caption)
+                                .foregroundStyle(ColorTheme.secondaryText)
+                        }
+                    }
+                    Spacer(minLength: 0)
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilitySummary)
+    }
+
+    private var accessibilitySummary: String {
+        var parts = ["\(nutrition.calories ?? 0) calories from \(mealCount) meal\(mealCount == 1 ? "" : "s")"]
+        for macro in macros {
+            let share = Int((macro.calories / max(macroCalorieTotal, 1) * 100).rounded())
+            parts.append("\(macro.name) \(Int(macro.grams.rounded())) grams, \(share) percent of energy")
+        }
+        return parts.joined(separator: ". ")
+    }
 }

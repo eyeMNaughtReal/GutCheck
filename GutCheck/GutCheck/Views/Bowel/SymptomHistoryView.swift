@@ -43,6 +43,8 @@ struct SymptomHistoryView: View {
             
             symptomsList
         }
+        .scrollContentBackground(.hidden)
+        .background(ColorTheme.background)
         .navigationTitle("Symptom History")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

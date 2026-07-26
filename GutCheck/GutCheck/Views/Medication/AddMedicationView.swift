@@ -14,7 +14,11 @@ struct AddMedicationView: View {
     /// Called after a successful save so the parent list can refresh.
     var onSave: (() -> Void)?
 
-    init(onSave: (() -> Void)? = nil) {
+    /// Existing record to edit. Nil adds a new medication.
+    private let medicationToEdit: MedicationRecord?
+
+    init(medication: MedicationRecord? = nil, onSave: (() -> Void)? = nil) {
+        self.medicationToEdit = medication
         self.onSave = onSave
     }
 
@@ -29,16 +33,27 @@ struct AddMedicationView: View {
                 statusSection
                 notesSection
             }
-            .navigationTitle("Add Medication")
+            .scrollContentBackground(.hidden)
+            .background(ColorTheme.background)
+            .navigationTitle(viewModel.isEditing ? "Edit Medication" : "Add Medication")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarItems }
-            .alert("Medication Added", isPresented: $viewModel.showingSuccessAlert) {
+            .task {
+                // Populate once; re-running would discard in-progress edits.
+                if let medicationToEdit, !viewModel.isEditing {
+                    viewModel.load(medicationToEdit)
+                }
+            }
+            .alert(viewModel.isEditing ? "Medication Updated" : "Medication Added",
+                   isPresented: $viewModel.showingSuccessAlert) {
                 Button("Done") {
                     onSave?()
                     dismiss()
                 }
             } message: {
-                Text("\(viewModel.name) has been saved to your medications.")
+                Text(viewModel.isEditing
+                     ? "\(viewModel.name) has been updated."
+                     : "\(viewModel.name) has been saved to your medications.")
             }
             .alert("Error", isPresented: $viewModel.showingErrorAlert) {
                 Button("OK", role: .cancel) {}

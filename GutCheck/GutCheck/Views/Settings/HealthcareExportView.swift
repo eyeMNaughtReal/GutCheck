@@ -44,6 +44,8 @@ struct HealthcareExportView: View {
                 }
                 .padding()
             }
+            .scrollContentBackground(.hidden)
+            .background(ColorTheme.background)
             .navigationTitle("Healthcare Export")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {

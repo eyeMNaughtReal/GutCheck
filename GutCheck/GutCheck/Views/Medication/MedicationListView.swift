@@ -11,6 +11,9 @@ import SwiftUI
 struct MedicationListView: View {
     @State private var viewModel = MedicationViewModel()
 
+    /// Record currently open in the edit sheet.
+    @State private var medicationToEdit: MedicationRecord?
+
     // MARK: - Body
 
     var body: some View {
@@ -23,6 +26,8 @@ struct MedicationListView: View {
                 medicationList
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(ColorTheme.background)
         .navigationTitle("My Medications")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
@@ -37,6 +42,11 @@ struct MedicationListView: View {
         }
         .sheet(isPresented: $viewModel.showingAddMedication) {
             AddMedicationView {
+                Task { await viewModel.loadMedications() }
+            }
+        }
+        .sheet(item: $medicationToEdit) { medication in
+            AddMedicationView(medication: medication) {
                 Task { await viewModel.loadMedications() }
             }
         }
@@ -76,8 +86,11 @@ struct MedicationListView: View {
                 Section(header: Text("Current")) {
                     ForEach(viewModel.activeMedications) { med in
                         MedicationRowView(medication: med)
+                            .contentShape(Rectangle())
+                            .onTapGesture { beginEditing(med) }
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 deleteButton(for: med)
+                                editButton(for: med)
                             }
                     }
                 }
@@ -88,8 +101,11 @@ struct MedicationListView: View {
                 Section(header: Text("Past Medications")) {
                     ForEach(viewModel.inactiveMedications) { med in
                         MedicationRowView(medication: med)
+                            .contentShape(Rectangle())
+                            .onTapGesture { beginEditing(med) }
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 deleteButton(for: med)
+                                editButton(for: med)
                             }
                     }
                 }
@@ -129,6 +145,25 @@ struct MedicationListView: View {
     }
 
     // MARK: - Helpers
+
+    /// HealthKit records are owned by Apple Health — editing them here would be
+    /// silently overwritten on the next sync, so the affordance is hidden.
+    private func beginEditing(_ medication: MedicationRecord) {
+        guard medication.source != .healthKit else { return }
+        medicationToEdit = medication
+    }
+
+    @ViewBuilder
+    private func editButton(for medication: MedicationRecord) -> some View {
+        if medication.source != .healthKit {
+            Button {
+                beginEditing(medication)
+            } label: {
+                Label("Edit", systemImage: "pencil")
+            }
+            .tint(ColorTheme.accent)
+        }
+    }
 
     @ViewBuilder
     private func deleteButton(for medication: MedicationRecord) -> some View {

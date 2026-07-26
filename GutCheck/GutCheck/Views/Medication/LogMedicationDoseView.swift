@@ -27,6 +27,8 @@ struct LogMedicationDoseView: View {
                     logForm
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(ColorTheme.background)
             .navigationTitle("Log Medication")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarItems }

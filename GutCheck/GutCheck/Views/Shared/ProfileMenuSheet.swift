@@ -30,6 +30,8 @@ struct ProfileMenuSheet: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(ColorTheme.background)
             .navigationTitle("Account")
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: ProfileMenuRoute.self) { route in

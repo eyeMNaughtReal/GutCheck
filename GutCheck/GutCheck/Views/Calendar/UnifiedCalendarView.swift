@@ -43,6 +43,8 @@ struct UnifiedCalendarView: View {
                 
                 Spacer()
             }
+            .scrollContentBackground(.hidden)
+            .background(ColorTheme.background)
             .navigationTitle("Calendar")
             .navigationDestination(for: CalendarRoute.self) { route in
                 switch route {

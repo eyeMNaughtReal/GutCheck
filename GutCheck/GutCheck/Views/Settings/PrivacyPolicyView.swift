@@ -41,6 +41,8 @@ struct PrivacyPolicyView: View {
                 .padding(.vertical, 8)
             }
         }
+        .scrollContentBackground(.hidden)
+        .background(ColorTheme.background)
         .navigationTitle("Privacy Policy")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(for: PrivacyPolicyRoute.self) { route in

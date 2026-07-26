@@ -99,6 +99,8 @@ struct DeleteAccountView: View {
             }
             .padding()
         }
+        .scrollContentBackground(.hidden)
+        .background(ColorTheme.background)
         .navigationTitle("Delete Account")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingReauthentication) {
