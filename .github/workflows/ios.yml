@@ -84,7 +84,7 @@ jobs:
 
     - name: Build GutCheck
       run: |
-        xcodebuild clean build \
+        xcodebuild build \
           -project GutCheck.xcodeproj \
           -scheme GutCheck \
           -sdk iphonesimulator \
