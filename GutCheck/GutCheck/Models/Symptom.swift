@@ -75,6 +75,11 @@ struct Symptom: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
     var notes: String?
     var tags: [String] = []
     var createdBy: String = ""  // Firebase UID - required for FirestoreModel
+
+    /// When the record was written, as distinct from `date` (when the symptom
+    /// occurred). Deduplication orders on `updatedAt` to keep the newer copy.
+    var createdAt: Date = Date.now
+    var updatedAt: Date = Date.now
     
     // MARK: - Privacy Classification
     
@@ -168,8 +173,14 @@ struct Symptom: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
             throw RepositoryError.invalidData("Missing or invalid createdBy field")
         }
         self.createdBy = createdBy
+
+        // `createdAt` was already being written but never read back, so
+        // deduplication had no way to tell two copies of the same record apart.
+        // Records predating these fields fall back to `date` for a usable ordering.
+        self.createdAt = (data["createdAt"] as? Timestamp)?.dateValue() ?? self.date
+        self.updatedAt = (data["updatedAt"] as? Timestamp)?.dateValue() ?? self.createdAt
     }
-    
+
     func toFirestoreData() -> [String: Any] {
         var data: [String: Any] = [
             "id": id,
@@ -179,7 +190,10 @@ struct Symptom: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
             "urgencyLevel": urgencyLevel.rawValue,
             "tags": tags,
             "createdBy": createdBy,
-            "createdAt": Timestamp(date: Date.now)
+            // `date` is when the symptom occurred; these track when the record
+            // was written, which is what conflict resolution needs.
+            "createdAt": Timestamp(date: createdAt),
+            "updatedAt": Timestamp(date: Date.now)
         ]
         
         if let notes = notes {
@@ -187,5 +201,35 @@ struct Symptom: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
         }
         
         return data
+    }
+}
+// MARK: - Timestamped Record
+
+/// Records that carry a write timestamp, so duplicates arriving from local
+/// storage and Firestore can be collapsed by keeping the most recent copy.
+protocol TimestampedRecord: Identifiable {
+    var id: String { get }
+    var updatedAt: Date { get }
+}
+
+extension Symptom: TimestampedRecord {}
+extension Meal: TimestampedRecord {}
+
+extension Array where Element: TimestampedRecord {
+    /// Collapses records sharing an id, keeping whichever was written most
+    /// recently. Ordering of the result is left to the caller.
+    ///
+    /// The same record routinely arrives from both local storage and Firestore.
+    /// Resolving on `updatedAt` means a newer edit always wins, rather than
+    /// whichever copy happened to be appended first.
+    func deduplicatedKeepingNewest() -> [Element] {
+        var newestById: [String: Element] = [:]
+        for record in self {
+            if let existing = newestById[record.id], existing.updatedAt >= record.updatedAt {
+                continue
+            }
+            newestById[record.id] = record
+        }
+        return Array(newestById.values)
     }
 }
