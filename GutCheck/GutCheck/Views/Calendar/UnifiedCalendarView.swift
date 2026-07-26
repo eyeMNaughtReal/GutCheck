@@ -72,7 +72,7 @@ struct UnifiedCalendarView: View {
         HStack {
             VStack(alignment: .leading) {
                 Text(selectedDate.formatted(.dateTime.month(.wide)))
-                    .font(.title2)
+                    .typography(Typography.title2)
                     .bold()
                 Text(selectedDate.formatted(.dateTime.year()))
                     .foregroundStyle(.secondary)
@@ -97,7 +97,7 @@ struct UnifiedCalendarView: View {
         HStack {
             ForEach(calendar.veryShortWeekdaySymbols, id: \.self) { symbol in
                 Text(symbol)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
             }
@@ -180,7 +180,7 @@ private struct DailySummaryCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(day.date.formatted(.dateTime.month().day().weekday()))
-                .font(.headline)
+                .typography(Typography.headline)
             
             if day.hasMeals {
                 VStack(alignment: .leading, spacing: 8) {
@@ -188,7 +188,7 @@ private struct DailySummaryCard: View {
                         .foregroundStyle(ColorTheme.mealLogging)
                     ForEach(day.meals) { meal in
                         Text(meal.name)
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                     }
                 }
             }
@@ -199,7 +199,7 @@ private struct DailySummaryCard: View {
                         .foregroundStyle(ColorTheme.bowelTracking)
                     ForEach(day.symptoms) { symptom in
                         Text("Stool: \(symptom.stoolType.rawValue), Pain: \(symptom.painLevel.rawValue)")
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                     }
                 }
             }
@@ -239,21 +239,21 @@ private struct CorrelationSummaryView: View {
                 .foregroundStyle(severityColor)
             
             Text("\(correlation.symptomCount) symptom\(correlation.symptomCount == 1 ? "" : "s") detected 2–8 hours after eating")
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(.secondary)
             
             HStack(spacing: 4) {
                 Text("Severity:")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(.secondary)
                 Text(severityLabel)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .fontWeight(.semibold)
                     .foregroundStyle(severityColor)
             }
             
             Text(correlation.triggerFoodNames.joined(separator: ", "))
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(.primary)
         }
         .padding(12)

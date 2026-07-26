@@ -10,7 +10,7 @@ struct FoodItemDetailRow: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(foodItem.name)
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
@@ -36,13 +36,13 @@ struct FoodItemDetailRow: View {
             
             // Quantity
             Text("\(foodItem.quantity)")
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText)
             
             // Nutrition details
             if let calories = foodItem.nutrition.calories {
                 Text("\(calories) calories")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.primaryText)
             }
             

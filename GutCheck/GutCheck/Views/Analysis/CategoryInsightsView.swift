@@ -41,7 +41,7 @@ struct CategoryInsightsView: View {
                 .foregroundStyle(category.accentColor)
             
             Text(category.description)
-                .font(.body)
+                .typography(Typography.body)
                 .foregroundStyle(ColorTheme.secondaryText)
                 .multilineTextAlignment(.center)
         }
@@ -90,7 +90,7 @@ struct CategoryInsightsView: View {
                 .foregroundStyle(ColorTheme.primaryText)
             
             Text("Keep logging your meals and symptoms. We'll analyze your data to provide insights in this category.")
-                .font(.body)
+                .typography(Typography.body)
                 .foregroundStyle(ColorTheme.secondaryText)
                 .multilineTextAlignment(.center)
         }
@@ -110,28 +110,28 @@ private struct ActiveInsightRow: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: insight.iconName)
-                    .font(.title2)
+                    .typography(Typography.title2)
                     .foregroundStyle(ColorTheme.accent)
                 
                 Text(insight.title)
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
                 
                 Text("\(insight.confidenceLevel)%")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
             
             Text(insight.summary)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText)
                 .lineLimit(2)
             
             HStack {
                 Text(insight.dateRange)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.accent)
                 
                 Spacer()
@@ -153,22 +153,22 @@ private struct HistoricalInsightRow: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: insight.iconName)
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.secondaryText)
                 
                 Text(insight.title)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
                 
                 Spacer()
                 
                 Text(insight.dateRange)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
             
             Text(insight.summary)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
                 .lineLimit(1)
         }

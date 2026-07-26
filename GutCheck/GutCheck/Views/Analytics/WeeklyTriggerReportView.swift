@@ -34,7 +34,7 @@ struct WeeklyTriggerReportView: View {
         VStack(spacing: 8) {
             HStack {
                 Image(systemName: "doc.text.magnifyingglass")
-                    .font(.title2)
+                    .typography(Typography.title2)
                     .foregroundStyle(ColorTheme.accent)
 
                 Text("Weekly Trigger Report")
@@ -47,7 +47,7 @@ struct WeeklyTriggerReportView: View {
             }
 
             Text(dateRangeString)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -121,14 +121,14 @@ struct WeeklyTriggerReportView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Label(title, systemImage: icon)
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(accentColor)
 
                 Spacer()
 
                 if let badge {
                     Text(badge)
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(.white)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
@@ -151,7 +151,7 @@ struct WeeklyTriggerReportView: View {
     private var symptomTrendCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Symptom Trend", systemImage: "chart.line.uptrend.xyaxis")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             HStack(spacing: 24) {
@@ -160,7 +160,7 @@ struct WeeklyTriggerReportView: View {
                         .font(.title.bold())
                         .foregroundStyle(ColorTheme.primaryText)
                     Text("This week")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                 }
 
@@ -172,7 +172,7 @@ struct WeeklyTriggerReportView: View {
                         .font(.title.bold())
                         .foregroundStyle(ColorTheme.secondaryText)
                     Text("Last week")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                 }
 
@@ -203,12 +203,12 @@ struct WeeklyTriggerReportView: View {
         return AnyView(
             VStack(alignment: .leading, spacing: 12) {
                 Label("Recommendations", systemImage: "lightbulb.fill")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
 
                 ForEach(allRecommendations, id: \.self) { recommendation in
                     Label(recommendation, systemImage: "checkmark.circle")
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .foregroundStyle(ColorTheme.accent)
                 }
             }
@@ -270,7 +270,7 @@ private struct TriggerEntryRow: View {
                 Spacer()
 
                 Text("\(trigger.correlationCount) correlation\(trigger.correlationCount == 1 ? "" : "s")")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
 
@@ -278,7 +278,7 @@ private struct TriggerEntryRow: View {
                 // Confidence bar
                 HStack(spacing: 4) {
                     Text("Confidence")
-                        .font(.caption2)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                     ProgressView(value: trigger.confidence)
                         .tint(accentColor)
@@ -287,7 +287,7 @@ private struct TriggerEntryRow: View {
 
                 // Average onset
                 Label(String(format: "%.1fh onset", trigger.averageOnsetHours), systemImage: "clock")
-                    .font(.caption2)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
 
@@ -295,7 +295,7 @@ private struct TriggerEntryRow: View {
                 HStack(spacing: 6) {
                     ForEach(trigger.associatedSymptoms, id: \.self) { symptom in
                         Text(symptom)
-                            .font(.caption2)
+                            .typography(Typography.caption)
                             .foregroundStyle(accentColor)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
@@ -340,7 +340,7 @@ struct TriggerCountPill: View {
                 .foregroundStyle(count > 0 ? color : ColorTheme.secondaryText)
 
             Text(label)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
         }
         .frame(maxWidth: .infinity)

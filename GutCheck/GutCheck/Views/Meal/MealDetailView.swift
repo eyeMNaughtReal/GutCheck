@@ -34,7 +34,7 @@ struct MealDetailView: View {
     
     private func mealBadge(type: MealType) -> some View {
         Text(type.rawValue)
-            .font(.caption)
+            .typography(Typography.caption)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(mealTypeColor(type).opacity(0.2))
@@ -111,14 +111,14 @@ struct MealDetailView: View {
     private var mealHeaderSection: some View {
         VStack(spacing: 8) {
             Text(viewModel.meal.name)
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
             
             HStack {
                 mealBadge(type: viewModel.meal.type)
                 
                 Text(viewModel.formattedDateTime)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
         }
@@ -130,7 +130,7 @@ struct MealDetailView: View {
         if !viewModel.meal.foodItems.isEmpty {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Food Items")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                     .padding(.horizontal)
                 
@@ -147,7 +147,7 @@ struct MealDetailView: View {
             let totalNutrition = calculateTotalNutrition()
             VStack(alignment: .leading, spacing: 16) {
                 Text("Nutrition Summary")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                     .padding(.horizontal)
                 
@@ -162,7 +162,7 @@ struct MealDetailView: View {
         if let notes = viewModel.meal.notes, !notes.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Notes")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                     .padding(.horizontal)
 
@@ -201,11 +201,11 @@ struct MealDetailView: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(foodItem.name)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(foodItem.quantity)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
             
@@ -213,7 +213,7 @@ struct MealDetailView: View {
             
             if let calories = foodItem.nutrition.calories {
                 Text("\(calories) calories")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
         }
@@ -228,13 +228,13 @@ struct MealDetailView: View {
             // Header
             HStack {
                 Text("Total Nutrition")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
                 
                 Text("\(nutrition.calories ?? 0) calories")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primary)
             }
             
@@ -263,7 +263,7 @@ struct MealDetailView: View {
     private func nutritionItem(name: String, value: Double?, unit: String, color: Color) -> some View {
         VStack(spacing: 4) {
             Text(name)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
             
             Text("\((value ?? 0).formatted(.number.precision(.fractionLength(1))))\(unit)")

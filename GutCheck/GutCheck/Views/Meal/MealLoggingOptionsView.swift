@@ -29,7 +29,7 @@ struct MealLoggingOptionsView: View {
                 
                 // Description
                 Text("Search our database to find and log your food")
-                    .font(.body)
+                    .typography(Typography.body)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
@@ -45,7 +45,7 @@ struct MealLoggingOptionsView: View {
                             Image(systemName: "magnifyingglass")
                             Text("Search Foods")
                         }
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(ColorTheme.accent)
@@ -57,7 +57,7 @@ struct MealLoggingOptionsView: View {
                         dismiss()
                     }) {
                         Text("Cancel")
-                            .font(.headline)
+                            .typography(Typography.headline)
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(ColorTheme.surface)

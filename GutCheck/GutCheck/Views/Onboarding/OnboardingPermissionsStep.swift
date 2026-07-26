@@ -27,7 +27,7 @@ struct OnboardingPermissionsStep: View {
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Text("GutCheck respects your privacy and only requests permissions for features you choose to use.")
-                    .font(.title3)
+                    .typography(Typography.title3)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
@@ -37,7 +37,7 @@ struct OnboardingPermissionsStep: View {
             // Permission overview
             VStack(spacing: 16) {
                 Text("We may ask for access to:")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 permissionOverviewList
@@ -55,7 +55,7 @@ struct OnboardingPermissionsStep: View {
                 Button("Set Up Permissions") {
                     showingPermissionRequest = true
                 }
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
@@ -65,7 +65,7 @@ struct OnboardingPermissionsStep: View {
                 Button("Skip for Now") {
                     currentStep += 1
                 }
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText)
             }
         }
@@ -97,7 +97,7 @@ struct OnboardingPermissionsStep: View {
                             .foregroundStyle(ColorTheme.primaryText)
                         
                         Text(description)
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
                     
@@ -119,7 +119,7 @@ struct OnboardingPermissionsStep: View {
                     .foregroundStyle(ColorTheme.success)
                 
                 Text("Your privacy is protected")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
@@ -150,7 +150,7 @@ struct OnboardingPermissionsStep: View {
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(description)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
             

@@ -18,7 +18,7 @@ struct HealthKitTestView: View {
         NavigationStack {
             VStack(spacing: 20) {
                 Text("HealthKit Integration Test")
-                    .font(.title)
+                    .typography(Typography.title)
                     .padding()
                 
                 Text(statusMessage)

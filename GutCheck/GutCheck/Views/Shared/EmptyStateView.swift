@@ -11,7 +11,7 @@ struct EmptyStateView: View {
                 .foregroundStyle(.gray)
             
             Text(message)
-                .font(.body)
+                .typography(Typography.body)
                 .foregroundStyle(.gray)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)

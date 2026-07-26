@@ -15,11 +15,11 @@ struct GreetingHeaderView: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text(greeting)
-                    .font(.title2)
+                    .typography(Typography.title2)
                     .fontWeight(.semibold)
                     .foregroundStyle(ColorTheme.primaryText)
                 Text("Here's how your day is going so far:")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
             Spacer()

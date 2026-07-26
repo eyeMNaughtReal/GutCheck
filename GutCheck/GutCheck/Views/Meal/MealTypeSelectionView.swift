@@ -34,11 +34,11 @@ struct MealTypeSelectionView: View {
                 // Food item preview
                 VStack(spacing: 12) {
                     Text("Add to Meal")
-                        .font(.title2)
+                        .typography(Typography.title2)
                         .fontWeight(.semibold)
                     
                     Text("Select which meal to add \(foodItem.name) to:")
-                        .font(.body)
+                        .typography(Typography.body)
                         .foregroundStyle(ColorTheme.secondaryText)
                         .multilineTextAlignment(.center)
                 }
@@ -49,12 +49,12 @@ struct MealTypeSelectionView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(foodItem.name)
-                                .font(.headline)
+                                .typography(Typography.headline)
                                 .fontWeight(.medium)
                             
                             if let brand = foodItem.nutritionDetails["brand"], !brand.isEmpty {
                                 Text(brand)
-                                    .font(.subheadline)
+                                    .typography(Typography.subheadline)
                                     .foregroundStyle(ColorTheme.secondaryText)
                             }
                         }
@@ -64,7 +64,7 @@ struct MealTypeSelectionView: View {
                         VStack(alignment: .trailing, spacing: 2) {
                             if let calories = foodItem.nutrition.calories {
                                 Text("\(Int(calories)) cal")
-                                    .font(.subheadline)
+                                    .typography(Typography.subheadline)
                                     .fontWeight(.medium)
                             }
                         }
@@ -81,7 +81,7 @@ struct MealTypeSelectionView: View {
                 // Meal type selection
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Meal Type")
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .fontWeight(.medium)
                     
                     VStack(spacing: 8) {
@@ -97,12 +97,12 @@ struct MealTypeSelectionView: View {
                                 HStack {
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(mealTypeInfo.display)
-                                            .font(.body)
+                                            .typography(Typography.body)
                                             .fontWeight(.medium)
                                             .foregroundStyle(isSelected ? .white : ColorTheme.primaryText)
                                         
                                         Text(mealTypeInfo.description)
-                                            .font(.caption)
+                                            .typography(Typography.caption)
                                             .foregroundStyle(isSelected ? .white.opacity(0.8) : ColorTheme.secondaryText)
                                     }
                                     
@@ -132,7 +132,7 @@ struct MealTypeSelectionView: View {
                     dismiss()
                 }) {
                     Text("Add to \(mealTypes.first(where: { $0.type == selectedMealType.rawValue })?.display ?? "Meal")")
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .fontWeight(.medium)
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)

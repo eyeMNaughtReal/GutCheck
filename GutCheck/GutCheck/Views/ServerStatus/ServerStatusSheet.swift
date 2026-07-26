@@ -75,13 +75,13 @@ struct ServerStatusSheet: View {
                     .tint(.white)
                     .scaleEffect(0.7)
                 Text("Checking...")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .fontWeight(.medium)
             } else {
                 Image(systemName: "arrow.clockwise")
                     .font(.system(size: 12, weight: .semibold))
                 Text("Rechecking in \(serverStatus.secondsUntilRecheck)s")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .fontWeight(.medium)
             }
         }
@@ -117,10 +117,10 @@ struct ServerStatusSheet: View {
     private func warningBadge(_ message: String) -> some View {
         HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.warning)
             Text(message)
-                .font(.caption)
+                .typography(Typography.caption)
                 .fontWeight(.medium)
                 .foregroundStyle(ColorTheme.warning)
         }
@@ -142,7 +142,7 @@ struct ServerStatusSheet: View {
     private var whatsHappeningSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("What's happening")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             ServerStatusRow(
@@ -192,7 +192,7 @@ struct ServerStatusSheet: View {
     private var whatStillWorksSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("What still works")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             ServerStatusRow(
@@ -227,7 +227,7 @@ struct ServerStatusSheet: View {
     private var temporarilyLimitedSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Temporarily limited")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             ServerStatusRow(
@@ -259,13 +259,13 @@ struct ServerStatusSheet: View {
                         .tint(.white)
                         .scaleEffect(0.7)
                     Text("Syncing...")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .fontWeight(.medium)
                 } else {
                     Image(systemName: "arrow.triangle.2.circlepath")
                         .font(.system(size: 12, weight: .semibold))
                     Text("Sync Now")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .fontWeight(.medium)
                 }
             }

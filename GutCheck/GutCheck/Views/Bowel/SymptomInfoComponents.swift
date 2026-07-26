@@ -17,14 +17,14 @@ struct BristolQuickCard: View {
     var body: some View {
         VStack(spacing: 6) {
             Text("\(type)")
-                .font(.title2)
+                .typography(Typography.title2)
                 .fontWeight(.bold)
                 .foregroundStyle(.white)
                 .frame(width: 32, height: 32)
                 .background(Circle().fill(color))
             
             Text(title)
-                .font(.caption)
+                .typography(Typography.caption)
                 .fontWeight(.medium)
                 .foregroundStyle(ColorTheme.secondaryText)
                 .multilineTextAlignment(.center)
@@ -47,7 +47,7 @@ struct BristolDetailCard: View {
     var body: some View {
         HStack(spacing: 12) {
             Text("\(type)")
-                .font(.title3)
+                .typography(Typography.title3)
                 .fontWeight(.bold)
                 .foregroundStyle(.white)
                 .frame(width: 28, height: 28)
@@ -55,12 +55,12 @@ struct BristolDetailCard: View {
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .fontWeight(.medium)
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(description)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
             
@@ -83,7 +83,7 @@ struct LegendItem: View {
                 .frame(width: 12, height: 12)
             
             Text(text)
-                .font(.caption)
+                .typography(Typography.caption)
                 .fontWeight(.medium)
                 .foregroundStyle(ColorTheme.secondaryText)
         }
@@ -99,7 +99,7 @@ struct PainRangeCard: View {
     var body: some View {
         HStack(spacing: 12) {
             Text(range)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .fontWeight(.bold)
                 .foregroundStyle(.white)
                 .frame(width: 36, height: 28)
@@ -107,12 +107,12 @@ struct PainRangeCard: View {
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .fontWeight(.medium)
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(description)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
             
@@ -138,12 +138,12 @@ struct UrgencyCard: View {
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(level)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .fontWeight(.medium)
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(description)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
             

@@ -11,7 +11,7 @@ struct SymptomExplanationView: View {
                     // Overview
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Overview")
-                            .font(.title2)
+                            .typography(Typography.title2)
                             .bold()
                         
                         Text(symptomType.description)
@@ -23,7 +23,7 @@ struct SymptomExplanationView: View {
                     // Severity Scale
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Severity Scale")
-                            .font(.title2)
+                            .typography(Typography.title2)
                             .bold()
                         
                         ForEach(SeverityLevel.allCases, id: \.self) { level in
@@ -37,7 +37,7 @@ struct SymptomExplanationView: View {
                     if !symptomType.commonTriggers.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Common Triggers")
-                                .font(.title2)
+                                .typography(Typography.title2)
                                 .bold()
                             
                             ForEach(symptomType.commonTriggers, id: \.self) { trigger in
@@ -53,7 +53,7 @@ struct SymptomExplanationView: View {
                     // Management Tips
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Management Tips")
-                            .font(.title2)
+                            .typography(Typography.title2)
                             .bold()
                         
                         ForEach(symptomType.managementTips, id: \.self) { tip in
@@ -68,7 +68,7 @@ struct SymptomExplanationView: View {
                     // When to Seek Help
                     VStack(alignment: .leading, spacing: 12) {
                         Text("When to Seek Help")
-                            .font(.title2)
+                            .typography(Typography.title2)
                             .bold()
                         
                         ForEach(symptomType.warningSignals, id: \.self) { warning in
@@ -101,15 +101,15 @@ private struct SeverityRow: View {
     var body: some View {
         HStack(spacing: 16) {
             Text("\(level.range)")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(level.color)
                 .frame(width: 60, alignment: .leading)
             
             VStack(alignment: .leading) {
                 Text(level.title)
-                    .font(.headline)
+                    .typography(Typography.headline)
                 Text(level.description)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.text.opacity(0.8))
             }
         }

@@ -105,7 +105,7 @@ struct SymptomChartsView: View {
                         AxisValueLabel {
                             if let intVal = value.as(Int.self) {
                                 Text(severityAxisLabel(intVal))
-                                    .font(.caption2)
+                                    .typography(Typography.caption)
                             }
                         }
                         AxisGridLine()
@@ -151,7 +151,7 @@ struct SymptomChartsView: View {
                         AxisValueLabel {
                             if let intVal = value.as(Int.self) {
                                 Text(severityAxisLabel(intVal))
-                                    .font(.caption2)
+                                    .typography(Typography.caption)
                             }
                         }
                         AxisGridLine()
@@ -216,7 +216,7 @@ struct SymptomChartsView: View {
                     ForEach(viewModel.ingredientData) { item in
                         HStack {
                             Text(item.name)
-                                .font(.subheadline)
+                                .typography(Typography.subheadline)
                                 .foregroundStyle(ColorTheme.primaryText)
                             Spacer()
                             Text("\(item.count)×")
@@ -238,7 +238,7 @@ struct SymptomChartsView: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Label(title, systemImage: icon)
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             content()
@@ -254,10 +254,10 @@ struct SymptomChartsView: View {
     private func chartEmptyState(_ message: String) -> some View {
         VStack(spacing: 12) {
             Image(systemName: "chart.bar.xaxis")
-                .font(.title)
+                .typography(Typography.title)
                 .foregroundStyle(ColorTheme.secondaryText)
             Text(message)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText)
         }
         .frame(maxWidth: .infinity)
@@ -267,13 +267,13 @@ struct SymptomChartsView: View {
     private func errorState(_ message: String) -> some View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.largeTitle)
+                .typography(Typography.largeTitle)
                 .foregroundStyle(ColorTheme.warning)
             Text("Unable to Load Charts")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
             Text(message)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText)
                 .multilineTextAlignment(.center)
         }

@@ -42,7 +42,7 @@ struct TriggerPatternDetailView: View {
                         .foregroundStyle(ColorTheme.primaryText)
 
                     Text("\(pattern.triggeringObservations) of \(pattern.totalObservations) observations triggered symptoms")
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .foregroundStyle(ColorTheme.secondaryText)
 
                     severityBadge
@@ -65,7 +65,7 @@ struct TriggerPatternDetailView: View {
                             .font(.title3.bold())
                             .foregroundStyle(scoreColor)
                         Text("Score")
-                            .font(.caption2)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
                 }
@@ -76,7 +76,7 @@ struct TriggerPatternDetailView: View {
                     HStack(spacing: 6) {
                         ForEach(pattern.associatedSymptomLabels, id: \.self) { label in
                             Text(label)
-                                .font(.caption2)
+                                .typography(Typography.caption)
                                 .foregroundStyle(scoreColor)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
@@ -97,7 +97,7 @@ struct TriggerPatternDetailView: View {
     private var summaryInsightsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Key Findings", systemImage: "lightbulb.fill")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             ForEach(pattern.summaryInsights) { insight in
@@ -107,18 +107,18 @@ struct TriggerPatternDetailView: View {
                         .foregroundStyle(ColorTheme.primaryText)
 
                     Text(insight.detail)
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
 
                     HStack {
                         Text("\(insight.dataPoints) data points")
-                            .font(.caption2)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.secondaryText)
 
                         Spacer()
 
                         Text("\(Int(insight.confidence * 100))% confidence")
-                            .font(.caption2)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.accent)
                     }
                 }
@@ -138,7 +138,7 @@ struct TriggerPatternDetailView: View {
     private var severityDistributionCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Severity Distribution", systemImage: "chart.bar.fill")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             VStack(spacing: 8) {
@@ -152,9 +152,9 @@ struct TriggerPatternDetailView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
-                        .font(.caption)
+                        .typography(Typography.caption)
                     Text("Stool risk: \(pattern.severityPrediction.stoolRisk.rawValue)")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                 }
             }
@@ -168,7 +168,7 @@ struct TriggerPatternDetailView: View {
     private func severityBar(label: String, value: Double, color: Color) -> some View {
         HStack(spacing: 8) {
             Text(label)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
                 .frame(width: 60, alignment: .trailing)
 
@@ -196,7 +196,7 @@ struct TriggerPatternDetailView: View {
     private var timingProfileCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Timing Profile", systemImage: "clock.fill")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             HStack(spacing: 0) {
@@ -221,10 +221,10 @@ struct TriggerPatternDetailView: View {
                 .font(.title3.bold().monospacedDigit())
                 .foregroundStyle(ColorTheme.primaryText)
             Text(label)
-                .font(.caption2)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
             Text("hours")
-                .font(.caption2)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
         }
         .frame(maxWidth: .infinity)
@@ -235,7 +235,7 @@ struct TriggerPatternDetailView: View {
     private var ingredientBreakdownSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Ingredient Analysis", systemImage: "leaf.fill")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             ForEach(pattern.ingredientBreakdown) { ingredient in
@@ -251,7 +251,7 @@ struct TriggerPatternDetailView: View {
 
                         if let category = ingredient.compoundCategory {
                             Text(category)
-                                .font(.caption2)
+                                .typography(Typography.caption)
                                 .foregroundStyle(ColorTheme.secondaryText)
                         }
                     }
@@ -280,7 +280,7 @@ struct TriggerPatternDetailView: View {
     private var scoreBreakdownCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Trigger Score Breakdown", systemImage: "gauge.with.dots.needle.33percent")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             scoreRow(label: "Correlation", value: pattern.triggerScore.correlationComponent, color: .blue)
@@ -297,7 +297,7 @@ struct TriggerPatternDetailView: View {
     private func scoreRow(label: String, value: Double, color: Color) -> some View {
         HStack(spacing: 8) {
             Text(label)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
                 .frame(width: 100, alignment: .trailing)
 
@@ -316,12 +316,12 @@ struct TriggerPatternDetailView: View {
     private var recommendationsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Recommendations", systemImage: "lightbulb.fill")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             ForEach(pattern.recommendations, id: \.self) { rec in
                 Label(rec, systemImage: "checkmark.circle")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.accent)
             }
         }
@@ -336,28 +336,28 @@ struct TriggerPatternDetailView: View {
     private var relatedTriggersSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Related Triggers", systemImage: "link")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             Text("Foods sharing similar compounds")
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
 
             ForEach(viewModel.relatedPatterns) { related in
                 NavigationLink(value: InsightsRoute.triggerPatternDetail(related)) {
                     HStack {
                         Text(related.foodName)
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(ColorTheme.primaryText)
 
                         Spacer()
 
                         Text("Score: \(related.triggerScore.overall)")
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.secondaryText)
 
                         Image(systemName: "chevron.right")
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
                     .padding(.vertical, 4)
@@ -391,7 +391,7 @@ struct TriggerPatternDetailView: View {
         }()
 
         return Text("Likely: \(painLabel) pain")
-            .font(.caption)
+            .typography(Typography.caption)
             .foregroundStyle(.white)
             .padding(.horizontal, 10)
             .padding(.vertical, 4)

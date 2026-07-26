@@ -82,12 +82,12 @@ struct HealthcareExportView: View {
                 .foregroundStyle(.blue)
             
             Text("Healthcare Professional Export")
-                .font(.title2)
+                .typography(Typography.title2)
                 .fontWeight(.bold)
                 .multilineTextAlignment(.center)
             
             Text("Generate comprehensive health reports for medical professionals, nutritionists, and healthcare providers.")
-                .font(.body)
+                .typography(Typography.body)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
@@ -101,7 +101,7 @@ struct HealthcareExportView: View {
     private var exportOptionsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Export Configuration")
-                .font(.headline)
+                .typography(Typography.headline)
                 .fontWeight(.semibold)
             
             VStack(spacing: 12) {
@@ -144,7 +144,7 @@ struct HealthcareExportView: View {
     private var dataPreviewSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Data Preview")
-                .font(.headline)
+                .typography(Typography.headline)
                 .fontWeight(.semibold)
             
             VStack(spacing: 12) {
@@ -196,7 +196,7 @@ struct HealthcareExportView: View {
                         .progressViewStyle(LinearProgressViewStyle())
                     
                     Text("Generating Report...")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(.secondary)
                 }
             } else {
@@ -205,7 +205,7 @@ struct HealthcareExportView: View {
                         Image(systemName: "square.and.arrow.up")
                         Text("Generate Healthcare Report")
                     }
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -222,7 +222,7 @@ struct HealthcareExportView: View {
     private var instructionsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Instructions for Healthcare Professionals")
-                .font(.headline)
+                .typography(Typography.headline)
                 .fontWeight(.semibold)
             
             VStack(alignment: .leading, spacing: 12) {
@@ -327,7 +327,7 @@ struct DataPreviewRow: View {
             Spacer()
             
             Text(count)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(.secondary)
         }
     }
@@ -340,7 +340,7 @@ struct InstructionRow: View {
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Text(number)
-                .font(.caption)
+                .typography(Typography.caption)
                 .fontWeight(.bold)
                 .foregroundStyle(.white)
                 .frame(width: 20, height: 20)
@@ -348,7 +348,7 @@ struct InstructionRow: View {
                 .clipShape(Circle())
             
             Text(text)
-                .font(.body)
+                .typography(Typography.body)
                 .foregroundStyle(.primary)
         }
     }
@@ -388,7 +388,7 @@ struct ExportOptionsSheet: View {
                 
                 Section("Privacy Note") {
                     Text("Private data includes personal notes, detailed symptoms, and medication information. Only include if required for medical assessment.")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(.secondary)
                 }
             }

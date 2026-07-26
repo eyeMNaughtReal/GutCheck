@@ -19,11 +19,11 @@ struct PainLevelInfoView: View {
                     // Header
                     VStack(alignment: .leading, spacing: 12) {
                         Text("0-10 Numeric Pain Scale")
-                            .font(.headline)
+                            .typography(Typography.headline)
                             .foregroundStyle(ColorTheme.primaryText)
                         
                         Text("Rate your abdominal pain, cramping, or discomfort.")
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -37,14 +37,14 @@ struct PainLevelInfoView: View {
                             ForEach(0...4, id: \.self) { level in
                                 VStack(spacing: 8) {
                                     Text("\(level)")
-                                        .font(.title2)
+                                        .typography(Typography.title2)
                                         .fontWeight(.bold)
                                         .foregroundStyle(.white)
                                         .frame(width: 40, height: 40)
                                         .background(Circle().fill(painColor(for: level)))
                                     
                                     Text(painLabel(for: level))
-                                        .font(.caption)
+                                        .typography(Typography.caption)
                                         .fontWeight(.medium)
                                         .foregroundStyle(ColorTheme.secondaryText)
                                         .multilineTextAlignment(.center)

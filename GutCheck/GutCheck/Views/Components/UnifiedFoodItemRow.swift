@@ -114,7 +114,7 @@ struct UnifiedFoodItemRow: View {
                     // Brand (if available and style supports it)
                     if config.showBrand, let brand = item.nutritionDetails["brand"] {
                         Text(brand)
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(ColorTheme.accent)
                             .lineLimit(1)
                     }
@@ -193,7 +193,7 @@ struct UnifiedFoodItemRow: View {
         HStack {
             ForEach(item.allergens.prefix(config.maxAllergens), id: \.self) { allergen in
                 Text(allergen)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 2)
                     .background(ColorTheme.error.opacity(0.2))
@@ -202,7 +202,7 @@ struct UnifiedFoodItemRow: View {
             }
             if item.allergens.count > config.maxAllergens {
                 Text("+\(item.allergens.count - config.maxAllergens)")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
         }
@@ -221,7 +221,7 @@ struct UnifiedFoodItemRow: View {
                             Image(systemName: tag.icon)
                                 .font(.system(size: 8))
                             Text(tag.displayName)
-                                .font(.caption2)
+                                .typography(Typography.caption)
                         }
                         .padding(.horizontal, 6)
                         .padding(.vertical, 3)
@@ -231,7 +231,7 @@ struct UnifiedFoodItemRow: View {
                     }
                     if breakdown.dietaryTags.count > 5 {
                         Text("+\(breakdown.dietaryTags.count - 5)")
-                            .font(.caption2)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
                 }

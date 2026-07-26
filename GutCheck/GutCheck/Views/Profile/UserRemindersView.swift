@@ -15,10 +15,10 @@ struct UserRemindersView: View {
                 ReminderSection(title: "Meal Reminders", color: ColorTheme.accent) {
                     HStack(spacing: 8) {
                         Image(systemName: "clock.fill")
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.accent)
                         Text("Set your typical meal time. A reminder fires 15 minutes after to log what you ate.")
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
                     .padding(.bottom, 4)
@@ -99,11 +99,11 @@ struct UserRemindersView: View {
                 ReminderSection(title: "Smart Notifications", color: ColorTheme.primary) {
                     HStack(spacing: 12) {
                         Image(systemName: "sparkles")
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(ColorTheme.primary)
                             .frame(width: 20)
                         Text("Sent automatically when GutCheck detects new insights or patterns in your data.")
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
                     .padding(.bottom, 4)
@@ -128,7 +128,7 @@ struct UserRemindersView: View {
                                 .scaleEffect(0.9)
                         } else {
                             Image(systemName: "checkmark.circle.fill")
-                                .font(.title3)
+                                .typography(Typography.title3)
                         }
                         
                         Text(reminderService.isLoading ? "Saving..." : "Save Reminders")
@@ -179,16 +179,16 @@ struct UserRemindersView: View {
         ReminderSection(title: "Apple Reminders", color: ColorTheme.primary) {
             HStack(spacing: 12) {
                 Image(systemName: "checklist")
-                    .font(.title3)
+                    .typography(Typography.title3)
                     .foregroundStyle(ColorTheme.primary)
                     .frame(width: 28)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Sync with Apple Reminders")
-                        .font(.body)
+                        .typography(Typography.body)
                         .foregroundStyle(ColorTheme.primaryText)
                     Text("Add reminders to your Apple Reminders app")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                 }
 
@@ -219,9 +219,9 @@ struct UserRemindersView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(ColorTheme.success)
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                     Text("Your reminders will appear in the \"GutCheck\" list in Apple Reminders.")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                 }
             }
@@ -267,7 +267,7 @@ struct ReminderSection<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(color)
             VStack(spacing: 12) {
                 content()

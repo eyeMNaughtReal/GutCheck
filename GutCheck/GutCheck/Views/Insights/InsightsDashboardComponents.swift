@@ -18,15 +18,15 @@ struct StatCard: View {
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.title2)
+                .typography(Typography.title2)
                 .foregroundStyle(color)
             
             Text(value)
-                .font(.title2)
+                .typography(Typography.title2)
                 .fontWeight(.bold)
             
             Text(title)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
@@ -47,16 +47,16 @@ struct SectionHeader: View {
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .font(.title2)
+                .typography(Typography.title2)
                 .foregroundStyle(color)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .fontWeight(.semibold)
                 
                 Text(subtitle)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(.secondary)
             }
             
@@ -73,7 +73,7 @@ struct CategoryFilterButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .fontWeight(.medium)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
@@ -132,16 +132,16 @@ struct InsightCard: View {
             // Header
             HStack {
                 Image(systemName: insight.iconName)
-                    .font(.title2)
+                    .typography(Typography.title2)
                     .foregroundStyle(accentColor)
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(insight.title)
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .fontWeight(.semibold)
                     
                     Text(insight.summary)
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(isExpanded ? nil : 2)
                 }
@@ -152,13 +152,13 @@ struct InsightCard: View {
             // Confidence level
             HStack {
                 Text("Confidence")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(.secondary)
                 
                 Spacer()
                 
                 Text("\(insight.confidenceLevel)%")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(.secondary)
             }
             
@@ -173,7 +173,7 @@ struct InsightCard: View {
                     // Detailed description
                     if let detailedDescription = insight.detailedDescription {
                         Text(detailedDescription)
-                            .font(.body)
+                            .typography(Typography.body)
                             .foregroundStyle(.primary)
                     }
                     
@@ -187,11 +187,11 @@ struct InsightCard: View {
                             ForEach(insight.recommendations, id: \.self) { recommendation in
                                 HStack(alignment: .top, spacing: 8) {
                                     Image(systemName: "lightbulb.fill")
-                                        .font(.caption)
+                                        .typography(Typography.caption)
                                         .foregroundStyle(.yellow)
                                     
                                     Text(recommendation)
-                                        .font(.caption)
+                                        .typography(Typography.caption)
                                         .foregroundStyle(.secondary)
                                 }
                             }
@@ -201,11 +201,11 @@ struct InsightCard: View {
                     // Date range
                     HStack {
                         Image(systemName: "calendar")
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(.secondary)
                         
                         Text(insight.dateRange)
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(.secondary)
                         
                         Spacer()
@@ -217,11 +217,11 @@ struct InsightCard: View {
             Button(action: { isExpanded.toggle() }) {
                 HStack {
                     Text(isExpanded ? "Show Less" : "Show More")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .fontWeight(.medium)
                     
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.caption)
+                        .typography(Typography.caption)
                 }
                 .foregroundStyle(accentColor)
             }

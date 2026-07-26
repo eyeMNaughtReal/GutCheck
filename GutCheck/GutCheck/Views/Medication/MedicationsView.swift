@@ -86,12 +86,12 @@ struct MedicationsView: View {
         } label: {
             HStack {
                 Image(systemName: "pills.fill")
-                    .font(.title2)
+                    .typography(Typography.title2)
                 Text("Log a Dose")
-                    .font(.headline)
+                    .typography(Typography.headline)
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(.secondary)
             }
             .padding()
@@ -170,7 +170,7 @@ struct MedicationsView: View {
             // Link to full catalog
             NavigationLink(value: AppDestination.medicationList) {
                 Text("Manage all medications…")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(.purple)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
@@ -197,7 +197,7 @@ private struct SectionTitle: View {
     let systemImage: String
     var body: some View {
         Label(title, systemImage: systemImage)
-            .font(.headline)
+            .typography(Typography.headline)
             .foregroundStyle(.primary)
     }
 }
@@ -210,7 +210,7 @@ private struct EmptyCard: View {
             Image(systemName: icon)
                 .foregroundStyle(.tertiary)
             Text(message)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -225,21 +225,21 @@ private struct DoseRowView: View {
         HStack(spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundStyle(.green)
-                .font(.title3)
+                .typography(Typography.title3)
             VStack(alignment: .leading, spacing: 2) {
                 Text(dose.medicationName)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .fontWeight(.medium)
                 HStack(spacing: 4) {
                     if dose.dosageAmount > 0 {
                         Text(formattedDose(dose))
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(.secondary)
                         Text("·")
                             .foregroundStyle(.tertiary)
                     }
                     Text(dose.dateTaken.formatted(date: .omitted, time: .shortened))
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -262,22 +262,22 @@ private struct MedCatalogRow: View {
         HStack(spacing: 12) {
             Image(systemName: "pills.fill")
                 .foregroundStyle(.purple)
-                .font(.title3)
+                .typography(Typography.title3)
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 2) {
                 Text(medication.name)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .fontWeight(.medium)
                 HStack(spacing: 4) {
                     if medication.dosage.amount > 0 {
                         Text(formattedDosage)
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(.secondary)
                         Text("·")
                             .foregroundStyle(.tertiary)
                     }
                     Text(medication.dosage.frequency.displayName)
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(.secondary)
                 }
             }

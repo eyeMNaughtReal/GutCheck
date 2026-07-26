@@ -82,16 +82,16 @@ private struct WelcomePageView: View {
             
             VStack(spacing: 12) {
                 Text(page.title)
-                    .font(.largeTitle)
+                    .typography(Typography.largeTitle)
                     .bold()
                     .foregroundStyle(ColorTheme.text)
                 
                 Text(page.subtitle)
-                    .font(.title2)
+                    .typography(Typography.title2)
                     .foregroundStyle(ColorTheme.primary)
                 
                 Text(page.description)
-                    .font(.body)
+                    .typography(Typography.body)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(ColorTheme.text)
                     .padding(.horizontal)

@@ -48,7 +48,7 @@ struct OnboardingHealthKitStep: View {
                         Text("Connect to Apple Health")
                     }
                 }
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
@@ -59,13 +59,13 @@ struct OnboardingHealthKitStep: View {
                 Button("Learn More") {
                     showPermissionExplanation = true
                 }
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.primary)
                 
                 Button("Skip for Now") {
                     currentStep += 1
                 }
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText)
             }
         }
@@ -83,7 +83,7 @@ struct OnboardingHealthKitStep: View {
     private var healthKitBenefitsView: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("What you'll get:")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
             
             VStack(spacing: 12) {
@@ -101,7 +101,7 @@ struct OnboardingHealthKitStep: View {
     private func healthKitBenefit(_ icon: String, _ title: String, _ description: String) -> some View {
         HStack(spacing: 12) {
             Text(icon)
-                .font(.title2)
+                .typography(Typography.title2)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
@@ -109,7 +109,7 @@ struct OnboardingHealthKitStep: View {
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(description)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
             
@@ -125,7 +125,7 @@ struct OnboardingHealthKitStep: View {
                     .foregroundStyle(ColorTheme.success)
                 
                 Text("Your health data stays secure")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
@@ -133,13 +133,13 @@ struct OnboardingHealthKitStep: View {
             
             VStack(alignment: .leading, spacing: 6) {
                 Text("• Data is encrypted and stored securely")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
                 Text("• You control what data to share")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
                 Text("• Can be revoked anytime in Settings")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
         }
@@ -229,7 +229,7 @@ struct HealthKitPermissionExplanationView: View {
     private func healthDataSection(_ title: String, _ items: [(String, String)]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
             
             VStack(spacing: 8) {
@@ -246,7 +246,7 @@ struct HealthKitPermissionExplanationView: View {
                                 .foregroundStyle(ColorTheme.primaryText)
                             
                             Text(item.1)
-                                .font(.caption)
+                                .typography(Typography.caption)
                                 .foregroundStyle(ColorTheme.secondaryText)
                         }
                         

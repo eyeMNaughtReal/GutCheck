@@ -14,7 +14,7 @@ struct InsightDetailView: View {
                     
                     if let description = insight.detailedDescription {
                         Text(description)
-                            .font(.body)
+                            .typography(Typography.body)
                             .foregroundStyle(ColorTheme.text.opacity(0.8))
                     }
                 }
@@ -26,7 +26,7 @@ struct InsightDetailView: View {
                 if !viewModel.chartData.isEmpty {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Trend Analysis")
-                            .font(.title2)
+                            .typography(Typography.title2)
                             .bold()
                         
                         // Simple chart placeholder
@@ -36,7 +36,7 @@ struct InsightDetailView: View {
                             .overlay(
                                 Text("Chart Visualization")
                                     .foregroundStyle(ColorTheme.accent)
-                                    .font(.headline)
+                                    .typography(Typography.headline)
                             )
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -48,7 +48,7 @@ struct InsightDetailView: View {
                 if !viewModel.contributingFactors.isEmpty {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Contributing Factors")
-                            .font(.title2)
+                            .typography(Typography.title2)
                             .bold()
                         
                         ForEach(viewModel.contributingFactors) { factor in
@@ -64,7 +64,7 @@ struct InsightDetailView: View {
                 if !insight.recommendations.isEmpty {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Recommendations")
-                            .font(.title2)
+                            .typography(Typography.title2)
                             .bold()
                         
                         ForEach(insight.recommendations, id: \.self) { recommendation in
@@ -80,7 +80,7 @@ struct InsightDetailView: View {
                 if !viewModel.relatedInsights.isEmpty {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Related Insights")
-                            .font(.title2)
+                            .typography(Typography.title2)
                             .bold()
                         
                         ForEach(viewModel.relatedInsights) { relatedInsight in
@@ -110,12 +110,12 @@ private struct InsightHeaderView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label(insight.title, systemImage: insight.iconName)
-                .font(.title2)
+                .typography(Typography.title2)
                 .bold()
                 .foregroundStyle(ColorTheme.primary)
             
             Text(insight.summary)
-                .font(.headline)
+                .typography(Typography.headline)
             
             HStack {
                 Label("\(insight.confidenceLevel)% Confidence", 
@@ -123,7 +123,7 @@ private struct InsightHeaderView: View {
                 Spacer()
                 Label(insight.dateRange, systemImage: "calendar")
             }
-            .font(.subheadline)
+            .typography(Typography.subheadline)
             .foregroundStyle(.secondary)
         }
     }
@@ -136,16 +136,16 @@ private struct ContributingFactorRow: View {
         HStack {
             VStack(alignment: .leading, spacing: 8) {
                 Text(factor.name)
-                    .font(.headline)
+                    .typography(Typography.headline)
                 Text(factor.description)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(.secondary)
             }
             
             Spacer()
             
             Text("\(Int(factor.impact * 100))%")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(impactColor)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -167,7 +167,7 @@ private struct RecommendationRow: View {
     
     var body: some View {
         Label(text, systemImage: "checkmark.circle")
-            .font(.subheadline)
+            .typography(Typography.subheadline)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 4)
     }
@@ -180,7 +180,7 @@ private struct RelatedInsightRow: View {
         NavigationLink(value: InsightsRoute.insightDetail(insight)) {
             HStack {
                 Label(insight.title, systemImage: insight.iconName)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                 Spacer()
                 Image(systemName: "chevron.right")
                     .foregroundStyle(.secondary)

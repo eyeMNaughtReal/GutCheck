@@ -30,7 +30,7 @@ struct AddWaterView: View {
                     )
                 
                 Text("cup(s)")
-                    .font(.title3)
+                    .typography(Typography.title3)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
             .padding(.horizontal)
@@ -40,7 +40,7 @@ struct AddWaterView: View {
                 addWater()
             }) {
                 Text("Add Water")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding()

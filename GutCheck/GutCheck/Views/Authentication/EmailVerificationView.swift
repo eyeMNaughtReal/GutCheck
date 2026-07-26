@@ -23,12 +23,12 @@ struct EmailVerificationView: View {
             // Title
             VStack(spacing: 12) {
                 Text("Verify Your Email")
-                    .font(.title)
+                    .typography(Typography.title)
                     .fontWeight(.bold)
                     .foregroundStyle(ColorTheme.text)
                 
                 Text("We sent a verification link to your email address. Please check your inbox and tap the link to continue.")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
@@ -70,7 +70,7 @@ struct EmailVerificationView: View {
                     try? authService.cancelEmailVerification()
                 } label: {
                     Text("Back to Sign In")
-                        .font(.footnote)
+                        .typography(Typography.footnote)
                         .foregroundStyle(ColorTheme.primary)
                 }
             }

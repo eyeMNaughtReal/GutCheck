@@ -37,7 +37,7 @@ struct ReauthenticationView: View {
                         .font(.title2.bold())
                     
                     Text("For security reasons, please verify your identity before \(operation.lowercased()).")
-                        .font(.body)
+                        .typography(Typography.body)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
@@ -48,7 +48,7 @@ struct ReauthenticationView: View {
                     // Email Field
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Email")
-                            .font(.headline)
+                            .typography(Typography.headline)
                         
                         TextField("Enter your email", text: $email)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -60,7 +60,7 @@ struct ReauthenticationView: View {
                     // Password Field
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Password")
-                            .font(.headline)
+                            .typography(Typography.headline)
                         
                         SecureField("Enter your password", text: $password)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -168,7 +168,7 @@ struct PhoneReauthenticationView: View {
                         .font(.title2.bold())
                     
                     Text("Verify your identity using your phone number.")
-                        .font(.body)
+                        .typography(Typography.body)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
@@ -180,7 +180,7 @@ struct PhoneReauthenticationView: View {
                         // Phone Number Input
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Phone Number")
-                                .font(.headline)
+                                .typography(Typography.headline)
                             
                             TextField("Enter phone number", text: $phoneNumber)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
@@ -210,7 +210,7 @@ struct PhoneReauthenticationView: View {
                         // Verification Code Input
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Verification Code")
-                                .font(.headline)
+                                .typography(Typography.headline)
                             
                             TextField("Enter 6-digit code", text: $verificationCode)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())

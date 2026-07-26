@@ -38,11 +38,11 @@ struct RegisterView: View {
                             .clipShape(.rect(cornerRadius: 20))
                         
                         Text("Create Your Account")
-                            .font(.title2)
+                            .typography(Typography.title2)
                             .bold()
                         
                         Text("Track your digestive health journey with GutCheck")
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                     }
@@ -79,13 +79,13 @@ struct RegisterView: View {
                         
                         if !password.isEmpty && password.count < 8 {
                             Text("Password must be at least 8 characters")
-                                .font(.caption)
+                                .typography(Typography.caption)
                                 .foregroundStyle(.red)
                         }
                         
                         if !confirmPassword.isEmpty && password != confirmPassword {
                             Text("Passwords do not match")
-                                .font(.caption)
+                                .typography(Typography.caption)
                                 .foregroundStyle(.red)
                         }
                     }
@@ -95,20 +95,20 @@ struct RegisterView: View {
                     VStack(spacing: 12) {
                         Toggle(isOn: $agreedToTerms) {
                             Text("I agree to the Terms of Service and Privacy Policy")
-                                .font(.subheadline)
+                                .typography(Typography.subheadline)
                         }
                         
                         Button("View Privacy Policy") {
                             showingPrivacyPolicy = true
                         }
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                     }
                     .padding(.horizontal)
                     
                     // Error Message
                     if let error = errorMessage {
                         Text(error)
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(.red)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
@@ -136,7 +136,7 @@ struct RegisterView: View {
                     Button("Already have an account? Sign In") {
                         dismiss()
                     }
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .padding(.bottom)
                 }
             }

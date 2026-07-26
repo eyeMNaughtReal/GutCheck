@@ -27,7 +27,7 @@ struct CustomTextField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .fontWeight(.medium)
                 .foregroundStyle(ColorTheme.text)
             

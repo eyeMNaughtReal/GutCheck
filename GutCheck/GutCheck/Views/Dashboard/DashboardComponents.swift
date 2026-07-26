@@ -237,11 +237,11 @@ struct TriggerAlertCard: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle.fill")
-                .font(.title3)
+                .typography(Typography.title3)
                 .foregroundStyle(.orange)
             
             Text(alert)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.primaryText)
                 .multilineTextAlignment(.leading)
             
@@ -285,11 +285,11 @@ struct DashboardInsightsView: View {
             VStack(spacing: 12) {
                 HStack {
                     Text("Today's Health Score")
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .foregroundStyle(ColorTheme.primaryText)
                     Spacer()
                     Text("\(healthScore)/10")
-                        .font(.title2)
+                        .typography(Typography.title2)
                         .fontWeight(.bold)
                         .foregroundStyle(healthScoreColor)
                 }
@@ -316,13 +316,13 @@ struct DashboardInsightsView: View {
                     Image(systemName: "target")
                         .foregroundStyle(.blue)
                     Text("Today's Focus")
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .foregroundStyle(ColorTheme.primaryText)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Text(todaysFocus)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .multilineTextAlignment(.leading)
             }
@@ -337,13 +337,13 @@ struct DashboardInsightsView: View {
                     Image(systemName: "exclamationmark.triangle")
                         .foregroundStyle(.orange)
                     Text("Avoidance Tip")
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .foregroundStyle(ColorTheme.primaryText)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Text(avoidanceTip)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .multilineTextAlignment(.leading)
             }

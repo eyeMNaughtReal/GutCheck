@@ -42,7 +42,7 @@ struct SymptomExplorerView: View {
     private var symptomPickerSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Label("Select Symptom", systemImage: "heart.text.clipboard")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             Picker("Symptom", selection: Binding(
@@ -71,7 +71,7 @@ struct SymptomExplorerView: View {
     private func selectedSymptomCard(_ symptom: Symptom) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Symptom Details", systemImage: "info.circle.fill")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             HStack(spacing: 16) {
@@ -113,10 +113,10 @@ struct SymptomExplorerView: View {
             if let notes = symptom.notes, !notes.isEmpty {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Notes")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                     Text(notes)
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .foregroundStyle(ColorTheme.primaryText)
                 }
             }
@@ -135,13 +135,13 @@ struct SymptomExplorerView: View {
     ) -> some View {
         VStack(spacing: 4) {
             Image(systemName: icon)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.accent)
             Text(value)
                 .font(.subheadline.bold())
                 .foregroundStyle(color)
             Text(label)
-                .font(.caption2)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
         }
         .frame(maxWidth: .infinity)
@@ -152,11 +152,11 @@ struct SymptomExplorerView: View {
     private var suspectedMealsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Suspected Meals", systemImage: "fork.knife.circle.fill")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             Text("Meals eaten 6-24 hours before this symptom, ranked by trigger likelihood")
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
 
             ForEach(Array(viewModel.suspectedMeals.enumerated()), id: \.element.id) { index, suspected in
@@ -190,7 +190,7 @@ struct SymptomExplorerView: View {
                     }
 
                     Text(suspected.timeBeforeFormatted)
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                 }
 
@@ -206,7 +206,7 @@ struct SymptomExplorerView: View {
                 }
             } else {
                 Text("No specific trigger compounds identified")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.tertiaryText)
             }
         }
@@ -221,7 +221,7 @@ struct SymptomExplorerView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text(food.foodItem.name)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.primaryText)
 
                 Spacer()
@@ -236,7 +236,7 @@ struct SymptomExplorerView: View {
                     HStack(spacing: 6) {
                         ForEach(food.compoundRisks, id: \.self) { compound in
                             Text(compound)
-                                .font(.caption2)
+                                .typography(Typography.caption)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
                                 .background(ColorTheme.warning.opacity(0.15))
@@ -248,7 +248,7 @@ struct SymptomExplorerView: View {
             }
 
             Text(food.reason)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
                 .lineLimit(2)
         }
@@ -262,15 +262,15 @@ struct SymptomExplorerView: View {
     private var noSymptomsState: some View {
         VStack(spacing: 16) {
             Image(systemName: "heart.text.clipboard")
-                .font(.largeTitle)
+                .typography(Typography.largeTitle)
                 .foregroundStyle(ColorTheme.secondaryText)
 
             Text("No Significant Symptoms")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             Text("Log symptoms with pain, urgency, or abnormal stool types to use the Symptom Explorer.")
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText)
                 .multilineTextAlignment(.center)
         }
@@ -281,15 +281,15 @@ struct SymptomExplorerView: View {
     private var emptyMealsState: some View {
         VStack(spacing: 12) {
             Image(systemName: "fork.knife")
-                .font(.title)
+                .typography(Typography.title)
                 .foregroundStyle(ColorTheme.secondaryText)
 
             Text("No Meals Found")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             Text("No meals were logged 6-24 hours before this symptom.")
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText)
                 .multilineTextAlignment(.center)
         }
@@ -303,7 +303,7 @@ struct SymptomExplorerView: View {
 
     private func mealTypeBadge(_ type: MealType) -> some View {
         Text(type.rawValue)
-            .font(.caption2)
+            .typography(Typography.caption)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
             .background(mealTypeColor(type).opacity(0.2))

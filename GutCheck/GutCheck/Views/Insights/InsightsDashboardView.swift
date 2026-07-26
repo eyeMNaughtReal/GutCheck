@@ -77,11 +77,11 @@ struct InsightsDashboardHeaderSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Discover patterns in your health data")
-                .font(.title2)
+                .typography(Typography.title2)
                 .fontWeight(.semibold)
             
             Text("Get personalized insights and recommendations based on your symptoms, meals, and daily activities.")
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -315,10 +315,10 @@ struct InsightsDashboardErrorState: View {
                 .foregroundStyle(.orange)
             
             Text("Unable to load insights")
-                .font(.headline)
+                .typography(Typography.headline)
             
             Text(error)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             
@@ -338,10 +338,10 @@ struct InsightsDashboardEmptyState: View {
                 .foregroundStyle(.secondary)
             
             Text("No insights yet")
-                .font(.headline)
+                .typography(Typography.headline)
             
             Text("Start logging your symptoms and meals to generate personalized insights.")
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }

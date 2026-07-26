@@ -6,7 +6,7 @@ struct LogEntryView: View {
     var body: some View {
         VStack(spacing: 40) {
             Text("What would you like to log?")
-                .font(.title)
+                .typography(Typography.title)
                 .fontWeight(.bold)
             
             HStack(spacing: 30) {
@@ -50,7 +50,7 @@ struct LogOptionButton: View {
                     .foregroundStyle(color)
                 
                 Text(title)
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(.primary)
             }
             .frame(width: 120, height: 120)

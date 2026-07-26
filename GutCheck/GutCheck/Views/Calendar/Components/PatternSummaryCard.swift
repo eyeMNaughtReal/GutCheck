@@ -6,7 +6,7 @@ struct PatternSummaryCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Identified Patterns")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(.primary)
             
             ForEach(patterns, id: \.self) { pattern in

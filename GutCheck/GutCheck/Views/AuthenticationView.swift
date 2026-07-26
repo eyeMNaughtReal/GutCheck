@@ -74,12 +74,12 @@ struct AuthenticationView: View {
             
             VStack(spacing: 8) {
                 Text("GutCheck")
-                    .font(.largeTitle)
+                    .typography(Typography.largeTitle)
                     .fontWeight(.bold)
                     .foregroundStyle(ColorTheme.text)
                 
                 Text(viewModel.isShowingSignUp ? "Create your account" : "Welcome back")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
         }
@@ -110,7 +110,7 @@ struct AuthenticationView: View {
                 Button("Forgot Password?") {
                     viewModel.isShowingForgotPassword = true
                 }
-                .font(.footnote)
+                .typography(Typography.footnote)
                 .foregroundStyle(ColorTheme.primary)
             }
             
@@ -190,11 +190,11 @@ struct AuthenticationView: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
                 Text("Password Strength:")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
                 
                 Text(viewModel.passwordStrength.text)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .fontWeight(.medium)
                     .foregroundStyle(viewModel.passwordStrength.color)
                 
@@ -215,7 +215,7 @@ struct AuthenticationView: View {
                 .foregroundStyle(viewModel.password == viewModel.confirmPassword ? ColorTheme.success : ColorTheme.error)
             
             Text(viewModel.password == viewModel.confirmPassword ? "Passwords match" : "Passwords don't match")
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(viewModel.password == viewModel.confirmPassword ? ColorTheme.success : ColorTheme.error)
             
             Spacer()
@@ -231,7 +231,7 @@ struct AuthenticationView: View {
             
             Button(action: viewModel.toggleAuthMode) {
                 Text(viewModel.isShowingSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up")
-                    .font(.footnote)
+                    .typography(Typography.footnote)
                     .foregroundStyle(ColorTheme.primary)
             }
         }
@@ -273,12 +273,12 @@ struct AuthenticationView: View {
             VStack(spacing: 24) {
                 VStack(spacing: 8) {
                     Text("Reset Password")
-                        .font(.title2)
+                        .typography(Typography.title2)
                         .fontWeight(.bold)
                         .foregroundStyle(ColorTheme.text)
                     
                     Text("Enter your email address and we'll send you a link to reset your password.")
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .foregroundStyle(ColorTheme.secondaryText)
                         .multilineTextAlignment(.center)
                 }
