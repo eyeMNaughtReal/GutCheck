@@ -24,7 +24,7 @@ struct WeekSelector: View {
             HStack {
                 Button(action: { navigateToPreviousWeek() }) {
                     Image(systemName: "chevron.left.circle.fill")
-                        .font(.title2)
+                        .typography(Typography.title2)
                         .foregroundStyle(ColorTheme.accent)
                 }
                 
@@ -33,12 +33,12 @@ struct WeekSelector: View {
                 // Week range display with Today button
                 VStack(spacing: 4) {
                     Text(weekRangeText)
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                     
                     Button(action: { resetToCurrentWeek() }) {
                         Text("Today")
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .fontWeight(.medium)
                             .foregroundStyle(ColorTheme.accent)
                             .padding(.horizontal, 8)
@@ -52,47 +52,60 @@ struct WeekSelector: View {
                 
                 Button(action: { navigateToNextWeek() }) {
                     Image(systemName: "chevron.right.circle.fill")
-                        .font(.title2)
+                        .typography(Typography.title2)
                         .foregroundStyle(ColorTheme.accent)
                 }
             }
             .padding(.horizontal)
             
-            // Week day selector
-            HStack(spacing: 4) {
+            // Week day selector — oblong capsules; the selected day is an accent-tinted
+            // capsule with the date number sitting in a solid white circle.
+            HStack(spacing: 6) {
                 ForEach(weekDates, id: \.self) { date in
+                    let isSelected = selectedDate.isSameDay(as: date)
+                    let isToday = date.isSameDay(as: Date.now)
+
                     Button(action: {
-                        selectedDate = date
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            selectedDate = date
+                        }
                         onDateSelected?(date)
                     }) {
-                        VStack {
+                        VStack(spacing: 8) {
                             Text(shortWeekdayString(for: date))
-                                .font(.caption)
-                                .foregroundStyle(ColorTheme.secondaryText)
+                                .typography(Typography.caption)
+                                .foregroundStyle(isSelected ? ColorTheme.accent : ColorTheme.secondaryText)
+
                             Text(dayString(for: date))
-                                .font(.headline)
-                                .foregroundStyle(selectedDate.isSameDay(as: date) ? .white : ColorTheme.primaryText)
+                                .typography(Typography.headline)
+                                .foregroundStyle(isSelected ? ColorTheme.onFixedLightSurface : ColorTheme.primaryText)
+                                .frame(width: 34, height: 34)
+                                .background {
+                                    if isSelected {
+                                        Circle().fill(.white)
+                                    }
+                                }
                         }
                         .frame(maxWidth: .infinity)
-                        .frame(height: 60)
-                        .background(
-                            Group {
-                                if selectedDate.isSameDay(as: date) {
-                                    ColorTheme.accent
-                                } else if date.isSameDay(as: Date.now) {
-                                    ColorTheme.accent.opacity(0.3)
-                                } else {
-                                    ColorTheme.cardBackground
-                                }
-                            }
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(date.isSameDay(as: Date.now) ? ColorTheme.accent : Color.clear, lineWidth: 2)
-                        )
-                        .clipShape(.rect(cornerRadius: 10))
-                        .shadow(color: selectedDate.isSameDay(as: date) ? ColorTheme.shadowColor : .clear, radius: 4, x: 0, y: 2)
+                        .frame(height: 78)
+                        .background {
+                            Capsule()
+                                .fill(isSelected ? ColorTheme.accent.opacity(0.22) : ColorTheme.cardBackground)
+                        }
+                        .overlay {
+                            // Selected gets a full accent ring; today keeps a quieter hint
+                            // so it stays findable without competing with the selection.
+                            Capsule()
+                                .strokeBorder(
+                                    isSelected ? ColorTheme.accent
+                                        : (isToday ? ColorTheme.accent.opacity(0.45) : .clear),
+                                    lineWidth: isSelected ? 2 : 1
+                                )
+                        }
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(accessibilityLabel(for: date, isToday: isToday))
+                    .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
                 }
             }
             .padding(.horizontal)
@@ -113,6 +126,12 @@ struct WeekSelector: View {
 
     private func dayString(for date: Date) -> String {
         DateFormattingService.string(from: date, format: .dayOnly)
+    }
+
+    /// VoiceOver reads the full date rather than a bare number.
+    private func accessibilityLabel(for date: Date, isToday: Bool) -> String {
+        let formatted = date.formatted(.dateTime.weekday(.wide).month(.wide).day())
+        return isToday ? "Today, \(formatted)" : formatted
     }
     
     // MARK: - Navigation Methods
