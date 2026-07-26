@@ -117,13 +117,9 @@ struct DashboardView: View {
         }
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                ProfileAvatarButton(user: authService.currentUser) {
-                    router.showProfile()
-                }
-            }
-        }
+        // The avatar and settings button live in GreetingHeaderView now, so the
+        // toolbar is intentionally empty here — a second avatar would duplicate it.
+        .toolbarBackground(.hidden, for: .navigationBar)
         .onAppear {
             loadDataIfAuthenticated()
         }
