@@ -193,8 +193,8 @@ private struct RelatedInsightRow: View {
 
 // MARK: - Supporting Types
 
-struct HealthInsight: Identifiable, Hashable {
-    let id = UUID()
+struct HealthInsight: Identifiable, Hashable, Codable {
+    let id: UUID
     let title: String
     let summary: String
     let detailedDescription: String?
@@ -202,6 +202,26 @@ struct HealthInsight: Identifiable, Hashable {
     let confidenceLevel: Int
     let dateRange: String
     let recommendations: [String]
+
+    init(
+        id: UUID = UUID(),
+        title: String,
+        summary: String,
+        detailedDescription: String?,
+        iconName: String,
+        confidenceLevel: Int,
+        dateRange: String,
+        recommendations: [String]
+    ) {
+        self.id = id
+        self.title = title
+        self.summary = summary
+        self.detailedDescription = detailedDescription
+        self.iconName = iconName
+        self.confidenceLevel = confidenceLevel
+        self.dateRange = dateRange
+        self.recommendations = recommendations
+    }
 }
 
 struct ContributingFactor: Identifiable {

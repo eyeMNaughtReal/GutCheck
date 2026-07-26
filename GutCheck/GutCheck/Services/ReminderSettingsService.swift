@@ -92,6 +92,18 @@ import UserNotifications
         isLoading = false
     }
     
+    /// Re-schedules notifications using current settings and Focus Filter state.
+    /// Called by GutCheckFocusFilter.perform() when a Focus activates or deactivates.
+    func rescheduleNotificationsForFocusChange() async {
+        guard let settings = reminderSettings else {
+            await loadReminderSettings()
+            guard let settings = reminderSettings else { return }
+            await scheduleNotifications(for: settings)
+            return
+        }
+        await scheduleNotifications(for: settings)
+    }
+
     func updateReminderSettings(update: @escaping (inout ReminderSettings) -> Void) async {
         guard var settings = reminderSettings else {
             await createDefaultSettings()
@@ -165,7 +177,7 @@ import UserNotifications
              "dinnerReminder",    "Time to Log Your Dinner")
         ]
 
-        for meal in mealReminders where meal.enabled {
+        for meal in mealReminders where meal.enabled && !FocusFilterState.mealRemindersSuppressed {
             let content = UNMutableNotificationContent()
             content.title = meal.title
             content.body  = "Don't forget to track what you ate. Consistent logging leads to better insights."
@@ -187,7 +199,7 @@ import UserNotifications
         }
 
         // Schedule symptom reminders
-        if settings.symptomReminderEnabled {
+        if settings.symptomReminderEnabled && !FocusFilterState.symptomRemindersSuppressed {
             let content = UNMutableNotificationContent()
             content.title = "Symptom Check-In"
             content.body = "How's your gut feeling today? Tap to log your symptoms."
@@ -207,7 +219,7 @@ import UserNotifications
         }
 
         // Schedule medication reminders
-        if settings.medicationReminderEnabled {
+        if settings.medicationReminderEnabled && !FocusFilterState.medicationRemindersSuppressed {
             let content = UNMutableNotificationContent()
             content.title = "Medication Reminder"
             content.body = "Time to take your medication. Tap to log your dose."
@@ -227,7 +239,7 @@ import UserNotifications
         }
 
         // Schedule weekly summary reminders
-        if settings.weeklyInsightEnabled {
+        if settings.weeklyInsightEnabled && !FocusFilterState.weeklyInsightsSuppressed {
             let content = UNMutableNotificationContent()
             content.title = "Your Weekly Gut Health Summary"
             content.body = "Your report for the past 7 days is ready. See your trends and patterns."
