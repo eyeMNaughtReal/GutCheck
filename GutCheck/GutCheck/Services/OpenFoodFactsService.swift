@@ -3,11 +3,14 @@ import Foundation
 class OpenFoodFactsService {
     static let shared = OpenFoodFactsService()
     private let baseURL = "https://world.openfoodfacts.org"
-    
+    private let rateLimiter = RateLimitingService.shared
+
     private init() {}
     
     // Search for foods in OpenFoodFacts database
     func searchFoods(query: String, page: Int = 1, pageSize: Int = 20) async throws -> [OpenFoodFactsProduct] {
+        try rateLimiter.checkLimit(for: .foodSearchOpenFoodFacts)
+
         let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
         let urlString = "\(baseURL)/cgi/search.pl?search_terms=\(encodedQuery)&search_simple=1&action=process&page=\(page)&page_size=\(pageSize)&json=1"
         
@@ -45,6 +48,8 @@ class OpenFoodFactsService {
     
     // Get detailed product information by barcode
     func getProduct(by barcode: String) async throws -> OpenFoodFactsProduct? {
+        try rateLimiter.checkLimit(for: .foodSearchOpenFoodFacts)
+
         let urlString = "\(baseURL)/api/v0/product/\(barcode).json"
         
         guard let url = URL(string: urlString) else {

@@ -243,9 +243,13 @@ struct AuthenticationView: View {
         VStack(spacing: 12) {
             AppleSignInButtonView(
                 onRequest: { request in
-                    let hashedNonce = authService.prepareAppleSignIn()
-                    request.requestedScopes = [.fullName, .email]
-                    request.nonce = hashedNonce
+                    do {
+                        let hashedNonce = try authService.prepareAppleSignIn()
+                        request.requestedScopes = [.fullName, .email]
+                        request.nonce = hashedNonce
+                    } catch {
+                        authService.errorMessage = "Failed to prepare Apple Sign-In: \(error.localizedDescription)"
+                    }
                 },
                 onCompletion: { result in
                     switch result {

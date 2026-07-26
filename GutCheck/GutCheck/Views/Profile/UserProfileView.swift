@@ -288,9 +288,9 @@ struct UserProfileView: View {
                     SettingsView()
                         .environment(settingsVM)
                         .environment(authService)
-                }
-                .navigationDestination(for: SettingsRoute.self) { route in
-                    SettingsRoute.destinationView(for: route)
+                        .navigationDestination(for: SettingsRoute.self) { route in
+                            SettingsRoute.destinationView(for: route)
+                        }
                 }
             }
         }
