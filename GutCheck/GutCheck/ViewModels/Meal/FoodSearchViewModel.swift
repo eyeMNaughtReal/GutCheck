@@ -8,15 +8,15 @@ import Foundation
 import Combine
 
 @MainActor
-class FoodSearchViewModel: ObservableObject {
+@Observable class FoodSearchViewModel {
     // Search state
-    @Published var searchQuery: String = ""
-    @Published var isSearching: Bool = false
-    @Published var hasSearched: Bool = false
-    @Published var searchResults: [FoodItem] = []
-    @Published var selectedFoodItem: FoodItem?
-    @Published var recentSearches: [String] = ["Oatmeal", "Chicken breast", "Greek yogurt"]
-    @Published var recentItems: [FoodItem] = []
+    var searchQuery: String = ""
+    var isSearching: Bool = false
+    var hasSearched: Bool = false
+    var searchResults: [FoodItem] = []
+    var selectedFoodItem: FoodItem?
+    var recentSearches: [String] = ["Oatmeal", "Chicken breast", "Greek yogurt"]
+    var recentItems: [FoodItem] = []
     
     let foodCategories = [
         "Fruits", "Vegetables", "Meat", "Dairy",
@@ -47,21 +47,16 @@ class FoodSearchViewModel: ObservableObject {
             return
         }
         
-        print("🔍 Starting search for: '\(searchQuery)'")
         isSearching = true
         hasSearched = true
         
         Task {
-            print("🔍 Calling foodSearchService.searchFoods...")
             await foodSearchService.searchFoods(query: searchQuery)
             
-            print("🔍 Got \(foodSearchService.results.count) results from service")
             let foods = foodSearchService.results.map { nfood in
-                print("🔍 Processing food: \(nfood.name)")
                 return createEnhancedFoodItem(from: nfood)
             }
             
-            print("🔍 Setting \(foods.count) search results")
             self.searchResults = foods
             self.isSearching = false
             
@@ -82,7 +77,7 @@ class FoodSearchViewModel: ObservableObject {
         let servingWeightGrams = nfood.servingWeight
         
         // Create quantity string
-        let quantityString = "\(String(format: "%g", servingQty)) \(servingUnit)"
+        let quantityString = "\(servingQty.formatted(.number)) \(servingUnit)"
         
         // Parse ingredients from Nutritionix ingredients string  
         let ingredientList: [String] = parseIngredients(from: nfood.ingredients)
@@ -97,48 +92,48 @@ class FoodSearchViewModel: ObservableObject {
         
         // Add basic nutrition values
         if let calories = nfood.calories {
-            nutritionDict["calories"] = String(format: "%.1f", calories)
+            nutritionDict["calories"] = calories.formatted(.number.precision(.fractionLength(1)))
         }
         if let protein = nfood.protein {
-            nutritionDict["protein"] = String(format: "%.1f", protein)
+            nutritionDict["protein"] = protein.formatted(.number.precision(.fractionLength(1)))
         }
         if let carbs = nfood.carbs {
-            nutritionDict["total_carbohydrate"] = String(format: "%.1f", carbs)
+            nutritionDict["total_carbohydrate"] = carbs.formatted(.number.precision(.fractionLength(1)))
         }
         if let fat = nfood.fat {
-            nutritionDict["total_fat"] = String(format: "%.1f", fat)
+            nutritionDict["total_fat"] = fat.formatted(.number.precision(.fractionLength(1)))
         }
         if let fiber = nfood.fiber {
-            nutritionDict["dietary_fiber"] = String(format: "%.1f", fiber)
+            nutritionDict["dietary_fiber"] = fiber.formatted(.number.precision(.fractionLength(1)))
         }
         if let sugar = nfood.sugar {
-            nutritionDict["sugars"] = String(format: "%.1f", sugar)
+            nutritionDict["sugars"] = sugar.formatted(.number.precision(.fractionLength(1)))
         }
         if let sodium = nfood.sodium {
-            nutritionDict["sodium"] = String(format: "%.1f", sodium)
+            nutritionDict["sodium"] = sodium.formatted(.number.precision(.fractionLength(1)))
         }
         
         // Add detailed nutrition from the specific properties
         if let saturatedFat = nfood.saturatedFat {
-            nutritionDict["saturated_fat"] = String(format: "%.1f", saturatedFat)
+            nutritionDict["saturated_fat"] = saturatedFat.formatted(.number.precision(.fractionLength(1)))
         }
         if let cholesterol = nfood.cholesterol {
-            nutritionDict["cholesterol"] = String(format: "%.1f", cholesterol)
+            nutritionDict["cholesterol"] = cholesterol.formatted(.number.precision(.fractionLength(1)))
         }
         if let potassium = nfood.potassium {
-            nutritionDict["potassium"] = String(format: "%.1f", potassium)
+            nutritionDict["potassium"] = potassium.formatted(.number.precision(.fractionLength(1)))
         }
         if let vitaminA = nfood.vitaminA {
-            nutritionDict["vitamin_a_dv"] = String(format: "%.0f", vitaminA)
+            nutritionDict["vitamin_a_dv"] = vitaminA.formatted(.number.precision(.fractionLength(0)))
         }
         if let vitaminC = nfood.vitaminC {
-            nutritionDict["vitamin_c_dv"] = String(format: "%.0f", vitaminC)
+            nutritionDict["vitamin_c_dv"] = vitaminC.formatted(.number.precision(.fractionLength(0)))
         }
         if let calcium = nfood.calcium {
-            nutritionDict["calcium_dv"] = String(format: "%.0f", calcium)
+            nutritionDict["calcium_dv"] = calcium.formatted(.number.precision(.fractionLength(0)))
         }
         if let iron = nfood.iron {
-            nutritionDict["iron_dv"] = String(format: "%.0f", iron)
+            nutritionDict["iron_dv"] = iron.formatted(.number.precision(.fractionLength(0)))
         }
         
         // Extract allergens with enhanced detection
@@ -155,7 +150,7 @@ class FoodSearchViewModel: ObservableObject {
             sodium: nfood.sodium
         )
         
-        return FoodItem(
+        let foodItem = FoodItem(
             id: nfood.id,
             name: nfood.name,
             quantity: quantityString,
@@ -167,6 +162,9 @@ class FoodSearchViewModel: ObservableObject {
             isUserEdited: false,
             nutritionDetails: nutritionDict
         )
+        
+        // Enrich with ingredient breakdown analysis
+        return IngredientBreakdownService.shared.enrichFoodItem(foodItem)
     }
     
     private func detectAllergens(from foodName: String, brand: String?, ingredients: [String]) -> [String] {
@@ -212,11 +210,12 @@ class FoodSearchViewModel: ObservableObject {
 
 
     func createCustomFoodItem() {
-        let customItem = FoodItem(
+        var customItem = FoodItem(
             name: searchQuery.isEmpty ? "New Food Item" : searchQuery,
             quantity: "1 serving",
             nutrition: NutritionInfo(calories: 0, protein: 0, carbs: 0, fat: 0)
         )
+        customItem = IngredientBreakdownService.shared.enrichFoodItem(customItem)
         selectedFoodItem = customItem
     }
 
@@ -355,6 +354,5 @@ class FoodSearchViewModel: ObservableObject {
 
     private func saveRecentItems() {
         // In a real app, save to UserDefaults or Core Data
-        print("Saved \(recentItems.count) recent items")
     }
 }

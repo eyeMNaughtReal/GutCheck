@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct WelcomeView: View {
-    @EnvironmentObject var authViewModel: AuthenticationViewModel
+    @Environment(AuthenticationViewModel.self) var authViewModel
     @State private var currentPage = 0
     
     private let pages = [
@@ -84,16 +84,16 @@ private struct WelcomePageView: View {
                 Text(page.title)
                     .font(.largeTitle)
                     .bold()
-                    .foregroundColor(ColorTheme.text)
+                    .foregroundStyle(ColorTheme.text)
                 
                 Text(page.subtitle)
                     .font(.title2)
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
                 
                 Text(page.description)
                     .font(.body)
                     .multilineTextAlignment(.center)
-                    .foregroundColor(ColorTheme.text)
+                    .foregroundStyle(ColorTheme.text)
                     .padding(.horizontal)
             }
         }
@@ -103,19 +103,19 @@ private struct WelcomePageView: View {
 
 #Preview {
     WelcomeView()
-        .environmentObject(AuthenticationViewModel(authService: AuthService()))
+        .environment(AuthenticationViewModel(authService: AuthService()))
 }
 
 // MARK: - Preview Helpers
 
-private class MockAuthService: AuthenticationProtocol {
-    @Published var isAuthStateResolved = true
-    @Published var isAuthenticated = false
-    @Published var isLoading = false
-    @Published var errorMessage: String?
-    @Published var isPhoneVerificationInProgress = false
-    @Published var isAwaitingEmailVerification = false
-    @Published var currentUser: User?
+@Observable private class MockAuthService: AuthenticationProtocol {
+    var isAuthStateResolved = true
+    var isAuthenticated = false
+    var isLoading = false
+    var errorMessage: String?
+    var isPhoneVerificationInProgress = false
+    var isAwaitingEmailVerification = false
+    var currentUser: User?
     
     func signIn(email: String, password: String) async throws {}
     func signUp(email: String, password: String, firstName: String, lastName: String, privacyPolicyAccepted: Bool) async throws {}
@@ -123,4 +123,10 @@ private class MockAuthService: AuthenticationProtocol {
     func verifyPhoneNumber(_ phoneNumber: String) async throws {}
     func signInWithPhone(verificationCode: String) async throws {}
     func signOut() throws {}
+    func resendVerificationEmail() async throws {}
+    func checkEmailVerification() async throws {}
+    func cancelEmailVerification() throws {}
+    func deleteAuthenticatedAccount() async throws {}
+    func updateUserProfile(_ updatedUser: User) async throws {}
+    func refreshCurrentUser() async {}
 }

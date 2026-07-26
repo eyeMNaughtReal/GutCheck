@@ -5,7 +5,7 @@ struct ProfileAvatarButton: View {
     let size: CGFloat
     let action: () -> Void
     
-    @StateObject private var profileImageService = UnifiedProfileImageService(strategy: LocalProfileImageStrategy())
+    @State private var profileImageService = UnifiedProfileImageService(strategy: LocalProfileImageStrategy())
     @State private var profileImage: UIImage?
     @State private var isLoadingImage = false
     
@@ -17,47 +17,12 @@ struct ProfileAvatarButton: View {
     
     var body: some View {
         Button(action: action) {
-            ZStack {
-                if let image = profileImage {
-                    // Profile image
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: size, height: size)
-                        .clipShape(Circle())
-                        .overlay(Circle().stroke(ColorTheme.accent, lineWidth: 2))
-                } else if isLoadingImage {
-                    // Loading state
-                    Circle()
-                        .fill(ColorTheme.cardBackground)
-                        .frame(width: size, height: size)
-                        .overlay(
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: ColorTheme.accent))
-                                .scaleEffect(0.7)
-                        )
-                        .overlay(Circle().stroke(ColorTheme.accent, lineWidth: 2))
-                } else {
-                    // Default avatar with initials or fallback icon
-                    Circle()
-                        .fill(ColorTheme.accent.opacity(0.2))
-                        .frame(width: size, height: size)
-                        .overlay(
-                            Group {
-                                if let user = user {
-                                    Text(user.initials)
-                                        .font(.system(size: size * 0.4, weight: .semibold))
-                                        .foregroundColor(ColorTheme.accent)
-                                } else {
-                                    Image(systemName: "person.circle.fill")
-                                        .font(.system(size: size * 0.8))
-                                        .foregroundColor(ColorTheme.accent)
-                                }
-                            }
-                        )
-                        .overlay(Circle().stroke(ColorTheme.accent, lineWidth: 2))
-                }
-            }
+            ProfileAvatarContent(
+                user: user,
+                size: size,
+                profileImage: profileImage,
+                isLoadingImage: isLoadingImage
+            )
         }
         .buttonStyle(PlainButtonStyle())
         .accessibilityLabel("Profile Menu")
@@ -73,7 +38,8 @@ struct ProfileAvatarButton: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .profileImageUpdated)) { _ in
             // Reload profile image when updated
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            Task {
+                try? await Task.sleep(for: .milliseconds(500))
                 loadProfileImage()
             }
         }
@@ -85,7 +51,6 @@ struct ProfileAvatarButton: View {
         isLoadingImage = false
         
         guard let user = user else {
-            print("🖼️ ProfileAvatarButton: No user provided")
             return
         }
         
@@ -93,27 +58,73 @@ struct ProfileAvatarButton: View {
         if let localStrategy = profileImageService.strategy as? LocalProfileImageStrategy,
            localStrategy.hasLocalProfileImage(for: user.id) {
             let localImagePath = "local://profile_\(user.id).jpg"
-            print("🖼️ ProfileAvatarButton: Loading local profile image: \(localImagePath)")
             isLoadingImage = true
             
             Task {
                 do {
                     let image = try await profileImageService.downloadProfileImage(from: localImagePath)
                     await MainActor.run {
-                        print("🖼️ ProfileAvatarButton: Successfully loaded local profile image")
                         self.profileImage = image
                         self.isLoadingImage = false
                     }
                 } catch {
                     await MainActor.run {
-                        print("🖼️ ProfileAvatarButton: Failed to load local profile image: \(error.localizedDescription)")
                         self.profileImage = nil
                         self.isLoadingImage = false
                     }
                 }
             }
         } else {
-            print("🖼️ ProfileAvatarButton: No local profile image found for user \(user.id)")
+        }
+    }
+}
+
+// MARK: - Avatar Content
+
+struct ProfileAvatarContent: View {
+    let user: User?
+    let size: CGFloat
+    let profileImage: UIImage?
+    let isLoadingImage: Bool
+    
+    var body: some View {
+        ZStack {
+            if let image = profileImage {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: size, height: size)
+                    .clipShape(Circle())
+                    .overlay { Circle().stroke(ColorTheme.accent, lineWidth: 2) }
+            } else if isLoadingImage {
+                Circle()
+                    .fill(ColorTheme.cardBackground)
+                    .frame(width: size, height: size)
+                    .overlay(
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: ColorTheme.accent))
+                            .scaleEffect(0.7)
+                    )
+                    .overlay { Circle().stroke(ColorTheme.accent, lineWidth: 2) }
+            } else {
+                Circle()
+                    .fill(ColorTheme.accent.opacity(0.2))
+                    .frame(width: size, height: size)
+                    .overlay(
+                        Group {
+                            if let user = user {
+                                Text(user.initials)
+                                    .font(.system(size: size * 0.4, weight: .semibold))
+                                    .foregroundStyle(ColorTheme.accent)
+                            } else {
+                                Image(systemName: "person.circle.fill")
+                                    .font(.system(size: size * 0.8))
+                                    .foregroundStyle(ColorTheme.accent)
+                            }
+                        }
+                    )
+                    .overlay { Circle().stroke(ColorTheme.accent, lineWidth: 2) }
+            }
         }
     }
 }
@@ -129,8 +140,8 @@ struct ProfileAvatarButton: View {
                 firstName: "John",
                 lastName: "Doe",
                 signInMethod: .email,
-                createdAt: Date(),
-                updatedAt: Date()
+                createdAt: Date.now,
+                updatedAt: Date.now
             ),
             size: 50
         ) { }

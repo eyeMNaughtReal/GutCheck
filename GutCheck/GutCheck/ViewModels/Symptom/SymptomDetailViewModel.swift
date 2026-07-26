@@ -2,19 +2,19 @@ import Foundation
 
 @MainActor
 class SymptomDetailViewModel: DetailViewModel<Symptom> {
-    @Published var symptomId: String?
+    var symptomId: String?
     
-    private let repository: SymptomRepository
+    private let repository: any SymptomRepositoryProtocol
     
     // Initialize with a Symptom object
-    init(entity: Symptom, repository: SymptomRepository = SymptomRepository.shared) {
+    init(entity: Symptom, repository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
         self.symptomId = entity.id
         self.repository = repository
         super.init(entity: entity)
     }
     
     // Initialize with a symptom ID
-    init(symptomId: String, repository: SymptomRepository = SymptomRepository.shared) {
+    init(symptomId: String, repository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
         self.symptomId = symptomId
         self.repository = repository
         super.init(entity: Symptom.emptySymptom())
@@ -26,27 +26,20 @@ class SymptomDetailViewModel: DetailViewModel<Symptom> {
     
     override func loadEntity() async {
         guard let symptomId = symptomId else { 
-            print("⚠️ SymptomDetailViewModel: No symptom ID provided")
             return 
         }
         
         // Prevent duplicate loading if we already have the symptom
         if !entity.id.isEmpty && entity.id == symptomId {
-            print("🔄 SymptomDetailViewModel: Symptom already loaded, skipping duplicate load")
             return
         }
         
-        print("🔄 SymptomDetailViewModel: Loading symptom with ID: \(symptomId)")
         
         await executeWithLoading {
             let symptom = try await self.repository.fetch(id: symptomId)
             if let symptom = symptom {
-                print("✅ SymptomDetailViewModel: Successfully loaded symptom: \(symptom.id), date: \(symptom.date)")
-                print("✅ SymptomDetailViewModel: Symptom details - stoolType: \(symptom.stoolType.rawValue), painLevel: \(symptom.painLevel.rawValue), urgencyLevel: \(symptom.urgencyLevel.rawValue)")
-                print("✅ SymptomDetailViewModel: Symptom details - notes: \(symptom.notes ?? "nil"), tags: \(symptom.tags)")
                 self.entity = symptom
             } else {
-                print("❌ SymptomDetailViewModel: Failed to load symptom - repository returned nil")
             }
         }
     }
@@ -58,6 +51,7 @@ class SymptomDetailViewModel: DetailViewModel<Symptom> {
         await executeWithSaving {
             try await self.repository.save(self.entity)
         } onSuccess: { _ in
+            SpotlightIndexingService.shared.indexSymptom(self.entity)
             self.isEditing = false
         } onError: { _ in
             // Error already handled by base class
@@ -71,6 +65,7 @@ class SymptomDetailViewModel: DetailViewModel<Symptom> {
         await executeWithLoading {
             try await self.repository.delete(id: self.entity.id)
         } onSuccess: { _ in
+            SpotlightIndexingService.shared.removeSymptom(id: self.entity.id)
             self.shouldDismiss = true
         }
         
@@ -128,7 +123,7 @@ extension Symptom {
     static func emptySymptom() -> Symptom {
         return Symptom(
             id: "",
-            date: Date(),
+            date: Date.now,
             stoolType: .type4,
             painLevel: .none,
             urgencyLevel: .none,

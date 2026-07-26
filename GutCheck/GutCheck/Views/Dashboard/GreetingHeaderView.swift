@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct GreetingHeaderView: View {
-    @EnvironmentObject var authService: AuthService
+    @Environment(AuthService.self) var authService
     
     private var greeting: String {
         if let user = authService.currentUser {
@@ -17,16 +17,16 @@ struct GreetingHeaderView: View {
                 Text(greeting)
                     .font(.title2)
                     .fontWeight(.semibold)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 Text("Here's how your day is going so far:")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             Spacer()
         }
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
     }
 }

@@ -1,11 +1,11 @@
 import SwiftUI
 
 struct SymptomHistoryView: View {
-    @StateObject private var viewModel = SymptomHistoryViewModel()
+    @State private var viewModel = SymptomHistoryViewModel()
     @State private var selectedFilter: SymptomFilter = .all
     @State private var showingDatePicker = false
-    @EnvironmentObject var router: AppRouter
-    @EnvironmentObject var authService: AuthService
+    @Environment(AppRouter.self) var router
+    @Environment(AuthService.self) var authService
     
     private var symptomsList: some View {
         let sortedDates = viewModel.groupedSymptoms.keys.sorted(by: >)
@@ -26,13 +26,9 @@ struct SymptomHistoryView: View {
     }
     
     private func symptomNavigationLink(for symptom: Symptom) -> some View {
-        NavigationLink(destination: symptomDetailView(for: symptom)) {
+        NavigationLink(value: AppDestination.symptomHistory(symptom)) {
             SymptomRow(symptom: symptom)
         }
-    }
-    
-    private func symptomDetailView(for symptom: Symptom) -> some View {
-        SymptomDetailView(symptom: symptom)
     }
     
     var body: some View {
@@ -50,7 +46,7 @@ struct SymptomHistoryView: View {
         .navigationTitle("Symptom History")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Menu {
                     Button(action: { showingDatePicker = true }) {
                         Label("Select Date Range", systemImage: "calendar")
@@ -64,7 +60,7 @@ struct SymptomHistoryView: View {
                 }
             }
             
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 ProfileAvatarButton(user: authService.currentUser) {
                     router.showProfile()
                 }
@@ -195,7 +191,7 @@ private struct SymptomRow: View {
                     .font(.headline)
                 Spacer()
                 Text(symptom.date.formatted(.dateTime.hour().minute()))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             HStack {
@@ -204,7 +200,7 @@ private struct SymptomRow: View {
                 if let notes = symptom.notes, !notes.isEmpty {
                     Text(notes)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
             }
@@ -221,7 +217,7 @@ private struct DateRangePickerView: View {
     @Binding var isPresented: Bool
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 DatePicker("Start Date", selection: $startDate, displayedComponents: [.date])
                 DatePicker("End Date", selection: $endDate, displayedComponents: [.date])
@@ -229,7 +225,7 @@ private struct DateRangePickerView: View {
             .navigationTitle("Select Date Range")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         isPresented = false
                     }
@@ -242,7 +238,7 @@ private struct DateRangePickerView: View {
 // MARK: - Supporting Types
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         SymptomHistoryView()
     }
 }

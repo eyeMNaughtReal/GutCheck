@@ -16,15 +16,15 @@ import UIKit
 
 /// Centralized permission management following Apple's iOS 18.5+ guidelines
 @MainActor
-class PermissionManager: NSObject, ObservableObject, CLLocationManagerDelegate {
+@Observable class PermissionManager: NSObject, CLLocationManagerDelegate {
     static let shared = PermissionManager()
     
-    // MARK: - Published States
-    @Published var cameraStatus: PermissionStatus = .notDetermined
-    @Published var photoLibraryStatus: PermissionStatus = .notDetermined
-    @Published var notificationStatus: PermissionStatus = .notDetermined
-    @Published var healthKitStatus: PermissionStatus = .notDetermined
-    @Published var locationStatus: PermissionStatus = .notDetermined
+    // MARK: - Observable States
+    var cameraStatus: PermissionStatus = .notDetermined
+    var photoLibraryStatus: PermissionStatus = .notDetermined
+    var notificationStatus: PermissionStatus = .notDetermined
+    var healthKitStatus: PermissionStatus = .notDetermined
+    var locationStatus: PermissionStatus = .notDetermined
     
     // MARK: - Permission Status Enum
     enum PermissionStatus: Equatable {
@@ -403,13 +403,11 @@ extension PermissionManager {
     nonisolated func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         Task { @MainActor in
             self.locationStatus = status.toPermissionStatus()
-            print("📍 PermissionManager: Location authorization changed to \(status)")
         }
     }
     
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         Task { @MainActor in
-            print("❌ PermissionManager: Location manager failed with error: \(error)")
         }
     }
 }

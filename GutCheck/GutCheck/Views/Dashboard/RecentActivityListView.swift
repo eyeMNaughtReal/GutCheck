@@ -3,9 +3,9 @@ import FirebaseFirestore
 import FirebaseAuth
 
 struct RecentActivityListView: View {
-    @StateObject private var viewModel = RecentActivityViewModel()
-    @EnvironmentObject var router: AppRouter
-    @EnvironmentObject var authService: AuthService
+    @State private var viewModel = RecentActivityViewModel()
+    @Environment(AppRouter.self) var router
+    @Environment(AuthService.self) var authService
     let selectedDate: Date
     
     var body: some View {
@@ -14,7 +14,7 @@ struct RecentActivityListView: View {
             HStack {
                 Text("Today's Activity")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
                 
@@ -23,7 +23,7 @@ struct RecentActivityListView: View {
                     router.selectedTab = .meals
                 }
                 .font(.caption)
-                .foregroundColor(ColorTheme.primary)
+                .foregroundStyle(ColorTheme.primary)
             }
             
             if viewModel.isLoading {
@@ -43,7 +43,7 @@ struct RecentActivityListView: View {
         }
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
         .onAppear {
             viewModel.loadRecentActivity(for: selectedDate, authService: authService)
@@ -78,7 +78,7 @@ struct ActivityRowView: View {
                 // Icon
                 Image(systemName: entry.icon)
                     .font(.title3)
-                    .foregroundColor(entry.iconColor)
+                    .foregroundStyle(entry.iconColor)
                     .frame(width: 24, height: 24)
                 
                 // Content
@@ -87,7 +87,7 @@ struct ActivityRowView: View {
                         Text(entry.title)
                             .font(.subheadline)
                             .fontWeight(.medium)
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                         
                         if case .symptom(let symptom) = entry.type {
                             BristolStoolBadge(stoolType: symptom.stoolType)
@@ -99,7 +99,7 @@ struct ActivityRowView: View {
                     if let subtitle = entry.subtitle {
                         Text(subtitle)
                             .font(.caption)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                 }
                 
@@ -107,17 +107,17 @@ struct ActivityRowView: View {
                 VStack(alignment: .trailing) {
                     Text(entry.timestamp, style: .time)
                         .font(.caption)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                     
                     Image(systemName: "chevron.right")
-                        .font(.caption2)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .font(.caption)
+                        .foregroundStyle(ColorTheme.secondaryText)
                 }
             }
             .padding(.vertical, 8)
             .padding(.horizontal, 12)
             .background(ColorTheme.surface)
-            .cornerRadius(8)
+            .clipShape(.rect(cornerRadius: 8))
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -131,7 +131,7 @@ struct BristolStoolBadge: View {
         Text("\(stoolType.rawValue)")
             .font(.caption)
             .fontWeight(.bold)
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .frame(width: 20, height: 20)
             .background(
                 RoundedRectangle(cornerRadius: 4)
@@ -181,7 +181,7 @@ struct LoadingStateView: View {
                 .padding(.vertical, 8)
                 .padding(.horizontal, 12)
                 .background(ColorTheme.surface)
-                .cornerRadius(8)
+                .clipShape(.rect(cornerRadius: 8))
             }
         }
         .redacted(reason: .placeholder)
@@ -194,15 +194,15 @@ struct RecentActivityEmptyStateView: View {
         VStack(spacing: 8) {
             Image(systemName: "tray")
                 .font(.title2)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             
             Text("No activity logged today")
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             
             Text("Start by logging a meal or symptom")
                 .font(.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
         }
         .padding(.vertical, 20)
         .frame(maxWidth: .infinity)

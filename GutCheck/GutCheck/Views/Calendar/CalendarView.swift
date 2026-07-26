@@ -18,10 +18,10 @@ import UIKit
 import Foundation // Required for Tab enum
 
 struct CalendarView: View {
-    @EnvironmentObject var router: AppRouter
-    @EnvironmentObject var authService: AuthService
-    @EnvironmentObject var refreshManager: RefreshManager
-    @StateObject private var viewModel = CalendarViewModel()
+    @Environment(AppRouter.self) var router
+    @Environment(AuthService.self) var authService
+    @Environment(RefreshManager.self) var refreshManager
+    @State private var viewModel = CalendarViewModel()
     @State private var isShowingActionMenu = false
     @State private var showNutritionDetail = false
 
@@ -196,7 +196,7 @@ struct CalendarView: View {
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 ProfileAvatarButton(user: authService.currentUser) {
                     router.showProfile()
                 }
@@ -204,7 +204,6 @@ struct CalendarView: View {
             
         }
         .onAppear {
-            print("📱 CalendarView: onAppear")
             if let date = selectedDate {
                 viewModel.setDate(date)
             }
@@ -212,17 +211,14 @@ struct CalendarView: View {
             viewModel.loadSymptoms()
         }
         .onChange(of: viewModel.selectedDate) { _, _ in
-            print("📅 CalendarView: Date changed to \(viewModel.selectedDate)")
             viewModel.loadMeals()
             viewModel.loadSymptoms()
         }
         .onChange(of: refreshManager.refreshToken) { _, _ in
-            print("🔄 CalendarView: Refresh triggered by RefreshManager")
             viewModel.loadMeals()
             viewModel.loadSymptoms()
         }
         .refreshable {
-            print("🔄 CalendarView: Manual refresh triggered")
             viewModel.loadMeals()
             viewModel.loadSymptoms()
         }
@@ -241,8 +237,8 @@ struct CalendarView: View {
 // Static header for the meals section: DailyNutritionCard + Log Meal button + section title.
 // Kept as a separate view to reduce compiler complexity in CalendarView.
 struct CalendarMealsSectionHeader: View {
-    @ObservedObject var viewModel: CalendarViewModel
-    @EnvironmentObject var router: AppRouter
+    var viewModel: CalendarViewModel
+    @Environment(AppRouter.self) var router
     let onNutritionTap: () -> Void
 
     var body: some View {
@@ -262,7 +258,7 @@ struct CalendarMealsSectionHeader: View {
                 Text("Meals")
                     .font(.title3)
                     .fontWeight(.semibold)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 Spacer()
                 Button {
                     HapticManager.shared.medium()
@@ -278,7 +274,7 @@ struct CalendarMealsSectionHeader: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(Color.orange, in: Capsule())
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 }
                 .accessibleButton(label: "Log Meal", hint: "Tap to log a new meal")
             }
@@ -293,8 +289,8 @@ struct CalendarMealsSectionHeader: View {
 // Static header for the symptoms section: DailySymptomCard + Log Symptom button + section title.
 // Kept as a separate view to reduce compiler complexity in CalendarView.
 struct CalendarSymptomsSectionHeader: View {
-    @ObservedObject var viewModel: CalendarViewModel
-    @EnvironmentObject var router: AppRouter
+    var viewModel: CalendarViewModel
+    @Environment(AppRouter.self) var router
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -309,7 +305,7 @@ struct CalendarSymptomsSectionHeader: View {
                 Text("Symptoms")
                     .font(.title3)
                     .fontWeight(.semibold)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 Spacer()
                 Button {
                     HapticManager.shared.medium()
@@ -325,7 +321,7 @@ struct CalendarSymptomsSectionHeader: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(Color.orange, in: Capsule())
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 }
                 .accessibleButton(label: "Log Symptom", hint: "Tap to log a new symptom")
                 .accessibilityIdentifier(AccessibilityIdentifiers.Calendar.floatingActionButton)
@@ -347,15 +343,15 @@ struct EmptyStateCard: View {
         VStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 40))
-                .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
+                .foregroundStyle(ColorTheme.secondaryText.opacity(0.5))
             
             Text(title)
                 .font(.headline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             
             Text(message)
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText.opacity(0.8))
+                .foregroundStyle(ColorTheme.secondaryText.opacity(0.8))
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -368,15 +364,18 @@ struct EmptyStateCard: View {
 }
 
 // MARK: - ViewModel
-class CalendarViewModel: ObservableObject {
-    @Published var selectedDate = Date()
-    @Published var meals: [Meal] = []
-    @Published var symptoms: [Symptom] = []
-    @Published var isLoadingMeals = false
-    @Published var isLoadingSymptoms = false
-    @Published var calendarDays: [CalendarDay] = []
+@MainActor
+@Observable class CalendarViewModel {
+    var selectedDate = Date.now
+    var meals: [Meal] = []
+    var symptoms: [Symptom] = []
+    var isLoadingMeals = false
+    var isLoadingSymptoms = false
+    var calendarDays: [CalendarDay] = []
     
-
+    // Month-wide data for pattern overlay correlations
+    private var monthMeals: [Meal] = []
+    private var monthSymptoms: [Symptom] = []
     
     // Computed property for formatted date string
     var formattedDate: String {
@@ -429,11 +428,9 @@ class CalendarViewModel: ObservableObject {
     // Public method to load meals from Firebase
     func loadMeals() {
         isLoadingMeals = true
-        print("📅 CalendarView: Loading meals for date: \(selectedDate)")
         Task {
             do {
                 guard let userId = AuthenticationManager.shared.currentUserId else {
-                    print("❌ CalendarView: No authenticated user for meals")
                     await MainActor.run {
                         self.meals = []
                         self.isLoadingMeals = false
@@ -441,14 +438,11 @@ class CalendarViewModel: ObservableObject {
                     return
                 }
                 let loadedMeals = try await MealRepository.shared.fetchMealsForDate(selectedDate, userId: userId)
-                print("🍽️ CalendarView: Loaded \(loadedMeals.count) meals from Firebase")
                 await MainActor.run {
                     self.meals = loadedMeals
                     self.isLoadingMeals = false
-                                    print("🍽️ CalendarView: Updated UI with \(self.meals.count) meals")
                 }
             } catch {
-                print("❌ CalendarView: Error loading meals: \(error)")
                 await MainActor.run {
                     self.meals = []
                     self.isLoadingMeals = false
@@ -460,18 +454,14 @@ class CalendarViewModel: ObservableObject {
     // Public method to load symptoms from Firebase
     func loadSymptoms() {
         isLoadingSymptoms = true
-        print("📅 CalendarView: Loading symptoms for date: \(selectedDate)")
         Task {
             do {
                 let loadedSymptoms = try await SymptomRepository.shared.getSymptoms(for: selectedDate)
-                print("📊 CalendarView: Loaded \(loadedSymptoms.count) symptoms from Firebase")
                 await MainActor.run {
                     self.symptoms = loadedSymptoms
                     self.isLoadingSymptoms = false
-                    print("📊 CalendarView: Updated UI with \(self.symptoms.count) symptoms")
                 }
             } catch {
-                print("❌ CalendarView: Error loading symptoms: \(error)")
                 await MainActor.run {
                     self.symptoms = []
                     self.isLoadingSymptoms = false
@@ -488,6 +478,123 @@ class CalendarViewModel: ObservableObject {
             self.loadSymptoms()
             self.generateCalendarDays(for: date)
         }
+        await loadMonthData(for: date)
+    }
+    
+    // MARK: - Month-Wide Pattern Overlay
+    
+    /// Fetch all meals and symptoms for the visible month, then compute correlations
+    private func loadMonthData(for date: Date) async {
+        let calendar = Calendar.current
+        guard let userId = AuthenticationManager.shared.currentUserId,
+              let monthInterval = calendar.dateInterval(of: .month, for: date) else {
+            return
+        }
+        
+        let startDate = monthInterval.start
+        let endDate = monthInterval.end
+        
+        do {
+            async let mealsTask = MealRepository.shared.fetchMealsForDateRange(
+                startDate: startDate, endDate: endDate, userId: userId
+            )
+            async let symptomsTask = SymptomRepository.shared.fetchSymptomsForDateRange(
+                startDate: startDate, endDate: endDate, userId: userId
+            )
+            
+            let (loadedMeals, loadedSymptoms) = try await (mealsTask, symptomsTask)
+            
+            self.monthMeals = loadedMeals
+            self.monthSymptoms = loadedSymptoms
+            
+            computeCorrelations()
+        } catch {
+            // Correlation overlay is non-critical; fail silently
+        }
+    }
+    
+    /// Compute lightweight meal-to-symptom correlations for each calendar day
+    private func computeCorrelations() {
+        let calendar = Calendar.current
+        
+        // Group meals and symptoms by day
+        let mealsByDay = Dictionary(grouping: monthMeals) { meal in
+            calendar.startOfDay(for: meal.date)
+        }
+        let symptomsByDay = Dictionary(grouping: monthSymptoms) { symptom in
+            calendar.startOfDay(for: symptom.date)
+        }
+        
+        for index in calendarDays.indices {
+            let dayStart = calendar.startOfDay(for: calendarDays[index].date)
+            
+            // Update entry type indicators from month-wide data
+            let dayMeals = mealsByDay[dayStart] ?? []
+            let daySymptoms = symptomsByDay[dayStart] ?? []
+            
+            if !dayMeals.isEmpty || !daySymptoms.isEmpty {
+                var entryTypes: Set<CalendarDay.EntryType> = []
+                if !dayMeals.isEmpty { entryTypes.insert(.meals) }
+                if !daySymptoms.isEmpty { entryTypes.insert(.symptom) }
+                if !dayMeals.isEmpty && !daySymptoms.isEmpty { entryTypes.insert(.both) }
+                
+                calendarDays[index] = CalendarDay(
+                    date: calendarDays[index].date,
+                    isCurrentMonth: calendarDays[index].isCurrentMonth,
+                    hasEntries: true,
+                    entryTypes: entryTypes,
+                    meals: calendarDays[index].meals,
+                    symptoms: calendarDays[index].symptoms,
+                    correlation: nil
+                )
+            }
+            
+            // Find meals on this day that were followed by symptoms within 2-8 hours
+            guard !dayMeals.isEmpty else { continue }
+            
+            // Collect all symptoms that could be correlated (same day + next day for late meals)
+            let nextDayStart = calendar.date(byAdding: .day, value: 1, to: dayStart)!
+            let candidateSymptoms = daySymptoms + (symptomsByDay[nextDayStart] ?? [])
+            guard !candidateSymptoms.isEmpty else { continue }
+            
+            var triggerFoods: Set<String> = []
+            var correlatedSymptoms: [Symptom] = []
+            
+            for meal in dayMeals {
+                let related = candidateSymptoms.filter { symptom in
+                    let hours = symptom.date.timeIntervalSince(meal.date) / 3600
+                    return hours >= 2 && hours <= 8
+                }
+                
+                if !related.isEmpty {
+                    for foodItem in meal.foodItems {
+                        triggerFoods.insert(foodItem.name)
+                    }
+                    correlatedSymptoms.append(contentsOf: related)
+                }
+            }
+            
+            guard !triggerFoods.isEmpty else { continue }
+            
+            // Deduplicate symptoms by id
+            let uniqueSymptoms = Dictionary(grouping: correlatedSymptoms, by: \.id)
+                .compactMap { $0.value.first }
+            
+            // Compute max severity
+            let maxSeverity = uniqueSymptoms.reduce(CorrelationSeverity.low) { current, symptom in
+                let severity = CorrelationSeverity.from(
+                    painLevel: symptom.painLevel,
+                    urgencyLevel: symptom.urgencyLevel
+                )
+                return max(current, severity)
+            }
+            
+            calendarDays[index].correlation = DayCorrelation(
+                triggerFoodNames: Array(triggerFoods).sorted(),
+                symptomCount: uniqueSymptoms.count,
+                severity: maxSeverity
+            )
+        }
     }
     
     // Delete a meal
@@ -499,7 +606,6 @@ class CalendarViewModel: ObservableObject {
                 AccessibilityAnnouncement.announce("Meal deleted")
             }
         } catch {
-            print("❌ Error deleting meal: \(error)")
             await MainActor.run {
                 AccessibilityAnnouncement.announce("Failed to delete meal")
             }
@@ -515,7 +621,6 @@ class CalendarViewModel: ObservableObject {
                 AccessibilityAnnouncement.announce("Symptom deleted")
             }
         } catch {
-            print("❌ Error deleting symptom: \(error)")
             await MainActor.run {
                 AccessibilityAnnouncement.announce("Failed to delete symptom")
             }
@@ -582,7 +687,8 @@ struct MealCalendarRow: View {
             isNavigating = true
             
             // Debounce the navigation
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            Task {
+                try? await Task.sleep(for: .milliseconds(500))
                 isNavigating = false
             }
             
@@ -597,7 +703,7 @@ struct MealCalendarRow: View {
                     
                     Image(systemName: mealIcon)
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(mealIconColor)
+                        .foregroundStyle(mealIconColor)
                 }
                 
                 // Content
@@ -605,19 +711,19 @@ struct MealCalendarRow: View {
                     HStack {
                         Text(meal.type.rawValue.capitalized)
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                         
                         Spacer()
                         
                         Text(formattedTime)
                             .font(.system(size: 15))
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                     
                     if !meal.foodItems.isEmpty {
                         Text(foodItemsPreview)
                             .font(.system(size: 15))
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                             .lineLimit(2)
                             .multilineTextAlignment(.leading)
                     }
@@ -626,7 +732,7 @@ struct MealCalendarRow: View {
                 // Chevron
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(ColorTheme.secondaryText.opacity(0.3))
+                    .foregroundStyle(ColorTheme.secondaryText.opacity(0.3))
             }
             .padding(16)
             .contentShape(Rectangle())
@@ -691,7 +797,8 @@ struct SymptomCalendarRow: View {
             isNavigating = true
             
             // Debounce the navigation
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            Task {
+                try? await Task.sleep(for: .milliseconds(500))
                 isNavigating = false
             }
             
@@ -706,7 +813,7 @@ struct SymptomCalendarRow: View {
                     
                     Image(systemName: "waveform.path.ecg")
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                 }
                 
                 // Content
@@ -714,39 +821,39 @@ struct SymptomCalendarRow: View {
                     HStack {
                         Text("Type \(symptom.stoolType.rawValue)")
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                         
                         Spacer()
                         
                         Text(formattedTime)
                             .font(.system(size: 15))
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                     
                     HStack(spacing: 16) {
                         HStack(spacing: 6) {
                             Image(systemName: "bolt.fill")
                                 .font(.system(size: 12))
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                             Text(painLevelText)
                                 .font(.system(size: 14))
-                                .foregroundColor(ColorTheme.secondaryText)
+                                .foregroundStyle(ColorTheme.secondaryText)
                         }
                         
                         HStack(spacing: 6) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .font(.system(size: 12))
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                             Text(urgencyLevelText)
                                 .font(.system(size: 14))
-                                .foregroundColor(ColorTheme.secondaryText)
+                                .foregroundStyle(ColorTheme.secondaryText)
                         }
                     }
                     
                     if let notes = symptom.notes, !notes.isEmpty {
                         Text(notes)
                             .font(.system(size: 15))
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                             .lineLimit(2)
                             .multilineTextAlignment(.leading)
                     }
@@ -755,7 +862,7 @@ struct SymptomCalendarRow: View {
                 // Chevron
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(ColorTheme.secondaryText.opacity(0.3))
+                    .foregroundStyle(ColorTheme.secondaryText.opacity(0.3))
             }
             .padding(16)
             .contentShape(Rectangle())
@@ -799,36 +906,36 @@ struct DailyNutritionCard: View {
             HStack {
                 Text("Daily Nutrition")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 Spacer()
                 if mealCount > 0 {
                     Text("See details")
                         .font(.caption)
-                        .foregroundColor(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                     Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundColor(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                 }
             }
 
             if mealCount == 0 {
                 Text("Log a meal to see your daily nutrition totals.")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 // Calorie count — prominent
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text("\(nutrition.calories ?? 0)")
                         .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                     Text("kcal")
                         .font(.subheadline)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                     Spacer()
                     Text("\(mealCount) meal\(mealCount == 1 ? "" : "s")")
                         .font(.caption)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                 }
 
                 // P / C / F pills
@@ -877,17 +984,17 @@ private struct MacroPill: View {
     var body: some View {
         HStack(spacing: 3) {
             Text(label)
-                .font(.caption2)
-                .fontWeight(.semibold)
-                .foregroundColor(color)
-            Text(value.map { String(format: "%.1fg", $0) } ?? "--")
                 .font(.caption)
-                .foregroundColor(ColorTheme.primaryText)
+                .fontWeight(.semibold)
+                .foregroundStyle(color)
+            Text(value.map { "\($0.formatted(.number.precision(.fractionLength(1))))g" } ?? "--")
+                .font(.caption)
+                .foregroundStyle(ColorTheme.primaryText)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(color.opacity(0.12))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 
@@ -913,24 +1020,24 @@ struct DailySymptomCard: View {
             HStack {
                 Text("Daily Summary")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 Spacer()
             }
 
             if symptoms.isEmpty {
                 Text("Log a symptom to see your daily summary.")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 // Symptom count — prominent
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text("\(symptoms.count)")
                         .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                     Text("symptom\(symptoms.count == 1 ? "" : "s")")
                         .font(.subheadline)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                     Spacer()
                 }
 
@@ -967,17 +1074,17 @@ private struct SymptomStatPill: View {
     var body: some View {
         HStack(spacing: 3) {
             Text(label)
-                .font(.caption2)
+                .font(.caption)
                 .fontWeight(.semibold)
-                .foregroundColor(color)
+                .foregroundStyle(color)
             Text(value)
                 .font(.caption)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(color.opacity(0.12))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 
@@ -1134,14 +1241,14 @@ struct DailyNutritionDetailView: View {
                                 Spacer()
                                 Text("\(mealCalories) kcal")
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                                     .monospacedDigit()
                                     .textCase(nil)
                             }
                         ) {
                             if meal.foodItems.isEmpty {
                                 Text("No food items logged")
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                                     .font(.subheadline)
                             } else {
                                 ForEach(meal.foodItems) { item in
@@ -1155,7 +1262,7 @@ struct DailyNutritionDetailView: View {
                 if nutrition.calories == nil && details.isEmpty {
                     Section {
                         Text("No nutrition data for this day. Log a meal to see your breakdown.")
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .font(.subheadline)
                     }
                 }
@@ -1163,7 +1270,7 @@ struct DailyNutritionDetailView: View {
             .navigationTitle(dateTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
                 }
             }
@@ -1182,7 +1289,7 @@ struct NutritionDetailRow: View {
         if unit == "kcal" || unit == "mg" {
             return "\(Int(v)) \(unit)"
         }
-        return String(format: "%.1f %@", v, unit)
+        return "\(v.formatted(.number.precision(.fractionLength(1)))) \(unit)"
     }
 
     var body: some View {
@@ -1191,10 +1298,10 @@ struct NutritionDetailRow: View {
                 .fill(color.opacity(0.2))
                 .frame(width: 8, height: 8)
             Text(label)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             Spacer()
             Text(formattedValue)
-                .foregroundColor(value != nil ? .primary : .secondary)
+                .foregroundStyle(value != nil ? .primary : .secondary)
                 .monospacedDigit()
         }
         .accessibilityElement(children: .combine)
@@ -1225,11 +1332,11 @@ private struct NutritionDetailFoodRow: View {
                     HStack(alignment: .top, spacing: 8) {
                         Text("Allergens")
                             .font(.subheadline)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         Spacer()
                         Text(item.allergens.joined(separator: ", "))
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .multilineTextAlignment(.trailing)
                     }
                     .padding(.top, 6)
@@ -1240,10 +1347,10 @@ private struct NutritionDetailFoodRow: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Ingredients")
                             .font(.subheadline)
-                            .foregroundColor(.primary)
+                            .foregroundStyle(.primary)
                         Text(item.ingredients.joined(separator: ", "))
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -1257,16 +1364,16 @@ private struct NutritionDetailFoodRow: View {
                     Text(item.name)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(.primary)
+                        .foregroundStyle(.primary)
                     Text(item.quantity)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 Spacer()
                 if let cal = item.nutrition.calories {
                     Text("\(cal) kcal")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }
             }
@@ -1278,6 +1385,6 @@ private struct NutritionDetailFoodRow: View {
 // MARK: - Preview
 #Preview {
     CalendarView(selectedTab: Tab.meals)
-        .environmentObject(AppRouter())
-        .environmentObject(AuthService())
+        .environment(AppRouter())
+        .environment(AuthService())
 }

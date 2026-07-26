@@ -15,27 +15,27 @@ struct SymptomSummaryCard: View {
                 }
             }
             .font(.headline)
-            .foregroundColor(.primary)
+            .foregroundStyle(.primary)
             
             if let notes = symptom.notes, !notes.isEmpty {
                 Text(notes)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Text(symptom.date.formatted(date: .omitted, time: .shortened))
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
         .padding()
         .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(10)
+        .clipShape(.rect(cornerRadius: 10))
     }
 }
 
 #Preview {
     SymptomSummaryCard(symptom: Symptom(
         id: "1",
-        date: Date(),
+        date: Date.now,
         stoolType: .type4,
         painLevel: .moderate,
         urgencyLevel: .mild,

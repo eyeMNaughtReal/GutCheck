@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct OfflineBannerView: View {
-    @EnvironmentObject private var serverStatus: ServerStatusService
+    @Environment(ServerStatusService.self) private var serverStatus
     @Binding var showingStatusSheet: Bool
 
     var body: some View {
@@ -25,7 +25,7 @@ struct OfflineBannerView: View {
                         .font(.subheadline)
                         .fontWeight(.semibold)
                 }
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
                 .background(

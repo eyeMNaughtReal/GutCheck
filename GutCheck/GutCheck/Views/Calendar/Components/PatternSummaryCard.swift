@@ -7,16 +7,16 @@ struct PatternSummaryCard: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Identified Patterns")
                 .font(.headline)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             ForEach(patterns, id: \.self) { pattern in
                 Text(pattern)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding()
         .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(10)
+        .clipShape(.rect(cornerRadius: 10))
     }
 }
 

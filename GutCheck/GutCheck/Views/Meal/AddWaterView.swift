@@ -18,12 +18,12 @@ struct AddWaterView: View {
             HStack {
                 TextField("0", value: $cups, format: .number)
                     .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                     .multilineTextAlignment(.center)
                     .keyboardType(.decimalPad)
                     .padding()
                     .background(ColorTheme.surface)
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
                             .stroke(ColorTheme.primary.opacity(0.3), lineWidth: 1)
@@ -31,7 +31,7 @@ struct AddWaterView: View {
                 
                 Text("cup(s)")
                     .font(.title3)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             .padding(.horizontal)
             
@@ -41,11 +41,11 @@ struct AddWaterView: View {
             }) {
                 Text("Add Water")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.blue)
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
             }
             .disabled(cups <= 0)
             .opacity(cups <= 0 ? 0.6 : 1)
@@ -62,12 +62,12 @@ struct AddWaterView: View {
     
     private var fluidOunces: String {
         let oz = cups * 8.0
-        return String(format: "%.1f", oz)
+        return oz.formatted(.number.precision(.fractionLength(1)))
     }
     
     private var milliliters: String {
         let ml = cups * 236.6 // 1 cup ≈ 236.6 mL
-        return String(format: "%.0f", ml)
+        return ml.formatted(.number.precision(.fractionLength(0)))
     }
     
     // MARK: - Actions
@@ -87,12 +87,7 @@ struct AddWaterView: View {
         
         // Write water intake to HealthKit
         let millilitersAmount = cups * 236.6
-        HealthKitManager.shared.writeWaterIntakeToHealthKit(amount: millilitersAmount) { success, error in
-            if success {
-                print("✅ AddWaterView: Successfully wrote water intake to HealthKit: \(millilitersAmount)ml")
-            } else if let error = error {
-                print("⚠️ AddWaterView: HealthKit water write failed: \(error.localizedDescription)")
-            }
+        HealthKitManager.shared.writeWaterIntakeToHealthKit(amount: millilitersAmount) { _, _ in
         }
         
         // Provide haptic feedback

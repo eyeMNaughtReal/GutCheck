@@ -3,8 +3,8 @@ import SwiftUI
 
 // Simple test to verify search functionality
 struct SearchTestView: View {
-    @StateObject private var searchService = FoodSearchService()
-    @StateObject private var viewModel = FoodSearchViewModel()
+    @State private var searchService = FoodSearchService()
+    @State private var viewModel = FoodSearchViewModel()
     @State private var testResults: [NutritionixFood] = []
     @State private var isLoading = false
     @State private var errorMessage = ""
@@ -27,7 +27,7 @@ struct SearchTestView: View {
             
             if !errorMessage.isEmpty {
                 Text("Error: \(errorMessage)")
-                    .foregroundColor(.red)
+                    .foregroundStyle(.red)
             }
             
             Text("Results: \(testResults.count)")
@@ -41,7 +41,7 @@ struct SearchTestView: View {
                 }
                 .padding()
                 .background(Color.gray.opacity(0.1))
-                .cornerRadius(8)
+                .clipShape(.rect(cornerRadius: 8))
             }
             
             Spacer()
@@ -50,16 +50,13 @@ struct SearchTestView: View {
     }
     
     private func testSearch() async {
-        print("🔍 Starting search test...")
         isLoading = true
         errorMessage = ""
         testResults = []
         
-        print("🔍 Calling searchFoods with query: 'apple'")
         await searchService.searchFoods(query: "apple")
         
         await MainActor.run {
-            print("🔍 Search completed with \(searchService.results.count) results")
             self.testResults = searchService.results
             self.isLoading = false
         }

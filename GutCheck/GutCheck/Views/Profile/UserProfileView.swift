@@ -8,7 +8,7 @@ struct ProfileImageView: View {
     let user: User
     @Binding var profileImage: UIImage?
     @Binding var showImagePicker: Bool
-    @StateObject private var profileImageService = UnifiedProfileImageService(strategy: LocalProfileImageStrategy())
+    @State private var profileImageService = UnifiedProfileImageService(strategy: LocalProfileImageStrategy())
     @State private var isLoadingImage = false
     @State private var showingUploadError = false
     
@@ -39,8 +39,8 @@ struct ProfileImageView: View {
                         .scaleEffect(0.8)
                     
                     Text("Uploading...")
-                        .font(.caption2)
-                        .foregroundColor(ColorTheme.accent)
+                        .font(.caption)
+                        .foregroundStyle(ColorTheme.accent)
                 }
                 .padding(12)
                 .background(
@@ -52,8 +52,8 @@ struct ProfileImageView: View {
             
             // Pro badge
             Text("Pro")
-                .font(.caption2.bold())
-                .foregroundColor(.white)
+                .font(.caption.bold())
+                .foregroundStyle(.white)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 4)
                 .background(Capsule().fill(ColorTheme.accent))
@@ -77,7 +77,7 @@ struct ProfileImageView: View {
                     .scaledToFill()
                     .frame(width: 110, height: 110)
                     .clipShape(Circle())
-                    .overlay(Circle().stroke(ColorTheme.accent, lineWidth: 5))
+                    .overlay { Circle().stroke(ColorTheme.accent, lineWidth: 5) }
             } else {
                 Circle()
                     .strokeBorder(ColorTheme.accent, lineWidth: 5)
@@ -95,7 +95,7 @@ struct ProfileImageView: View {
                             } else {
                                 Text(user.initials)
                                     .font(.system(size: 36, weight: .bold))
-                                    .foregroundColor(ColorTheme.accent)
+                                    .foregroundStyle(ColorTheme.accent)
                             }
                         }
                     )
@@ -109,7 +109,7 @@ struct ProfileImageView: View {
                         Spacer()
                         Image(systemName: "camera.fill")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .padding(8)
                             .background(Circle().fill(ColorTheme.accent))
                             .offset(x: -8, y: -8)
@@ -137,7 +137,6 @@ struct ProfileImageView: View {
                 } catch {
                     await MainActor.run {
                         self.isLoadingImage = false
-                        print("Failed to load profile image: \(error)")
                     }
                 }
             }
@@ -147,17 +146,15 @@ struct ProfileImageView: View {
     private func uploadProfileImage(_ image: UIImage) {
         Task {
             do {
-                let imageURL = try await profileImageService.uploadProfileImage(image, for: user.id)
+                _ = try await profileImageService.uploadProfileImage(image, for: user.id)
                 await MainActor.run {
                     // Update the local profile image immediately
                     self.profileImage = image
                 }
-                print("✅ Profile image uploaded successfully: \(imageURL)")
                 
             } catch {
                 await MainActor.run {
                     self.showingUploadError = true
-                    print("❌ Failed to upload profile image: \(error)")
                 }
             }
         }
@@ -193,7 +190,7 @@ struct ImagePicker: UIViewControllerRepresentable {
 
 struct ProfileInfoSection: View {
     let user: User
-    @EnvironmentObject var settingsVM: SettingsViewModel
+    @Environment(SettingsViewModel.self) var settingsVM
     
     var body: some View {
         VStack(spacing: 24) {
@@ -241,7 +238,6 @@ struct ProfileActionSection: View {
                 try authService.signOut()
                 dismiss()
             } catch {
-                print("Error signing out: \(error)")
             }
         }
     }
@@ -251,13 +247,13 @@ import PhotosUI
 
 struct UserProfileView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var authService: AuthService
+    @Environment(AuthService.self) var authService
     let user: User
     
     @State private var profileImage: UIImage? = nil
     @State private var showImagePicker = false
     @State private var showSettings = false
-    @EnvironmentObject var settingsVM: SettingsViewModel
+    @Environment(SettingsViewModel.self) var settingsVM
 
     var body: some View {
         NavigationStack {
@@ -266,7 +262,7 @@ struct UserProfileView: View {
                     profileHeaderSection
                     
                     ProfileInfoSection(user: user)
-                        .environmentObject(settingsVM)
+                        .environment(settingsVM)
                     
                     ProfileActionSection(
                         showSettings: $showSettings,
@@ -281,16 +277,21 @@ struct UserProfileView: View {
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Close") {
                         dismiss()
                     }
                 }
             }
             .sheet(isPresented: $showSettings) {
-                SettingsView()
-                    .environmentObject(settingsVM)
-                    .environmentObject(authService)
+                NavigationStack {
+                    SettingsView()
+                        .environment(settingsVM)
+                        .environment(authService)
+                        .navigationDestination(for: SettingsRoute.self) { route in
+                            SettingsRoute.destinationView(for: route)
+                        }
+                }
             }
         }
     }
@@ -305,12 +306,12 @@ struct UserProfileView: View {
             
             Text(user.fullName)
                 .font(.title2.bold())
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
                 .padding(.top, 4)
             
             Text(user.email)
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
                 .padding(.bottom, 8)
         }
     }
@@ -324,20 +325,20 @@ struct ProfileInfoCard: View {
         VStack(spacing: 8) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundColor(ColorTheme.accent)
+                .foregroundStyle(ColorTheme.accent)
                 .padding(8)
                 .background(Circle().fill(ColorTheme.accent.opacity(0.08)))
             Text(title)
                 .font(.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             Text(value)
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
         }
         .frame(maxWidth: .infinity)
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(16)
+        .clipShape(.rect(cornerRadius: 16))
         .shadow(color: ColorTheme.shadowColor.opacity(0.08), radius: 4, x: 0, y: 2)
     }
 }
@@ -351,34 +352,30 @@ struct ProfileActionRow: View {
         HStack {
             Image(systemName: icon)
                 .font(.title3)
-                .foregroundColor(ColorTheme.accent)
+                .foregroundStyle(ColorTheme.accent)
                 .frame(width: 36, height: 36)
                 .background(Circle().fill(ColorTheme.accent.opacity(0.08)))
             Text(title)
                 .font(.body)
-                .foregroundColor(textColor)
+                .foregroundStyle(textColor)
             Spacer()
             Image(systemName: "chevron.right")
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
         }
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(16)
+        .clipShape(.rect(cornerRadius: 16))
         .shadow(color: ColorTheme.shadowColor.opacity(0.08), radius: 4, x: 0, y: 2)
     }
 }
 
-#if DEBUG
-struct UserProfileView_Previews: PreviewProvider {
-    static var previews: some View {
-        NavigationStack {
-            UserProfileView(user: User(
-                id: "1",
-                email: "jenny@email.com",
-                firstName: "Jenny",
-                lastName: "Wilson"
-            ))
-        }
+#Preview {
+    NavigationStack {
+        UserProfileView(user: User(
+            id: "1",
+            email: "jenny@email.com",
+            firstName: "Jenny",
+            lastName: "Wilson"
+        ))
     }
 }
-#endif

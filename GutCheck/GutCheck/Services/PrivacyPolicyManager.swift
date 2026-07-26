@@ -11,13 +11,13 @@ import Foundation
 import FirebaseFirestore
 
 @MainActor
-class PrivacyPolicyManager: ObservableObject {
+@Observable class PrivacyPolicyManager {
     static let shared = PrivacyPolicyManager()
     
-    @Published var currentVersion = "1.0"
-    @Published var lastUpdated = "August 18, 2025"
-    @Published var isPrivacyPolicyAccepted = false
-    @Published var privacyPolicyAcceptedDate: Date?
+    var currentVersion = "1.0"
+    var lastUpdated = "August 18, 2025"
+    var isPrivacyPolicyAccepted = false
+    var privacyPolicyAcceptedDate: Date?
     
     private let firestore = Firestore.firestore()
     private let userDefaults = UserDefaults.standard
@@ -54,7 +54,7 @@ class PrivacyPolicyManager: ObservableObject {
         
         // Update local status
         isPrivacyPolicyAccepted = true
-        privacyPolicyAcceptedDate = Date()
+        privacyPolicyAcceptedDate = Date.now
         savePrivacyPolicyStatus()
         
         // Update Firestore
@@ -72,7 +72,6 @@ class PrivacyPolicyManager: ObservableObject {
             "updatedAt": FieldValue.serverTimestamp()
         ])
         
-        print("🔐 PrivacyPolicyManager: Privacy policy accepted for user \(userId)")
     }
     
     /// Checks if user needs to accept updated privacy policy

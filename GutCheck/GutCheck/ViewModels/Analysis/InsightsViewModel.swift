@@ -8,37 +8,57 @@ struct RankedItem: Identifiable {
 }
 
 @MainActor
-class InsightsViewModel: ObservableObject {
-    @Published var recentInsights: [HealthInsight] = []
-    @Published var patterns: [HealthPattern] = []
-    @Published var recommendations: [HealthRecommendation] = []
-    @Published var isLoading = false
-    @Published var error: String?
+@Observable class InsightsViewModel {
+    var recentInsights: [HealthInsight] = []
+    var patterns: [HealthPattern] = []
+    var recommendations: [HealthRecommendation] = []
+    var isLoading = false
+    var error: String?
 
     // MARK: - Weekly Summary Data
 
-    @Published var weeklyMealCount: Int = 0
-    @Published var weeklySymptomCount: Int = 0
-    @Published var topSymptoms: [RankedItem] = []
-    @Published var topTriggerFoods: [RankedItem] = []
-    @Published var bestDays: [RankedItem] = []
+    var weeklyMealCount: Int = 0
+    var weeklySymptomCount: Int = 0
+    var topSymptoms: [RankedItem] = []
+    var topTriggerFoods: [RankedItem] = []
+    var bestDays: [RankedItem] = []
+    var weeklyTriggerReport: WeeklyTriggerReport?
+    var triggerPatterns: [TriggerPattern] = []
+    var topTriggerPatterns: [TriggerPattern] = []
+    var mealSuggestions: [MealSuggestion] = []
 
     private let insightsService = InsightsService.shared
-    private let mealRepository = MealRepository.shared
-    private let symptomRepository = SymptomRepository.shared
-    private let healthKitManager = HealthKitManager.shared
+    private let mealRepository: any MealRepositoryProtocol
+    private let symptomRepository: any SymptomRepositoryProtocol
+    private let healthKitManager: any HealthKitManagerProtocol
     private let authService = AuthService()
+    
+    init(mealRepository: any MealRepositoryProtocol = MealRepository.shared,
+         symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared,
+         healthKitManager: any HealthKitManagerProtocol = HealthKitManager.shared) {
+        self.mealRepository = mealRepository
+        self.symptomRepository = symptomRepository
+        self.healthKitManager = healthKitManager
+    }
     
     func loadInsights() async {
         isLoading = true
         error = nil
-        
+
+        // Load cached insights for instant display on fresh launch
+        if recentInsights.isEmpty,
+           let cached = BackgroundTaskService.shared.loadCachedInsights() {
+            recentInsights = cached
+            patterns = convertInsightsToPatterns(cached)
+            recommendations = convertInsightsToRecommendations(cached)
+        }
+
         do {
             // Get current user ID
             let userId = getCurrentUserId()
             
             // Calculate time range for last 30 days
-            let endDate = Date()
+            let endDate = Date.now
             let startDate = Calendar.current.date(byAdding: .day, value: -30, to: endDate) ?? endDate
             let timeRange = DateInterval(start: startDate, end: endDate)
             
@@ -76,9 +96,17 @@ class InsightsViewModel: ObservableObject {
             // Compute weekly summary cards
             computeWeeklySummaries(meals: meals, symptoms: symptoms)
 
+            // Compute weekly trigger report (week-over-week comparison)
+            computeWeeklyTriggerReport(meals: meals, symptoms: symptoms)
+
+            // Compute trigger patterns with scoring and severity prediction
+            await computeTriggerPatterns(meals: meals, symptoms: symptoms)
+
+            // Compute safe meal suggestions using trigger pattern data
+            computeMealSuggestions(meals: meals, triggerPatterns: triggerPatterns)
+
         } catch {
             self.error = error.localizedDescription
-            print("❌ Error loading insights: \(error)")
         }
         
         isLoading = false
@@ -131,7 +159,7 @@ class InsightsViewModel: ObservableObject {
                 priority: priority,
                 actionItems: insight.recommendations,
                 source: "AI Analysis",
-                dateCreated: Date()
+                dateCreated: Date.now
             )
         }
     }
@@ -140,7 +168,6 @@ class InsightsViewModel: ObservableObject {
         if let currentUser = authService.currentUser {
             return currentUser.id
         } else {
-            print("⚠️ InsightsViewModel: No authenticated user found, using default user ID")
             return "default_user"
         }
     }
@@ -149,7 +176,7 @@ class InsightsViewModel: ObservableObject {
 
     private func computeWeeklySummaries(meals: [Meal], symptoms: [Symptom]) {
         let calendar = Calendar.current
-        let now = Date()
+        let now = Date.now
         let weekAgo = calendar.date(byAdding: .day, value: -7, to: now) ?? now
 
         let weekMeals = meals.filter { $0.date >= weekAgo }
@@ -238,6 +265,226 @@ class InsightsViewModel: ObservableObject {
             .map { RankedItem(name: $0.key, count: $0.value) }
     }
 
+    // MARK: - Weekly Trigger Report
+
+    private func computeWeeklyTriggerReport(meals: [Meal], symptoms: [Symptom]) {
+        let calendar = Calendar.current
+        let now = Date.now
+        let currentWeekStart = calendar.date(byAdding: .day, value: -7, to: now) ?? now
+        let previousWeekStart = calendar.date(byAdding: .day, value: -14, to: now) ?? now
+
+        let currentWeekMeals = meals.filter { $0.date >= currentWeekStart }
+        let currentWeekSymptoms = symptoms.filter { $0.date >= currentWeekStart }
+        let previousWeekMeals = meals.filter { $0.date >= previousWeekStart && $0.date < currentWeekStart }
+        let previousWeekSymptoms = symptoms.filter { $0.date >= previousWeekStart && $0.date < currentWeekStart }
+
+        let currentTriggers = computeTriggerEntries(meals: currentWeekMeals, symptoms: currentWeekSymptoms)
+        let previousTriggers = computeTriggerEntries(meals: previousWeekMeals, symptoms: previousWeekSymptoms)
+
+        let currentFoodNames = Set(currentTriggers.keys)
+        let previousFoodNames = Set(previousTriggers.keys)
+
+        let newTriggers = currentFoodNames.subtracting(previousFoodNames)
+            .compactMap { currentTriggers[$0] }
+            .sorted { $0.correlationCount > $1.correlationCount }
+        let recurringTriggers = currentFoodNames.intersection(previousFoodNames)
+            .compactMap { currentTriggers[$0] }
+            .sorted { $0.correlationCount > $1.correlationCount }
+        let resolvedTriggers = previousFoodNames.subtracting(currentFoodNames)
+            .compactMap { previousTriggers[$0] }
+            .sorted { $0.correlationCount > $1.correlationCount }
+
+        // Only produce a report if there is meaningful data
+        guard !newTriggers.isEmpty || !recurringTriggers.isEmpty || !resolvedTriggers.isEmpty else {
+            weeklyTriggerReport = nil
+            return
+        }
+
+        weeklyTriggerReport = WeeklyTriggerReport(
+            id: UUID(),
+            generatedDate: now,
+            weekStart: currentWeekStart,
+            weekEnd: now,
+            newTriggers: newTriggers,
+            recurringTriggers: recurringTriggers,
+            resolvedTriggers: resolvedTriggers,
+            currentWeekSymptomCount: currentWeekSymptoms.count,
+            previousWeekSymptomCount: previousWeekSymptoms.count,
+            currentWeekMealCount: currentWeekMeals.count,
+            previousWeekMealCount: previousWeekMeals.count
+        )
+    }
+
+    // MARK: - Trigger Pattern Computation
+
+    private func computeTriggerPatterns(meals: [Meal], symptoms: [Symptom]) async {
+        let patterns = await PatternRecognitionService.shared.analyzeTriggerPatterns(
+            meals: meals,
+            symptoms: symptoms
+        )
+        self.triggerPatterns = patterns
+        self.topTriggerPatterns = Array(patterns.prefix(3))
+    }
+
+    /// Compute trigger entries for a given set of meals and symptoms using 2-8 hour correlation.
+    private func computeTriggerEntries(meals: [Meal], symptoms: [Symptom]) -> [String: TriggerEntry] {
+        var foodData: [String: (count: Int, onsetHours: [Double], symptomTypes: Set<String>)] = [:]
+
+        for symptom in symptoms {
+            guard symptom.painLevel != .none || symptom.urgencyLevel != .none
+                    || symptom.stoolType == .type1 || symptom.stoolType == .type2
+                    || symptom.stoolType == .type6 || symptom.stoolType == .type7 else {
+                continue
+            }
+
+            // Determine symptom labels
+            var symptomLabels: [String] = []
+            switch symptom.painLevel {
+            case .mild: symptomLabels.append("Mild Pain")
+            case .moderate: symptomLabels.append("Moderate Pain")
+            case .severe: symptomLabels.append("Severe Pain")
+            case .none: break
+            }
+            switch symptom.urgencyLevel {
+            case .mild: symptomLabels.append("Mild Urgency")
+            case .moderate: symptomLabels.append("Moderate Urgency")
+            case .urgent: symptomLabels.append("High Urgency")
+            case .none: break
+            }
+            switch symptom.stoolType {
+            case .type1, .type2: symptomLabels.append("Constipation")
+            case .type6, .type7: symptomLabels.append("Loose Stool")
+            default: break
+            }
+
+            // Find meals eaten 2-8 hours before this symptom
+            let windowStart = symptom.date.addingTimeInterval(-8 * 3600)
+            let windowEnd = symptom.date.addingTimeInterval(-2 * 3600)
+            let precedingMeals = meals.filter { $0.date >= windowStart && $0.date <= windowEnd }
+
+            for meal in precedingMeals {
+                let onsetHours = symptom.date.timeIntervalSince(meal.date) / 3600
+                for item in meal.foodItems {
+                    var entry = foodData[item.name] ?? (count: 0, onsetHours: [], symptomTypes: Set())
+                    entry.count += 1
+                    entry.onsetHours.append(onsetHours)
+                    symptomLabels.forEach { entry.symptomTypes.insert($0) }
+                    foodData[item.name] = entry
+                }
+            }
+        }
+
+        var result: [String: TriggerEntry] = [:]
+        for (name, data) in foodData {
+            let avgOnset = data.onsetHours.isEmpty ? 0 : data.onsetHours.reduce(0, +) / Double(data.onsetHours.count)
+            let confidence = min(0.95, Double(data.count) / 10.0 + 0.3)
+
+            var recommendations = ["Consider reducing \(name) intake for 2-4 weeks"]
+            if data.count >= 3 {
+                recommendations.append("Strong correlation detected — consult a dietitian")
+            }
+            recommendations.append("Reintroduce gradually to confirm sensitivity")
+
+            result[name] = TriggerEntry(
+                id: UUID(),
+                foodName: name,
+                correlationCount: data.count,
+                confidence: confidence,
+                averageOnsetHours: avgOnset,
+                associatedSymptoms: Array(data.symptomTypes).sorted(),
+                recommendations: recommendations
+            )
+        }
+        return result
+    }
+
+    // MARK: - Meal Suggestions
+
+    /// Compute safe meal suggestions using constraint satisfaction:
+    /// hard filter out meals with high-trigger foods, score remaining by safety, apply variety penalty.
+    private func computeMealSuggestions(meals: [Meal], triggerPatterns: [TriggerPattern]) {
+        // Build trigger score lookup: lowercased food name → overall score (0-100)
+        var triggerScoreMap: [String: Int] = [:]
+        for pattern in triggerPatterns {
+            let key = pattern.foodName.lowercased().trimmingCharacters(in: .whitespaces)
+            triggerScoreMap[key] = pattern.triggerScore.overall
+        }
+
+        // Group meals by name (case-insensitive)
+        let grouped = Dictionary(grouping: meals) { $0.name.lowercased().trimmingCharacters(in: .whitespaces) }
+
+        let now = Date.now
+        let threeDaysAgo = Calendar.current.date(byAdding: .day, value: -3, to: now) ?? now
+        var suggestions: [MealSuggestion] = []
+
+        for (_, mealGroup) in grouped {
+            guard let representative = mealGroup.first else { continue }
+
+            // Collect unique food item names for this meal
+            let allFoodItems = representative.foodItems.map { $0.name }
+            guard !allFoodItems.isEmpty else { continue }
+
+            // Hard constraint: skip meals with any high-trigger food (score >= 60)
+            let hasHighTrigger = allFoodItems.contains { item in
+                let key = item.lowercased().trimmingCharacters(in: .whitespaces)
+                return (triggerScoreMap[key] ?? 0) >= 60
+            }
+            guard !hasHighTrigger else { continue }
+
+            // Compute safety score: average of (100 - triggerScore) per food item
+            let itemScores = allFoodItems.map { item -> Int in
+                let key = item.lowercased().trimmingCharacters(in: .whitespaces)
+                let triggerScore = triggerScoreMap[key] ?? 0
+                return 100 - triggerScore
+            }
+            var safetyScore = itemScores.reduce(0, +) / max(1, itemScores.count)
+
+            let timesEaten = mealGroup.count
+            let lastEaten = mealGroup.map(\.date).max() ?? now
+
+            // Soft boost: meals eaten 3+ times with no trigger correlation get +10
+            let hasTriggerCorrelation = allFoodItems.contains { item in
+                let key = item.lowercased().trimmingCharacters(in: .whitespaces)
+                return triggerScoreMap[key] != nil
+            }
+            if timesEaten >= 3 && !hasTriggerCorrelation {
+                safetyScore = min(100, safetyScore + 10)
+            }
+
+            // Variety penalty: if eaten in last 3 days, subtract 15
+            if lastEaten >= threeDaysAgo {
+                safetyScore = max(0, safetyScore - 15)
+            }
+
+            // Generate reasoning
+            let reasoning: String
+            if !hasTriggerCorrelation {
+                reasoning = "No symptom correlations detected across \(timesEaten) meal\(timesEaten == 1 ? "" : "s")"
+            } else if safetyScore >= 80 {
+                reasoning = "All items have low trigger scores"
+            } else {
+                reasoning = "Most items are well-tolerated based on your history"
+            }
+
+            suggestions.append(MealSuggestion(
+                id: UUID(),
+                mealName: representative.name,
+                mealType: representative.type,
+                foodItems: allFoodItems,
+                safetyScore: safetyScore,
+                timesEaten: timesEaten,
+                lastEaten: lastEaten,
+                reasoning: reasoning
+            ))
+        }
+
+        // Sort by safety score descending, take top 8
+        self.mealSuggestions = suggestions
+            .sorted { $0.safetyScore > $1.safetyScore }
+            .prefix(8)
+            .map { $0 }
+    }
+
     /// Rank days of the week by lowest symptom count (last 30 days)
     private func computeBestDays(symptoms: [Symptom]) {
         let calendar = Calendar.current
@@ -249,7 +496,7 @@ class InsightsViewModel: ObservableObject {
         var dayCounts: [Int: Int] = [:]  // weekday (1=Sun..7=Sat) → count
         var dayOccurrences: [Int: Int] = [:]  // how many of each weekday are in the 30-day range
 
-        let now = Date()
+        let now = Date.now
         let thirtyDaysAgo = calendar.date(byAdding: .day, value: -30, to: now) ?? now
 
         // Count occurrences of each weekday in the range

@@ -68,7 +68,7 @@ struct DataDeletionRequest: Codable, Identifiable, Hashable, Equatable {
          userId: String,
          userEmail: String,
          userName: String,
-         requestDate: Date = Date(),
+         requestDate: Date = Date.now,
          reason: String? = nil,
          status: DeletionStatus = .pending,
          adminNotes: String? = nil,

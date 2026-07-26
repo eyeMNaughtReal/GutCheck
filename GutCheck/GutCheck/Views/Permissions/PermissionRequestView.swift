@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct PermissionRequestView: View {
-    @StateObject private var permissionManager = PermissionManager.shared
+    @State private var permissionManager = PermissionManager.shared
     @Environment(\.dismiss) private var dismiss
     
     @State private var currentStep = 0
@@ -61,7 +61,7 @@ struct PermissionRequestView: View {
                     skipToEnd()
                 }
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.primary)
+                .foregroundStyle(ColorTheme.primary)
             }
             
             // Progress indicator
@@ -80,16 +80,16 @@ struct PermissionRequestView: View {
             VStack(spacing: 16) {
                 Image(systemName: permissionType.icon)
                     .font(.system(size: 64))
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
                 
                 Text(permissionType.title)
                     .font(.largeTitle.bold())
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(permissionType.description)
                     .font(.title3)
                     .multilineTextAlignment(.center)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .lineLimit(nil)
             }
             
@@ -108,26 +108,26 @@ struct PermissionRequestView: View {
             VStack(spacing: 12) {
                 Image(systemName: permissionType.icon)
                     .font(.system(size: 64))
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
                 
                 VStack(spacing: 8) {
                     Text(permissionType.title)
                         .font(.largeTitle.bold())
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                     
                     Text("Optional")
                         .font(.caption)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 4)
                         .background(ColorTheme.surface)
-                        .cornerRadius(8)
+                        .clipShape(.rect(cornerRadius: 8))
                 }
                 
                 Text(permissionType.description)
                     .font(.title3)
                     .multilineTextAlignment(.center)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .lineLimit(nil)
             }
             
@@ -144,18 +144,18 @@ struct PermissionRequestView: View {
         return VStack(alignment: .leading, spacing: 12) {
             Text("This helps you:")
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(getBenefits(for: permissionType), id: \.self) { benefit in
                     HStack(spacing: 12) {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(ColorTheme.success)
+                            .foregroundStyle(ColorTheme.success)
                             .font(.system(size: 16))
                         
                         Text(benefit)
                             .font(.subheadline)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                         
                         Spacer()
                     }
@@ -164,7 +164,7 @@ struct PermissionRequestView: View {
         }
         .padding(16)
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     // MARK: - Permission Status View
@@ -173,12 +173,12 @@ struct PermissionRequestView: View {
         
         return HStack(spacing: 12) {
             Image(systemName: status.statusIcon)
-                .foregroundColor(status.statusColor)
+                .foregroundStyle(status.statusColor)
                 .font(.system(size: 16))
             
             Text(status.statusText)
                 .font(.subheadline)
-                .foregroundColor(status.statusColor)
+                .foregroundStyle(status.statusColor)
             
             Spacer()
             
@@ -187,12 +187,12 @@ struct PermissionRequestView: View {
                     permissionManager.openAppSettings()
                 }
                 .font(.caption)
-                .foregroundColor(ColorTheme.primary)
+                .foregroundStyle(ColorTheme.primary)
             }
         }
         .padding(12)
         .background(status.statusColor.opacity(0.1))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
     
     // MARK: - Completion View
@@ -200,17 +200,17 @@ struct PermissionRequestView: View {
         VStack(spacing: 32) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 80))
-                .foregroundColor(ColorTheme.success)
+                .foregroundStyle(ColorTheme.success)
             
             VStack(spacing: 16) {
                 Text("All Set!")
                     .font(.largeTitle.bold())
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Text("GutCheck is ready to help you track your digestive health with personalized insights.")
                     .font(.title3)
                     .multilineTextAlignment(.center)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             
             // Summary of enabled permissions
@@ -222,18 +222,18 @@ struct PermissionRequestView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Enabled Features:")
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             ForEach(PermissionManager.PermissionType.allCases, id: \.self) { type in
                 if permissionManager.isPermissionGranted(type) {
                     HStack(spacing: 12) {
                         Image(systemName: type.icon)
-                            .foregroundColor(ColorTheme.success)
+                            .foregroundStyle(ColorTheme.success)
                             .frame(width: 20)
                         
                         Text(type.title)
                             .font(.subheadline)
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                         
                         Spacer()
                     }
@@ -242,7 +242,7 @@ struct PermissionRequestView: View {
         }
         .padding(16)
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     // MARK: - Bottom Action View
@@ -267,11 +267,11 @@ struct PermissionRequestView: View {
                         }
                     }
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(ColorTheme.primary)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                     .disabled(isRequestingPermissions)
                     
                     if !permissionType.isRequired {
@@ -279,18 +279,18 @@ struct PermissionRequestView: View {
                             nextStep()
                         }
                         .font(.subheadline)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                     }
                 } else {
                     Button("Continue") {
                         nextStep()
                     }
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(ColorTheme.primary)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                 }
             } else {
                 // Completion button
@@ -298,11 +298,11 @@ struct PermissionRequestView: View {
                     dismiss()
                 }
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.primary)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
             }
         }
         .padding(.horizontal, 24)

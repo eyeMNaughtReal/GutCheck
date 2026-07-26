@@ -2,15 +2,15 @@ import SwiftUI
 
 struct CalendarShortcutButton: View {
     var body: some View {
-        NavigationLink(destination: CalendarView(selectedDate: Date())) {
+        NavigationLink(value: AppDestination.calendar(Date.now)) {
             HStack {
                 Image(systemName: "calendar")
-                    .foregroundColor(ColorTheme.accent)
+                    .foregroundStyle(ColorTheme.accent)
                 Text("View Full Calendar")
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             .padding()
             .background(RoundedRectangle(cornerRadius: 12).fill(ColorTheme.cardBackground))

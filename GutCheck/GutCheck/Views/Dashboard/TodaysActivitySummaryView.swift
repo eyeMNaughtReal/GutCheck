@@ -3,9 +3,9 @@ import FirebaseFirestore
 import FirebaseAuth
 
 struct TodaysActivitySummaryView: View {
-    @ObservedObject var viewModel: RecentActivityViewModel
-    @EnvironmentObject var router: AppRouter
-    @EnvironmentObject var authService: AuthService
+    var viewModel: RecentActivityViewModel
+    @Environment(AppRouter.self) var router
+    @Environment(AuthService.self) var authService
     let selectedDate: Date
     @State private var isExpanded = false
     
@@ -43,7 +43,7 @@ struct TodaysActivitySummaryView: View {
             HStack {
                 Text("Today's Summary")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
                 
@@ -56,11 +56,11 @@ struct TodaysActivitySummaryView: View {
                         HStack(spacing: 4) {
                             Text(isExpanded ? "See Less" : "See All")
                                 .font(.caption)
-                                .foregroundColor(ColorTheme.primary)
+                                .foregroundStyle(ColorTheme.primary)
                             
                             Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                                .font(.caption2)
-                                .foregroundColor(ColorTheme.primary)
+                                .font(.caption)
+                                .foregroundStyle(ColorTheme.primary)
                         }
                     }
                 }
@@ -70,28 +70,28 @@ struct TodaysActivitySummaryView: View {
             VStack(spacing: 8) {
                 HStack(spacing: 8) {
                     Image(systemName: "fork.knife")
-                        .foregroundColor(ColorTheme.accent)
+                        .foregroundStyle(ColorTheme.accent)
                         .frame(width: 20)
                     Text("\(mealsCount) \(mealsCount == 1 ? "Meal" : "Meals")")
-                        .foregroundColor(ColorTheme.accent)
+                        .foregroundStyle(ColorTheme.accent)
                     Spacer()
                 }
                 
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle")
-                        .foregroundColor(ColorTheme.warning)
+                        .foregroundStyle(ColorTheme.warning)
                         .frame(width: 20)
                     Text("\(symptomsCount) \(symptomsCount == 1 ? "Symptom" : "Symptoms")")
-                        .foregroundColor(ColorTheme.warning)
+                        .foregroundStyle(ColorTheme.warning)
                     Spacer()
                 }
                 
                 HStack(spacing: 8) {
                     Image(systemName: "pills")
-                        .foregroundColor(ColorTheme.primary)
+                        .foregroundStyle(ColorTheme.primary)
                         .frame(width: 20)
                     Text("\(medicationsCount) \(medicationsCount == 1 ? "Medication" : "Medications")")
-                        .foregroundColor(ColorTheme.primary)
+                        .foregroundStyle(ColorTheme.primary)
                     Spacer()
                 }
             }
@@ -119,26 +119,21 @@ struct TodaysActivitySummaryView: View {
         }
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
         .refreshable {
-            print("🔄 TodaysActivitySummaryView: Manual refresh triggered")
             viewModel.loadRecentActivity(for: selectedDate, authService: authService)
         }
     }
     
     private func handleEntryTap(_ entry: ActivityEntry) {
-        print("🔄 TodaysActivitySummaryView: Entry tapped - type: \(entry.type)")
         
         switch entry.type {
         case .meal(let meal):
-            print("🍽️ TodaysActivitySummaryView: Showing meal detail sheet: \(meal.id)")
             router.viewMealDetails(id: meal.id)
         case .symptom(let symptom):
-            print("🏥 TodaysActivitySummaryView: Showing symptom detail sheet: \(symptom.id)")
             router.viewSymptomDetails(id: symptom.id)
-        case .medication(let medication):
-            print("💊 TodaysActivitySummaryView: Medication tapped: \(medication.name)")
+        case .medication:
             // For now, we'll just show a simple alert since we don't have a medication detail view yet
             // In the future, this could navigate to a medication detail view
             break
@@ -150,9 +145,9 @@ struct TodaysActivitySummaryView: View {
 #Preview {
     TodaysActivitySummaryView(
         viewModel: RecentActivityViewModel(),
-        selectedDate: Date()
+        selectedDate: Date.now
     )
-    .environmentObject(AppRouter.shared)
-    .environmentObject(PreviewAuthService())
+    .environment(AppRouter.shared)
+    .environment(PreviewAuthService())
     .padding()
 }

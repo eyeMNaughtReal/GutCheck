@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct NotificationPermissionView: View {
-    @StateObject private var permissionManager = PermissionManager.shared
+    @State private var permissionManager = PermissionManager.shared
     @State private var isRequesting = false
     
     let title: String
@@ -31,15 +31,15 @@ struct NotificationPermissionView: View {
             VStack(spacing: 16) {
                 Image(systemName: "bell.badge")
                     .font(.system(size: 64))
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
                 
                 Text(title)
                     .font(.title2.bold())
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(message)
                     .multilineTextAlignment(.center)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .lineLimit(nil)
             }
             
@@ -54,7 +54,7 @@ struct NotificationPermissionView: View {
         }
         .padding(24)
         .background(ColorTheme.cardBackground)
-        .cornerRadius(16)
+        .clipShape(.rect(cornerRadius: 16))
         .onAppear {
             permissionManager.updateAllPermissionStates()
         }
@@ -67,7 +67,7 @@ struct NotificationPermissionView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Helpful reminders for:")
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             VStack(alignment: .leading, spacing: 8) {
                 reminderBenefit("🍽️", "Meal logging", "Never miss tracking a meal")
@@ -78,7 +78,7 @@ struct NotificationPermissionView: View {
         }
         .padding(16)
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private func reminderBenefit(_ icon: String, _ title: String, _ description: String) -> some View {
@@ -89,11 +89,11 @@ struct NotificationPermissionView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline.bold())
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             
             Spacer()
@@ -104,17 +104,17 @@ struct NotificationPermissionView: View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
                 Image(systemName: permissionManager.notificationStatus.statusIcon)
-                    .foregroundColor(permissionManager.notificationStatus.statusColor)
+                    .foregroundStyle(permissionManager.notificationStatus.statusColor)
                     .font(.system(size: 20))
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Notification Permission")
                         .font(.subheadline.bold())
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                     
                     Text(permissionManager.notificationStatus.statusText)
                         .font(.caption)
-                        .foregroundColor(permissionManager.notificationStatus.statusColor)
+                        .foregroundStyle(permissionManager.notificationStatus.statusColor)
                 }
                 
                 Spacer()
@@ -124,18 +124,18 @@ struct NotificationPermissionView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("To enable notifications:")
                         .font(.caption.bold())
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text("1. Open Settings → Notifications")
-                            .font(.caption2)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .font(.caption)
+                            .foregroundStyle(ColorTheme.secondaryText)
                         Text("2. Find 'GutCheck' and tap it")
-                            .font(.caption2)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .font(.caption)
+                            .foregroundStyle(ColorTheme.secondaryText)
                         Text("3. Turn on 'Allow Notifications'")
-                            .font(.caption2)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .font(.caption)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                 }
                 .padding(.top, 8)
@@ -143,7 +143,7 @@ struct NotificationPermissionView: View {
         }
         .padding(16)
         .background(permissionManager.notificationStatus.statusColor.opacity(0.1))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private var actionButtons: some View {
@@ -162,46 +162,46 @@ struct NotificationPermissionView: View {
                     }
                 }
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.primary)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 .disabled(isRequesting)
                 
                 Button("Maybe Later") {
                     onPermissionResult(false)
                 }
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
                 
             } else if permissionManager.notificationStatus.canOpenSettings {
                 Button("Open Settings") {
                     permissionManager.openAppSettings()
                 }
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.primary)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 
                 Button("Continue Without Notifications") {
                     onPermissionResult(false)
                 }
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
                 
             } else if permissionManager.notificationStatus.isGranted {
                 Button("Continue") {
                     onPermissionResult(true)
                 }
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.success)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
             }
         }
     }
@@ -249,11 +249,9 @@ struct OnboardingNotificationView: View {
 #Preview {
     VStack(spacing: 20) {
         NotificationPermissionView { granted in
-            print("Permission result: \(granted)")
         }
         
         ReminderSetupNotificationView { granted in
-            print("Reminder permission: \(granted)")
         }
     }
     .padding()

@@ -1,29 +1,26 @@
-//
-//  GutCheckUITestsLaunchTests.swift
-//  GutCheckUITests
-//
-//  Created by Mark Conley on 7/9/25.
-//
-
 import XCTest
 
 final class GutCheckUITestsLaunchTests: XCTestCase {
 
-    override class var runsForEachTargetApplicationUIConfiguration: Bool {
-        true
-    }
+    override class var runsForEachTargetApplicationUIConfiguration: Bool { true }
 
     override func setUpWithError() throws {
         continueAfterFailure = false
     }
 
-    @MainActor
     func testLaunch() throws {
         let app = XCUIApplication()
         app.launch()
 
-        // Insert steps here to perform after app launch but before taking a screenshot,
-        // such as logging into a test account or navigating somewhere in the app
+        // App should reach either the auth screen (logged out) or main tab bar (logged in)
+        let signInButton = app.buttons["SignInButton"]
+        let tabBar = app.tabBars.firstMatch
+
+        let reachedKnownState = signInButton.waitForExistence(timeout: 10) || tabBar.waitForExistence(timeout: 10)
+        XCTAssertTrue(
+            reachedKnownState,
+            "App should display either the authentication screen or the main tab bar after launch"
+        )
 
         let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "Launch Screen"

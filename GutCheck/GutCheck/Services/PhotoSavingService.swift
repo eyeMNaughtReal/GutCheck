@@ -9,11 +9,11 @@ import UIKit
 import Photos
 
 @MainActor
-class PhotoSavingService: ObservableObject {
+@Observable class PhotoSavingService {
     static let shared = PhotoSavingService()
     
-    @Published var isSaving = false
-    @Published var lastSaveResult: SaveResult?
+    var isSaving = false
+    var lastSaveResult: SaveResult?
     
     enum SaveResult {
         case success
@@ -67,11 +67,9 @@ class PhotoSavingService: ObservableObject {
                     let result: SaveResult
                     if success {
                         result = .success
-                        print("✅ PhotoSavingService: Successfully saved meal photo")
                     } else {
                         let errorMessage = error?.localizedDescription ?? "Unknown error"
                         result = .error(errorMessage)
-                        print("❌ PhotoSavingService: Failed to save photo: \(errorMessage)")
                     }
                     
                     self?.lastSaveResult = result

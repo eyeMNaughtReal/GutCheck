@@ -2,12 +2,12 @@ import Foundation
 import Combine
 
 /// Service for generating and managing health insights
-class InsightsService: ObservableObject {
+@Observable class InsightsService {
     static let shared = InsightsService()
     
-    @Published var recentInsights: [HealthInsight] = []
-    @Published var isLoading = false
-    @Published var error: String?
+    var recentInsights: [HealthInsight] = []
+    var isLoading = false
+    var error: String?
     
     private let patternService = PatternRecognitionService.shared
     private var cancellables = Set<AnyCancellable>()
@@ -46,7 +46,7 @@ class InsightsService: ObservableObject {
     
     /// Generates insights for the last 30 days
     func generateRecentInsights() async {
-        let endDate = Date()
+        let endDate = Date.now
         let startDate = Calendar.current.date(byAdding: .day, value: -30, to: endDate) ?? endDate
         let timeRange = DateInterval(start: startDate, end: endDate)
         
@@ -86,7 +86,6 @@ class InsightsService: ObservableObject {
     private func fetchMeals(for timeRange: DateInterval) async -> [Meal] {
         do {
             guard let userId = AuthenticationManager.shared.currentUserId else {
-                print("❌ Error fetching meals for insights: No authenticated user")
                 return []
             }
             
@@ -97,7 +96,6 @@ class InsightsService: ObservableObject {
                 userId: userId
             )
         } catch {
-            print("❌ Error fetching meals for insights: \(error)")
             return []
         }
     }
@@ -105,7 +103,6 @@ class InsightsService: ObservableObject {
     private func fetchSymptoms(for timeRange: DateInterval) async -> [Symptom] {
         do {
             guard let userId = AuthenticationManager.shared.currentUserId else {
-                print("❌ Error fetching symptoms for insights: No authenticated user")
                 return []
             }
             
@@ -116,7 +113,6 @@ class InsightsService: ObservableObject {
                 userId: userId
             )
         } catch {
-            print("❌ Error fetching symptoms for insights: \(error)")
             return []
         }
     }
@@ -256,7 +252,7 @@ class InsightsService: ObservableObject {
         
         description += trend.description + " "
         
-        description += "Your current intake is \(String(format: "%.1f", trend.currentValue)) \(trend.unit), while the recommended target is \(String(format: "%.1f", trend.targetValue)) \(trend.unit). "
+        description += "Your current intake is \(trend.currentValue.formatted(.number.precision(.fractionLength(1)))) \(trend.unit), while the recommended target is \(trend.targetValue.formatted(.number.precision(.fractionLength(1)))) \(trend.unit). "
         
         if trend.currentValue < trend.targetValue {
             description += "This represents a \(Int(((trend.targetValue - trend.currentValue) / trend.targetValue) * 100))% shortfall from your target. "

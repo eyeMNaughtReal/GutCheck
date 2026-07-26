@@ -11,8 +11,8 @@ import SwiftUI
 
 struct DataDeletionRequestView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var authService: AuthService
-    @StateObject private var deletionService = DataDeletionService.shared
+    @Environment(AuthService.self) var authService
+    @State private var deletionService = DataDeletionService.shared
     
     @State private var reason = ""
     @State private var deleteUserProfile = true
@@ -26,20 +26,19 @@ struct DataDeletionRequestView: View {
     @State private var showingSuccess = false
     
     var body: some View {
-        NavigationStack {
-            Form {
+        Form {
                 Section {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                             Text("Data Deletion Request")
                                 .font(.headline)
                         }
                         
                         Text("This will submit a request to delete your data. The request will be reviewed by our team before any data is permanently removed.")
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 8)
                 }
@@ -82,7 +81,7 @@ struct DataDeletionRequestView: View {
                         Text("• Some data may be retained for legal compliance")
                     }
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 }
                 
                 Section {
@@ -106,7 +105,7 @@ struct DataDeletionRequestView: View {
             .navigationTitle("Data Deletion")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") { dismiss() }
                 }
             }
@@ -125,7 +124,6 @@ struct DataDeletionRequestView: View {
             } message: {
                 Text("Your data deletion request has been submitted successfully. You will receive an email confirmation within 24 hours.")
             }
-        }
     }
     
     // MARK: - Computed Properties
@@ -171,5 +169,5 @@ struct DataDeletionRequestView: View {
 
 #Preview {
     DataDeletionRequestView()
-        .environmentObject(AuthService())
+        .environment(AuthService())
 }

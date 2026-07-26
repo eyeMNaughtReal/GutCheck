@@ -10,12 +10,12 @@ struct GraphPreviewView: View {
                 .font(.headline)
             Text("AI trend analysis coming soon...")
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             Rectangle()
                 .fill(Color.gray.opacity(0.1))
                 .frame(height: 120)
-                .cornerRadius(8)
-                .overlay(Text("Graph Placeholder"))
+                .clipShape(.rect(cornerRadius: 8))
+                .overlay { Text("Graph Placeholder") }
         }
     }
 }

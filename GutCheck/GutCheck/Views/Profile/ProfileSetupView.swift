@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ProfileSetupView: View {
-    @EnvironmentObject var authService: AuthService
+    @Environment(AuthService.self) var authService
     @State private var firstName: String = ""
     @State private var lastName: String = ""
     @State private var isSaving = false
@@ -12,14 +12,14 @@ struct ProfileSetupView: View {
             VStack(spacing: 24) {
                 Text("Set Up Your Profile")
                     .font(.title.bold())
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 TextField("First Name", text: $firstName)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                 TextField("Last Name", text: $lastName)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                 if let error = errorMessage {
                     Text(error)
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                 }
                 Button(action: saveProfile) {
                     if isSaving {
@@ -30,8 +30,8 @@ struct ProfileSetupView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(ColorTheme.accent)
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
+                            .foregroundStyle(.white)
+                            .clipShape(.rect(cornerRadius: 10))
                     }
                 }
                 .disabled(isSaving || firstName.isEmpty || lastName.isEmpty)

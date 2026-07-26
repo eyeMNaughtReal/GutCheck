@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct LogMedicationDoseView: View {
-    @StateObject private var viewModel = LogMedicationDoseViewModel()
+    @State private var viewModel = LogMedicationDoseViewModel()
     @Environment(\.dismiss) private var dismiss
 
     var onSave: (() -> Void)?
@@ -87,7 +87,7 @@ struct LogMedicationDoseView: View {
                 DatePicker(
                     "Date & Time",
                     selection: $viewModel.dateTaken,
-                    in: ...Date(),
+                    in: ...Date.now,
                     displayedComponents: [.date, .hourAndMinute]
                 )
                 .datePickerStyle(.compact)
@@ -145,10 +145,10 @@ struct LogMedicationDoseView: View {
 
     @ToolbarContentBuilder
     private var toolbarItems: some ToolbarContent {
-        ToolbarItem(placement: .navigationBarLeading) {
+        ToolbarItem(placement: .topBarLeading) {
             Button("Cancel") { dismiss() }
         }
-        ToolbarItem(placement: .navigationBarTrailing) {
+        ToolbarItem(placement: .topBarTrailing) {
             Group {
                 if viewModel.isSaving {
                     ProgressView()
@@ -164,7 +164,7 @@ struct LogMedicationDoseView: View {
     // MARK: - Helpers
 
     private func formattedAmount(_ amount: Double) -> String {
-        amount == amount.rounded() ? "\(Int(amount))" : String(format: "%.1f", amount)
+        amount == amount.rounded() ? "\(Int(amount))" : amount.formatted(.number.precision(.fractionLength(1)))
     }
 }
 
@@ -191,7 +191,7 @@ private struct MedicationPickerRow: View {
     }
 
     private func formattedAmount(_ amount: Double) -> String {
-        amount == amount.rounded() ? "\(Int(amount))" : String(format: "%.1f", amount)
+        amount == amount.rounded() ? "\(Int(amount))" : amount.formatted(.number.precision(.fractionLength(1)))
     }
 }
 

@@ -15,14 +15,14 @@ struct HealthKitTestView: View {
     @State private var testResults: [String] = []
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 20) {
                 Text("HealthKit Integration Test")
                     .font(.title)
                     .padding()
                 
                 Text(statusMessage)
-                    .foregroundColor(isAuthorized ? .green : .orange)
+                    .foregroundStyle(isAuthorized ? .green : .orange)
                     .multilineTextAlignment(.center)
                     .padding()
                 
@@ -57,7 +57,7 @@ struct HealthKitTestView: View {
                             testResults.removeAll()
                         }
                         .buttonStyle(.borderless)
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                     }
                     .padding()
                 }
@@ -81,12 +81,12 @@ struct HealthKitTestView: View {
         statusMessage = "Requesting HealthKit authorization..."
         
         HealthKitManager.shared.requestAuthorization { success, error in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 isLoading = false
                 if success {
                     isAuthorized = true
                     statusMessage = "✅ HealthKit authorized successfully!"
-                    testResults.append("✅ Authorization granted at \(Date().formatted())")
+                    testResults.append("✅ Authorization granted at \(Date.now.formatted())")
                 } else {
                     statusMessage = "❌ HealthKit authorization failed: \(error?.localizedDescription ?? "Unknown error")"
                     testResults.append("❌ Authorization failed: \(error?.localizedDescription ?? "Unknown")")
@@ -117,7 +117,7 @@ struct HealthKitTestView: View {
         
         let testMeal = Meal(
             name: "HealthKit Test Meal",
-            date: Date(),
+            date: Date.now,
             type: .lunch,
             source: .manual,
             foodItems: [testFoodItem],
@@ -127,7 +127,7 @@ struct HealthKitTestView: View {
         )
         
         HealthKitManager.shared.writeMealToHealthKit(testMeal) { success, error in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 isLoading = false
                 if success {
                     statusMessage = "✅ Test meal written to HealthKit successfully!"
@@ -146,7 +146,7 @@ struct HealthKitTestView: View {
         
         // Create test symptom
         let testSymptom = Symptom(
-            date: Date(),
+            date: Date.now,
             stoolType: .type4,
             painLevel: .mild,
             urgencyLevel: .mild,
@@ -156,7 +156,7 @@ struct HealthKitTestView: View {
         )
         
         HealthKitManager.shared.writeSymptomToHealthKit(testSymptom) { success, error in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 isLoading = false
                 if success {
                     statusMessage = "✅ Test symptom written to HealthKit successfully!"
@@ -176,7 +176,7 @@ struct HealthKitTestView: View {
         let waterAmount = 500.0 // 500ml
         
         HealthKitManager.shared.writeWaterIntakeToHealthKit(amount: waterAmount) { success, error in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 isLoading = false
                 if success {
                     statusMessage = "✅ Test water intake written to HealthKit successfully!"
@@ -190,10 +190,6 @@ struct HealthKitTestView: View {
     }
 }
 
-#if DEBUG
-struct HealthKitTestView_Previews: PreviewProvider {
-    static var previews: some View {
-        HealthKitTestView()
-    }
+#Preview {
+    HealthKitTestView()
 }
-#endif

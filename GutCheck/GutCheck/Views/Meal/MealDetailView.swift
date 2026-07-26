@@ -2,19 +2,19 @@ import SwiftUI
 import FirebaseFirestore
 
 struct MealDetailView: View {
-    @StateObject private var viewModel: MealDetailViewModel
+    @State private var viewModel: MealDetailViewModel
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var router: AppRouter
-    @EnvironmentObject var refreshManager: RefreshManager
+    @Environment(AppRouter.self) var router
+    @Environment(RefreshManager.self) var refreshManager
     
     // New initializer that takes a meal ID
     init(mealId: String) {
-        self._viewModel = StateObject(wrappedValue: MealDetailViewModel(mealId: mealId))
+        self._viewModel = State(wrappedValue: MealDetailViewModel(mealId: mealId))
     }
     
     // Keep the original initializer for backward compatibility
     init(meal: Meal) {
-        self._viewModel = StateObject(wrappedValue: MealDetailViewModel(meal: meal))
+        self._viewModel = State(wrappedValue: MealDetailViewModel(meal: meal))
     }
     
     var body: some View {
@@ -25,11 +25,9 @@ struct MealDetailView: View {
                 mealContentView
             }
         }
-        .onAppear {
+        .task {
             if viewModel.mealId != nil {
-                Task {
-                    await viewModel.loadMeal()
-                }
+                await viewModel.loadMeal()
             }
         }
     }
@@ -40,8 +38,8 @@ struct MealDetailView: View {
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(mealTypeColor(type).opacity(0.2))
-            .foregroundColor(mealTypeColor(type))
-            .cornerRadius(12)
+            .foregroundStyle(mealTypeColor(type))
+            .clipShape(.rect(cornerRadius: 12))
     }
     
     private func mealTypeColor(_ type: MealType) -> Color {
@@ -81,7 +79,7 @@ struct MealDetailView: View {
         .navigationTitle("Meal Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 editMenuButton
             }
         }
@@ -114,14 +112,14 @@ struct MealDetailView: View {
         VStack(spacing: 8) {
             Text(viewModel.meal.name)
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             HStack {
                 mealBadge(type: viewModel.meal.type)
                 
                 Text(viewModel.formattedDateTime)
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
         }
         .padding(.horizontal)
@@ -133,7 +131,7 @@ struct MealDetailView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Food Items")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                     .padding(.horizontal)
                 
                 ForEach(viewModel.meal.foodItems, id: \.id) { foodItem in
@@ -150,7 +148,7 @@ struct MealDetailView: View {
             VStack(alignment: .leading, spacing: 16) {
                 Text("Nutrition Summary")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                     .padding(.horizontal)
                 
                 nutritionSummaryCard(nutrition: totalNutrition)
@@ -165,13 +163,13 @@ struct MealDetailView: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Notes")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                     .padding(.horizontal)
 
                 Text(notes)
                     .padding()
                     .background(ColorTheme.surface)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                     .padding(.horizontal)
             }
         }
@@ -204,11 +202,11 @@ struct MealDetailView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(foodItem.name)
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(foodItem.quantity)
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             
             Spacer()
@@ -216,12 +214,12 @@ struct MealDetailView: View {
             if let calories = foodItem.nutrition.calories {
                 Text("\(calories) calories")
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .padding(.horizontal)
     }
     
@@ -231,13 +229,13 @@ struct MealDetailView: View {
             HStack {
                 Text("Total Nutrition")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
                 
                 Text("\(nutrition.calories ?? 0) calories")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
             }
             
             Divider()
@@ -259,18 +257,18 @@ struct MealDetailView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private func nutritionItem(name: String, value: Double?, unit: String, color: Color) -> some View {
         VStack(spacing: 4) {
             Text(name)
                 .font(.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             
-            Text("\(String(format: "%.1f", value ?? 0))\(unit)")
+            Text("\((value ?? 0).formatted(.number.precision(.fractionLength(1))))\(unit)")
                 .font(.subheadline.bold())
-                .foregroundColor(color)
+                .foregroundStyle(color)
         }
         .frame(maxWidth: .infinity)
     }
@@ -298,6 +296,6 @@ struct MealDetailView: View {
 
 #Preview {
     MealDetailView(meal: Meal.sampleMeal)
-        .environmentObject(AppRouter.shared)
-        .environmentObject(RefreshManager.shared)
+        .environment(AppRouter.shared)
+        .environment(RefreshManager.shared)
 }

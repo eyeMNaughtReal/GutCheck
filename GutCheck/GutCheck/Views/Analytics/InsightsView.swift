@@ -8,56 +8,94 @@
 import SwiftUI
 
 struct InsightsView: View {
-    @EnvironmentObject var authService: AuthService
-    @EnvironmentObject var router: AppRouter
-    @StateObject private var viewModel = InsightsViewModel()
+    @Environment(AuthService.self) var authService
+    @Environment(AppRouter.self) var router
+    @State private var viewModel = InsightsViewModel()
     
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Weekly Stats Row
-                    weeklyStatsRow
+        ScrollView {
+            VStack(spacing: 24) {
+                // Weekly Stats Row
+                weeklyStatsRow
 
-                    // Top Summary Cards
-                    topSymptomsCard
-                    triggerFoodsCard
-                    bestDaysCard
+                // Weekly Trigger Report Card
+                if let report = viewModel.weeklyTriggerReport {
+                    weeklyTriggerReportCard(report: report)
+                }
 
-                    // Recent Insights Section
-                    if !viewModel.recentInsights.isEmpty {
-                        recentInsightsSection
-                    }
-                    
-                    // Categories Section
-                    insightCategoriesSection
-                    
-                    // Patterns Section
-                    if !viewModel.patterns.isEmpty {
-                        patternsSection
-                    }
-                    
-                    // Recommendations Section
-                    if !viewModel.recommendations.isEmpty {
-                        recommendationsSection
-                    }
+                // Trigger Pattern Summaries
+                if !viewModel.topTriggerPatterns.isEmpty {
+                    triggerPatternSummarySection
                 }
-                .padding()
-            }
-            .navigationTitle("Insights")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    ProfileAvatarButton(user: authService.currentUser) {
-                        router.presentSheet(.profile)
-                    }
+
+                // Safe Meal Suggestions Card
+                if !viewModel.mealSuggestions.isEmpty {
+                    mealSuggestionsCard
+                }
+
+                // Top Summary Cards
+                topSymptomsCard
+                triggerFoodsCard
+
+                // Symptom Explorer Card
+                symptomExplorerCard
+
+                // Symptom Charts Card
+                symptomChartsCard
+
+                bestDaysCard
+
+                // Recent Insights Section
+                if !viewModel.recentInsights.isEmpty {
+                    recentInsightsSection
+                }
+                
+                // Categories Section
+                insightCategoriesSection
+                
+                // Patterns Section
+                if !viewModel.patterns.isEmpty {
+                    patternsSection
+                }
+                
+                // Recommendations Section
+                if !viewModel.recommendations.isEmpty {
+                    recommendationsSection
                 }
             }
-            .refreshable {
-                await viewModel.loadInsights()
+            .padding()
+        }
+        .navigationTitle("Insights")
+        .navigationDestination(for: InsightsRoute.self) { route in
+            switch route {
+            case .insightDetail(let insight):
+                InsightDetailView(insight: insight)
+            case .categoryInsights(let category):
+                CategoryInsightsView(category: category)
+            case .weeklyTriggerReport(let report):
+                WeeklyTriggerReportView(report: report)
+            case .triggerPatternDetail(let pattern):
+                TriggerPatternDetailView(pattern: pattern)
+            case .symptomExplorer:
+                SymptomExplorerView()
+            case .symptomCharts:
+                SymptomChartsView()
+            case .mealSuggestions(let suggestions):
+                MealSuggestionsView(suggestions: suggestions)
             }
-            .task {
-                await viewModel.loadInsights()
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                ProfileAvatarButton(user: authService.currentUser) {
+                    router.presentSheet(.profile)
+                }
             }
+        }
+        .refreshable {
+            await viewModel.loadInsights()
+        }
+        .task {
+            await viewModel.loadInsights()
         }
     }
     
@@ -67,9 +105,9 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Recent Insights")
                 .font(.title2.bold())
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
-            ScrollView(.horizontal, showsIndicators: false) {
+            ScrollView(.horizontal) {
                 HStack(spacing: 16) {
                     ForEach(viewModel.recentInsights) { insight in
                         AnalyticsInsightCard(insight: insight)
@@ -77,6 +115,7 @@ struct InsightsView: View {
                     }
                 }
             }
+            .scrollIndicators(.hidden)
         }
     }
     
@@ -84,7 +123,7 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Categories")
                 .font(.title2.bold())
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             LazyVGrid(columns: [
                 GridItem(.flexible()),
@@ -101,7 +140,7 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Patterns")
                 .font(.title2.bold())
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             ForEach(viewModel.patterns) { pattern in
                 PatternRow(pattern: pattern)
@@ -113,7 +152,7 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Recommendations")
                 .font(.title2.bold())
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             ForEach(viewModel.recommendations) { recommendation in
                 RecommendationCard(recommendation: recommendation)
@@ -146,16 +185,212 @@ struct InsightsView: View {
         }
     }
 
+    private func weeklyTriggerReportCard(report: WeeklyTriggerReport) -> some View {
+        NavigationLink(value: InsightsRoute.weeklyTriggerReport(report)) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .font(.title2)
+                        .foregroundStyle(ColorTheme.accent)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Weekly Trigger Report")
+                            .font(.headline)
+                            .foregroundStyle(ColorTheme.primaryText)
+                        Text(reportDateRange(report))
+                            .font(.caption)
+                            .foregroundStyle(ColorTheme.secondaryText)
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .foregroundStyle(ColorTheme.secondaryText)
+                }
+
+                HStack(spacing: 12) {
+                    TriggerCountPill(count: report.newTriggers.count, label: "New", color: .red)
+                    TriggerCountPill(count: report.recurringTriggers.count, label: "Recurring", color: .orange)
+                    TriggerCountPill(count: report.resolvedTriggers.count, label: "Resolved", color: ColorTheme.success)
+                }
+            }
+            .padding()
+            .background(ColorTheme.surface)
+            .clipShape(.rect(cornerRadius: 12))
+            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
+        }
+        .accessibilityIdentifier(AccessibilityIdentifiers.Insights.weeklyTriggerReportCard)
+    }
+
+    private func reportDateRange(_ report: WeeklyTriggerReport) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        let start = formatter.string(from: report.weekStart)
+        let endFormatter = DateFormatter()
+        endFormatter.dateFormat = "MMM d, yyyy"
+        let end = endFormatter.string(from: report.weekEnd)
+        return "\(start) – \(end)"
+    }
+
+    // MARK: - Trigger Pattern Summary
+
+    private var triggerPatternSummarySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Top Trigger Patterns", systemImage: "exclamationmark.triangle.fill")
+                .font(.headline)
+                .foregroundStyle(ColorTheme.primaryText)
+
+            ForEach(Array(viewModel.topTriggerPatterns.enumerated()), id: \.element.id) { index, pattern in
+                NavigationLink(value: InsightsRoute.triggerPatternDetail(pattern)) {
+                    HStack(spacing: 12) {
+                        // Score badge
+                        ZStack {
+                            Circle()
+                                .fill(triggerScoreColor(pattern.triggerScore.overall).opacity(0.15))
+                                .frame(width: 44, height: 44)
+                            Text("\(pattern.triggerScore.overall)")
+                                .font(.subheadline.bold().monospacedDigit())
+                                .foregroundStyle(triggerScoreColor(pattern.triggerScore.overall))
+                        }
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(pattern.foodName)
+                                .font(.subheadline.bold())
+                                .foregroundStyle(ColorTheme.primaryText)
+
+                            if let topInsight = pattern.summaryInsights.first {
+                                Text(topInsight.headline)
+                                    .font(.caption)
+                                    .foregroundStyle(ColorTheme.secondaryText)
+                                    .lineLimit(1)
+                            }
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(ColorTheme.secondaryText)
+                    }
+                    .padding(12)
+                    .background(ColorTheme.surface)
+                    .clipShape(.rect(cornerRadius: 12))
+                }
+                .accessibilityIdentifier(AccessibilityIdentifiers.Insights.triggerPatternCard(index))
+            }
+        }
+        .accessibilityIdentifier(AccessibilityIdentifiers.Insights.triggerPatternSummarySection)
+    }
+
+    private func triggerScoreColor(_ score: Int) -> Color {
+        if score >= 70 { return .red }
+        if score >= 40 { return .orange }
+        return .yellow
+    }
+
+    // MARK: - Meal Suggestions
+
+    private var mealSuggestionsCard: some View {
+        NavigationLink(value: InsightsRoute.mealSuggestions(viewModel.mealSuggestions)) {
+            HStack(spacing: 12) {
+                Image(systemName: "leaf.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(ColorTheme.success)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Safe Meal Ideas")
+                        .font(.headline)
+                        .foregroundStyle(ColorTheme.primaryText)
+                    Text("\(viewModel.mealSuggestions.count) suggestions based on your history")
+                        .font(.caption)
+                        .foregroundStyle(ColorTheme.secondaryText)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(ColorTheme.secondaryText)
+            }
+            .padding()
+            .background(ColorTheme.surface)
+            .clipShape(.rect(cornerRadius: 12))
+            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
+        }
+        .accessibilityIdentifier(AccessibilityIdentifiers.Insights.mealSuggestionsCard)
+    }
+
+    // MARK: - Symptom Charts
+
+    private var symptomChartsCard: some View {
+        NavigationLink(value: InsightsRoute.symptomCharts) {
+            HStack(spacing: 12) {
+                Image(systemName: "chart.xyaxis.line")
+                    .font(.title2)
+                    .foregroundStyle(ColorTheme.accent)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Symptom Charts")
+                        .font(.headline)
+                        .foregroundStyle(ColorTheme.primaryText)
+                    Text("Interactive graphs and trends")
+                        .font(.caption)
+                        .foregroundStyle(ColorTheme.secondaryText)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(ColorTheme.secondaryText)
+            }
+            .padding()
+            .background(ColorTheme.surface)
+            .clipShape(.rect(cornerRadius: 12))
+            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
+        }
+        .accessibilityIdentifier(AccessibilityIdentifiers.Insights.symptomChartsCard)
+    }
+
+    // MARK: - Symptom Explorer
+
+    private var symptomExplorerCard: some View {
+        NavigationLink(value: InsightsRoute.symptomExplorer) {
+            HStack(spacing: 12) {
+                Image(systemName: "magnifyingglass.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(ColorTheme.accent)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Symptom Explorer")
+                        .font(.headline)
+                        .foregroundStyle(ColorTheme.primaryText)
+                    Text("Investigate meals before symptoms")
+                        .font(.caption)
+                        .foregroundStyle(ColorTheme.secondaryText)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(ColorTheme.secondaryText)
+            }
+            .padding()
+            .background(ColorTheme.surface)
+            .clipShape(.rect(cornerRadius: 12))
+            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
+        }
+        .accessibilityIdentifier(AccessibilityIdentifiers.Insights.symptomExplorerCard)
+    }
+
     private var topSymptomsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Most Frequent Symptoms", systemImage: "chart.bar.fill")
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
 
             if viewModel.topSymptoms.isEmpty {
                 Text("No symptoms logged this week")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 4)
             } else {
@@ -163,26 +398,26 @@ struct InsightsView: View {
                     HStack(spacing: 12) {
                         Text("\(index + 1)")
                             .font(.caption.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(.white)
                             .frame(width: 22, height: 22)
                             .background(Circle().fill(rankColor(index)))
 
                         Text(item.name)
                             .font(.subheadline)
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
 
                         Spacer()
 
                         Text("\(item.count)×")
                             .font(.subheadline.bold())
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                 }
             }
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
     }
 
@@ -190,12 +425,12 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Top Triggering Foods", systemImage: "exclamationmark.triangle.fill")
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
 
             if viewModel.topTriggerFoods.isEmpty {
                 Text("Not enough data to identify triggers yet")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 4)
             } else {
@@ -203,25 +438,25 @@ struct InsightsView: View {
                     HStack(spacing: 12) {
                         Image(systemName: "exclamationmark.triangle")
                             .font(.caption)
-                            .foregroundColor(rankColor(index))
+                            .foregroundStyle(rankColor(index))
 
                         Text(item.name)
                             .font(.subheadline)
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                             .lineLimit(1)
 
                         Spacer()
 
                         Text("\(item.count) correlation\(item.count == 1 ? "" : "s")")
                             .font(.caption)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                 }
             }
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
     }
 
@@ -229,34 +464,34 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Best Days", systemImage: "checkmark.seal.fill")
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
 
             if viewModel.bestDays.isEmpty {
                 Text("Log symptoms for a week to see your best days")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 4)
             } else {
                 ForEach(Array(viewModel.bestDays.enumerated()), id: \.element.id) { index, item in
                     HStack(spacing: 12) {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(ColorTheme.success)
+                            .foregroundStyle(ColorTheme.success)
 
                         Text(item.name)
                             .font(.subheadline)
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
 
                         Spacer()
 
                         if item.count == 0 {
                             Text("Symptom-free")
                                 .font(.caption)
-                                .foregroundColor(ColorTheme.success)
+                                .foregroundStyle(ColorTheme.success)
                         } else {
                             Text("Low symptoms")
                                 .font(.caption)
-                                .foregroundColor(ColorTheme.secondaryText)
+                                .foregroundStyle(ColorTheme.secondaryText)
                         }
                     }
                 }
@@ -264,7 +499,7 @@ struct InsightsView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
     }
 
@@ -290,20 +525,20 @@ private struct WeeklyStatPill: View {
         VStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.title3)
-                .foregroundColor(color)
+                .foregroundStyle(color)
 
             Text(value)
                 .font(.title2.bold())
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
 
             Text(label)
                 .font(.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 }
@@ -312,38 +547,38 @@ private struct AnalyticsInsightCard: View {
     let insight: HealthInsight
     
     var body: some View {
-        NavigationLink(destination: InsightDetailView(insight: insight)) {
+        NavigationLink(value: InsightsRoute.insightDetail(insight)) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Image(systemName: insight.iconName)
                         .font(.title2)
-                        .foregroundColor(ColorTheme.accent)
+                        .foregroundStyle(ColorTheme.accent)
                     
                     Spacer()
                     
                     Text("\(insight.confidenceLevel)%")
                         .font(.caption)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                 }
                 
                 Text(insight.title)
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                     .lineLimit(1)
                     .truncationMode(.tail)
                 
                 Text(insight.summary)
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .lineLimit(2)
                 
                 Text(insight.dateRange)
                     .font(.caption)
-                    .foregroundColor(ColorTheme.accent)
+                    .foregroundStyle(ColorTheme.accent)
             }
             .padding()
             .background(ColorTheme.surface)
-            .cornerRadius(12)
+            .clipShape(.rect(cornerRadius: 12))
             .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
         }
     }
@@ -353,28 +588,28 @@ private struct CategoryCard: View {
     let category: InsightCategory
     
     var body: some View {
-        NavigationLink(destination: CategoryInsightsView(category: category)) {
+        NavigationLink(value: InsightsRoute.categoryInsights(category)) {
             VStack(spacing: 12) {
                 Image(systemName: category.iconName)
                     .font(.title)
-                    .foregroundColor(category.accentColor)
+                    .foregroundStyle(category.accentColor)
                 
                 Text(category.title)
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                     .lineLimit(1)
                     .truncationMode(.tail)
                 
                 Text(category.description)
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
             }
             .padding()
             .frame(maxWidth: .infinity, minHeight: 140, maxHeight: 140)
             .background(ColorTheme.surface)
-            .cornerRadius(12)
+            .clipShape(.rect(cornerRadius: 12))
             .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
         }
     }
@@ -387,27 +622,27 @@ private struct PatternRow: View {
         HStack(spacing: 16) {
             Image(systemName: pattern.iconName)
                 .font(.title2)
-                .foregroundColor(ColorTheme.accent)
+                .foregroundStyle(ColorTheme.accent)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(pattern.title)
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(pattern.description)
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .lineLimit(2)
             }
             
             Spacer()
             
             Image(systemName: "chevron.right")
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 }
 
@@ -419,30 +654,30 @@ private struct RecommendationCard: View {
             HStack {
                 Image(systemName: recommendation.iconName)
                     .font(.title2)
-                    .foregroundColor(ColorTheme.accent)
+                    .foregroundStyle(ColorTheme.accent)
                 
                 Text(recommendation.title)
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
             }
             
             Text(recommendation.description)
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             
             if !recommendation.actionItems.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(recommendation.actionItems, id: \.self) { action in
                         Label(action, systemImage: "checkmark.circle")
                             .font(.caption)
-                            .foregroundColor(ColorTheme.accent)
+                            .foregroundStyle(ColorTheme.accent)
                     }
                 }
             }
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 }
 
@@ -450,11 +685,11 @@ private struct RecommendationCard: View {
 
 #Preview {
     InsightsView()
-        .environmentObject(AuthService())
-        .environmentObject(AppRouter.shared)
+        .environment(AuthService())
+        .environment(AppRouter.shared)
 }
 
 #Preview {
     InsightsView()
-        .environmentObject(AuthService())
+        .environment(AuthService())
 }

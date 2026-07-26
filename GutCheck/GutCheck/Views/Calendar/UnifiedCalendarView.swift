@@ -1,15 +1,15 @@
 import SwiftUI
 
 struct UnifiedCalendarView: View {
-    @StateObject private var viewModel = CalendarViewModel()
-    @State private var selectedDate = Date()
+    @State private var viewModel = CalendarViewModel()
+    @State private var selectedDate = Date.now
     @State private var showingDatePicker = false
     
     private let calendar = Calendar.current
     private let daysInWeek = 7
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 // Month Header
                 monthHeader
@@ -20,20 +20,22 @@ struct UnifiedCalendarView: View {
                 // Calendar Grid
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: daysInWeek), spacing: 0) {
                     ForEach(viewModel.calendarDays) { day in
-                        DayCell(
-                            day: day,
-                            isSelected: calendar.isDate(day.date, inSameDayAs: selectedDate)
-                        )
-                        .onTapGesture {
+                        Button {
                             selectedDate = day.date
+                        } label: {
+                            DayCell(
+                                day: day,
+                                isSelected: calendar.isDate(day.date, inSameDayAs: selectedDate)
+                            )
                         }
+                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.horizontal)
                 
                 // Daily Summary
                 if let selectedDay = viewModel.calendarDays.first(where: { calendar.isDate($0.date, inSameDayAs: selectedDate) }) {
-                    NavigationLink(destination: CalendarDetailView(date: selectedDate)) {
+                    NavigationLink(value: CalendarRoute.dayDetail(selectedDate)) {
                         DailySummaryCard(day: selectedDay)
                             .padding()
                     }
@@ -42,8 +44,16 @@ struct UnifiedCalendarView: View {
                 Spacer()
             }
             .navigationTitle("Calendar")
+            .navigationDestination(for: CalendarRoute.self) { route in
+                switch route {
+                case .dayDetail(let date):
+                    CalendarDetailView(date: date)
+                case .fullCalendar(let date):
+                    CalendarView(selectedDate: date)
+                }
+            }
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button(action: { showingDatePicker = true }) {
                         Image(systemName: "calendar")
                     }
@@ -65,7 +75,7 @@ struct UnifiedCalendarView: View {
                     .font(.title2)
                     .bold()
                 Text(selectedDate.formatted(.dateTime.year()))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Spacer()
@@ -88,7 +98,7 @@ struct UnifiedCalendarView: View {
             ForEach(calendar.veryShortWeekdaySymbols, id: \.self) { symbol in
                 Text(symbol)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
             }
         }
@@ -121,11 +131,19 @@ private struct DayCell: View {
     let day: CalendarDay
     let isSelected: Bool
     
+    private var correlationColor: Color {
+        guard let severity = day.correlation?.severity else { return .clear }
+        switch severity {
+        case .high: return .red
+        case .medium, .low: return .orange
+        }
+    }
+    
     var body: some View {
         VStack(spacing: 4) {
             Text("\(Calendar.current.component(.day, from: day.date))")
                 .font(.system(.body, design: .rounded))
-                .foregroundColor(isSelected ? .white : day.isCurrentMonth ? .primary : .secondary)
+                .foregroundStyle(isSelected ? .white : day.isCurrentMonth ? .primary : .secondary)
             
             if day.hasMeals || day.hasSymptoms {
                 HStack(spacing: 4) {
@@ -138,6 +156,11 @@ private struct DayCell: View {
                         Circle()
                             .fill(ColorTheme.bowelTracking)
                             .frame(width: 6, height: 6)
+                    }
+                    if day.hasCorrelation {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 8))
+                            .foregroundStyle(correlationColor)
                     }
                 }
             }
@@ -162,7 +185,7 @@ private struct DailySummaryCard: View {
             if day.hasMeals {
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Meals", systemImage: "fork.knife")
-                        .foregroundColor(ColorTheme.mealLogging)
+                        .foregroundStyle(ColorTheme.mealLogging)
                     ForEach(day.meals) { meal in
                         Text(meal.name)
                             .font(.subheadline)
@@ -173,12 +196,16 @@ private struct DailySummaryCard: View {
             if day.hasSymptoms {
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Symptoms", systemImage: "waveform.path.ecg")
-                        .foregroundColor(ColorTheme.bowelTracking)
+                        .foregroundStyle(ColorTheme.bowelTracking)
                     ForEach(day.symptoms) { symptom in
                         Text("Stool: \(symptom.stoolType.rawValue), Pain: \(symptom.painLevel.rawValue)")
                             .font(.subheadline)
                     }
                 }
+            }
+            
+            if let correlation = day.correlation {
+                CorrelationSummaryView(correlation: correlation)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -187,12 +214,61 @@ private struct DailySummaryCard: View {
     }
 }
 
+private struct CorrelationSummaryView: View {
+    let correlation: DayCorrelation
+    
+    private var severityColor: Color {
+        switch correlation.severity {
+        case .high: return .red
+        case .medium: return .orange
+        case .low: return .yellow
+        }
+    }
+    
+    private var severityLabel: String {
+        switch correlation.severity {
+        case .high: return "High"
+        case .medium: return "Moderate"
+        case .low: return "Low"
+        }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Possible Triggers", systemImage: "exclamationmark.triangle.fill")
+                .foregroundStyle(severityColor)
+            
+            Text("\(correlation.symptomCount) symptom\(correlation.symptomCount == 1 ? "" : "s") detected 2–8 hours after eating")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            
+            HStack(spacing: 4) {
+                Text("Severity:")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(severityLabel)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(severityColor)
+            }
+            
+            Text(correlation.triggerFoodNames.joined(separator: ", "))
+                .font(.subheadline)
+                .foregroundStyle(.primary)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(severityColor.opacity(0.08))
+        .clipShape(.rect(cornerRadius: 10))
+    }
+}
+
 private struct DatePickerView: View {
     @Binding var selectedDate: Date
     @Binding var isPresented: Bool
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             DatePicker(
                 "Select Date",
                 selection: $selectedDate,
@@ -202,7 +278,7 @@ private struct DatePickerView: View {
             .navigationTitle("Choose Date")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         isPresented = false
                     }

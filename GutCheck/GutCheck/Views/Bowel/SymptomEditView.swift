@@ -11,7 +11,7 @@ struct SymptomEditView: View {
     @State private var selectedPainLevel: Int = 0
     @State private var selectedUrgencyLevel: UrgencyLevel = .none
     @State private var notes: String = ""
-    @State private var symptomDate: Date = Date()
+    @State private var symptomDate: Date = Date.now
     @State private var isSaving = false
     @State private var showingSuccessAlert = false
 
@@ -32,13 +32,13 @@ struct SymptomEditView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     // Symptom Time
-                    symptomTimeSection
+                    SymptomEditTimeSection(symptomDate: $symptomDate)
 
                     // Bristol Stool Scale
                     Text("Bristol Stool Scale")
                         .font(.title3)
                         .fontWeight(.semibold)
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                         .padding(.bottom, 2)
                     BristolScaleSelectionView(selectedStoolType: $selectedStoolType)
 
@@ -46,7 +46,7 @@ struct SymptomEditView: View {
                     Text("Pain Level")
                         .font(.title3)
                         .fontWeight(.semibold)
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                         .padding(.bottom, 2)
                     PainLevelSliderView(selectedPainLevel: $selectedPainLevel)
 
@@ -54,15 +54,20 @@ struct SymptomEditView: View {
                     Text("Urgency Level")
                         .font(.title3)
                         .fontWeight(.semibold)
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                         .padding(.bottom, 2)
                     UrgencyLevelSelectionView(selectedUrgencyLevel: $selectedUrgencyLevel)
 
                     // Notes
-                    notesSection
+                    SymptomEditNotesSection(notes: $notes)
 
                     // Action buttons
-                    actionButtonsSection
+                    SymptomEditActionButtons(
+                        isSaving: isSaving,
+                        isFormValid: isFormValid,
+                        onSave: { saveChanges() },
+                        onCancel: { dismiss() }
+                    )
                 }
                 .padding()
             }
@@ -82,104 +87,6 @@ struct SymptomEditView: View {
                 Text("Your symptom has been successfully updated.")
             }
         }
-    }
-    
-    // MARK: - View Components
-    
-    private var symptomTimeSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Symptom Time")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundColor(ColorTheme.primaryText)
-            DatePicker(
-                "",
-                selection: $symptomDate,
-                displayedComponents: [.date, .hourAndMinute]
-            )
-            .datePickerStyle(.compact)
-            .accentColor(ColorTheme.primary)
-        }
-        .padding()
-        .background(ColorTheme.surface)
-        .cornerRadius(12)
-    }
-    
-    private var notesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Notes")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundColor(ColorTheme.primaryText)
-            
-            TextEditor(text: $notes)
-                .frame(minHeight: 100)
-                .padding(12)
-                .background(ColorTheme.cardBackground)
-                .cornerRadius(8)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(ColorTheme.border.opacity(0.3), lineWidth: 1)
-                )
-        }
-        .padding()
-        .background(ColorTheme.surface)
-        .cornerRadius(12)
-    }
-    
-    private var actionButtonsSection: some View {
-        VStack(spacing: 12) {
-            // Save button
-            Button(action: {
-                saveChanges()
-            }) {
-                HStack(spacing: 8) {
-                    if isSaving {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            .scaleEffect(0.9)
-                    } else {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.title3)
-                    }
-                    
-                    Text(isSaving ? "Saving..." : "Save Changes")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(isFormValid ? ColorTheme.primary : ColorTheme.disabled)
-                )
-            }
-            .disabled(!isFormValid || isSaving)
-            
-            // Cancel button
-            Button(action: {
-                dismiss()
-            }) {
-                Text("Cancel")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(ColorTheme.secondaryText)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(ColorTheme.cardBackground)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(ColorTheme.border.opacity(0.3), lineWidth: 1)
-                    )
-            }
-        }
-        .padding()
-        .background(ColorTheme.surface)
-        .cornerRadius(12)
     }
     
     private var isFormValid: Bool {
@@ -203,41 +110,128 @@ struct SymptomEditView: View {
         onSave(updatedSymptom)
         
         // Show success feedback and reset state
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+        Task {
+            try? await Task.sleep(for: .milliseconds(300))
             isSaving = false
             showingSuccessAlert = true
         }
     }
 }
 
-// Extension to handle PainLevel conversion
-extension PainLevel {
-    var intValue: Int {
-        switch self {
-        case .none: return 0
-        case .mild: return 1
-        case .moderate: return 2
-        case .severe: return 3
-        }
-    }
+// MARK: - Extracted Subviews
+
+struct SymptomEditTimeSection: View {
+    @Binding var symptomDate: Date
     
-    static func fromInt(_ value: Int) -> PainLevel {
-        switch value {
-        case 0: return .none
-        case 1: return .mild
-        case 2: return .moderate
-        case 3: return .severe
-        default: return .none
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Symptom Time")
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundStyle(ColorTheme.primaryText)
+            DatePicker(
+                "",
+                selection: $symptomDate,
+                displayedComponents: [.date, .hourAndMinute]
+            )
+            .datePickerStyle(.compact)
+            .accentColor(ColorTheme.primary)
         }
+        .padding()
+        .background(ColorTheme.surface)
+        .clipShape(.rect(cornerRadius: 12))
     }
 }
 
+struct SymptomEditNotesSection: View {
+    @Binding var notes: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Notes")
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundStyle(ColorTheme.primaryText)
+            
+            TextEditor(text: $notes)
+                .frame(minHeight: 100)
+                .padding(12)
+                .background(ColorTheme.cardBackground)
+                .clipShape(.rect(cornerRadius: 8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(ColorTheme.border.opacity(0.3), lineWidth: 1)
+                )
+        }
+        .padding()
+        .background(ColorTheme.surface)
+        .clipShape(.rect(cornerRadius: 12))
+    }
+}
+
+struct SymptomEditActionButtons: View {
+    let isSaving: Bool
+    let isFormValid: Bool
+    let onSave: () -> Void
+    let onCancel: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            // Save button
+            Button(action: onSave) {
+                HStack(spacing: 8) {
+                    if isSaving {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(0.9)
+                    } else {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.title3)
+                    }
+                    
+                    Text(isSaving ? "Saving..." : "Save Changes")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(isFormValid ? ColorTheme.primary : ColorTheme.disabled)
+                )
+            }
+            .disabled(!isFormValid || isSaving)
+            
+            // Cancel button
+            Button(action: onCancel) {
+                Text("Cancel")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(ColorTheme.secondaryText)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(ColorTheme.cardBackground)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(ColorTheme.border.opacity(0.3), lineWidth: 1)
+                    )
+            }
+        }
+        .padding()
+        .background(ColorTheme.surface)
+        .clipShape(.rect(cornerRadius: 12))
+    }
+}
 
 // Preview with mock data
 #Preview {
     SymptomEditView(
         symptom: Symptom(
-            date: Date(),
+            date: Date.now,
             stoolType: .type4,
             painLevel: .moderate,
             urgencyLevel: .mild,

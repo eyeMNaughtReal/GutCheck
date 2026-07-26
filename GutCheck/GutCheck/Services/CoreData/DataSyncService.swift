@@ -13,16 +13,16 @@ import FirebaseFirestore
 import FirebaseAuth
 
 @MainActor
-class DataSyncService: ObservableObject {
+@Observable class DataSyncService {
     static let shared = DataSyncService()
     
     private let localStorage = CoreDataStorageService.shared
     private let coreDataStack = CoreDataStack.shared
-    private lazy var firestore = Firestore.firestore()
+    @ObservationIgnored private lazy var firestore = Firestore.firestore()
     
-    @Published var isSyncing = false
-    @Published var lastSyncDate: Date?
-    @Published var syncProgress: Double = 0.0
+    var isSyncing = false
+    var lastSyncDate: Date?
+    var syncProgress: Double = 0.0
     
     private init() {}
     
@@ -37,7 +37,7 @@ class DataSyncService: ObservableObject {
         defer {
             isSyncing = false
             syncProgress = 1.0
-            lastSyncDate = Date()
+            lastSyncDate = Date.now
         }
         
         do {
@@ -60,7 +60,6 @@ class DataSyncService: ObservableObject {
             syncProgress = 1.0
             
         } catch {
-            print("Full sync failed: \(error)")
             throw error
         }
     }
@@ -190,10 +189,10 @@ class DataSyncService: ObservableObject {
             breakfastReminderEnabled: localSettings.mealReminderEnabled,
             breakfastReminderTime: localSettings.mealReminderTime ?? ReminderSettings.defaultTime(hour: 7),
             symptomReminderEnabled: localSettings.symptomReminderEnabled,
-            symptomReminderTime: localSettings.symptomReminderTime ?? Date(),
+            symptomReminderTime: localSettings.symptomReminderTime ?? Date.now,
             remindMeLaterInterval: Int(localSettings.remindMeLaterInterval),
             weeklyInsightEnabled: localSettings.weeklyInsightEnabled,
-            weeklyInsightTime: localSettings.weeklyInsightTime ?? Date()
+            weeklyInsightTime: localSettings.weeklyInsightTime ?? Date.now
         )
         
         // Upload to Firestore
@@ -300,11 +299,10 @@ class DataSyncService: ObservableObject {
                 do {
                     try await performIncrementalSync()
                     // Wait 15 minutes before next sync
-                    try await Task.sleep(nanoseconds: 15 * 60 * 1_000_000_000)
+                    try await Task.sleep(for: .seconds(15 * 60))
                 } catch {
-                    print("Background sync failed: \(error)")
                     // Wait 5 minutes before retry on failure
-                    try await Task.sleep(nanoseconds: 5 * 60 * 1_000_000_000)
+                    try await Task.sleep(for: .seconds(5 * 60))
                 }
             }
         }

@@ -13,12 +13,12 @@ import CryptoKit
 import Security
 
 @MainActor
-class CoreDataStack: ObservableObject {
+@Observable class CoreDataStack {
     static let shared = CoreDataStack()
     
     // MARK: - Core Data Stack
     
-    lazy var persistentContainer: NSPersistentContainer = {
+    @ObservationIgnored lazy var persistentContainer: NSPersistentContainer = {
         let container = NSPersistentContainer(name: "GutCheck")
         
         // Configure persistent store with encryption
@@ -119,7 +119,6 @@ class CoreDataStack: ObservableObject {
             do {
                 try context.save()
             } catch {
-                print("Error saving Core Data context: \(error)")
             }
         }
     }
@@ -131,7 +130,6 @@ class CoreDataStack: ObservableObject {
             do {
                 try context.save()
             } catch {
-                print("Error saving background Core Data context: \(error)")
             }
         }
     }
@@ -174,7 +172,7 @@ class CoreDataStack: ObservableObject {
         
         // Clean up old sync records
         let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName: "LocalMeal")
-        fetchRequest.predicate = NSPredicate(format: "syncStatus == %@ AND lastModified < %@", "synced", Date().addingTimeInterval(-30*24*60*60) as CVarArg)
+        fetchRequest.predicate = NSPredicate(format: "syncStatus == %@ AND lastModified < %@", "synced", Date.now.addingTimeInterval(-30*24*60*60) as CVarArg)
         
         do {
             let oldMeals = try context.fetch(fetchRequest) as? [LocalMeal] ?? []
@@ -184,7 +182,6 @@ class CoreDataStack: ObservableObject {
             
             try context.save()
         } catch {
-            print("Error cleaning up old data: \(error)")
         }
     }
     
@@ -204,7 +201,6 @@ extension NSManagedObjectContext {
             do {
                 try save()
             } catch {
-                print("Error saving context: \(error)")
             }
         }
     }

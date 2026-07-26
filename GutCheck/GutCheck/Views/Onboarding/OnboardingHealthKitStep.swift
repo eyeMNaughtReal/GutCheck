@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct OnboardingHealthKitStep: View {
-    @StateObject private var permissionManager = PermissionManager.shared
+    @State private var permissionManager = PermissionManager.shared
     @Binding var currentStep: Int
     
     @State private var isRequesting = false
@@ -13,15 +13,15 @@ struct OnboardingHealthKitStep: View {
             VStack(spacing: 16) {
                 Image(systemName: "heart.text.square")
                     .font(.system(size: 64))
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
                 
                 Text("Health Data Integration")
                     .font(.largeTitle.bold())
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Text("Connect with Apple Health to sync your nutrition and symptom data for comprehensive health tracking.")
                     .multilineTextAlignment(.center)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             
             Spacer()
@@ -49,24 +49,24 @@ struct OnboardingHealthKitStep: View {
                     }
                 }
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.primary)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 .disabled(isRequesting)
                 
                 Button("Learn More") {
                     showPermissionExplanation = true
                 }
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.primary)
+                .foregroundStyle(ColorTheme.primary)
                 
                 Button("Skip for Now") {
                     currentStep += 1
                 }
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             }
         }
         .padding(.horizontal, 24)
@@ -84,7 +84,7 @@ struct OnboardingHealthKitStep: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("What you'll get:")
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             VStack(spacing: 12) {
                 healthKitBenefit("📊", "Comprehensive tracking", "All your health data in one place")
@@ -95,7 +95,7 @@ struct OnboardingHealthKitStep: View {
         }
         .padding(16)
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private func healthKitBenefit(_ icon: String, _ title: String, _ description: String) -> some View {
@@ -106,11 +106,11 @@ struct OnboardingHealthKitStep: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline.bold())
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(description)
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             
             Spacer()
@@ -122,11 +122,11 @@ struct OnboardingHealthKitStep: View {
             HStack(spacing: 12) {
                 Image(systemName: "lock.shield.fill")
                     .font(.system(size: 20))
-                    .foregroundColor(ColorTheme.success)
+                    .foregroundStyle(ColorTheme.success)
                 
                 Text("Your health data stays secure")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
             }
@@ -134,18 +134,18 @@ struct OnboardingHealthKitStep: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("• Data is encrypted and stored securely")
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                 Text("• You control what data to share")
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                 Text("• Can be revoked anytime in Settings")
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
         }
         .padding(16)
         .background(ColorTheme.success.opacity(0.1))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private func requestHealthKitPermission() {
@@ -176,10 +176,10 @@ struct HealthKitPermissionExplanationView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Health Data We'll Access")
                             .font(.title2.bold())
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                         
                         Text("GutCheck will request permission to read and write specific health data types:")
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                     
                     VStack(alignment: .leading, spacing: 16) {
@@ -202,14 +202,14 @@ struct HealthKitPermissionExplanationView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Privacy & Control")
                             .font(.title3.bold())
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                         
                         Text("• You can choose which data types to allow or deny\n• Permissions can be changed anytime in Health app settings\n• GutCheck never shares your health data with third parties\n• All data is encrypted and stored securely")
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                     .padding(16)
                     .background(ColorTheme.cardBackground)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 32)
@@ -217,7 +217,7 @@ struct HealthKitPermissionExplanationView: View {
             .navigationTitle("HealthKit Integration")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
@@ -230,24 +230,24 @@ struct HealthKitPermissionExplanationView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             VStack(spacing: 8) {
                 ForEach(items, id: \.0) { item in
                     HStack(alignment: .top, spacing: 12) {
                         Image(systemName: "circle.fill")
                             .font(.system(size: 6))
-                            .foregroundColor(ColorTheme.primary)
+                            .foregroundStyle(ColorTheme.primary)
                             .padding(.top, 6)
                         
                         VStack(alignment: .leading, spacing: 2) {
                             Text(item.0)
                                 .font(.subheadline.bold())
-                                .foregroundColor(ColorTheme.primaryText)
+                                .foregroundStyle(ColorTheme.primaryText)
                             
                             Text(item.1)
                                 .font(.caption)
-                                .foregroundColor(ColorTheme.secondaryText)
+                                .foregroundStyle(ColorTheme.secondaryText)
                         }
                         
                         Spacer()
@@ -257,6 +257,6 @@ struct HealthKitPermissionExplanationView: View {
         }
         .padding(16)
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 }

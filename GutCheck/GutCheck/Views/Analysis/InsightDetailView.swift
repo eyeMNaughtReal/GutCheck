@@ -3,7 +3,7 @@ import SwiftUI
 struct InsightDetailView: View {
     let insight: HealthInsight
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var viewModel = InsightDetailViewModel()
+    @State private var viewModel = InsightDetailViewModel()
     
     var body: some View {
         ScrollView {
@@ -15,7 +15,7 @@ struct InsightDetailView: View {
                     if let description = insight.detailedDescription {
                         Text(description)
                             .font(.body)
-                            .foregroundColor(ColorTheme.text.opacity(0.8))
+                            .foregroundStyle(ColorTheme.text.opacity(0.8))
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -35,7 +35,7 @@ struct InsightDetailView: View {
                             .frame(height: 200)
                             .overlay(
                                 Text("Chart Visualization")
-                                    .foregroundColor(ColorTheme.accent)
+                                    .foregroundStyle(ColorTheme.accent)
                                     .font(.headline)
                             )
                     }
@@ -112,7 +112,7 @@ private struct InsightHeaderView: View {
             Label(insight.title, systemImage: insight.iconName)
                 .font(.title2)
                 .bold()
-                .foregroundColor(ColorTheme.primary)
+                .foregroundStyle(ColorTheme.primary)
             
             Text(insight.summary)
                 .font(.headline)
@@ -124,7 +124,7 @@ private struct InsightHeaderView: View {
                 Label(insight.dateRange, systemImage: "calendar")
             }
             .font(.subheadline)
-            .foregroundColor(.secondary)
+            .foregroundStyle(.secondary)
         }
     }
 }
@@ -139,14 +139,14 @@ private struct ContributingFactorRow: View {
                     .font(.headline)
                 Text(factor.description)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Spacer()
             
             Text("\(Int(factor.impact * 100))%")
                 .font(.headline)
-                .foregroundColor(impactColor)
+                .foregroundStyle(impactColor)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 8)
@@ -177,13 +177,13 @@ private struct RelatedInsightRow: View {
     let insight: HealthInsight
     
     var body: some View {
-        NavigationLink(destination: InsightDetailView(insight: insight)) {
+        NavigationLink(value: InsightsRoute.insightDetail(insight)) {
             HStack {
                 Label(insight.title, systemImage: insight.iconName)
                     .font(.subheadline)
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 4)
@@ -193,8 +193,8 @@ private struct RelatedInsightRow: View {
 
 // MARK: - Supporting Types
 
-struct HealthInsight: Identifiable {
-    let id = UUID()
+struct HealthInsight: Identifiable, Hashable, Codable {
+    let id: UUID
     let title: String
     let summary: String
     let detailedDescription: String?
@@ -202,6 +202,26 @@ struct HealthInsight: Identifiable {
     let confidenceLevel: Int
     let dateRange: String
     let recommendations: [String]
+
+    init(
+        id: UUID = UUID(),
+        title: String,
+        summary: String,
+        detailedDescription: String?,
+        iconName: String,
+        confidenceLevel: Int,
+        dateRange: String,
+        recommendations: [String]
+    ) {
+        self.id = id
+        self.title = title
+        self.summary = summary
+        self.detailedDescription = detailedDescription
+        self.iconName = iconName
+        self.confidenceLevel = confidenceLevel
+        self.dateRange = dateRange
+        self.recommendations = recommendations
+    }
 }
 
 struct ContributingFactor: Identifiable {
@@ -212,7 +232,7 @@ struct ContributingFactor: Identifiable {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         InsightDetailView(insight: HealthInsight(
             title: "Dairy Sensitivity Pattern",
             summary: "Strong correlation between dairy consumption and bloating",

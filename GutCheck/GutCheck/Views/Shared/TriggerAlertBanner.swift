@@ -7,7 +7,7 @@ struct TriggerAlertBanner: View {
         VStack(alignment: .leading, spacing: 8) {
             Label("Trigger Alert", systemImage: "exclamationmark.circle")
                 .font(.headline)
-                .foregroundColor(.red)
+                .foregroundStyle(.red)
             ForEach(alerts, id: \.self) { alert in
                 Text("• \(alert)")
                     .font(.subheadline)
@@ -16,7 +16,7 @@ struct TriggerAlertBanner: View {
         .frame(maxWidth: .infinity)
         .padding()
         .background(RoundedRectangle(cornerRadius: 12).fill(Color.red.opacity(0.1)))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.red, lineWidth: 1))
+        .overlay { RoundedRectangle(cornerRadius: 12).stroke(Color.red, lineWidth: 1) }
 
     }
 }

@@ -36,6 +36,7 @@ enum AccessibilityIdentifiers {
         static let avoidanceTipCard = "dashboard.avoidanceTip.card"
         static let weekSelector = "dashboard.weekSelector"
         static let activitySummary = "dashboard.activitySummary"
+        static let aiInsightsCard = "dashboard.aiInsights.card"
     }
     
     // MARK: - Meal Builder
@@ -60,6 +61,15 @@ enum AccessibilityIdentifiers {
         static func deleteFoodItem(_ index: Int) -> String {
             "mealBuilder.foodItem.\(index).delete"
         }
+        
+        // Risk Assessment
+        static let riskAssessmentCard = "mealBuilder.riskAssessment.card"
+        static let riskAssessmentHeader = "mealBuilder.riskAssessment.header"
+        static let riskAssessmentNoHistory = "mealBuilder.riskAssessment.noHistory"
+        
+        // Ingredient Breakdown
+        static let ingredientBreakdown = "mealBuilder.ingredientBreakdown"
+        static let ingredientBreakdownTags = "mealBuilder.ingredientBreakdown.tags"
     }
     
     // MARK: - Food Search
@@ -189,10 +199,42 @@ enum AccessibilityIdentifiers {
         static let timeRangeSelector = "insights.timeRange"
         static let filterButton = "insights.filter.button"
         static let insightCardsList = "insights.cards.list"
+        static let weeklyTriggerReportCard = "insights.weeklyTriggerReport.card"
+        static let weeklyTriggerReportView = "insights.weeklyTriggerReport.view"
+        static let triggerPatternSummarySection = "insights.triggerPattern.summary"
+        static let triggerPatternDetailView = "insights.triggerPattern.detail"
         
         static func insightCard(_ index: Int) -> String {
             "insights.card.\(index)"
         }
+        
+        static func triggerPatternCard(_ index: Int) -> String {
+            "insights.triggerPattern.card.\(index)"
+        }
+        
+        // Symptom Explorer
+        static let symptomExplorerCard = "insights.symptomExplorer.card"
+        static let symptomExplorerView = "insights.symptomExplorer.view"
+        static let symptomExplorerPicker = "insights.symptomExplorer.picker"
+        static let symptomExplorerEmptyState = "insights.symptomExplorer.empty"
+        
+        static func suspectedMealCard(_ index: Int) -> String {
+            "insights.symptomExplorer.meal.\(index)"
+        }
+        
+        // Meal Suggestions
+        static let mealSuggestionsCard = "insights.mealSuggestions.card"
+        static let mealSuggestionsView = "insights.mealSuggestions.view"
+        static func mealSuggestionRow(_ index: Int) -> String {
+            "insights.mealSuggestions.row.\(index)"
+        }
+
+        // Symptom Charts
+        static let symptomChartsCard = "insights.symptomCharts.card"
+        static let symptomChartsView = "insights.symptomCharts.view"
+        static let chartTimeRangePicker = "insights.symptomCharts.timeRange.picker"
+        static let chartSymptomFilterPicker = "insights.symptomCharts.symptomFilter.picker"
+        static let chartTabPicker = "insights.symptomCharts.tab.picker"
     }
     
     // MARK: - Tab Bar
@@ -293,8 +335,8 @@ extension View {
  
  5. Tab bar items:
  ```swift
- .tabItem {
-     Label("Dashboard", systemImage: "house.fill")
+ Tab("Dashboard", systemImage: "house.fill", value: .dashboard) {
+     DashboardView()
  }
  .accessibilityId(AccessibilityIdentifiers.TabBar.dashboard)
  ```

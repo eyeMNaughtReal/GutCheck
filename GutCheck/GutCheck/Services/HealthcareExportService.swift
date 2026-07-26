@@ -37,7 +37,7 @@ struct ExportOptions {
     var anonymizeData: Bool
     
     static let `default` = ExportOptions(
-        dateRange: Calendar.current.date(byAdding: .month, value: -3, to: Date())!...Date(),
+        dateRange: Calendar.current.date(byAdding: .month, value: -3, to: Date.now)!...Date.now,
         includePrivateData: false,
         includeNutritionData: true,
         includeSymptomData: true,
@@ -50,15 +50,16 @@ struct ExportOptions {
 
 // MARK: - Healthcare Export Service
 
-class HealthcareExportService: ObservableObject {
+@MainActor
+@Observable class HealthcareExportService {
     static let shared = HealthcareExportService()
     
     private let mealRepository = MealRepository.shared
     private let symptomRepository = SymptomRepository.shared
     private let localStorageService = LocalStorageService.shared
     
-    @Published var isExporting = false
-    @Published var exportProgress: Double = 0.0
+    var isExporting = false
+    var exportProgress: Double = 0.0
     
     private init() {}
     
@@ -399,7 +400,7 @@ class HealthcareExportService: ObservableObject {
             
             if let avgInterval = intervals.isEmpty ? nil : intervals.reduce(0, +) / Double(intervals.count) {
                 if avgInterval < 2 {
-                    recommendations.append("Consider spacing meals further apart (current average: \(String(format: "%.1f", avgInterval)) hours)")
+                    recommendations.append("Consider spacing meals further apart (current average: \(avgInterval.formatted(.number.precision(.fractionLength(1)))) hours)")
                 }
             }
         }
@@ -514,7 +515,7 @@ class HealthcareExportService: ObservableObject {
         
         // Generated timestamp
         let generatedY = dateBoxY + 80
-        let generatedString = "Generated: \(DateFormatter().string(from: Date()))"
+        let generatedString = "Generated: \(DateFormatter().string(from: Date.now))"
         let generatedSize = generatedString.size(withAttributes: dateAttributes)
         generatedString.draw(at: CGPoint(x: (pageRect.width - generatedSize.width) / 2, y: generatedY), withAttributes: dateAttributes)
         
@@ -1169,7 +1170,6 @@ extension MealRepository {
             }
             allMeals.append(contentsOf: filteredLocalMeals)
         } catch {
-            print("⚠️ Local meal query failed: \(error)")
         }
         
         // Fetch from Firestore (public meals)
@@ -1203,7 +1203,6 @@ extension SymptomRepository {
             }
             allSymptoms.append(contentsOf: filteredLocalSymptoms)
         } catch {
-            print("⚠️ Local symptom query failed: \(error)")
         }
         
         // Fetch from Firestore (public symptoms)

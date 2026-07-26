@@ -144,7 +144,7 @@ struct Symptom: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
             "urgencyLevel": urgencyLevel.rawValue,
             "tags": tags,
             "createdBy": createdBy,
-            "createdAt": Timestamp(date: Date())
+            "createdAt": Timestamp(date: Date.now)
         ]
         
         if let notes = notes {

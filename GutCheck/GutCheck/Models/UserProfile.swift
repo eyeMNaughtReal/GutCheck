@@ -7,5 +7,5 @@ struct UserProfile: Identifiable, Codable {
     var age: Int?
     var weight: Double?  // kg
     var height: Double?  // cm
-    var createdAt: Date = Date()
+    var createdAt: Date = Date.now
 }

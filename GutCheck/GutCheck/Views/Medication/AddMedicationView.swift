@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AddMedicationView: View {
-    @StateObject private var viewModel = AddMedicationViewModel()
+    @State private var viewModel = AddMedicationViewModel()
     @Environment(\.dismiss) private var dismiss
 
     /// Called after a successful save so the parent list can refresh.
@@ -123,7 +123,7 @@ struct AddMedicationView: View {
             ZStack(alignment: .topLeading) {
                 if viewModel.notes.isEmpty {
                     Text("e.g. Take with food, prescribed by Dr. Smith…")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .font(.body)
                         .padding(.top, 8)
                         .padding(.leading, 4)
@@ -139,10 +139,10 @@ struct AddMedicationView: View {
 
     @ToolbarContentBuilder
     private var toolbarItems: some ToolbarContent {
-        ToolbarItem(placement: .navigationBarLeading) {
+        ToolbarItem(placement: .topBarLeading) {
             Button("Cancel") { dismiss() }
         }
-        ToolbarItem(placement: .navigationBarTrailing) {
+        ToolbarItem(placement: .topBarTrailing) {
             Group {
                 if viewModel.isSaving {
                     ProgressView()

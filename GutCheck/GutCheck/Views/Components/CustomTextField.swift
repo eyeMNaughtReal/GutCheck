@@ -29,7 +29,7 @@ struct CustomTextField: View {
             Text(title)
                 .font(.subheadline)
                 .fontWeight(.medium)
-                .foregroundColor(ColorTheme.text)
+                .foregroundStyle(ColorTheme.text)
             
             ZStack {
                 RoundedRectangle(cornerRadius: 12)
@@ -45,6 +45,7 @@ struct CustomTextField: View {
                             .textFieldStyle(PlainTextFieldStyle())
                             .keyboardType(keyboardType)
                             .focused($isFocused)
+                            .accessibilityIdentifier("\(title)Field")
                     } else {
                         TextField(placeholder, text: $text)
                             .textFieldStyle(PlainTextFieldStyle())
@@ -52,6 +53,7 @@ struct CustomTextField: View {
                             .focused($isFocused)
                             .autocapitalization(.none)
                             .disableAutocorrection(true)
+                            .accessibilityIdentifier("\(title)Field")
                     }
                 }
                 .padding(.horizontal, 16)

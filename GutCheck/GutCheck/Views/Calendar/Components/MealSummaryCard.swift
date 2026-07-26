@@ -7,20 +7,20 @@ struct MealSummaryCard: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(meal.type.rawValue)
                 .font(.headline)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             ForEach(meal.foodItems) { food in
                 Text(food.name)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
             
             Text(meal.date.formatted(date: .omitted, time: .shortened))
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
         .padding()
         .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(10)
+        .clipShape(.rect(cornerRadius: 10))
     }
 }
 
@@ -28,7 +28,7 @@ struct MealSummaryCard: View {
     MealSummaryCard(meal: Meal(
         id: "1",
         name: "Breakfast",
-        date: Date(),
+        date: Date.now,
         type: .breakfast,
         source: .manual,
         foodItems: [

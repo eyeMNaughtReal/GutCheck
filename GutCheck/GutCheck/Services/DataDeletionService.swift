@@ -12,11 +12,11 @@ import FirebaseFirestore
 import FirebaseAuth
 
 @MainActor
-class DataDeletionService: ObservableObject {
+@Observable class DataDeletionService {
     static let shared = DataDeletionService()
     
-    @Published var isLoading = false
-    @Published var errorMessage: String?
+    var isLoading = false
+    var errorMessage: String?
     
     private let firestore = Firestore.firestore()
     private let auth = Auth.auth()

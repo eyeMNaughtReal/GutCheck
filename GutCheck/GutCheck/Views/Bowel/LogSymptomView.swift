@@ -35,16 +35,16 @@ struct BristolScaleSelectionView: View {
                             Text("\(info.type.rawValue)")
                                 .typography(Typography.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(selectedStoolType == info.type ? .white : bristolTextColor(for: info.type))
+                                .foregroundStyle(selectedStoolType == info.type ? .white : bristolTextColor(for: info.type))
                             Text(info.summary)
                                 .typography(Typography.caption)
-                                .foregroundColor(selectedStoolType == info.type ? .white.opacity(0.9) : ColorTheme.secondaryText)
+                                .foregroundStyle(selectedStoolType == info.type ? .white.opacity(0.9) : ColorTheme.secondaryText)
                                 .multilineTextAlignment(.center)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                             Text(info.description)
-                                .font(.caption2)
-                                .foregroundColor(selectedStoolType == info.type ? .white.opacity(0.8) : ColorTheme.secondaryText)
+                                .font(.caption)
+                                .foregroundStyle(selectedStoolType == info.type ? .white.opacity(0.8) : ColorTheme.secondaryText)
                                 .multilineTextAlignment(.center)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.7)
@@ -76,7 +76,7 @@ struct BristolScaleSelectionView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     private func bristolColor(for type: StoolType) -> Color {
         switch type {
@@ -124,7 +124,7 @@ struct PainLevelSliderView: View {
                                 Text("\(i)")
                                     .typography(Typography.title2)
                                     .fontWeight(.semibold)
-                                    .foregroundColor(selectedPainLevel == i ? .white : painColor(for: i))
+                                    .foregroundStyle(selectedPainLevel == i ? .white : painColor(for: i))
                                     .frame(width: 40, height: 40)
                                     .background(
                                         Circle()
@@ -135,9 +135,9 @@ struct PainLevelSliderView: View {
                                             .stroke(painColor(for: i), lineWidth: selectedPainLevel == i ? 2 : 1)
                                     )
                                 Text(labels[i])
-                                    .typography(Typography.caption2)
+                                    .typography(Typography.caption)
                                     .fontWeight(.medium)
-                                    .foregroundColor(selectedPainLevel == i ? ColorTheme.primaryText : ColorTheme.secondaryText)
+                                    .foregroundStyle(selectedPainLevel == i ? ColorTheme.primaryText : ColorTheme.secondaryText)
                             }
                         }
                         .frame(maxWidth: .infinity)
@@ -157,7 +157,7 @@ struct PainLevelSliderView: View {
                 if selectedPainLevel < descriptions.count {
                     Text(descriptions[selectedPainLevel])
                         .font(.caption)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.top, 4)
                 }
@@ -165,7 +165,7 @@ struct PainLevelSliderView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     private func painColor(for level: Int) -> Color {
         switch level {
@@ -218,7 +218,7 @@ struct UrgencyLevelSelectionView: View {
                             Text(label)
                                 .typography(Typography.caption)
                                 .fontWeight(.medium)
-                                .foregroundColor(selectedUrgencyLevel == level ? ColorTheme.primaryText : ColorTheme.secondaryText)
+                                .foregroundStyle(selectedUrgencyLevel == level ? ColorTheme.primaryText : ColorTheme.secondaryText)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
@@ -239,7 +239,7 @@ struct UrgencyLevelSelectionView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private func urgencyColor(for level: UrgencyLevel) -> Color {
@@ -266,7 +266,7 @@ struct TagSelectionView: View {
             Text("Tags")
                 .typography(Typography.title3)
                 .fontWeight(.semibold)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 80), spacing: 8)], spacing: 8) {
                 ForEach(allTags, id: \.self) { tag in
@@ -283,7 +283,7 @@ struct TagSelectionView: View {
                             .fontWeight(.medium)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 8)
-                            .foregroundColor(selectedTags.contains(tag) ? .white : ColorTheme.secondaryText)
+                            .foregroundStyle(selectedTags.contains(tag) ? .white : ColorTheme.secondaryText)
                             .background(
                                 RoundedRectangle(cornerRadius: 16)
                                     .fill(selectedTags.contains(tag) ? ColorTheme.accent : ColorTheme.cardBackground)
@@ -305,14 +305,14 @@ struct TagSelectionView: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 }
 
 struct LogSymptomView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var authService: AuthService
-    @StateObject private var coordinator = LogSymptomViewModel()
+    @Environment(AuthService.self) var authService
+    @State private var coordinator = LogSymptomViewModel()
     @State private var showProfileSheet = false
     @State private var infoTypeToShow: SymptomInfoType? = nil
     @State private var showingDatePicker = false
@@ -388,7 +388,7 @@ struct SectionHeader: View {
             Text(title)
                 .typography(Typography.title3)
                 .fontWeight(.semibold)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
                 .accessibleHeader(title)
             Button(action: {
                 HapticManager.shared.light()
@@ -396,7 +396,7 @@ struct SectionHeader: View {
             }) {
                 Image(systemName: "info.circle")
                     .font(.title3)
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
             }
             .accessibleButton(
                 label: "Information about \(title)",
@@ -416,23 +416,23 @@ struct SectionHeader: View {
             Text("Symptom Time")
                 .typography(Typography.title3)
                 .fontWeight(.semibold)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             Button(action: {
                 HapticManager.shared.light()
                 showingDatePicker = true
             }) {
                 HStack {
                     Image(systemName: "calendar")
-                        .foregroundColor(ColorTheme.primary)
+                        .foregroundStyle(ColorTheme.primary)
                         .accessibleDecorative()
                     Text(coordinator.symptomDate.formattedDateTime)
                         .typography(Typography.body)
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.surface)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(ColorTheme.border, lineWidth: 1)
@@ -446,7 +446,7 @@ struct SectionHeader: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private var notesSection: some View {
@@ -454,14 +454,14 @@ struct SectionHeader: View {
             Text("Notes")
                 .typography(Typography.title3)
                 .fontWeight(.semibold)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
             
             TextEditor(text: $coordinator.notes)
                 .typography(Typography.body)
                 .frame(minHeight: 100)
                 .padding(12)
                 .background(ColorTheme.cardBackground)
-                .cornerRadius(8)
+                .clipShape(.rect(cornerRadius: 8))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(ColorTheme.border.opacity(0.3), lineWidth: 1)
@@ -472,7 +472,7 @@ struct SectionHeader: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private var actionButtonsSection: some View {
@@ -499,7 +499,7 @@ struct SectionHeader: View {
                         .typography(Typography.button)
                         .fontWeight(.semibold)
                 }
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
                 .background(
@@ -526,7 +526,7 @@ struct SectionHeader: View {
                     Text("Clear")
                         .typography(Typography.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
                         .background(
@@ -555,7 +555,7 @@ struct SectionHeader: View {
                     Text("Remind Later")
                         .typography(Typography.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(ColorTheme.primary)
+                        .foregroundStyle(ColorTheme.primary)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
                         .background(
@@ -575,7 +575,7 @@ struct SectionHeader: View {
         }
         .padding()
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
 
     private var datePickerSheet: some View {
@@ -613,7 +613,7 @@ struct SectionHeader: View {
             .navigationTitle("Symptom Time")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         HapticManager.shared.light()
                         showingDatePicker = false
@@ -633,6 +633,6 @@ struct SectionHeader: View {
 #if DEBUG
 #Preview {
     LogSymptomView()
-        .environmentObject(AuthService())
+        .environment(AuthService())
 }
 #endif

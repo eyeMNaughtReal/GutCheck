@@ -16,7 +16,7 @@ struct ReauthenticationView: View {
     let onSuccess: () -> Void
     let onCancel: () -> Void
     
-    @EnvironmentObject var authService: AuthService
+    @Environment(AuthService.self) var authService
     @State private var email = ""
     @State private var password = ""
     @State private var showPhoneAuth = false
@@ -31,14 +31,14 @@ struct ReauthenticationView: View {
                 VStack(spacing: 12) {
                     Image(systemName: "lock.shield")
                         .font(.system(size: 48))
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                     
                     Text("Verify Your Identity")
                         .font(.title2.bold())
                     
                     Text("For security reasons, please verify your identity before \(operation.lowercased()).")
                         .font(.body)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                 }
@@ -85,20 +85,20 @@ struct ReauthenticationView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.red)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
+                        .foregroundStyle(.white)
+                        .clipShape(.rect(cornerRadius: 12))
                     }
                     .disabled(authService.isLoading || email.isEmpty || password.isEmpty)
                     
                     Button("Use Phone Verification") {
                         showPhoneAuth = true
                     }
-                    .foregroundColor(.blue)
+                    .foregroundStyle(.blue)
                     
                     Button("Cancel") {
                         onCancel()
                     }
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal)
                 
@@ -147,7 +147,7 @@ struct PhoneReauthenticationView: View {
     let onSuccess: () -> Void
     let onCancel: () -> Void
     
-    @EnvironmentObject var authService: AuthService
+    @Environment(AuthService.self) var authService
     @State private var phoneNumber = ""
     @State private var verificationCode = ""
     @State private var codeSent = false
@@ -162,14 +162,14 @@ struct PhoneReauthenticationView: View {
                 VStack(spacing: 12) {
                     Image(systemName: "phone.circle")
                         .font(.system(size: 48))
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                     
                     Text("Phone Verification")
                         .font(.title2.bold())
                     
                     Text("Verify your identity using your phone number.")
                         .font(.body)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
                 }
@@ -202,8 +202,8 @@ struct PhoneReauthenticationView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.blue)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
+                            .foregroundStyle(.white)
+                            .clipShape(.rect(cornerRadius: 12))
                         }
                         .disabled(authService.isLoading || phoneNumber.isEmpty)
                     } else {
@@ -232,15 +232,15 @@ struct PhoneReauthenticationView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(Color.green)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
+                            .foregroundStyle(.white)
+                            .clipShape(.rect(cornerRadius: 12))
                         }
                         .disabled(authService.isLoading || verificationCode.isEmpty)
                         
                         Button("Resend Code") {
                             sendVerificationCode()
                         }
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                     }
                 }
                 .padding(.horizontal)
@@ -251,7 +251,7 @@ struct PhoneReauthenticationView: View {
                 Button("Cancel") {
                     onCancel()
                 }
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .padding(.horizontal)
             }
             .padding()

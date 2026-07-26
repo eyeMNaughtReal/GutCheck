@@ -8,10 +8,10 @@
 import SwiftUI
 
 struct ReminderSettingsTestView: View {
-    @StateObject private var reminderService = ReminderSettingsService.shared
+    @State private var reminderService = ReminderSettingsService.shared
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 20) {
                 Text("Reminder Settings Test")
                     .font(.title)
@@ -23,7 +23,7 @@ struct ReminderSettingsTestView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         if let settings = reminderService.reminderSettings {
                             Text("Settings loaded successfully!")
-                                .foregroundColor(.green)
+                                .foregroundStyle(.green)
                                 .font(.headline)
                             
                             Group {
@@ -39,12 +39,12 @@ struct ReminderSettingsTestView: View {
                             .padding(.horizontal)
                         } else {
                             Text("No settings loaded")
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                         }
                         
                         if let error = reminderService.errorMessage {
                             Text("Error: \(error)")
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                                 .padding()
                         }
                     }
@@ -83,19 +83,13 @@ struct ReminderSettingsTestView: View {
                 .padding()
             }
             .navigationTitle("Test View")
-            .onAppear {
-                Task {
-                    await reminderService.loadReminderSettings()
-                }
+            .task {
+                await reminderService.loadReminderSettings()
             }
         }
     }
 }
 
-#if DEBUG
-struct ReminderSettingsTestView_Previews: PreviewProvider {
-    static var previews: some View {
-        ReminderSettingsTestView()
-    }
+#Preview {
+    ReminderSettingsTestView()
 }
-#endif

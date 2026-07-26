@@ -12,7 +12,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct HealthcareExportView: View {
-    @StateObject private var exportService = HealthcareExportService.shared
+    @State private var exportService = HealthcareExportService.shared
     @State private var exportOptions = ExportOptions.default
     @State private var showingExportOptions = false
     @State private var showingShareSheet = false
@@ -21,12 +21,11 @@ struct HealthcareExportView: View {
     @State private var errorMessage = ""
     
     // Date range picker states
-    @State private var startDate = Calendar.current.date(byAdding: .month, value: -3, to: Date()) ?? Date()
-    @State private var endDate = Date()
+    @State private var startDate = Calendar.current.date(byAdding: .month, value: -3, to: Date.now) ?? Date.now
+    @State private var endDate = Date.now
     
     var body: some View {
-        NavigationView {
-            ScrollView {
+        ScrollView {
                 VStack(spacing: 24) {
                     // Header
                     headerSection
@@ -48,7 +47,7 @@ struct HealthcareExportView: View {
             .navigationTitle("Healthcare Export")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Export") {
                         showingExportOptions = true
                     }
@@ -72,7 +71,6 @@ struct HealthcareExportView: View {
             } message: {
                 Text(errorMessage)
             }
-        }
     }
     
     // MARK: - Header Section
@@ -81,7 +79,7 @@ struct HealthcareExportView: View {
         VStack(spacing: 16) {
             Image(systemName: "heart.text.square")
                 .font(.system(size: 48))
-                .foregroundColor(.blue)
+                .foregroundStyle(.blue)
             
             Text("Healthcare Professional Export")
                 .font(.title2)
@@ -90,12 +88,12 @@ struct HealthcareExportView: View {
             
             Text("Generate comprehensive health reports for medical professionals, nutritionists, and healthcare providers.")
                 .font(.body)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
         }
         .padding()
         .background(Color(.systemGray6))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     // MARK: - Export Options Section
@@ -112,7 +110,7 @@ struct HealthcareExportView: View {
                         .fontWeight(.medium)
                     Spacer()
                     Text("\(startDate.formatted(date: .abbreviated, time: .omitted)) - \(endDate.formatted(date: .abbreviated, time: .omitted))")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 
                 HStack {
@@ -120,7 +118,7 @@ struct HealthcareExportView: View {
                         .fontWeight(.medium)
                     Spacer()
                     Text(exportOptions.format.displayName)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 
                 HStack {
@@ -128,12 +126,12 @@ struct HealthcareExportView: View {
                         .fontWeight(.medium)
                     Spacer()
                     Text(exportOptions.includePrivateData ? "Yes" : "No")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
             .padding()
             .background(Color(.systemBackground))
-            .cornerRadius(8)
+            .clipShape(.rect(cornerRadius: 8))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(Color(.systemGray4), lineWidth: 1)
@@ -180,7 +178,7 @@ struct HealthcareExportView: View {
             }
             .padding()
             .background(Color(.systemBackground))
-            .cornerRadius(8)
+            .clipShape(.rect(cornerRadius: 8))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(Color(.systemGray4), lineWidth: 1)
@@ -199,7 +197,7 @@ struct HealthcareExportView: View {
                     
                     Text("Generating Report...")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             } else {
                 Button(action: generateExport) {
@@ -208,11 +206,11 @@ struct HealthcareExportView: View {
                         Text("Generate Healthcare Report")
                     }
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.blue)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                 }
                 .disabled(exportService.isExporting)
             }
@@ -255,7 +253,7 @@ struct HealthcareExportView: View {
             }
             .padding()
             .background(Color(.systemBackground))
-            .cornerRadius(8)
+            .clipShape(.rect(cornerRadius: 8))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .stroke(Color(.systemGray4), lineWidth: 1)
@@ -320,7 +318,7 @@ struct DataPreviewRow: View {
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .foregroundColor(color)
+                .foregroundStyle(color)
                 .frame(width: 24)
             
             Text(title)
@@ -330,7 +328,7 @@ struct DataPreviewRow: View {
             
             Text(count)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
         }
     }
 }
@@ -344,14 +342,14 @@ struct InstructionRow: View {
             Text(number)
                 .font(.caption)
                 .fontWeight(.bold)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(width: 20, height: 20)
                 .background(Color.blue)
                 .clipShape(Circle())
             
             Text(text)
                 .font(.body)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
         }
     }
 }
@@ -363,7 +361,7 @@ struct ExportOptionsSheet: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section("Date Range") {
                     DatePicker("Start Date", selection: $startDate, displayedComponents: .date)
@@ -391,19 +389,19 @@ struct ExportOptionsSheet: View {
                 Section("Privacy Note") {
                     Text("Private data includes personal notes, detailed symptoms, and medication information. Only include if required for medical assessment.")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
             .navigationTitle("Export Options")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
@@ -444,10 +442,6 @@ extension ExportFormat {
     }
 }
 
-// MARK: - Preview
-
-struct HealthcareExportView_Previews: PreviewProvider {
-    static var previews: some View {
-        HealthcareExportView()
-    }
+#Preview {
+    HealthcareExportView()
 }

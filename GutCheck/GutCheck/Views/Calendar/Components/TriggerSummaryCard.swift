@@ -7,16 +7,16 @@ struct TriggerSummaryCard: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Identified Triggers")
                 .font(.headline)
-                .foregroundColor(.primary)
+                .foregroundStyle(.primary)
             
             ForEach(triggers, id: \.self) { trigger in
                 Text(trigger)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding()
         .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(10)
+        .clipShape(.rect(cornerRadius: 10))
     }
 }
 

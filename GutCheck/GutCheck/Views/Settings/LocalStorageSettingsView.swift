@@ -11,9 +11,9 @@ import SwiftUI
 import CoreData
 
 struct LocalStorageSettingsView: View {
-    @EnvironmentObject private var dataSyncService: DataSyncService
-    @EnvironmentObject private var localStorage: CoreDataStorageService
-    @EnvironmentObject private var coreDataStack: CoreDataStack
+    @Environment(DataSyncService.self) private var dataSyncService
+    @Environment(CoreDataStorageService.self) private var localStorage
+    @Environment(CoreDataStack.self) private var coreDataStack
     
     @State private var showingSyncAlert = false
     @State private var showingClearDataAlert = false
@@ -24,21 +24,21 @@ struct LocalStorageSettingsView: View {
             Section("Local Storage Status") {
                 HStack {
                     Image(systemName: "internaldrive")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                     Text("Core Data Status")
                     Spacer()
                     Text("Active")
-                        .foregroundColor(.green)
+                        .foregroundStyle(.green)
                         .font(.caption)
                 }
                 
                 HStack {
                     Image(systemName: "lock.shield")
-                        .foregroundColor(.green)
+                        .foregroundStyle(.green)
                     Text("Encryption")
                     Spacer()
                     Text("Enabled")
-                        .foregroundColor(.green)
+                        .foregroundStyle(.green)
                         .font(.caption)
                 }
             }
@@ -46,11 +46,11 @@ struct LocalStorageSettingsView: View {
             Section("Synchronization") {
                 HStack {
                     Image(systemName: "arrow.triangle.2.circlepath")
-                        .foregroundColor(.orange)
+                        .foregroundStyle(.orange)
                     Text("Sync Status")
                     Spacer()
                     Text(dataSyncService.getSyncStatus().description)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .font(.caption)
                 }
                 
@@ -72,7 +72,7 @@ struct LocalStorageSettingsView: View {
                             .progressViewStyle(LinearProgressViewStyle())
                         Text("\(Int(dataSyncService.syncProgress * 100))%")
                             .font(.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
@@ -83,9 +83,9 @@ struct LocalStorageSettingsView: View {
                 }) {
                     HStack {
                         Image(systemName: "trash")
-                            .foregroundColor(.red)
+                            .foregroundStyle(.red)
                         Text("Clear Local Data")
-                            .foregroundColor(.red)
+                            .foregroundStyle(.red)
                     }
                 }
                 
@@ -96,7 +96,7 @@ struct LocalStorageSettingsView: View {
                 }) {
                     HStack {
                         Image(systemName: "clock.arrow.circlepath")
-                            .foregroundColor(.orange)
+                            .foregroundStyle(.orange)
                         Text("Clean Up Old Data")
                     }
                 }
@@ -105,21 +105,21 @@ struct LocalStorageSettingsView: View {
             Section("Storage Information") {
                 HStack {
                     Image(systemName: "info.circle")
-                        .foregroundColor(.blue)
+                        .foregroundStyle(.blue)
                     Text("Local Database Size")
                     Spacer()
                     Text("Calculating...")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .font(.caption)
                 }
                 
                 HStack {
                     Image(systemName: "clock")
-                        .foregroundColor(.purple)
+                        .foregroundStyle(.purple)
                     Text("Last Cleanup")
                     Spacer()
                     Text("Never")
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .font(.caption)
                 }
             }
@@ -168,16 +168,15 @@ struct LocalStorageSettingsView: View {
                 try context.save()
             }
         } catch {
-            print("Error clearing local data: \(error)")
         }
     }
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         LocalStorageSettingsView()
-            .environmentObject(DataSyncService.shared)
-            .environmentObject(CoreDataStorageService.shared)
-            .environmentObject(CoreDataStack.shared)
+            .environment(DataSyncService.shared)
+            .environment(CoreDataStorageService.shared)
+            .environment(CoreDataStack.shared)
     }
 }

@@ -1,13 +1,8 @@
-// MARK: - Preview
-#if DEBUG
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
-            .environmentObject(AuthService())
-            .environmentObject(AppRouter.shared)
-    }
+#Preview {
+    ContentView()
+        .environment(AuthService())
+        .environment(AppRouter.shared)
 }
-#endif
 //
 //  ContentView.swift
 //  GutCheck
@@ -18,8 +13,8 @@ struct ContentView_Previews: PreviewProvider {
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject var authService: AuthService
-    @ObservedObject var router = AppRouter.shared
+    @Environment(AuthService.self) var authService
+    @Bindable var router = AppRouter.shared
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -39,6 +34,9 @@ struct ContentView: View {
                 .navigationDestination(for: AppDestination.self) { destination in
                     destinationView(for: destination)
                 }
+                .navigationDestination(for: SettingsRoute.self) { route in
+                    SettingsRoute.destinationView(for: route)
+                }
                 .sheet(item: $router.activeSheet) { sheet in
                     sheetView(for: sheet)
                 }
@@ -49,7 +47,7 @@ struct ContentView: View {
                 handleTabBarAction(action)
             }
         }
-        .environmentObject(router)
+        .environment(router)
         .background(ColorTheme.background.ignoresSafeArea())
 
     }
@@ -85,6 +83,10 @@ struct ContentView: View {
             SettingsView()
         case .analytics:
             InsightsView()
+        case .symptomHistory(let symptom):
+            SymptomDetailView(symptom: symptom)
+        case .medicationList:
+            MedicationListView()
         }
     }
     
@@ -99,13 +101,13 @@ struct ContentView: View {
             }
         case .mealForm(_):
             MealBuilderView()
-                .environmentObject(router)
+                .environment(router)
         case .symptomForm(_):
             LogSymptomView()
-                .environmentObject(router)
+                .environment(router)
         case .logEntry:
             LogEntryView()
-                .environmentObject(router)
+                .environment(router)
         }
     }
     
@@ -122,12 +124,3 @@ struct ContentView: View {
         }
     }
 }
-
-// MARK: - Tab Bar Actions
-enum TabBarAction {
-    case logMeal
-    case logSymptom
-    case tabTapped(Tab)
-}
-
-

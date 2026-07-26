@@ -27,19 +27,19 @@ struct DashboardView: View {
     // MARK: - Environment Objects
     
     /// Authentication service for user management and data access
-    @EnvironmentObject var authService: AuthService
+    @Environment(AuthService.self) var authService
     
     /// Navigation router for programmatic navigation
-    @EnvironmentObject var router: AppRouter
+    @Environment(AppRouter.self) var router
     
     /// Data store containing dashboard-specific data and insights
-    @StateObject private var dashboardStore = DashboardDataStore(preview: false)
+    @State private var dashboardStore = DashboardDataStore(preview: false)
     
     /// View model for recent activity display
-    @StateObject private var recentActivityViewModel = RecentActivityViewModel()
+    @State private var recentActivityViewModel = RecentActivityViewModel()
 
     /// Manager for coordinating data refresh across the app
-    @EnvironmentObject private var refreshManager: RefreshManager
+    @Environment(RefreshManager.self) private var refreshManager
 
     var body: some View {
         VStack(spacing: 0) {
@@ -91,6 +91,15 @@ struct DashboardView: View {
                         }
                     }
                     
+                    // AI Insights Card
+                    AIInsightsCard(
+                        summary: dashboardStore.aiInsightSummary,
+                        severity: dashboardStore.aiInsightSeverity
+                    )
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("AI Insights: \(dashboardStore.aiInsightSummary)")
+                    .accessibilityIdentifier(AccessibilityIdentifiers.Dashboard.aiInsightsCard)
+                    
                     // Trigger alerts with better styling
                     if !dashboardStore.triggerAlerts.isEmpty {
                         VStack(spacing: 12) {
@@ -109,7 +118,7 @@ struct DashboardView: View {
         .navigationTitle("Dashboard")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 ProfileAvatarButton(user: authService.currentUser) {
                     router.showProfile()
                 }
@@ -130,7 +139,6 @@ struct DashboardView: View {
             dashboardStore.loadDataForSelectedDate()
         }
         .onChange(of: refreshManager.refreshToken) { _, _ in
-            print("📱 DashboardView: Refresh triggered by RefreshManager")
             loadDataIfAuthenticated()
         }
     }
@@ -141,341 +149,17 @@ struct DashboardView: View {
     /// This method ensures data is only loaded for authenticated users
     private func loadDataIfAuthenticated() {
         guard authService.isAuthenticated, authService.currentUser != nil else {
-            print("📱 DashboardView: Cannot load data - user not authenticated or currentUser nil")
             return
         }
         
-        print("📱 DashboardView: Loading data for \(dashboardStore.selectedDate)")
         recentActivityViewModel.loadRecentActivity(for: dashboardStore.selectedDate, authService: authService)
-    }
-}
-
-// MARK: - Modern Dashboard Components
-
-/// Health Score Card - Large prominent display of overall health
-struct HealthScoreCard: View {
-    let score: Int
-    
-    private var scoreColor: Color {
-        switch score {
-        case 1...3: return .red
-        case 4...6: return .orange
-        case 7...8: return Color(red: 0.8, green: 0.8, blue: 0.2) // Yellow
-        case 9...10: return .green
-        default: return .gray
-        }
-    }
-    
-    private var scoreLabel: String {
-        switch score {
-        case 1...3: return "Needs Attention"
-        case 4...6: return "Could Be Better"
-        case 7...8: return "Doing Well"
-        case 9...10: return "Excellent!"
-        default: return "Unknown"
-        }
-    }
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            HStack(alignment: .center) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Health Score")
-                        .typography(Typography.headline)
-                        .foregroundColor(ColorTheme.secondaryText)
-                    
-                    HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text("\(score)")
-                            .font(.system(size: 52, weight: .bold, design: .rounded))
-                            .foregroundColor(scoreColor)
-                        
-                        Text("/10")
-                            .typography(Typography.title)
-                            .foregroundColor(ColorTheme.secondaryText)
-                    }
-                    
-                    Text(scoreLabel)
-                        .typography(Typography.subheadline)
-                        .foregroundColor(scoreColor)
-                        .fontWeight(.medium)
-                }
-                
-                Spacer()
-                
-                // Circular progress indicator
-                ZStack {
-                    Circle()
-                        .stroke(ColorTheme.border.opacity(0.3), lineWidth: 8)
-                        .frame(width: 80, height: 80)
-                    
-                    Circle()
-                        .trim(from: 0, to: CGFloat(score) / 10.0)
-                        .stroke(scoreColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-                        .frame(width: 80, height: 80)
-                        .rotationEffect(.degrees(-90))
-                        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: score)
-                    
-                    Image(systemName: score >= 7 ? "checkmark.circle.fill" : "heart.fill")
-                        .font(.system(size: 28))
-                        .foregroundColor(scoreColor)
-                }
-                .accessibleDecorative()
-            }
-            
-            // Progress bar alternative
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    Rectangle()
-                        .fill(ColorTheme.border.opacity(0.3))
-                        .frame(height: 6)
-                        .cornerRadius(3)
-                    
-                    Rectangle()
-                        .fill(scoreColor)
-                        .frame(width: geometry.size.width * CGFloat(score) / 10.0, height: 6)
-                        .cornerRadius(3)
-                        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: score)
-                }
-            }
-            .frame(height: 6)
-            .accessibleDecorative()
-        }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(ColorTheme.cardBackground)
-                .shadow(color: ColorTheme.shadowColor.opacity(0.1), radius: 8, x: 0, y: 2)
-        )
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Health Score: \(score) out of 10, \(scoreLabel)")
-        .accessibilityIdentifier(AccessibilityIdentifiers.Dashboard.healthScoreCard)
-    }
-}
-
-/// Dashboard Insight Card - Compact card for Focus and Avoidance tips
-struct DashboardInsightCard: View {
-    let icon: String
-    let iconColor: Color
-    let title: String
-    let content: String
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(iconColor)
-                    .frame(width: 32, height: 32)
-                    .background(iconColor.opacity(0.15))
-                    .cornerRadius(8)
-                    .accessibleDecorative()
-                
-                Text(title)
-                    .typography(Typography.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(ColorTheme.primaryText)
-            }
-            
-            Text(content)
-                .typography(Typography.caption)
-                .foregroundColor(ColorTheme.secondaryText)
-                .lineLimit(4)
-                .multilineTextAlignment(.leading)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(ColorTheme.cardBackground)
-                .shadow(color: ColorTheme.shadowColor.opacity(0.08), radius: 6, x: 0, y: 2)
-        )
-    }
-}
-
-/// Floating Action Button - Modern circular button with label
-struct FloatingActionButton: View {
-    let icon: String
-    let label: String
-    let color: Color
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: {
-            HapticManager.shared.medium()
-            action()
-        }) {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.white)
-                    .accessibleDecorative()
-                
-                Text(label)
-                    .typography(Typography.button)
-                    .foregroundColor(.white)
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 14)
-            .background(
-                Capsule()
-                    .fill(color)
-                    .shadow(color: color.opacity(0.4), radius: 8, x: 0, y: 4)
-            )
-        }
-        .accessibleButton(
-            label: label,
-            hint: "Tap to \(label.lowercased())"
-        )
-    }
-}
-
-/// Trigger Alert Card - Warning card for health triggers
-struct TriggerAlertCard: View {
-    let alert: String
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.title3)
-                .foregroundColor(.orange)
-            
-            Text(alert)
-                .font(.subheadline)
-                .foregroundColor(ColorTheme.primaryText)
-                .multilineTextAlignment(.leading)
-            
-            Spacer()
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.orange.opacity(0.1))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.orange.opacity(0.3), lineWidth: 1)
-                )
-        )
-    }
-}
-
-// MARK: - Legacy Dashboard Insights View (Deprecated)
-
-/// Dashboard insights component that displays three key health metrics
-/// 
-/// ⚠️ DEPRECATED: This view has been replaced by individual modern components
-/// (HealthScoreCard, InsightCard) for better visual hierarchy and flexibility.
-/// Keeping for backward compatibility but should be removed in next major version.
-struct DashboardInsightsView: View {
-    // MARK: - Properties
-    
-    /// Current health score (1-10) calculated from symptoms and meals
-    let healthScore: Int
-    
-    /// Personalized health focus for the selected day
-    let todaysFocus: String
-    
-    /// Smart recommendation about what to avoid today
-    let avoidanceTip: String
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            // Health Score Section
-            // Displays a visual 1-10 rating with color-coded progress bar
-            VStack(spacing: 12) {
-                HStack {
-                    Text("Today's Health Score")
-                        .font(.headline)
-                        .foregroundColor(ColorTheme.primaryText)
-                    Spacer()
-                    Text("\(healthScore)/10")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(healthScoreColor)
-                }
-                
-                // Health Score Bar
-                // Visual representation of the health score with color coding
-                HStack(spacing: 4) {
-                    ForEach(1...10, id: \.self) { index in
-                        Rectangle()
-                            .fill(index <= healthScore ? healthScoreColor : ColorTheme.border)
-                            .frame(height: 8)
-                            .cornerRadius(4)
-                    }
-                }
-            }
-            .padding()
-            .background(ColorTheme.surface)
-            .cornerRadius(12)
-            
-            // Today's Focus Section
-            // Provides actionable health advice based on current symptoms
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: "target")
-                        .foregroundColor(.blue)
-                    Text("Today's Focus")
-                        .font(.headline)
-                        .foregroundColor(ColorTheme.primaryText)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                
-                Text(todaysFocus)
-                    .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
-                    .multilineTextAlignment(.leading)
-            }
-            .padding()
-            .background(ColorTheme.surface)
-            .cornerRadius(12)
-            
-            // Avoidance Tip Section
-            // Warns about potential food triggers based on recent patterns
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Image(systemName: "exclamationmark.triangle")
-                        .foregroundColor(.orange)
-                    Text("Avoidance Tip")
-                        .font(.headline)
-                        .foregroundColor(ColorTheme.primaryText)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                
-                Text(avoidanceTip)
-                    .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
-                    .multilineTextAlignment(.leading)
-            }
-            .padding()
-            .background(ColorTheme.surface)
-            .cornerRadius(12)
-        }
-    }
-    
-    // MARK: - Computed Properties
-    
-    /// Returns the appropriate color for the health score
-    /// Color coding helps users quickly understand their health status:
-    /// - Red (1-3): Poor health day - requires attention
-    /// - Orange (4-6): Fair health day - room for improvement
-    /// - Yellow (7-8): Good health day - maintaining wellness
-    /// - Green (9-10): Excellent health day - optimal wellness
-    private var healthScoreColor: Color {
-        switch healthScore {
-        case 1...3: return .red
-        case 4...6: return .orange
-        case 7...8: return .yellow
-        case 9...10: return .green
-        default: return .gray
-        }
     }
 }
 
 #Preview {
     DashboardView()
-        .environmentObject(PreviewAuthService())
-        .environmentObject(AppRouter.shared)
-        .environmentObject(RefreshManager.shared)
+        .environment(PreviewAuthService())
+        .environment(AppRouter.shared)
+        .environment(RefreshManager.shared)
 
 }

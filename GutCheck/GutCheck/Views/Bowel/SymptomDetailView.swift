@@ -1,20 +1,20 @@
 import SwiftUI
 
 struct SymptomDetailView: View {
-    @StateObject private var viewModel: SymptomDetailViewModel
+    @State private var viewModel: SymptomDetailViewModel
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var router: AppRouter
-    @EnvironmentObject var refreshManager: RefreshManager
+    @Environment(AppRouter.self) var router
+    @Environment(RefreshManager.self) var refreshManager
     @State private var showingEditSheet = false
 
     // New initializer that takes a symptom ID
     init(symptomId: String) {
-        self._viewModel = StateObject(wrappedValue: SymptomDetailViewModel(symptomId: symptomId))
+        self._viewModel = State(wrappedValue: SymptomDetailViewModel(symptomId: symptomId))
     }
 
     // Keep the original initializer for backward compatibility
     init(symptom: Symptom) {
-        self._viewModel = StateObject(wrappedValue: SymptomDetailViewModel(entity: symptom))
+        self._viewModel = State(wrappedValue: SymptomDetailViewModel(entity: symptom))
     }
 
     var body: some View {
@@ -25,30 +25,17 @@ struct SymptomDetailView: View {
                 contentView
             }
         }
-        .onAppear {
-            #if DEBUG
-            print("🔄 SymptomDetailView: View appeared, symptomId: \(viewModel.symptomId ?? "nil")")
-            print("🔄 SymptomDetailView: Current entity ID: \(viewModel.entity.id)")
-            print("🔄 SymptomDetailView: Is loading: \(viewModel.isLoading)")
-            print("🔄 SymptomDetailView: Entity data - date: \(viewModel.entity.date), stoolType: \(viewModel.entity.stoolType.rawValue)")
-            print("🔄 SymptomDetailView: Entity data - painLevel: \(viewModel.entity.painLevel.rawValue), urgencyLevel: \(viewModel.entity.urgencyLevel.rawValue)")
-            print("🔄 SymptomDetailView: Entity data - notes: \(viewModel.entity.notes ?? "nil"), tags: \(viewModel.entity.tags)")
-            #endif
-
+        .task {
             if viewModel.symptomId != nil && viewModel.entity.id.isEmpty {
-                Task {
-                    await viewModel.loadEntity()
-                }
+                await viewModel.loadEntity()
             }
         }
         .onChange(of: viewModel.entity) { _, newEntity in
             #if DEBUG
-            print("🔄 SymptomDetailView: Entity changed to: \(newEntity.id), date: \(newEntity.date)")
             #endif
         }
         .onChange(of: viewModel.isLoading) { _, isLoading in
             #if DEBUG
-            print("🔄 SymptomDetailView: Loading state changed to: \(isLoading)")
             #endif
         }
     }
@@ -61,7 +48,7 @@ struct SymptomDetailView: View {
                 .scaleEffect(1.2)
             Text("Loading symptom details...")
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(ColorTheme.background)
@@ -86,10 +73,10 @@ struct SymptomDetailView: View {
         .navigationTitle("Symptom Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 trailingToolbarContent
             }
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 leadingToolbarContent
             }
         }
@@ -133,33 +120,33 @@ struct SymptomDetailView: View {
             // Calendar day block
             VStack(spacing: 2) {
                 Text(viewModel.entity.date.formatted(.dateTime.month(.abbreviated)).uppercased())
-                    .font(.caption2)
+                    .font(.caption)
                     .fontWeight(.bold)
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
                     .kerning(0.5)
                 Text(viewModel.entity.date.formatted(.dateTime.day()))
                     .font(.system(size: 30, weight: .bold, design: .rounded))
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
             }
             .frame(width: 58)
             .padding(.vertical, 10)
             .background(ColorTheme.primary.opacity(0.1))
-            .cornerRadius(12)
+            .clipShape(.rect(cornerRadius: 12))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(viewModel.entity.date.formatted(.dateTime.weekday(.wide)))
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 Text(viewModel.entity.date.formatted(.dateTime.month(.wide).day().year()))
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                 HStack(spacing: 4) {
                     Image(systemName: "clock")
-                        .font(.caption2)
-                        .foregroundColor(ColorTheme.tertiaryText)
+                        .font(.caption)
+                        .foregroundStyle(ColorTheme.tertiaryText)
                     Text(viewModel.entity.date.formatted(.dateTime.hour().minute()))
                         .font(.caption)
-                        .foregroundColor(ColorTheme.tertiaryText)
+                        .foregroundStyle(ColorTheme.tertiaryText)
                 }
             }
 
@@ -167,7 +154,7 @@ struct SymptomDetailView: View {
         }
         .padding(16)
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
     }
 
@@ -188,7 +175,7 @@ struct SymptomDetailView: View {
                             Text("Type \(viewModel.entity.stoolType.rawValue)")
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
-                                .foregroundColor(stoolTypeColor)
+                                .foregroundStyle(stoolTypeColor)
                         }
                     )
                 }
@@ -209,7 +196,7 @@ struct SymptomDetailView: View {
             )
         }
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
     }
 
@@ -228,7 +215,7 @@ struct SymptomDetailView: View {
             }
         }
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
     }
 
@@ -243,14 +230,14 @@ struct SymptomDetailView: View {
         HStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(iconColor)
+                .foregroundStyle(iconColor)
                 .frame(width: 28, height: 28)
                 .background(iconColor.opacity(0.12))
-                .cornerRadius(8)
+                .clipShape(.rect(cornerRadius: 8))
 
             Text(label)
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
 
             Spacer()
 
@@ -265,19 +252,19 @@ struct SymptomDetailView: View {
             HStack(spacing: 12) {
                 Image(systemName: "note.text")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(ColorTheme.info)
+                    .foregroundStyle(ColorTheme.info)
                     .frame(width: 28, height: 28)
                     .background(ColorTheme.info.opacity(0.12))
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
 
                 Text("Notes")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
             }
 
             Text(notes)
                 .font(.body)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.leading, 40)
         }
@@ -290,32 +277,33 @@ struct SymptomDetailView: View {
             HStack(spacing: 12) {
                 Image(systemName: "tag.fill")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(ColorTheme.secondary)
+                    .foregroundStyle(ColorTheme.secondary)
                     .frame(width: 28, height: 28)
                     .background(ColorTheme.secondary.opacity(0.12))
-                    .cornerRadius(8)
+                    .clipShape(.rect(cornerRadius: 8))
 
                 Text("Tags")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
             }
 
-            ScrollView(.horizontal, showsIndicators: false) {
+            ScrollView(.horizontal) {
                 HStack(spacing: 8) {
                     ForEach(viewModel.entity.tags, id: \.self) { tag in
                         Text(tag)
                             .font(.caption)
                             .fontWeight(.medium)
-                            .foregroundColor(ColorTheme.primary)
+                            .foregroundStyle(ColorTheme.primary)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
                             .background(ColorTheme.primary.opacity(0.12))
-                            .cornerRadius(20)
+                            .clipShape(.rect(cornerRadius: 20))
                     }
                 }
                 .padding(.leading, 40)
                 .padding(.trailing, 4)
             }
+            .scrollIndicators(.hidden)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
@@ -332,11 +320,11 @@ struct SymptomDetailView: View {
         Text(label)
             .font(.caption)
             .fontWeight(.semibold)
-            .foregroundColor(color)
+            .foregroundStyle(color)
             .padding(.horizontal, 10)
             .padding(.vertical, 5)
             .background(color.opacity(0.15))
-            .cornerRadius(20)
+            .clipShape(.rect(cornerRadius: 20))
     }
 
     // MARK: - Color Helpers
@@ -437,8 +425,8 @@ struct SymptomDetailView: View {
 
 #Preview {
     SymptomDetailView(symptom: Symptom.sampleSymptom())
-        .environmentObject(AppRouter.shared)
-        .environmentObject(RefreshManager.shared)
+        .environment(AppRouter.shared)
+        .environment(RefreshManager.shared)
 }
 
 // Add this if not available elsewhere
@@ -446,7 +434,7 @@ extension Symptom {
     static func sampleSymptom() -> Symptom {
         return Symptom(
             id: "sample-id",
-            date: Date(),
+            date: Date.now,
             stoolType: .type4,
             painLevel: .none,
             urgencyLevel: .none,

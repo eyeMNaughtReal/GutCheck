@@ -11,10 +11,10 @@ import SwiftUI
 // MARK: - Main View
 
 struct MedicationCalendarView: View {
-    @EnvironmentObject var authService: AuthService
-    @EnvironmentObject var router: AppRouter
-    @EnvironmentObject var refreshManager: RefreshManager
-    @StateObject private var viewModel = MedicationCalendarViewModel()
+    @Environment(AuthService.self) var authService
+    @Environment(AppRouter.self) var router
+    @Environment(RefreshManager.self) var refreshManager
+    @State private var viewModel = MedicationCalendarViewModel()
     @State private var showingLogDose        = false
     @State private var showingAddMedication  = false
 
@@ -94,20 +94,20 @@ struct MedicationCalendarView: View {
         .navigationTitle("Meds")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 ProfileAvatarButton(user: authService.currentUser) {
                     router.showProfile()
                 }
             }
-            ToolbarItem(placement: .navigationBarLeading) {
-                NavigationLink(destination: MedicationListView()) {
+            ToolbarItem(placement: .topBarLeading) {
+                NavigationLink(value: AppDestination.medicationList) {
                     Image(systemName: "list.bullet")
                         .accessibilityLabel("Manage medications")
                 }
             }
         }
-        .onAppear {
-            Task { await viewModel.loadDoses() }
+        .task {
+            await viewModel.loadDoses()
         }
         .onChange(of: viewModel.selectedDate) { _, _ in
             Task { await viewModel.loadDoses() }
@@ -132,7 +132,7 @@ struct MedicationCalendarView: View {
 // MARK: - Medications Section Header
 
 struct CalendarMedicationsSectionHeader: View {
-    @ObservedObject var viewModel: MedicationCalendarViewModel
+    var viewModel: MedicationCalendarViewModel
     let onLogDose: () -> Void
 
     var body: some View {
@@ -148,7 +148,7 @@ struct CalendarMedicationsSectionHeader: View {
                 Text("Medications")
                     .font(.title3)
                     .fontWeight(.semibold)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 Spacer()
                 Button {
                     HapticManager.shared.medium()
@@ -164,7 +164,7 @@ struct CalendarMedicationsSectionHeader: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
                     .background(Color.orange, in: Capsule())
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                 }
                 .accessibleButton(label: "Log Dose", hint: "Tap to log a medication dose")
             }
@@ -189,36 +189,37 @@ struct DailyMedicationCard: View {
             HStack {
                 Text("Daily Medications")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 Spacer()
             }
 
             if doses.isEmpty {
                 Text("Log a dose to see your daily medication summary.")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 // Dose count — prominent
                 HStack(alignment: .firstTextBaseline, spacing: 4) {
                     Text("\(doses.count)")
                         .font(.system(size: 36, weight: .bold, design: .rounded))
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                     Text("dose\(doses.count == 1 ? "" : "s") taken")
                         .font(.subheadline)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                     Spacer()
                 }
 
                 // Medication name pills
                 if !uniqueMedNames.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
+                    ScrollView(.horizontal) {
                         HStack(spacing: 8) {
                             ForEach(uniqueMedNames, id: \.self) { name in
                                 MedNamePill(name: name)
                             }
                         }
                     }
+                    .scrollIndicators(.hidden)
                 }
             }
         }
@@ -242,16 +243,16 @@ private struct MedNamePill: View {
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: "pills.fill")
-                .font(.caption2)
-                .foregroundColor(.purple)
+                .font(.caption)
+                .foregroundStyle(.purple)
             Text(name)
                 .font(.caption)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .background(Color.purple.opacity(0.12))
-        .cornerRadius(8)
+        .clipShape(.rect(cornerRadius: 8))
     }
 }
 
@@ -270,7 +271,7 @@ struct DoseCalendarRow: View {
         if dose.dosageAmount > 0 {
             let amtStr = dose.dosageAmount.truncatingRemainder(dividingBy: 1) == 0
                 ? String(Int(dose.dosageAmount))
-                : String(format: "%.1f", dose.dosageAmount)
+                : dose.dosageAmount.formatted(.number.precision(.fractionLength(1)))
             return "\(amtStr) \(dose.dosageUnit)"
         }
         return dose.dosageUnit
@@ -285,7 +286,7 @@ struct DoseCalendarRow: View {
                     .frame(width: 48, height: 48)
                 Image(systemName: "pills.fill")
                     .font(.system(size: 20, weight: .medium))
-                    .foregroundColor(.purple)
+                    .foregroundStyle(.purple)
             }
 
             // Content
@@ -293,21 +294,21 @@ struct DoseCalendarRow: View {
                 HStack {
                     Text(dose.medicationName)
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                     Spacer()
                     Text(formattedTime)
                         .font(.system(size: 15))
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                 }
 
                 Text(dosageText)
                     .font(.system(size: 15))
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
 
                 if let notes = dose.notes, !notes.isEmpty {
                     Text(notes)
                         .font(.system(size: 14))
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                         .lineLimit(2)
                 }
             }
@@ -315,7 +316,7 @@ struct DoseCalendarRow: View {
             // Checkmark
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 20))
-                .foregroundColor(.green)
+                .foregroundStyle(.green)
         }
         .padding(16)
         .contentShape(Rectangle())
@@ -327,10 +328,10 @@ struct DoseCalendarRow: View {
 // MARK: - ViewModel
 
 @MainActor
-class MedicationCalendarViewModel: ObservableObject {
-    @Published var selectedDate = Date()
-    @Published var doses: [MedicationDoseLog] = []
-    @Published var isLoading = false
+@Observable class MedicationCalendarViewModel {
+    var selectedDate = Date.now
+    var doses: [MedicationDoseLog] = []
+    var isLoading = false
 
     private let doseRepo: MedicationDoseRepository
 
@@ -347,7 +348,6 @@ class MedicationCalendarViewModel: ObservableObject {
             let loaded = try await doseRepo.fetchDosesForDate(selectedDate, userId: userId)
             doses = loaded.sorted { $0.dateTaken < $1.dateTaken }
         } catch {
-            print("❌ MedicationCalendarView: Error loading doses: \(error)")
             doses = []
         }
         isLoading = false
@@ -360,7 +360,6 @@ class MedicationCalendarViewModel: ObservableObject {
             DataSyncManager.shared.triggerRefreshAfterSave(operation: "Dose delete", dataType: .dashboard)
             AccessibilityAnnouncement.announce("Dose deleted")
         } catch {
-            print("❌ MedicationCalendarView: Error deleting dose: \(error)")
             AccessibilityAnnouncement.announce("Failed to delete dose")
         }
     }
@@ -369,7 +368,7 @@ class MedicationCalendarViewModel: ObservableObject {
 // MARK: - Preview
 #Preview {
     MedicationCalendarView()
-        .environmentObject(AuthService())
-        .environmentObject(AppRouter.shared)
-        .environmentObject(RefreshManager.shared)
+        .environment(AuthService())
+        .environment(AppRouter.shared)
+        .environment(RefreshManager.shared)
 }

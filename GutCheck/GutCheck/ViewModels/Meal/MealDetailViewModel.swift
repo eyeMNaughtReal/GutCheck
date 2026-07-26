@@ -3,24 +3,24 @@ import FirebaseFirestore
 import SwiftUI
 
 @MainActor
-class MealDetailViewModel: ObservableObject {
-    @Published var meal: Meal
-    @Published var mealId: String?
-    @Published var notes: String = ""
-    @Published var isEditing = false
-    @Published var isSaving = false
-    @Published var isLoading = false
-    @Published var editingFoodItem: FoodItem?
-    @Published var showingDeleteConfirmation = false
-    @Published var showingErrorAlert = false
-    @Published var errorMessage = ""
-    @Published var shouldDismiss = false
+@Observable class MealDetailViewModel {
+    var meal: Meal
+    var mealId: String?
+    var notes: String = ""
+    var isEditing = false
+    var isSaving = false
+    var isLoading = false
+    var editingFoodItem: FoodItem?
+    var showingDeleteConfirmation = false
+    var showingErrorAlert = false
+    var errorMessage = ""
+    var shouldDismiss = false
     
     // Repository dependency
-    private let mealRepository: MealRepository
+    private let mealRepository: any MealRepositoryProtocol
     
     // Initialize with a Meal object
-    init(meal: Meal, mealRepository: MealRepository = MealRepository.shared) {
+    init(meal: Meal, mealRepository: any MealRepositoryProtocol = MealRepository.shared) {
         self.meal = meal
         self.mealId = meal.id
         self.notes = meal.notes ?? ""
@@ -28,7 +28,7 @@ class MealDetailViewModel: ObservableObject {
     }
     
     // Initialize with a meal ID
-    init(mealId: String, mealRepository: MealRepository = MealRepository.shared) {
+    init(mealId: String, mealRepository: any MealRepositoryProtocol = MealRepository.shared) {
         self.mealId = mealId
         self.meal = Meal.emptyMeal()
         self.mealRepository = mealRepository
@@ -46,16 +46,13 @@ class MealDetailViewModel: ObservableObject {
                 self.meal = loadedMeal
                 self.notes = loadedMeal.notes ?? ""
                 
-                print("✅ Meal loaded successfully: \(loadedMeal.name)")
             } else {
                 self.errorMessage = "Could not find the meal"
                 self.showingErrorAlert = true
-                print("⚠️ No meal found with ID: \(id)")
             }
         } catch {
             self.errorMessage = "Error loading meal: \(error.localizedDescription)"
             self.showingErrorAlert = true
-            print("❌ Error loading meal: \(error)")
         }
         
         isLoading = false
@@ -91,6 +88,7 @@ class MealDetailViewModel: ObservableObject {
         
         do {
             try await mealRepository.save(meal)
+            SpotlightIndexingService.shared.indexMeal(meal)
             isSaving = false
             isEditing = false
             return true
@@ -105,6 +103,7 @@ class MealDetailViewModel: ObservableObject {
     func deleteMeal() async -> Bool {
         do {
             try await mealRepository.delete(id: meal.id)
+            SpotlightIndexingService.shared.removeMeal(id: meal.id)
             return true
         } catch {
             errorMessage = "Failed to delete meal: \(error.localizedDescription)"
@@ -130,7 +129,7 @@ extension Meal {
         return Meal(
             id: "",
             name: "Loading...",
-            date: Date(),
+            date: Date.now,
             type: .breakfast,
             source: .manual,
             foodItems: []
@@ -141,7 +140,7 @@ extension Meal {
         return Meal(
             id: UUID().uuidString,
             name: "Sample Lunch",
-            date: Date(),
+            date: Date.now,
             type: .lunch,
             source: .manual,
             foodItems: [

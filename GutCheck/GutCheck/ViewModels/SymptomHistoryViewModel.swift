@@ -2,19 +2,24 @@ import SwiftUI
 import FirebaseFirestore
 
 @MainActor
-class SymptomHistoryViewModel: ObservableObject {
-    @Published var groupedSymptoms: [Date: [Symptom]] = [:]
-    @Published var isLoading = false
-    @Published var isLoadingMore = false
-    @Published var hasMoreData = true
-    @Published var error: Error?
-    @Published var startDate = Date.distantPast
-    @Published var endDate = Date.now
-    @Published var selectedFilter: SymptomFilter = .all
+@Observable class SymptomHistoryViewModel {
+    var groupedSymptoms: [Date: [Symptom]] = [:]
+    var isLoading = false
+    var isLoadingMore = false
+    var hasMoreData = true
+    var error: Error?
+    var startDate = Date.distantPast
+    var endDate = Date.now
+    var selectedFilter: SymptomFilter = .all
     
     private let firebaseManager = FirebaseManager.shared
+    private let symptomRepository: any SymptomRepositoryProtocol
     private var lastDocument: DocumentSnapshot?
     private let pageSize = 20
+    
+    init(symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
+        self.symptomRepository = symptomRepository
+    }
     
     func loadSymptoms(filter: SymptomFilter = .all, refresh: Bool = false) async {
         if refresh {
@@ -111,7 +116,8 @@ class SymptomHistoryViewModel: ObservableObject {
     func deleteSymptom(_ symptom: Symptom) async {
         do {
             try await firebaseManager.deleteDocument(from: "symptoms", documentId: symptom.id)
-            
+            SpotlightIndexingService.shared.removeSymptom(id: symptom.id)
+
             // Remove from grouped symptoms
             for (date, symptoms) in groupedSymptoms {
                 if let index = symptoms.firstIndex(where: { $0.id == symptom.id }) {
@@ -129,8 +135,9 @@ class SymptomHistoryViewModel: ObservableObject {
     
     func updateSymptom(_ updatedSymptom: Symptom) async {
         do {
-            try await SymptomRepository.shared.save(updatedSymptom)
-            
+            try await symptomRepository.save(updatedSymptom)
+            SpotlightIndexingService.shared.indexSymptom(updatedSymptom)
+
             // Trigger dashboard refresh after successful update
             DataSyncManager.shared.triggerRefreshAfterSave(operation: "Symptom update", dataType: .symptoms)
             

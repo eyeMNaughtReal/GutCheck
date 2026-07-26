@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct MedicationListView: View {
-    @StateObject private var viewModel = MedicationViewModel()
+    @State private var viewModel = MedicationViewModel()
 
     // MARK: - Body
 
@@ -26,7 +26,7 @@ struct MedicationListView: View {
         .navigationTitle("My Medications")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     viewModel.showingAddMedication = true
                 } label: {
@@ -102,7 +102,7 @@ struct MedicationListView: View {
         VStack(spacing: 20) {
             Image(systemName: "pills.circle")
                 .font(.system(size: 64))
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
 
             Text("No Medications Yet")
                 .font(.title2)
@@ -110,7 +110,7 @@ struct MedicationListView: View {
 
             Text("Add your current medications to track dosages and timing, and help GutCheck surface insights about how they affect your gut health.")
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
 
@@ -154,9 +154,9 @@ private struct MedicationRowView: View {
                 Spacer()
                 if medication.isActive {
                     Text("Active")
-                        .font(.caption2)
+                        .font(.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(.green)
+                        .foregroundStyle(.green)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
                         .background(Color.green.opacity(0.12), in: Capsule())
@@ -168,19 +168,19 @@ private struct MedicationRowView: View {
                 if medication.dosage.amount > 0 {
                     Text(formattedDosage)
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                     Text("·")
                         .foregroundStyle(.tertiary)
                 }
                 Text(medication.dosage.frequency.displayName)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
 
             // Source + start date
             HStack(spacing: 4) {
                 Image(systemName: sourceIcon)
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(.tertiary)
                 Text(dateLabel)
                     .font(.caption)
@@ -199,7 +199,7 @@ private struct MedicationRowView: View {
         if amt == amt.rounded() {
             return "\(Int(amt)) \(medication.dosage.unit)"
         } else {
-            return "\(String(format: "%.1f", amt)) \(medication.dosage.unit)"
+            return "\(amt.formatted(.number.precision(.fractionLength(1)))) \(medication.dosage.unit)"
         }
     }
 

@@ -27,13 +27,13 @@ enum MealFilter: String, CaseIterable {
 }
 
 @MainActor
-class MealHistoryViewModel: ObservableObject, HasLoadingState {
-    @Published var groupedMeals: [Date: [Meal]] = [:]
-    @Published var hasMoreData = true
-    @Published var error: Error?
-    @Published var selectedFilter: MealFilter = .all
-    @Published var startDate: Date?
-    @Published var endDate: Date?
+@Observable class MealHistoryViewModel: HasLoadingState {
+    var groupedMeals: [Date: [Meal]] = [:]
+    var hasMoreData = true
+    var error: Error?
+    var selectedFilter: MealFilter = .all
+    var startDate: Date?
+    var endDate: Date?
     
     let loadingState = LoadingStateManager()
     
@@ -176,7 +176,8 @@ class MealHistoryViewModel: ObservableObject, HasLoadingState {
     func deleteMeal(_ meal: Meal) async {
         do {
             try await firebaseManager.deleteDocument(from: "meals", documentId: meal.id)
-            
+            SpotlightIndexingService.shared.removeMeal(id: meal.id)
+
             // Remove from grouped meals
             for (date, meals) in groupedMeals {
                 if let index = meals.firstIndex(where: { $0.id == meal.id }) {

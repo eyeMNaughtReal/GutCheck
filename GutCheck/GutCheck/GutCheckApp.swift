@@ -8,6 +8,8 @@
 import SwiftUI
 import UIKit
 import UserNotifications
+import BackgroundTasks
+import CoreSpotlight
 import FirebaseCore
 import FirebaseFirestore
 
@@ -23,14 +25,10 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // Configure Firebase - try automatic configuration first
         if FirebaseApp.app() == nil {
             // Check if GoogleService-Info.plist exists
-            if let plistPath = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") {
-                print("✅ Found GoogleService-Info.plist at: \(plistPath)")
+            if Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil {
                 FirebaseApp.configure()
             } else {
                 // TEMPORARY: Manual configuration if plist is missing
-                print("⚠️ GoogleService-Info.plist not found!")
-                print("⚠️ Please add GoogleService-Info.plist to your project")
-                print("⚠️ Download it from: https://console.firebase.google.com/")
 
                 // You can add manual configuration here as a temporary workaround:
                 // let options = FirebaseOptions(googleAppID: "1:123:ios:abc",
@@ -56,11 +54,13 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 
         db.settings = settings
 
-        print("🔥 Firebase configured with Firestore settings")
 
         // Register as the notification delegate so banners appear while the
         // app is in the foreground and taps can be routed to the right screen
         UNUserNotificationCenter.current().delegate = self
+
+        // Register background task handlers for pre-computed insights and data sync
+        BackgroundTaskService.shared.registerBackgroundTasks()
 
         // Test basic Firebase connectivity
         Task {
@@ -121,29 +121,41 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 @main
 struct GutCheckApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @StateObject private var authService = AuthService()
-    @StateObject private var settingsVM = SettingsViewModel()
-    @StateObject private var coreDataStack = CoreDataStack.shared
-    @StateObject private var localStorage = CoreDataStorageService.shared
-    @StateObject private var dataSyncService = DataSyncService.shared
-    @StateObject private var serverStatusService = ServerStatusService.shared
+    @State private var authService: AuthService
+    @State private var settingsVM = SettingsViewModel()
+    @State private var coreDataStack = CoreDataStack.shared
+    @State private var localStorage = CoreDataStorageService.shared
+    @State private var dataSyncService = DataSyncService.shared
+    @State private var serverStatusService = ServerStatusService.shared
     @Environment(\.scenePhase) private var scenePhase
-    
+
+    init() {
+        // Firebase must be configured before AuthService is created,
+        // since AuthService.init() calls Auth.auth() which requires
+        // a configured FirebaseApp instance.
+        if FirebaseApp.app() == nil {
+            if Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil {
+                FirebaseApp.configure()
+            }
+        }
+        _authService = State(wrappedValue: AuthService())
+    }
+
     static func testFirebaseConnection() async {
         do {
             let testDoc = FirebaseManager.shared.testDocument("connection")
             let _ = try await testDoc.getDocument()
-            print("✅ Firebase connection test successful")
         } catch {
-            print("❌ Firebase connection test failed: \(error)")
-            print("❌ This suggests a configuration issue with GoogleService-Info.plist")
         }
     }
 
     var body: some Scene {
         WindowGroup {
             Group {
-                if !authService.isAuthStateResolved {
+                if ProcessInfo.processInfo.arguments.contains("--uitesting") {
+                    // UI Testing mode: skip auth and show the auth screen directly
+                    AuthenticationView(authService: authService)
+                } else if !authService.isAuthStateResolved {
                     // Show loading while Firebase restores auth session
                     ZStack {
                         ColorTheme.background
@@ -153,13 +165,13 @@ struct GutCheckApp: App {
                     }
                 } else if authService.isAuthenticated {
                     AppRoot()
-                        .environmentObject(authService)
-                        .environmentObject(settingsVM)
-                        .environmentObject(TimeoutManager.shared)
-                        .environmentObject(coreDataStack)
-                        .environmentObject(localStorage)
-                        .environmentObject(dataSyncService)
-                        .environmentObject(serverStatusService)
+                        .environment(authService)
+                        .environment(settingsVM)
+                        .environment(TimeoutManager.shared)
+                        .environment(coreDataStack)
+                        .environment(localStorage)
+                        .environment(dataSyncService)
+                        .environment(serverStatusService)
                 } else if authService.isAwaitingEmailVerification {
                     EmailVerificationView(authService: authService)
                 } else {
@@ -179,6 +191,22 @@ struct GutCheckApp: App {
                     serverStatusService.startMonitoring()
                 } else {
                     serverStatusService.stopMonitoring()
+                    // Clear Spotlight index when user signs out
+                    SpotlightIndexingService.shared.removeAllItems()
+                }
+            }
+            .onContinueUserActivity(CSSearchableItemActionType) { activity in
+                guard let identifier = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String,
+                      let parsed = SpotlightIndexingService.parseIdentifier(identifier) else {
+                    return
+                }
+                switch parsed.type {
+                case "meal":
+                    AppRouter.shared.viewMealDetails(id: parsed.id)
+                case "symptom":
+                    AppRouter.shared.viewSymptomDetails(id: parsed.id)
+                default:
+                    break
                 }
             }
             .onChange(of: scenePhase) { oldPhase, newPhase in
@@ -186,12 +214,15 @@ struct GutCheckApp: App {
                 case .background:
                     TimeoutManager.shared.applicationDidEnterBackground()
                     serverStatusService.stopMonitoring()
+                    BackgroundTaskService.shared.scheduleAllTasks()
                 case .active:
                     TimeoutManager.shared.applicationWillEnterForeground()
                     Task { await HealthKitSyncManager.shared.syncIfNeeded() }
                     if authService.isAuthenticated {
                         serverStatusService.startMonitoring()
                         Task { try? await dataSyncService.performFullSync() }
+                        // Re-evaluate notifications in case Focus Filter state changed
+                        Task { await ReminderSettingsService.shared.rescheduleNotificationsForFocusChange() }
                     }
                 default:
                     break

@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct MedicationsView: View {
-    @StateObject private var viewModel   = MedicationViewModel()
+    @State private var viewModel   = MedicationViewModel()
     @State private var showingLogDose    = false
     @State private var showingAddMed     = false
     @State private var todayDoses: [MedicationDoseLog] = []
@@ -31,7 +31,7 @@ struct MedicationsView: View {
         .navigationTitle("Medications")
         .navigationBarTitleDisplayMode(.large)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     showingAddMed = true
                 } label: {
@@ -96,7 +96,7 @@ struct MedicationsView: View {
             }
             .padding()
             .background(Color.purple.opacity(0.12), in: RoundedRectangle(cornerRadius: 14))
-            .foregroundColor(.purple)
+            .foregroundStyle(.purple)
         }
         .accessibilityLabel("Log a medication dose")
         .accessibilityHint("Tap to record that you took a medication")
@@ -168,10 +168,10 @@ struct MedicationsView: View {
             }
 
             // Link to full catalog
-            NavigationLink(destination: MedicationListView()) {
+            NavigationLink(value: AppDestination.medicationList) {
                 Text("Manage all medications…")
                     .font(.subheadline)
-                    .foregroundColor(.purple)
+                    .foregroundStyle(.purple)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
@@ -183,9 +183,8 @@ struct MedicationsView: View {
         guard let userId = AuthenticationManager.shared.currentUserId else { return }
         isLoadingDoses = true
         do {
-            todayDoses = try await MedicationDoseRepository.shared.fetchDosesForDate(Date(), userId: userId)
+            todayDoses = try await MedicationDoseRepository.shared.fetchDosesForDate(Date.now, userId: userId)
         } catch {
-            print("⚠️ MedicationsView: failed to load today's doses: \(error)")
         }
         isLoadingDoses = false
     }
@@ -199,7 +198,7 @@ private struct SectionTitle: View {
     var body: some View {
         Label(title, systemImage: systemImage)
             .font(.headline)
-            .foregroundColor(.primary)
+            .foregroundStyle(.primary)
     }
 }
 
@@ -225,7 +224,7 @@ private struct DoseRowView: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(.green)
+                .foregroundStyle(.green)
                 .font(.title3)
             VStack(alignment: .leading, spacing: 2) {
                 Text(dose.medicationName)
@@ -252,7 +251,7 @@ private struct DoseRowView: View {
 
     private func formattedDose(_ dose: MedicationDoseLog) -> String {
         let amt = dose.dosageAmount
-        let formatted = amt == amt.rounded() ? "\(Int(amt))" : String(format: "%.1f", amt)
+        let formatted = amt == amt.rounded() ? "\(Int(amt))" : amt.formatted(.number.precision(.fractionLength(1)))
         return "\(formatted) \(dose.dosageUnit)"
     }
 }
@@ -262,7 +261,7 @@ private struct MedCatalogRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "pills.fill")
-                .foregroundColor(.purple)
+                .foregroundStyle(.purple)
                 .font(.title3)
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 2) {
@@ -290,7 +289,7 @@ private struct MedCatalogRow: View {
 
     private var formattedDosage: String {
         let amt = medication.dosage.amount
-        let n   = amt == amt.rounded() ? "\(Int(amt))" : String(format: "%.1f", amt)
+        let n   = amt == amt.rounded() ? "\(Int(amt))" : amt.formatted(.number.precision(.fractionLength(1)))
         return "\(n) \(medication.dosage.unit)"
     }
 }

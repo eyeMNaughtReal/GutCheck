@@ -35,7 +35,7 @@ class FoodRecognitionService {
             completion(topResults)
         }
         let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-        DispatchQueue.global(qos: .userInitiated).async {
+        Task.detached(priority: .userInitiated) {
             try? handler.perform([request])
         }
     }

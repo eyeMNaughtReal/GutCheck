@@ -9,12 +9,12 @@
 import SwiftUI
 
 struct ServerStatusSheet: View {
-    @EnvironmentObject private var serverStatus: ServerStatusService
-    @ObservedObject private var syncService = DataSyncService.shared
+    @Environment(ServerStatusService.self) private var serverStatus
+    private var syncService = DataSyncService.shared
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
                     // Recheck countdown pill
@@ -44,14 +44,14 @@ struct ServerStatusSheet: View {
             .navigationTitle("Server Status")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Image(systemName: "icloud.slash")
-                        .foregroundColor(ColorTheme.warning)
+                        .foregroundStyle(ColorTheme.warning)
                 }
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                     .accessibilityId(AccessibilityIdentifiers.ServerStatus.dismissButton)
                 }
@@ -85,7 +85,7 @@ struct ServerStatusSheet: View {
                     .fontWeight(.medium)
             }
         }
-        .foregroundColor(.white)
+        .foregroundStyle(.white)
         .padding(.horizontal, 14)
         .padding(.vertical, 6)
         .background(Capsule().fill(ColorTheme.warning))
@@ -118,11 +118,11 @@ struct ServerStatusSheet: View {
         HStack(spacing: 8) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.caption)
-                .foregroundColor(ColorTheme.warning)
+                .foregroundStyle(ColorTheme.warning)
             Text(message)
                 .font(.caption)
                 .fontWeight(.medium)
-                .foregroundColor(ColorTheme.warning)
+                .foregroundStyle(ColorTheme.warning)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
@@ -143,7 +143,7 @@ struct ServerStatusSheet: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("What's happening")
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
 
             ServerStatusRow(
                 icon: "exclamationmark.triangle.fill",
@@ -193,7 +193,7 @@ struct ServerStatusSheet: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("What still works")
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
 
             ServerStatusRow(
                 icon: "checkmark.circle.fill",
@@ -228,7 +228,7 @@ struct ServerStatusSheet: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Temporarily limited")
                 .font(.headline)
-                .foregroundColor(ColorTheme.primaryText)
+                .foregroundStyle(ColorTheme.primaryText)
 
             ServerStatusRow(
                 icon: "exclamationmark.triangle.fill",
@@ -269,7 +269,7 @@ struct ServerStatusSheet: View {
                         .fontWeight(.medium)
                 }
             }
-            .foregroundColor(.white)
+            .foregroundStyle(.white)
             .padding(.horizontal, 14)
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity)
@@ -284,5 +284,5 @@ struct ServerStatusSheet: View {
 
 #Preview {
     ServerStatusSheet()
-        .environmentObject(ServerStatusService.shared)
+        .environment(ServerStatusService.shared)
 }

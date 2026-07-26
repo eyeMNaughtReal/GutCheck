@@ -6,8 +6,8 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @EnvironmentObject var settingsVM: SettingsViewModel
-    @EnvironmentObject var authService: AuthService
+    @Environment(SettingsViewModel.self) var settingsVM
+    @Environment(AuthService.self) var authService
     @Environment(\.dismiss) private var dismiss
     @AppStorage("lastHealthKitSyncTimestamp") private var lastHealthKitSyncTimestamp: Double = 0
     @State private var showAppleHealth = false
@@ -17,47 +17,46 @@ struct SettingsView: View {
         let date = Date(timeIntervalSince1970: lastHealthKitSyncTimestamp)
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .abbreviated
-        return "Synced \(formatter.localizedString(for: date, relativeTo: Date()))"
+        return "Synced \(formatter.localizedString(for: date, relativeTo: Date.now))"
     }
 
     var body: some View {
-        NavigationStack {
-            List {
+        List {
                 Section("Preferences") {
-                    NavigationLink(destination: LanguageSelectionView()) {
+                    NavigationLink(value: SettingsRoute.language) {
                         HStack {
                             Text("Language")
                                 .typography(Typography.body)
                             Spacer()
                             Text(settingsVM.language.displayName)
                                 .typography(Typography.body)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .accessibilityLabel("Language: \(settingsVM.language.displayName)")
                     .accessibilityHint("Tap to change app language")
                     
-                    NavigationLink(destination: UnitSelectionView()) {
+                    NavigationLink(value: SettingsRoute.units) {
                         HStack {
                             Text("Units")
                                 .typography(Typography.body)
                             Spacer()
                             Text(settingsVM.unitOfMeasure.displayName)
                                 .typography(Typography.body)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .accessibilityLabel("Units: \(settingsVM.unitOfMeasure.displayName)")
                     .accessibilityHint("Tap to change measurement units")
 
-                    NavigationLink(destination: AppearanceSelectionView()) {
+                    NavigationLink(value: SettingsRoute.appearance) {
                         HStack {
                             Text("Appearance")
                                 .typography(Typography.body)
                             Spacer()
                             Text(settingsVM.colorScheme.displayName)
                                 .typography(Typography.body)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .accessibilityLabel("Appearance: \(settingsVM.colorScheme.displayName)")
@@ -65,10 +64,10 @@ struct SettingsView: View {
                 }
                 
                 Section("Notifications") {
-                    NavigationLink(destination: UserRemindersView()) {
+                    NavigationLink(value: SettingsRoute.reminders) {
                         HStack {
                             Image(systemName: "bell.badge")
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                                 .accessibleDecorative()
                             Text("Reminders")
                                 .typography(Typography.body)
@@ -79,17 +78,17 @@ struct SettingsView: View {
                 }
 
                 Section("Medications") {
-                    NavigationLink(destination: MedicationListView()) {
+                    NavigationLink(value: SettingsRoute.medications) {
                         HStack {
                             Image(systemName: "pills.fill")
-                                .foregroundColor(.purple)
+                                .foregroundStyle(.purple)
                                 .accessibleDecorative()
                             Text("My Medications")
                                 .typography(Typography.body)
                             Spacer()
                             Text("Manage your list")
                                 .typography(Typography.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .accessibilityLabel("My Medications")
@@ -100,31 +99,31 @@ struct SettingsView: View {
                     Button(action: { showAppleHealth = true }) {
                         HStack {
                             Image(systemName: "heart.fill")
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                                 .accessibleDecorative()
                             Text("Apple Health")
                                 .typography(Typography.body)
-                                .foregroundColor(.primary)
+                                .foregroundStyle(.primary)
                             Spacer()
                             Text(appleHealthStatusText)
                                 .typography(Typography.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .accessibilityLabel("Apple Health: \(appleHealthStatusText)")
                     .accessibilityHint("Tap to manage Apple Health sync")
 
-                    NavigationLink(destination: HealthcareExportView()) {
+                    NavigationLink(value: SettingsRoute.healthcareExport) {
                         HStack {
                             Image(systemName: "heart.text.square")
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                                 .accessibleDecorative()
                             Text("Export Health Data")
                                 .typography(Typography.body)
                             Spacer()
                             Text("For Healthcare Professionals")
                                 .typography(Typography.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .accessibilityLabel("Export Health Data for Healthcare Professionals")
@@ -132,10 +131,10 @@ struct SettingsView: View {
                 }
                 
                 Section("Privacy & Security") {
-                    NavigationLink(destination: PrivacyPolicyView()) {
+                    NavigationLink(value: SettingsRoute.privacyPolicy) {
                         HStack {
                             Image(systemName: "lock.shield")
-                                .foregroundColor(.green)
+                                .foregroundStyle(.green)
                                 .accessibleDecorative()
                             Text("Privacy Policy")
                                 .typography(Typography.body)
@@ -144,17 +143,17 @@ struct SettingsView: View {
                     .accessibilityLabel("Privacy Policy")
                     .accessibilityHint("Tap to read the privacy policy")
 
-                    NavigationLink(destination: DataDeletionRequestView()) {
+                    NavigationLink(value: SettingsRoute.dataDeletion) {
                         HStack {
                             Image(systemName: "trash.circle")
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                                 .accessibleDecorative()
                             Text("Request Data Deletion")
                                 .typography(Typography.body)
                             Spacer()
                             Text("GDPR Right")
                                 .typography(Typography.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .accessibilityLabel("Request Data Deletion")
@@ -162,18 +161,18 @@ struct SettingsView: View {
 
                     HStack {
                         Image(systemName: "checkmark.shield")
-                            .foregroundColor(.blue)
+                            .foregroundStyle(.blue)
                             .accessibleDecorative()
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Privacy Policy Accepted")
                                 .font(.subheadline)
                             Text("Version 1.0 - August 18, 2025")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                         Spacer()
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
+                            .foregroundStyle(.green)
                             .accessibleDecorative()
                     }
                     .padding(.vertical, 4)
@@ -182,25 +181,79 @@ struct SettingsView: View {
                 }
                 
                 Section("Data & Storage") {
-                    NavigationLink(destination: LocalStorageSettingsView()) {
+                    NavigationLink(value: SettingsRoute.localStorage) {
                         HStack {
                             Image(systemName: "internaldrive")
-                                .foregroundColor(.blue)
+                                .foregroundStyle(.blue)
                             Text("Local Storage")
                             Spacer()
                             Text("Core Data")
                                 .font(.caption)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }
-                
+
+                #if DEBUG
+                Section {
+                    Toggle(isOn: Bindable(settingsVM).testMealModeEnabled) {
+                        HStack {
+                            Image(systemName: "fork.knife.circle")
+                                .foregroundStyle(.mint)
+                                .accessibleDecorative()
+                            Text("Test Meal Mode")
+                                .typography(Typography.body)
+                        }
+                    }
+                    .accessibilityLabel("Test Meal Mode")
+                    .accessibilityHint("Toggle to enable sample meal data for testing")
+
+                    Toggle(isOn: Bindable(settingsVM).experimentalAIEnabled) {
+                        HStack {
+                            Image(systemName: "brain")
+                                .foregroundStyle(.purple)
+                                .accessibleDecorative()
+                            Text("Experimental AI Predictions")
+                                .typography(Typography.body)
+                        }
+                    }
+                    .accessibilityLabel("Experimental AI Predictions")
+                    .accessibilityHint("Toggle to enable experimental AI analysis features")
+
+                    Toggle(isOn: Bindable(settingsVM).showSyncDebugInfo) {
+                        HStack {
+                            Image(systemName: "ant.circle")
+                                .foregroundStyle(.orange)
+                                .accessibleDecorative()
+                            Text("Show Sync/Debug Info")
+                                .typography(Typography.body)
+                        }
+                    }
+                    .accessibilityLabel("Show Sync and Debug Info")
+                    .accessibilityHint("Toggle to display sync status and debug logs")
+
+                    NavigationLink(value: SettingsRoute.debugMenu) {
+                        HStack {
+                            Image(systemName: "ladybug")
+                                .foregroundStyle(.red)
+                                .accessibleDecorative()
+                            Text("Debug Menu")
+                                .typography(Typography.body)
+                        }
+                    }
+                    .accessibilityLabel("Debug Menu")
+                    .accessibilityHint("Tap to open the debug menu")
+                } header: {
+                    Label("Developer", systemImage: "hammer.fill")
+                }
+                #endif
+
                 Section("Account Management") {
                     // Linked account display
                     if let user = authService.currentUser {
                         HStack(spacing: 12) {
                             Image(systemName: user.signInMethod.icon)
-                                .foregroundColor(ColorTheme.primary)
+                                .foregroundStyle(ColorTheme.primary)
                                 .frame(width: 20)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Signed in with \(user.signInMethod.displayName)")
@@ -208,11 +261,11 @@ struct SettingsView: View {
                                     .fontWeight(.medium)
                                 Text(user.email)
                                     .font(.caption)
-                                    .foregroundColor(.secondary)
+                                    .foregroundStyle(.secondary)
                             }
                             Spacer()
                             Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(ColorTheme.success)
+                                .foregroundStyle(ColorTheme.success)
                         }
                         .padding(.vertical, 4)
                         .accessibilityElement(children: .combine)
@@ -226,70 +279,74 @@ struct SettingsView: View {
                     } label: {
                         HStack {
                             Image(systemName: "rectangle.portrait.and.arrow.right")
-                                .foregroundColor(.orange)
+                                .foregroundStyle(.orange)
                             Text("Sign Out")
-                                .foregroundColor(ColorTheme.primaryText)
+                                .foregroundStyle(ColorTheme.primaryText)
                         }
                     }
                     .accessibilityLabel("Sign Out")
                     .accessibilityHint("Tap to sign out of your account")
                     
                     // Delete account
-                    NavigationLink(destination: DeleteAccountView()) {
+                    NavigationLink(value: SettingsRoute.deleteAccount) {
                         HStack {
                             Image(systemName: "trash")
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                             Text("Delete Account")
                             Spacer()
                             Text("Permanent")
                                 .font(.caption)
-                                .foregroundColor(.red)
+                                .foregroundStyle(.red)
                         }
                     }
                 }
             }
-            .navigationTitle("Settings")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Close") {
-                        HapticManager.shared.light()
-                        dismiss()
-                    }
-                    .accessibleButton(
-                        label: "Close",
-                        hint: "Close settings"
-                    )
+        .navigationTitle("Settings")
+        .navigationDestination(for: SettingsRoute.self) { route in
+            SettingsRoute.destinationView(for: route)
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Close") {
+                    HapticManager.shared.light()
+                    dismiss()
                 }
+                .accessibleButton(
+                    label: "Close",
+                    hint: "Close settings"
+                )
             }
-            .sheet(isPresented: $showAppleHealth) {
-                HealthDataIntegrationView()
-                    .environmentObject(settingsVM)
-                    .environmentObject(authService)
-            }
+        }
+        .sheet(isPresented: $showAppleHealth) {
+            HealthDataIntegrationView()
+                .environment(settingsVM)
+                .environment(authService)
         }
     }
 }
 
 struct LanguageSelectionView: View {
-    @EnvironmentObject var settingsVM: SettingsViewModel
+    @Environment(SettingsViewModel.self) var settingsVM
     var body: some View {
         List {
             ForEach(AppLanguage.allCases, id: \ .self) { lang in
-                HStack {
-                    Text(lang.displayName)
-                        .typography(Typography.body)
-                    Spacer()
-                    if lang == settingsVM.language {
-                        Image(systemName: "checkmark")
-                            .foregroundColor(.accentColor)
-                            .accessibleDecorative()
-                    }
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
+                Button {
                     HapticManager.shared.selection()
                     settingsVM.language = lang
+                } label: {
+                    HStack {
+                        Text(lang.displayName)
+                            .typography(Typography.body)
+                        Spacer()
+                        if lang == settingsVM.language {
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(Color.accentColor)
+                                .accessibleDecorative()
+                        }
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
                 .accessibleSelectable(
                     label: lang.displayName,
                     isSelected: lang == settingsVM.language
@@ -302,25 +359,27 @@ struct LanguageSelectionView: View {
 }
 
 struct UnitSelectionView: View {
-    @EnvironmentObject var settingsVM: SettingsViewModel
+    @Environment(SettingsViewModel.self) var settingsVM
     var body: some View {
         List {
             ForEach(UnitSystem.allCases, id: \ .self) { unit in
-                HStack {
-                    Text(unit.displayName)
-                        .typography(Typography.body)
-                    Spacer()
-                    if unit == settingsVM.unitOfMeasure {
-                        Image(systemName: "checkmark")
-                            .foregroundColor(.accentColor)
-                            .accessibleDecorative()
-                    }
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
+                Button {
                     HapticManager.shared.selection()
                     settingsVM.unitOfMeasure = unit
+                } label: {
+                    HStack {
+                        Text(unit.displayName)
+                            .typography(Typography.body)
+                        Spacer()
+                        if unit == settingsVM.unitOfMeasure {
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(Color.accentColor)
+                                .accessibleDecorative()
+                        }
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
                 .accessibleSelectable(
                     label: unit.displayName,
                     isSelected: unit == settingsVM.unitOfMeasure
@@ -333,25 +392,27 @@ struct UnitSelectionView: View {
 }
 
 struct AppearanceSelectionView: View {
-    @EnvironmentObject var settingsVM: SettingsViewModel
+    @Environment(SettingsViewModel.self) var settingsVM
     var body: some View {
         List {
             ForEach(AppColorScheme.allCases, id: \ .self) { scheme in
-                HStack {
-                    Text(scheme.displayName)
-                        .typography(Typography.body)
-                    Spacer()
-                    if scheme == settingsVM.colorScheme {
-                        Image(systemName: "checkmark")
-                            .foregroundColor(.accentColor)
-                            .accessibleDecorative()
-                    }
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
+                Button {
                     HapticManager.shared.selection()
                     settingsVM.colorScheme = scheme
+                } label: {
+                    HStack {
+                        Text(scheme.displayName)
+                            .typography(Typography.body)
+                        Spacer()
+                        if scheme == settingsVM.colorScheme {
+                            Image(systemName: "checkmark")
+                                .foregroundStyle(Color.accentColor)
+                                .accessibleDecorative()
+                        }
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
                 .accessibleSelectable(
                     label: scheme.displayName,
                     isSelected: scheme == settingsVM.colorScheme

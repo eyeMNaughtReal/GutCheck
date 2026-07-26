@@ -1,7 +1,7 @@
 import Foundation
 
 @MainActor
-protocol AuthenticationProtocol: ObservableObject {
+protocol AuthenticationProtocol: AnyObject {
     var isAuthStateResolved: Bool { get }
     var isAuthenticated: Bool { get }
     var isLoading: Bool { get }
@@ -16,4 +16,16 @@ protocol AuthenticationProtocol: ObservableObject {
     func verifyPhoneNumber(_ phoneNumber: String) async throws
     func signInWithPhone(verificationCode: String) async throws
     func signOut() throws
+    
+    // Email verification
+    func resendVerificationEmail() async throws
+    func checkEmailVerification() async throws
+    func cancelEmailVerification() throws
+    
+    // Account deletion
+    func deleteAuthenticatedAccount() async throws
+    
+    // Profile management
+    func updateUserProfile(_ updatedUser: User) async throws
+    func refreshCurrentUser() async
 }

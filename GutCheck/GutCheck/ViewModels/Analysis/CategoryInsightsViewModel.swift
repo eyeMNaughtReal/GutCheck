@@ -1,16 +1,22 @@
 import Foundation
 
 @MainActor
-class CategoryInsightsViewModel: ObservableObject {
-    @Published var activeInsights: [HealthInsight] = []
-    @Published var historicalInsights: [HealthInsight] = []
-    @Published var isLoading = false
-    @Published var error: String?
+@Observable class CategoryInsightsViewModel {
+    var activeInsights: [HealthInsight] = []
+    var historicalInsights: [HealthInsight] = []
+    var isLoading = false
+    var error: String?
     
     private let insightsService = InsightsService.shared
-    private let mealRepository = MealRepository.shared
-    private let symptomRepository = SymptomRepository.shared
+    private let mealRepository: any MealRepositoryProtocol
+    private let symptomRepository: any SymptomRepositoryProtocol
     private let authService = AuthService()
+    
+    init(mealRepository: any MealRepositoryProtocol = MealRepository.shared,
+         symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
+        self.mealRepository = mealRepository
+        self.symptomRepository = symptomRepository
+    }
     
     func loadInsights(for category: InsightCategory) async {
         isLoading = true
@@ -21,7 +27,7 @@ class CategoryInsightsViewModel: ObservableObject {
             let userId = getCurrentUserId()
             
             // Calculate time range for last 30 days
-            let endDate = Date()
+            let endDate = Date.now
             let startDate = Calendar.current.date(byAdding: .day, value: -30, to: endDate) ?? endDate
             let timeRange = DateInterval(start: startDate, end: endDate)
             
@@ -87,7 +93,6 @@ class CategoryInsightsViewModel: ObservableObject {
             
         } catch {
             self.error = error.localizedDescription
-            print("❌ Error loading category insights: \(error)")
         }
         
         isLoading = false
@@ -100,7 +105,6 @@ class CategoryInsightsViewModel: ObservableObject {
         } else {
             // Fallback to a default if no user is authenticated
             // This should rarely happen in a properly authenticated app
-            print("⚠️ CategoryInsightsViewModel: No authenticated user found, using default user ID")
             return "default_user"
         }
     }

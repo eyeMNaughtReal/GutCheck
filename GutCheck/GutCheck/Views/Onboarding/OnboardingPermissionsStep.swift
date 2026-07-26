@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct OnboardingPermissionsStep: View {
-    @StateObject private var permissionManager = PermissionManager.shared
+    @State private var permissionManager = PermissionManager.shared
     @Binding var currentStep: Int
     
     @State private var isRequestingPermissions = false
@@ -20,16 +20,16 @@ struct OnboardingPermissionsStep: View {
             VStack(spacing: 16) {
                 Image(systemName: "lock.shield")
                     .font(.system(size: 64))
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
                 
                 Text("Privacy & Permissions")
                     .font(.largeTitle.bold())
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Text("GutCheck respects your privacy and only requests permissions for features you choose to use.")
                     .font(.title3)
                     .multilineTextAlignment(.center)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             
             Spacer()
@@ -38,7 +38,7 @@ struct OnboardingPermissionsStep: View {
             VStack(spacing: 16) {
                 Text("We may ask for access to:")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 permissionOverviewList
             }
@@ -56,17 +56,17 @@ struct OnboardingPermissionsStep: View {
                     showingPermissionRequest = true
                 }
                 .font(.headline)
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
                 .background(ColorTheme.primary)
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 
                 Button("Skip for Now") {
                     currentStep += 1
                 }
                 .font(.subheadline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             }
         }
         .padding(.horizontal, 24)
@@ -88,17 +88,17 @@ struct OnboardingPermissionsStep: View {
                 HStack(spacing: 16) {
                     Image(systemName: icon)
                         .font(.system(size: 24))
-                        .foregroundColor(ColorTheme.primary)
+                        .foregroundStyle(ColorTheme.primary)
                         .frame(width: 32)
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text(title)
                             .font(.subheadline.bold())
-                            .foregroundColor(ColorTheme.primaryText)
+                            .foregroundStyle(ColorTheme.primaryText)
                         
                         Text(description)
                             .font(.caption)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                     
                     Spacer()
@@ -108,7 +108,7 @@ struct OnboardingPermissionsStep: View {
         }
         .padding(16)
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private var privacyCommitmentView: some View {
@@ -116,11 +116,11 @@ struct OnboardingPermissionsStep: View {
             HStack(spacing: 12) {
                 Image(systemName: "checkmark.shield.fill")
                     .font(.system(size: 20))
-                    .foregroundColor(ColorTheme.success)
+                    .foregroundStyle(ColorTheme.success)
                 
                 Text("Your privacy is protected")
                     .font(.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
             }
@@ -134,24 +134,24 @@ struct OnboardingPermissionsStep: View {
         }
         .padding(16)
         .background(ColorTheme.success.opacity(0.1))
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
     }
     
     private func privacyPoint(_ title: String, _ description: String) -> some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 12))
-                .foregroundColor(ColorTheme.success)
+                .foregroundStyle(ColorTheme.success)
                 .padding(.top, 2)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.caption.bold())
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(description)
-                    .font(.caption2)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .font(.caption)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             
             Spacer()

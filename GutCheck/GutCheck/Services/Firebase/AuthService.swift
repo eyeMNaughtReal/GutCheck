@@ -10,28 +10,30 @@ import FirebaseAuth
 import FirebaseFirestore
 import CryptoKit
 import AuthenticationServices
+import os.log
 
 @MainActor
-class AuthService: AuthenticationProtocol, HasLoadingState {
-    @Published private(set) var authUser: FirebaseAuth.User?
-    @Published private(set) var currentUser: User?
-    @Published private(set) var isAuthStateResolved = false
-    @Published private(set) var isAuthenticated = false
-    @Published private(set) var isAwaitingEmailVerification = false
-    private var verificationId: String?
-    @Published private(set) var isPhoneVerificationInProgress = false
+@Observable class AuthService: AuthenticationProtocol, HasLoadingState {
+    private(set) var authUser: FirebaseAuth.User?
+    private(set) var currentUser: User?
+    private(set) var isAuthStateResolved = false
+    private(set) var isAuthenticated = false
+    private(set) var isAwaitingEmailVerification = false
+    @ObservationIgnored private var verificationId: String?
+    private(set) var isPhoneVerificationInProgress = false
     /// Temporarily holds the email for resending verification when the user is signed out
-    private var pendingVerificationEmail: String?
-    private var pendingVerificationPassword: String?
-    private var currentNonce: String?
+    @ObservationIgnored private var pendingVerificationEmail: String?
+    @ObservationIgnored private var pendingVerificationPassword: String?
+    @ObservationIgnored private var currentNonce: String?
     
     let loadingState = LoadingStateManager()
-    
-    private let auth = Auth.auth()
-    private lazy var firestore = Firestore.firestore()
+
+    @ObservationIgnored private let auth = Auth.auth()
+    @ObservationIgnored private lazy var firestore = Firestore.firestore()
+    @ObservationIgnored private let rateLimiter = RateLimitingService.shared
     
     // Auth state listener handle
-    private var authStateListenerHandle: AuthStateDidChangeListenerHandle?
+    @ObservationIgnored private var authStateListenerHandle: AuthStateDidChangeListenerHandle?
     
     init() {
         // Listen for auth state changes
@@ -72,15 +74,18 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
     // MARK: - Authentication Methods
     
     func signIn(email: String, password: String) async throws {
+        try rateLimiter.checkLimit(for: .login)
+
         isLoading = true
         errorMessage = nil
-        
+
         defer { isLoading = false }
-        
+
         do {
             let result = try await auth.signIn(withEmail: email, password: password)
             authUser = result.user
-            
+            rateLimiter.reset(for: .login)
+
             // Block unverified email users
             if !result.user.isEmailVerified {
                 pendingVerificationEmail = email
@@ -89,10 +94,13 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
                 isAuthenticated = false
                 return
             }
-            
+
+            pendingVerificationEmail = nil
+            pendingVerificationPassword = nil
             isAuthenticated = true
             await loadCurrentUser(userId: result.user.uid)
         } catch {
+            rateLimiter.recordFailure(for: .login)
             errorMessage = handleAuthError(error)
             throw error
         }
@@ -139,6 +147,11 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
             self.currentUser = nil
             self.isAuthenticated = false
             self.errorMessage = nil
+            // Clear sensitive credentials from memory
+            self.pendingVerificationEmail = nil
+            self.pendingVerificationPassword = nil
+            self.currentNonce = nil
+            self.verificationId = nil
         } catch {
             self.errorMessage = "Failed to sign out: \(error.localizedDescription)"
             throw error
@@ -146,11 +159,13 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
     }
     
     func sendPasswordReset(email: String) async throws {
+        try rateLimiter.checkLimit(for: .passwordReset)
+
         isLoading = true
         errorMessage = nil
-        
+
         defer { isLoading = false }
-        
+
         do {
             try await auth.sendPasswordReset(withEmail: email)
         } catch {
@@ -160,12 +175,14 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
     }
     
     func verifyPhoneNumber(_ phoneNumber: String) async throws {
+        try rateLimiter.checkLimit(for: .phoneVerification)
+
         isLoading = true
         errorMessage = nil
         isPhoneVerificationInProgress = true
-        
+
         defer { isLoading = false }
-        
+
         do {
             let verificationID = try await PhoneAuthProvider.provider()
                 .verifyPhoneNumber(phoneNumber, uiDelegate: nil)
@@ -188,6 +205,7 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
         defer { 
             isLoading = false
             isPhoneVerificationInProgress = false
+            self.verificationId = nil
         }
         
         do {
@@ -209,6 +227,8 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
     // MARK: - Email Verification
     
     func resendVerificationEmail() async throws {
+        try rateLimiter.checkLimit(for: .resendVerificationEmail)
+
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
@@ -315,7 +335,6 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
         
         do {
             try await currentFirebaseUser.reauthenticate(with: credential)
-            print("🔐 AuthService: User re-authenticated successfully")
         } catch {
             errorMessage = handleAuthError(error)
             throw error
@@ -356,15 +375,12 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
         
         do {
             // Step 1: Re-authenticate before deletion
-            print("🔐 AuthService: Re-authenticating user before account deletion")
             try await currentFirebaseUser.reauthenticate(with: credential)
             
             // Step 2: Delete user data from Firestore
-            print("🗑️ AuthService: Deleting user data from Firestore")
             try await deleteUserData(userId: currentFirebaseUser.uid)
             
             // Step 3: Delete the Firebase Auth account
-            print("🗑️ AuthService: Deleting Firebase Auth account")
             try await currentFirebaseUser.delete()
             
             // Step 4: Clear local state
@@ -372,10 +388,8 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
             currentUser = nil
             isAuthenticated = false
             
-            print("✅ AuthService: Account deleted successfully")
         } catch {
             errorMessage = error.localizedDescription
-            print("❌ AuthService: Failed to delete account: \(error)")
             throw error
         }
     }
@@ -393,17 +407,14 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
         defer { isLoading = false }
         
         do {
-            print("🗑️ AuthService: Deleting user data from Firestore")
             try await deleteUserData(userId: currentFirebaseUser.uid)
             
-            print("🗑️ AuthService: Deleting Firebase Auth account")
             try await currentFirebaseUser.delete()
             
             authUser = nil
             currentUser = nil
             isAuthenticated = false
             
-            print("✅ AuthService: Account deleted successfully")
         } catch {
             errorMessage = error.localizedDescription
             throw error
@@ -432,12 +443,14 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
     // MARK: - Phone Sign In
     
     func sendPhoneVerification(phoneNumber: String) async throws {
+        try rateLimiter.checkLimit(for: .phoneVerification)
+
         isLoading = true
         isPhoneVerificationInProgress = true
         errorMessage = nil
-        
+
         defer { isLoading = false }
-        
+
         do {
             let verificationID = try await PhoneAuthProvider.provider().verifyPhoneNumber(phoneNumber, uiDelegate: nil)
             verificationId = verificationID
@@ -459,6 +472,7 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
         defer {
             isLoading = false
             isPhoneVerificationInProgress = false
+            self.verificationId = nil
         }
         
         do {
@@ -490,8 +504,8 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
     
     /// Prepares the Apple Sign-In request by generating and storing a nonce.
     /// Returns the SHA256-hashed nonce to include in the ASAuthorizationAppleIDRequest.
-    func prepareAppleSignIn() -> String {
-        let nonce = randomNonceString()
+    func prepareAppleSignIn() throws -> String {
+        let nonce = try randomNonceString()
         currentNonce = nonce
         return sha256(nonce)
     }
@@ -500,7 +514,10 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
     func signInWithApple(_ authorization: ASAuthorization) async throws {
         isLoading = true
         errorMessage = nil
-        defer { isLoading = false }
+        defer {
+            isLoading = false
+            currentNonce = nil
+        }
         
         guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential else {
             throw AuthError.custom("Invalid Apple credential type")
@@ -549,21 +566,19 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
             // Apple users are pre-verified — skip email verification
             isAuthenticated = true
             isAwaitingEmailVerification = false
-            currentNonce = nil
             
         } catch {
-            currentNonce = nil
             errorMessage = handleAuthError(error)
             throw error
         }
     }
     
-    private func randomNonceString(length: Int = 32) -> String {
+    private func randomNonceString(length: Int = 32) throws -> String {
         precondition(length > 0)
         var randomBytes = [UInt8](repeating: 0, count: length)
         let errorCode = SecRandomCopyBytes(kSecRandomDefault, randomBytes.count, &randomBytes)
-        if errorCode != errSecSuccess {
-            fatalError("Unable to generate nonce. SecRandomCopyBytes failed with OSStatus \(errorCode)")
+        guard errorCode == errSecSuccess else {
+            throw AuthError.custom("Failed to generate secure nonce (OSStatus \(errorCode))")
         }
         
         let charset: [Character] = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
@@ -583,15 +598,12 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
     
     private func loadCurrentUser(userId: String) async {
         do {
-            print("👤 AuthService: Loading user data for \(userId)")
             let document = try await FirebaseManager.shared.userDocument(userId).getDocument()
             if let data = document.data() {
                 let user = try parseUser(from: data, id: userId)
-                print("👤 AuthService: Loaded user - profileImageURL: \(user.profileImageURL ?? "nil")")
                 currentUser = user
             }
         } catch {
-            print("Error loading user profile: \(error)")
         }
     }
     
@@ -732,11 +744,13 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
         }
 
         #if DEBUG
-        print("🗑️ AuthService: Deleted \(documentsToDelete.count) Firestore documents for user \(userId)")
         #endif
     }
     
     private func handleAuthError(_ error: Error) -> String {
+        if let rateLimitError = error as? RateLimitError {
+            return rateLimitError.localizedDescription
+        }
         if let authError = error as NSError? {
             switch authError.code {
             case AuthErrorCode.invalidEmail.rawValue:
@@ -771,10 +785,8 @@ class AuthService: AuthenticationProtocol, HasLoadingState {
     /// Refresh the current user data from Firestore
     func refreshCurrentUser() async {
         guard let userId = authUser?.uid else { 
-            print("🔄 AuthService: No authUser.uid available for refresh")
             return 
         }
-        print("🔄 AuthService: Refreshing current user data...")
         await loadCurrentUser(userId: userId)
     }
 }

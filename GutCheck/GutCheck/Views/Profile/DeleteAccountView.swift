@@ -12,7 +12,7 @@ import SwiftUI
 
 struct DeleteAccountView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var authService: AuthService
+    @Environment(AuthService.self) var authService
     @State private var showingReauthentication = false
     @State private var showingFinalConfirmation = false
     @State private var showingAlert = false
@@ -27,22 +27,22 @@ struct DeleteAccountView: View {
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 64))
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                     
                     Text("Delete Your Account")
                         .font(.title.bold())
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                     
                     Text("This action cannot be undone")
                         .font(.headline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 
                 // Consequences Warning
                 VStack(alignment: .leading, spacing: 16) {
                     Text("What will happen:")
                         .font(.headline)
-                        .foregroundColor(.red)
+                        .foregroundStyle(.red)
                     
                     VStack(alignment: .leading, spacing: 8) {
                         WarningRow(icon: "trash", text: "All your health data will be permanently deleted")
@@ -54,7 +54,7 @@ struct DeleteAccountView: View {
                 }
                 .padding()
                 .background(Color.red.opacity(0.1))
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 
                 // Data Summary
                 VStack(alignment: .leading, spacing: 16) {
@@ -71,7 +71,7 @@ struct DeleteAccountView: View {
                 }
                 .padding()
                 .background(Color.orange.opacity(0.1))
-                .cornerRadius(12)
+                .clipShape(.rect(cornerRadius: 12))
                 
                 // Action Buttons
                 VStack(spacing: 16) {
@@ -83,15 +83,15 @@ struct DeleteAccountView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(Color.red)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
+                        .foregroundStyle(.white)
+                        .clipShape(.rect(cornerRadius: 12))
                     }
                     .disabled(isDeleting)
                     
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal)
                 
@@ -161,7 +161,7 @@ struct WarningRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(.red)
+                .foregroundStyle(.red)
                 .frame(width: 20)
             
             Text(text)
@@ -179,7 +179,7 @@ struct DataRow: View {
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(.orange)
+                .foregroundStyle(.orange)
                 .frame(width: 20)
             
             Text(text)
@@ -193,6 +193,6 @@ struct DataRow: View {
 #Preview {
     NavigationStack {
         DeleteAccountView()
-            .environmentObject(AuthService())
+            .environment(AuthService())
     }
 }

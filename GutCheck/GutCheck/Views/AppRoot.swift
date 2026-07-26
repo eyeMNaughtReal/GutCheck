@@ -1,57 +1,48 @@
 import SwiftUI
 
 struct AppRoot: View {
-    @StateObject private var router = AppRouter.shared
-    @StateObject private var refreshManager = RefreshManager.shared
-    @EnvironmentObject var authService: AuthService
-    @EnvironmentObject var serverStatusService: ServerStatusService
+    @State private var router = AppRouter.shared
+    @State private var refreshManager = RefreshManager.shared
+    @Environment(AuthService.self) var authService
+    @Environment(ServerStatusService.self) var serverStatusService
     @State private var showingServerStatusSheet = false
     
     var body: some View {
         ZStack(alignment: .bottom) {
             TabView(selection: $router.selectedTab) {
-                NavigationStack(path: $router.dashboardPath) {
-                    DashboardView()
-                        .withAppNavigationDestinations(router: router, refreshManager: refreshManager)
+                SwiftUI.Tab("Dashboard", systemImage: "house.fill", value: GutCheck.Tab.dashboard) {
+                    NavigationStack(path: $router.dashboardPath) {
+                        DashboardView()
+                            .withAppNavigationDestinations(router: router, refreshManager: refreshManager)
+                    }
                 }
-                .tabItem {
-                    Label("Dashboard", systemImage: "house.fill")
-                }
-                .tag(Tab.dashboard)
-                
-                NavigationStack(path: $router.mealsPath) {
-                    CalendarView(selectedTab: .meals)
-                        .withAppNavigationDestinations(router: router, refreshManager: refreshManager)
-                }
-                .tabItem {
-                    Label("Meals", systemImage: "fork.knife")
-                }
-                .tag(Tab.meals)
-                
-                NavigationStack(path: $router.symptomsPath) {
-                    CalendarView(selectedTab: .symptoms)
-                        .withAppNavigationDestinations(router: router, refreshManager: refreshManager)
-                }
-                .tabItem {
-                    Label("Symptoms", systemImage: "heart.text.square.fill")
-                }
-                .tag(Tab.symptoms)
-                
-                NavigationStack {
-                    MedicationCalendarView()
-                }
-                .tabItem {
-                    Label("Meds", systemImage: "pills.fill")
-                }
-                .tag(Tab.medications)
 
-                NavigationStack {
-                    InsightsView()
+                SwiftUI.Tab("Meals", systemImage: "fork.knife", value: GutCheck.Tab.meals) {
+                    NavigationStack(path: $router.mealsPath) {
+                        CalendarView(selectedTab: .meals)
+                            .withAppNavigationDestinations(router: router, refreshManager: refreshManager)
+                    }
                 }
-                .tabItem {
-                    Label("Insights", systemImage: "chart.bar.fill")
+
+                SwiftUI.Tab("Symptoms", systemImage: "heart.text.square.fill", value: GutCheck.Tab.symptoms) {
+                    NavigationStack(path: $router.symptomsPath) {
+                        CalendarView(selectedTab: .symptoms)
+                            .withAppNavigationDestinations(router: router, refreshManager: refreshManager)
+                    }
                 }
-                .tag(Tab.insights)
+
+                SwiftUI.Tab("Meds", systemImage: "pills.fill", value: GutCheck.Tab.medications) {
+                    NavigationStack {
+                        MedicationCalendarView()
+                            .withAppNavigationDestinations(router: router, refreshManager: refreshManager)
+                    }
+                }
+
+                SwiftUI.Tab("Insights", systemImage: "chart.bar.fill", value: GutCheck.Tab.insights) {
+                    NavigationStack {
+                        InsightsView()
+                    }
+                }
             }
             
             .safeAreaInset(edge: .top) {
@@ -62,7 +53,7 @@ struct AppRoot: View {
             // Server status sheet (separate from router sheets)
             .sheet(isPresented: $showingServerStatusSheet) {
                 ServerStatusSheet()
-                    .environmentObject(serverStatusService)
+                    .environment(serverStatusService)
             }
             
             // Handle the sheet presentations
@@ -72,45 +63,45 @@ struct AppRoot: View {
                     case .profile:
                         if let currentUser = authService.currentUser {
                             UserProfileView(user: currentUser)
-                                .environmentObject(authService)
+                                .environment(authService)
                         } else {
                             Text("User information unavailable")
-                                .environmentObject(authService)
+                                .environment(authService)
                         }
                     case .mealForm(let id):
                         MealBuilderView(mealId: id)
-                            .environmentObject(router)
-                            .environmentObject(refreshManager)
+                            .environment(router)
+                            .environment(refreshManager)
                     case .symptomForm(let id):
                         if id != nil {
                             // Edit existing symptom - need to create LogSymptomView_New with id support
                             LogSymptomView()
-                                .environmentObject(router)
-                                .environmentObject(refreshManager)
+                                .environment(router)
+                                .environment(refreshManager)
                         } else {
                             // Create new symptom
                             LogSymptomView()
-                                .environmentObject(router)
-                                .environmentObject(refreshManager)
+                                .environment(router)
+                                .environment(refreshManager)
                         }
                     case .logEntry:
                         LogEntryView()
-                            .environmentObject(router)
+                            .environment(router)
                     }
                 }
             }
         }
 
-        .environmentObject(router)
-        .environmentObject(refreshManager)
+        .environment(router)
+        .environment(refreshManager)
     }
 }
 
 // MARK: - Shared Navigation Destinations
 
 private struct AppNavigationDestinations: ViewModifier {
-    @ObservedObject var router: AppRouter
-    @ObservedObject var refreshManager: RefreshManager
+    var router: AppRouter
+    var refreshManager: RefreshManager
 
     func body(content: Content) -> some View {
         content
@@ -123,16 +114,16 @@ private struct AppNavigationDestinations: ViewModifier {
                 case .mealDetail(let id):
                     if let id = id {
                         MealDetailView(mealId: id)
-                            .environmentObject(router)
-                            .environmentObject(refreshManager)
+                            .environment(router)
+                            .environment(refreshManager)
                     } else {
                         Text("Invalid meal")
                     }
                 case .symptomDetail(let id):
                     if let id = id {
                         SymptomDetailView(symptomId: id)
-                            .environmentObject(router)
-                            .environmentObject(refreshManager)
+                            .environment(router)
+                            .environment(refreshManager)
                     } else {
                         Text("Invalid symptom")
                     }
@@ -140,7 +131,14 @@ private struct AppNavigationDestinations: ViewModifier {
                     SettingsView()
                 case .analytics:
                     InsightsView()
+                case .symptomHistory(let symptom):
+                    SymptomDetailView(symptom: symptom)
+                case .medicationList:
+                    MedicationListView()
                 }
+            }
+            .navigationDestination(for: SettingsRoute.self) { route in
+                SettingsRoute.destinationView(for: route)
             }
     }
 }
@@ -153,5 +151,5 @@ extension View {
 
 #Preview {
     AppRoot()
-        .environmentObject(PreviewAuthService())
+        .environment(PreviewAuthService())
 }

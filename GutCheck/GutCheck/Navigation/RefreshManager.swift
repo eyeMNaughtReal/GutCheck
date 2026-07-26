@@ -1,11 +1,11 @@
 import SwiftUI
 
 @MainActor
-class RefreshManager: ObservableObject {
+@Observable class RefreshManager {
     static let shared = RefreshManager()
     
-    @Published var refreshToken = UUID()
-    @Published var isRefreshing = false
+    var refreshToken = UUID()
+    var isRefreshing = false
     
     private init() {}
     
@@ -16,7 +16,7 @@ class RefreshManager: ObservableObject {
     func triggerRefreshAfterSave() {
         // Wait a short moment to allow database operations to complete
         Task {
-            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            try? await Task.sleep(for: .milliseconds(500))
             triggerRefresh()
         }
     }

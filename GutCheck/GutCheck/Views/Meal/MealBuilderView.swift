@@ -12,15 +12,16 @@ struct MealBuilderView: View {
     var mealId: String? = nil
 
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var router: AppRouter
-    @EnvironmentObject var refreshManager: RefreshManager
-    @StateObject private var mealService = MealBuilderService.shared
+    @Environment(AppRouter.self) var router
+    @Environment(RefreshManager.self) var refreshManager
+    @State private var mealService = MealBuilderService.shared
     @State private var showingDatePicker = false
     @State private var showingConfirmation = false
     @State private var showingDiscard = false
     @State private var showingFoodOptions = false
     @State private var editingFoodItem: FoodItem?
 @State private var loadError: String? = nil
+    @State private var riskService = MealRiskPredictionService.shared
     
     var body: some View {
         VStack(spacing: 0) {
@@ -31,7 +32,7 @@ struct MealBuilderView: View {
                     .typography(Typography.headline)
                     .padding()
                     .background(ColorTheme.surface)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(ColorTheme.border, lineWidth: 1)
@@ -42,7 +43,7 @@ struct MealBuilderView: View {
                 
                 VStack(spacing: 12) {
                     // Meal type pills
-                    ScrollView(.horizontal, showsIndicators: false) {
+                    ScrollView(.horizontal) {
                         HStack(spacing: 8) {
                             ForEach(MealType.allCases, id: \.self) { type in
                                 let isSelected = mealService.mealType == type
@@ -55,8 +56,8 @@ struct MealBuilderView: View {
                                         .padding(.horizontal, 16)
                                         .padding(.vertical, 8)
                                         .background(isSelected ? ColorTheme.primary : ColorTheme.surface)
-                                        .foregroundColor(isSelected ? .white : ColorTheme.primaryText)
-                                        .cornerRadius(20)
+                                        .foregroundStyle(isSelected ? .white : ColorTheme.primaryText)
+                                        .clipShape(.rect(cornerRadius: 20))
                                         .overlay(
                                             RoundedRectangle(cornerRadius: 20)
                                                 .stroke(isSelected ? Color.clear : ColorTheme.border, lineWidth: 1)
@@ -70,8 +71,9 @@ struct MealBuilderView: View {
                         .padding(.horizontal)
                         .padding(.vertical, 8)
                     }
+                    .scrollIndicators(.hidden)
                     .background(ColorTheme.surface)
-                    .cornerRadius(12)
+                    .clipShape(.rect(cornerRadius: 12))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(ColorTheme.border, lineWidth: 1)
@@ -85,16 +87,16 @@ struct MealBuilderView: View {
                     }) {
                         HStack {
                             Image(systemName: "calendar")
-                                .foregroundColor(ColorTheme.primary)
+                                .foregroundStyle(ColorTheme.primary)
                                 .accessibleDecorative()
                             Text(mealService.formattedDateTime)
                                 .typography(Typography.body)
-                                .foregroundColor(ColorTheme.primaryText)
+                                .foregroundStyle(ColorTheme.primaryText)
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(ColorTheme.surface)
-                        .cornerRadius(12)
+                        .clipShape(.rect(cornerRadius: 12))
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(ColorTheme.border, lineWidth: 1)
@@ -123,6 +125,13 @@ struct MealBuilderView: View {
                         .padding(.horizontal)
                         .padding(.top)
                         .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.nutritionSummary)
+                    
+                    // Risk assessment card
+                    if !mealService.currentMeal.isEmpty,
+                       let assessment = riskService.predictRisk(for: mealService.currentMeal) {
+                        MealRiskAssessmentCard(assessment: assessment)
+                            .padding(.horizontal)
+                    }
                     
                     // Food items
                     if mealService.currentMeal.isEmpty {
@@ -157,14 +166,14 @@ struct MealBuilderView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Notes")
                             .typography(Typography.subheadline)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                         
                         TextEditor(text: $mealService.notes)
                             .typography(Typography.body)
                             .frame(minHeight: 100)
                             .padding(8)
                             .background(ColorTheme.surface)
-                            .cornerRadius(12)
+                            .clipShape(.rect(cornerRadius: 12))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
                                     .stroke(ColorTheme.border, lineWidth: 1)
@@ -195,8 +204,8 @@ struct MealBuilderView: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(ColorTheme.primary.opacity(0.9))
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
+                    .foregroundStyle(.white)
+                    .clipShape(.rect(cornerRadius: 12))
                 }
                 .accessibleButton(
                     label: "Add Food Item",
@@ -219,8 +228,8 @@ struct MealBuilderView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(ColorTheme.surface)
-                            .foregroundColor(ColorTheme.primaryText)
-                            .cornerRadius(12)
+                            .foregroundStyle(ColorTheme.primaryText)
+                            .clipShape(.rect(cornerRadius: 12))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
                                     .stroke(ColorTheme.border, lineWidth: 1)
@@ -247,7 +256,6 @@ struct MealBuilderView: View {
                             } catch {
                                 HapticManager.shared.error()
                                 // TODO: Show error alert
-                                Swift.print("❌ Failed to save meal: \(error)")
                                 AccessibilityAnnouncement.announce("Failed to save meal")
                             }
                         }
@@ -257,8 +265,8 @@ struct MealBuilderView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(ColorTheme.accent)
-                            .foregroundColor(ColorTheme.text)
-                            .cornerRadius(12)
+                            .foregroundStyle(ColorTheme.text)
+                            .clipShape(.rect(cornerRadius: 12))
                     }
                     .disabled(mealService.currentMeal.isEmpty)
                     .opacity(mealService.currentMeal.isEmpty ? 0.6 : 1)
@@ -282,12 +290,14 @@ struct MealBuilderView: View {
         .navigationTitle(mealId == nil ? "Build Your Meal" : "Edit Meal")
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            guard let id = mealId else { return }
-            do {
-                try await mealService.loadMeal(id: id)
-            } catch {
-                loadError = error.localizedDescription
+            if let id = mealId {
+                do {
+                    try await mealService.loadMeal(id: id)
+                } catch {
+                    loadError = error.localizedDescription
+                }
             }
+            await riskService.loadHistoricalData()
         }
         .alert("Failed to Load Meal", isPresented: .constant(loadError != nil)) {
             Button("OK") { loadError = nil; dismiss() }
@@ -303,7 +313,7 @@ struct MealBuilderView: View {
                     MealBuilderService.shared.addFoodItem(foodItem)
                     showingFoodOptions = false
                 }
-                .environmentObject(router)
+                .environment(router)
             }
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
@@ -341,22 +351,22 @@ struct MealBuilderView: View {
         VStack(spacing: 12) {
             Image(systemName: "fork.knife")
                 .font(.system(size: 48))
-                .foregroundColor(ColorTheme.secondaryText.opacity(0.5))
+                .foregroundStyle(ColorTheme.secondaryText.opacity(0.5))
                 .accessibleDecorative()
             
             Text("No food items yet")
                 .typography(Typography.headline)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             
             Text("Tap \"Add Food Item\" to start building your meal")
                 .typography(Typography.caption)
-                .foregroundColor(ColorTheme.secondaryText.opacity(0.8))
+                .foregroundStyle(ColorTheme.secondaryText.opacity(0.8))
                 .multilineTextAlignment(.center)
         }
         .padding()
         .frame(maxWidth: .infinity)
         .background(ColorTheme.surface)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .accessibleGroup(
             label: "No food items yet. Tap Add Food Item button to start building your meal",
             hint: nil
@@ -373,13 +383,13 @@ struct NutritionSummaryCard: View {
             HStack {
                 Text("Nutrition Summary")
                     .typography(Typography.headline)
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
                 
                 Text("\(Int(nutrition.calories ?? 0)) calories")
                     .typography(Typography.headline)
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
             }
             
             Divider()
@@ -393,7 +403,7 @@ struct NutritionSummaryCard: View {
         }
         .padding()
         .background(ColorTheme.cardBackground)
-        .cornerRadius(12)
+        .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
         .accessibleGroup(
             label: AccessibilityText.nutritionSummary(
@@ -417,15 +427,15 @@ struct NutrientLabel: View {
         VStack(spacing: 4) {
             Text(name)
                 .typography(Typography.caption)
-                .foregroundColor(ColorTheme.secondaryText)
+                .foregroundStyle(ColorTheme.secondaryText)
             
-            Text("\(String(format: "%.1f", value ?? 0)) \(unit)")
+            Text("\((value ?? 0).formatted(.number.precision(.fractionLength(1)))) \(unit)")
                 .typography(Typography.headline)
-                .foregroundColor(color)
+                .foregroundStyle(color)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(name): \(String(format: "%.1f", value ?? 0)) \(unit)")
+        .accessibilityLabel("\(name): \((value ?? 0).formatted(.number.precision(.fractionLength(1)))) \(unit)")
     }
 }
 
@@ -462,7 +472,7 @@ struct DateTimePickerView: View {
             .navigationTitle("Select Date & Time")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         HapticManager.shared.light()
                         dismiss()

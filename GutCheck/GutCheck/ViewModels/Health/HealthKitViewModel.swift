@@ -2,15 +2,15 @@ import SwiftUI
 import HealthKit
 
 @MainActor
-final class HealthKitViewModel: ObservableObject {
-    @Published var healthData: UserHealthData?
-    @Published var isAuthorized = false
-    @Published var showPermissionError = false
-    @AppStorage("lastHealthKitSyncTimestamp") private var lastSyncTimestamp: Double = 0
+@Observable final class HealthKitViewModel {
+    var healthData: UserHealthData?
+    var isAuthorized = false
+    var showPermissionError = false
+    @ObservationIgnored @AppStorage("lastHealthKitSyncTimestamp") private var lastSyncTimestamp: Double = 0
 
     // MARK: - Write authorization statuses (keyed by identifier rawValue for Codable-free storage)
-    @Published var mealWriteStatuses:    [HKQuantityTypeIdentifier:  HKAuthorizationStatus] = [:]
-    @Published var symptomWriteStatuses: [HKCategoryTypeIdentifier:  HKAuthorizationStatus] = [:]
+    var mealWriteStatuses:    [HKQuantityTypeIdentifier:  HKAuthorizationStatus] = [:]
+    var symptomWriteStatuses: [HKCategoryTypeIdentifier:  HKAuthorizationStatus] = [:]
 
     /// True if any write type is not yet authorized (not determined or denied).
     var hasWriteIssues: Bool {
@@ -34,15 +34,18 @@ final class HealthKitViewModel: ObservableObject {
     // Inject settings and auth service for unit preferences and profile updates
     private var settingsViewModel: SettingsViewModel
     private var authService: AuthService
+    private let healthKitManager: any HealthKitManagerProtocol
     
-    init() {
+    init(healthKitManager: any HealthKitManagerProtocol = HealthKitManager.shared) {
         self.settingsViewModel = SettingsViewModel()
         self.authService = AuthService()
+        self.healthKitManager = healthKitManager
     }
     
-    init(settingsViewModel: SettingsViewModel, authService: AuthService) {
+    init(settingsViewModel: SettingsViewModel, authService: AuthService, healthKitManager: any HealthKitManagerProtocol = HealthKitManager.shared) {
         self.settingsViewModel = settingsViewModel
         self.authService = authService
+        self.healthKitManager = healthKitManager
     }
     
     // Allow updating dependencies after initialization (for environment objects)
@@ -68,7 +71,7 @@ final class HealthKitViewModel: ObservableObject {
     func fetchHealthData() async {
         healthData = await HealthKitAsyncWrapper.shared.fetchUserHealthDataWithLogging()
         if healthData != nil {
-            lastSyncTimestamp = Date().timeIntervalSince1970
+            lastSyncTimestamp = Date.now.timeIntervalSince1970
         }
     }
 
@@ -77,7 +80,7 @@ final class HealthKitViewModel: ObservableObject {
     /// Reads the current authorization status for every write type from HealthKit.
     /// Call this on appear and after any authorization request.
     func refreshWriteStatuses() {
-        let manager = HealthKitManager.shared
+        let manager = healthKitManager
 
         let mealTypes: [HKQuantityTypeIdentifier] = [
             .dietaryEnergyConsumed,
@@ -108,7 +111,6 @@ final class HealthKitViewModel: ObservableObject {
     func updateUserProfileWithHealthData() async {
         guard let healthData = healthData,
               let currentUser = authService.currentUser else {
-            print("HealthKit: No health data or user available for profile update")
             return
         }
         
@@ -122,9 +124,7 @@ final class HealthKitViewModel: ObservableObject {
             
             // Update the user profile
             try await authService.updateUserProfile(updatedUserData)
-            print("HealthKit: Successfully updated user profile with health data")
         } catch {
-            print("HealthKit: Failed to update user profile: \(error.localizedDescription)")
         }
     }
 
@@ -132,7 +132,7 @@ final class HealthKitViewModel: ObservableObject {
     func formattedAge() -> String {
         guard let dob = healthData?.dateOfBirth else { return "-" }
         let calendar = Calendar.current
-        let ageComponents = calendar.dateComponents([.year], from: dob, to: Date())
+        let ageComponents = calendar.dateComponents([.year], from: dob, to: Date.now)
         if let years = ageComponents.year {
             return String(years)
         }

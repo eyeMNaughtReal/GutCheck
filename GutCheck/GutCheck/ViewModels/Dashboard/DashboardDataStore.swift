@@ -15,35 +15,64 @@ import Foundation
 import SwiftUI
 import Combine
 
+/// Severity level for AI-generated insight messages
+enum AIInsightSeverity {
+    case positive
+    case neutral
+    case warning
+    
+    var color: Color {
+        switch self {
+        case .positive: return ColorTheme.success
+        case .neutral: return ColorTheme.info
+        case .warning: return ColorTheme.warning
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .positive: return "checkmark.seal.fill"
+        case .neutral: return "sparkles"
+        case .warning: return "exclamationmark.triangle.fill"
+        }
+    }
+}
+
 /// Central data store for dashboard functionality
 /// Manages all dashboard-related data including health insights, meal/symptom data,
 /// and real-time calculations for health scoring and recommendations.
-final class DashboardDataStore: ObservableObject {
+@Observable final class DashboardDataStore {
     // MARK: - Published Properties
     
     /// Today's meals for the selected date
-    @Published var todaysMeals: [Meal] = []
+    var todaysMeals: [Meal] = []
     
     /// Today's symptoms for the selected date
-    @Published var todaysSymptoms: [Symptom] = []
+    var todaysSymptoms: [Symptom] = []
     
     /// Active trigger alerts that require immediate attention
-    @Published var triggerAlerts: [String] = []
+    var triggerAlerts: [String] = []
     
     /// Legacy insight message (deprecated - replaced by structured insights)
-    @Published var insightMessage: String? = nil
+    var insightMessage: String? = nil
     
     /// Current health score (1-10) calculated from symptoms and meals
-    @Published var todaysHealthScore: Int = 7
+    var todaysHealthScore: Int = 7
     
     /// Personalized health focus recommendation for the selected day
-    @Published var todaysFocus: String = ""
+    var todaysFocus: String = ""
     
     /// Smart avoidance tip based on recent symptom patterns
-    @Published var avoidanceTip: String = ""
+    var avoidanceTip: String = ""
+    
+    /// AI-generated insight summary for the selected day
+    var aiInsightSummary: String = ""
+    
+    /// Severity level of the current AI insight
+    var aiInsightSeverity: AIInsightSeverity = .neutral
     
     /// Currently selected date for dashboard data display
-    @Published var selectedDate: Date = Date()
+    var selectedDate: Date = Date.now
     
     // MARK: - Private Properties
     
@@ -53,11 +82,19 @@ final class DashboardDataStore: ObservableObject {
     /// Authentication service for getting current user ID
     private var authService: AuthService?
     
+    /// Repository dependencies
+    private let mealRepository: any MealRepositoryProtocol
+    private let symptomRepository: any SymptomRepositoryProtocol
+    
     // MARK: - Initialization
     
     /// Initialize the dashboard data store
     /// - Parameter preview: If true, loads mock data for SwiftUI previews
-    init(preview: Bool = false) {
+    init(preview: Bool = false,
+         mealRepository: any MealRepositoryProtocol = MealRepository.shared,
+         symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
+        self.mealRepository = mealRepository
+        self.symptomRepository = symptomRepository
         if preview {
             loadPreviewData()
         } else {
@@ -163,6 +200,34 @@ final class DashboardDataStore: ObservableObject {
         if todaysSymptoms.contains(where: { $0.painLevel.rawValue >= 8 }) {
             triggerAlerts.append("High pain level detected - consider consulting healthcare provider")
         }
+        
+        // Generate AI insight summary
+        generateAIInsight()
+    }
+    
+    /// Generate AI insight based on current meal and symptom data
+    /// Uses placeholder logic; future versions will integrate with AIAnalysisService
+    private func generateAIInsight() {
+        if todaysSymptoms.isEmpty && todaysMeals.count >= 2 {
+            aiInsightSummary = "No triggers detected today. Your digestion looks healthy!"
+            aiInsightSeverity = .positive
+        } else if todaysSymptoms.isEmpty && todaysMeals.isEmpty {
+            aiInsightSummary = "Start logging meals to get personalized insights about your gut health."
+            aiInsightSeverity = .neutral
+        } else if todaysSymptoms.isEmpty {
+            aiInsightSummary = "Looking good so far. Keep logging meals for better insights."
+            aiInsightSeverity = .neutral
+        } else if todaysSymptoms.contains(where: { $0.painLevel.rawValue >= 7 }) {
+            aiInsightSummary = "Elevated symptoms detected. Consider gentle, easy-to-digest foods."
+            aiInsightSeverity = .warning
+        } else if !todaysSymptoms.isEmpty && !todaysMeals.isEmpty {
+            let recentMealName = todaysMeals.last?.name ?? "your recent meal"
+            aiInsightSummary = "Possible trigger: \(recentMealName). Symptoms appeared after eating."
+            aiInsightSeverity = .warning
+        } else {
+            aiInsightSummary = "Keep logging to help identify patterns."
+            aiInsightSeverity = .neutral
+        }
     }
     
     // MARK: - Preview Support
@@ -172,7 +237,7 @@ final class DashboardDataStore: ObservableObject {
             Meal(
                 id: "preview-1",
                 name: "Breakfast",
-                date: Date().addingTimeInterval(-3600 * 3),
+                date: Date.now.addingTimeInterval(-3600 * 3),
                 type: .breakfast,
                 source: .manual,
                 foodItems: [],
@@ -183,7 +248,7 @@ final class DashboardDataStore: ObservableObject {
             Meal(
                 id: "preview-2",
                 name: "Lunch",
-                date: Date(),
+                date: Date.now,
                 type: .lunch,
                 source: .manual,
                 foodItems: [],
@@ -198,6 +263,8 @@ final class DashboardDataStore: ObservableObject {
         self.todaysHealthScore = 8
         self.todaysFocus = "Focus on eating slowly and mindfully today. Try setting your fork down between bites."
         self.avoidanceTip = "Skip dairy products (milk, cheese, ice cream) - they've caused bloating 3 times this week"
+        self.aiInsightSummary = "No triggers detected today. Your digestion looks healthy!"
+        self.aiInsightSeverity = .positive
     }
     
     // MARK: - Private Load Logic
@@ -207,31 +274,26 @@ final class DashboardDataStore: ObservableObject {
         guard todaysMeals.isEmpty && todaysSymptoms.isEmpty else { return }
         
         // Load real data from repositories
-        print("📱 Dashboard: Loading symptoms for date: \(selectedDate)")
         Task {
             do {
                 // Load today's symptoms
-                let symptoms = try await SymptomRepository.shared.getSymptoms(for: selectedDate)
-                print("📊 Dashboard: Loaded \(symptoms.count) symptoms")
+                let symptoms = try await symptomRepository.getSymptoms(for: selectedDate)
                 
                 // Load today's meals using the current user ID
                 if let currentUser = await authService?.currentUser {
-                    let userMeals = try await MealRepository.shared.fetchMealsForDate(
+                    let userMeals = try await mealRepository.fetchMealsForDate(
                         selectedDate,
                         userId: currentUser.id
                     )
-                    print("📊 Dashboard: Loaded \(userMeals.count) meals for user \(currentUser.id)")
                     await MainActor.run { [weak self] in
                         self?.todaysMeals = userMeals
                     }
                 } else {
-                    print("⚠️ Dashboard: No authenticated user found, skipping meal loading")
                 }
                 
                 await MainActor.run { [weak self] in
                     guard let self = self else { return }
                     self.todaysSymptoms = symptoms
-                    print("📊 Dashboard: Updated UI with \(self.todaysSymptoms.count) symptoms and \(self.todaysMeals.count) meals")
                     
                     // Calculate health score based on actual data
                     self.todaysHealthScore = self.calculateHealthScore()
@@ -244,7 +306,6 @@ final class DashboardDataStore: ObservableObject {
                     self.insightMessage = nil
                 }
             } catch {
-                print("❌ Dashboard: Error loading dashboard data: \(error)")
                 await MainActor.run { [weak self] in
                     guard let self = self else { return }
                     self.todaysSymptoms = []
@@ -253,6 +314,8 @@ final class DashboardDataStore: ObservableObject {
                     self.insightMessage = nil
                     self.todaysFocus = "Unable to load data. Please try again."
                     self.avoidanceTip = "Check your connection and try refreshing."
+                    self.aiInsightSummary = "Unable to generate insights right now."
+                    self.aiInsightSeverity = .neutral
                 }
             }
         }

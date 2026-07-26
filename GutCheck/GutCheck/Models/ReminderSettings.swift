@@ -22,31 +22,31 @@ struct ReminderSettings: Identifiable, Codable, Hashable, Equatable, FirestoreMo
 
     // Other Daily Reminders
     var symptomReminderEnabled: Bool = false
-    var symptomReminderTime: Date = Date()
+    var symptomReminderTime: Date = Date.now
     var medicationReminderEnabled: Bool = false
-    var medicationReminderTime: Date = Date()
+    var medicationReminderTime: Date = Date.now
     var remindMeLaterInterval: Int = 15 // minutes
 
     // Weekly Reports
     var weeklyInsightEnabled: Bool = false
-    var weeklyInsightTime: Date = Date()
+    var weeklyInsightTime: Date = Date.now
 
     // Smart Notifications (server-triggered via FCM)
     var newInsightsEnabled: Bool = true
     var patternAlertEnabled: Bool = true
 
     // Metadata
-    var lastUpdated: Date = Date()
+    var lastUpdated: Date = Date.now
 
     // MARK: - Helpers
 
     /// Returns a Date set to today at the given hour (minute 0) in the current calendar.
     static func defaultTime(hour: Int) -> Date {
-        var components = Calendar.current.dateComponents([.year, .month, .day], from: Date())
+        var components = Calendar.current.dateComponents([.year, .month, .day], from: Date.now)
         components.hour = hour
         components.minute = 0
         components.second = 0
-        return Calendar.current.date(from: components) ?? Date()
+        return Calendar.current.date(from: components) ?? Date.now
     }
 
     // MARK: - DataClassifiable Conformance
@@ -66,12 +66,12 @@ struct ReminderSettings: Identifiable, Codable, Hashable, Equatable, FirestoreMo
          dinnerReminderEnabled: Bool = false,
          dinnerReminderTime: Date = ReminderSettings.defaultTime(hour: 18),
          symptomReminderEnabled: Bool = false,
-         symptomReminderTime: Date = Date(),
+         symptomReminderTime: Date = Date.now,
          medicationReminderEnabled: Bool = false,
-         medicationReminderTime: Date = Date(),
+         medicationReminderTime: Date = Date.now,
          remindMeLaterInterval: Int = 15,
          weeklyInsightEnabled: Bool = false,
-         weeklyInsightTime: Date = Date(),
+         weeklyInsightTime: Date = Date.now,
          newInsightsEnabled: Bool = true,
          patternAlertEnabled: Bool = true) {
         self.id = id
@@ -91,7 +91,7 @@ struct ReminderSettings: Identifiable, Codable, Hashable, Equatable, FirestoreMo
         self.weeklyInsightTime = weeklyInsightTime
         self.newInsightsEnabled = newInsightsEnabled
         self.patternAlertEnabled = patternAlertEnabled
-        self.lastUpdated = Date()
+        self.lastUpdated = Date.now
     }
 
     // MARK: - FirestoreModel Implementation
@@ -146,19 +146,19 @@ struct ReminderSettings: Identifiable, Codable, Hashable, Equatable, FirestoreMo
         if let ts = data["symptomReminderTime"] as? Timestamp {
             self.symptomReminderTime = ts.dateValue()
         } else {
-            self.symptomReminderTime = Date()
+            self.symptomReminderTime = Date.now
         }
 
         if let ts = data["medicationReminderTime"] as? Timestamp {
             self.medicationReminderTime = ts.dateValue()
         } else {
-            self.medicationReminderTime = Date()
+            self.medicationReminderTime = Date.now
         }
 
         if let ts = data["weeklyInsightTime"] as? Timestamp {
             self.weeklyInsightTime = ts.dateValue()
         } else {
-            self.weeklyInsightTime = Date()
+            self.weeklyInsightTime = Date.now
         }
 
         self.weeklyInsightEnabled = data["weeklyInsightEnabled"] as? Bool ?? false
@@ -166,7 +166,7 @@ struct ReminderSettings: Identifiable, Codable, Hashable, Equatable, FirestoreMo
         if let ts = data["lastUpdated"] as? Timestamp {
             self.lastUpdated = ts.dateValue()
         } else {
-            self.lastUpdated = Date()
+            self.lastUpdated = Date.now
         }
     }
 
@@ -194,8 +194,8 @@ struct ReminderSettings: Identifiable, Codable, Hashable, Equatable, FirestoreMo
             "newInsightsEnabled": newInsightsEnabled,
             "patternAlertEnabled": patternAlertEnabled,
             // Metadata
-            "lastUpdated": Timestamp(date: Date()),
-            "createdAt": Timestamp(date: Date())
+            "lastUpdated": Timestamp(date: Date.now),
+            "createdAt": Timestamp(date: Date.now)
         ]
     }
 }

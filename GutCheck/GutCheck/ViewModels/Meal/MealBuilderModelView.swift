@@ -10,26 +10,26 @@ import FirebaseFirestore
 import FirebaseAuth
 
 @MainActor
-class MealBuilderViewModel: ObservableObject {
+@Observable class MealBuilderViewModel {
     // Meal properties
-    @Published var mealName: String = ""
-    @Published var mealType: MealType = .lunch
-    @Published var mealDate: Date = Date()
-    @Published var notes: String = ""
-    @Published var foodItems: [FoodItem] = []
-    @Published var isSaving: Bool = false
+    var mealName: String = ""
+    var mealType: MealType = .lunch
+    var mealDate: Date = Date.now
+    var notes: String = ""
+    var foodItems: [FoodItem] = []
+    var isSaving: Bool = false
     
     // Error state
-    @Published var errorMessage: String?
+    var errorMessage: String?
     
     // Food item being edited
-    @Published var editingFoodItem: FoodItem?
+    var editingFoodItem: FoodItem?
     
     // Repository dependency
-    private let mealRepository: MealRepository
+    private let mealRepository: any MealRepositoryProtocol
     
     // Dependency injection for easier testing
-    init(mealRepository: MealRepository = MealRepository.shared) {
+    init(mealRepository: any MealRepositoryProtocol = MealRepository.shared) {
         self.mealRepository = mealRepository
     }
     
@@ -164,6 +164,9 @@ class MealBuilderViewModel: ObservableObject {
                 // Save to repository (using the new repository pattern)
                 try await mealRepository.save(meal)
 
+                // Index in Spotlight for search
+                SpotlightIndexingService.shared.indexMeal(meal)
+
                 // Write nutrition data to HealthKit (respects user preference)
                 if UserDefaults.standard.bool(forKey: "healthKitWriteMeals") {
                     await HealthKitAsyncWrapper.shared.writeMealWithLogging(meal)
@@ -206,7 +209,7 @@ class MealBuilderViewModel: ObservableObject {
     private func resetForm() {
         mealName = ""
         mealType = .lunch
-        mealDate = Date()
+        mealDate = Date.now
         notes = ""
         foodItems = []
         editingFoodItem = nil

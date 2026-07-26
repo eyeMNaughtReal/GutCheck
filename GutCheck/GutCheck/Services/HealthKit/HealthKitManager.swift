@@ -13,7 +13,7 @@ struct UserHealthData {
     var heartRate: Double?               // bpm
 }
 
-final class HealthKitManager {
+final class HealthKitManager: HealthKitManagerProtocol {
     static let shared = HealthKitManager()
     private let healthStore = HKHealthStore()
 
@@ -113,11 +113,9 @@ final class HealthKitManager {
             if let biologicalSex = try? healthStore.biologicalSex().biologicalSex {
                 healthData.biologicalSex = biologicalSex
                 #if DEBUG
-                print("HealthKit: Retrieved biological sex")
                 #endif
             } else {
                 #if DEBUG
-                print("HealthKit: No biological sex data available")
                 #endif
             }
 
@@ -165,7 +163,6 @@ final class HealthKitManager {
             }
 
         } catch {
-            print("HealthKit error: \(error.localizedDescription)")
             completion(nil)
         }
     }
@@ -278,14 +275,7 @@ final class HealthKitManager {
         }
         
         healthStore.save(samples) { success, error in
-            DispatchQueue.main.async {
-                #if DEBUG
-                if success {
-                    print("✅ HealthKit: Successfully wrote meal data")
-                } else {
-                    print("❌ HealthKit: Failed to write meal data: \(error?.localizedDescription ?? "Unknown error")")
-                }
-                #endif
+            Task { @MainActor in
                 completion(success, error)
             }
         }
@@ -365,21 +355,14 @@ final class HealthKitManager {
         }
 
         healthStore.save(samples) { success, error in
-            DispatchQueue.main.async {
-                #if DEBUG
-                if success {
-                    print("✅ HealthKit: Successfully wrote \(samples.count) symptom sample(s)")
-                } else {
-                    print("❌ HealthKit: Failed to write symptom data: \(error?.localizedDescription ?? "Unknown error")")
-                }
-                #endif
+            Task { @MainActor in
                 completion(success, error)
             }
         }
     }
     
     /// Write water intake to HealthKit
-    func writeWaterIntakeToHealthKit(amount: Double, date: Date = Date(), completion: @escaping (Bool, Error?) -> Void) {
+    func writeWaterIntakeToHealthKit(amount: Double, date: Date = Date.now, completion: @escaping (Bool, Error?) -> Void) {
         guard let waterType = HKQuantityType.quantityType(forIdentifier: .dietaryWater) else {
             completion(false, HealthKitError.invalidData)
             return
@@ -389,12 +372,7 @@ final class HealthKitManager {
         let waterSample = HKQuantitySample(type: waterType, quantity: waterQuantity, start: date, end: date)
         
         healthStore.save(waterSample) { success, error in
-            DispatchQueue.main.async {
-                if success {
-                    print("✅ HealthKit: Successfully wrote water intake: \(amount)ml")
-                } else {
-                    print("❌ HealthKit: Failed to write water intake: \(error?.localizedDescription ?? "Unknown error")")
-                }
+            Task { @MainActor in
                 completion(success, error)
             }
         }

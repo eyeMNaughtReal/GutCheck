@@ -3,9 +3,9 @@ import SwiftUI
 struct MealConfirmationView: View {
     let meal: Meal
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var router: AppRouter
-    @EnvironmentObject private var serverStatus: ServerStatusService
-    @StateObject private var viewModel = MealConfirmationViewModel()
+    @Environment(AppRouter.self) private var router
+    @Environment(ServerStatusService.self) private var serverStatus
+    @State private var viewModel = MealConfirmationViewModel()
     
     var body: some View {
         ScrollView {
@@ -18,18 +18,18 @@ struct MealConfirmationView: View {
                             .bold()
                         Spacer()
                         Text(meal.date.formatted(.dateTime.hour().minute()))
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     
                     if let notes = meal.notes {
                         Text(notes)
                             .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(.secondary)
                     }
                     
                     Label("\(meal.type.rawValue)", systemImage: "clock")
                         .font(.subheadline)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 .padding()
                 .roundedCard()
@@ -64,10 +64,10 @@ struct MealConfirmationView: View {
                 if serverStatus.isOffline {
                     HStack(spacing: 8) {
                         Image(systemName: "wifi.slash")
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                         Text("AI analysis unavailable while offline")
                             .font(.subheadline)
-                            .foregroundColor(ColorTheme.secondaryText)
+                            .foregroundStyle(ColorTheme.secondaryText)
                     }
                     .padding()
                     .frame(maxWidth: .infinity)
@@ -90,7 +90,7 @@ struct MealConfirmationView: View {
                             ForEach(analysis.warnings, id: \.self) { warning in
                                 Label(warning, systemImage: "exclamationmark.triangle")
                                     .font(.subheadline)
-                                    .foregroundColor(.orange)
+                                    .foregroundStyle(.orange)
                                     .padding(.vertical, 4)
                             }
                         }
@@ -113,8 +113,8 @@ struct MealConfirmationView: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(ColorTheme.primary)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+                    .foregroundStyle(.white)
+                    .clipShape(.rect(cornerRadius: 10))
                     
                     Button("Edit Meal") {
                         router.navigateBack()
@@ -122,8 +122,8 @@ struct MealConfirmationView: View {
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(ColorTheme.background)
-                    .foregroundColor(ColorTheme.primary)
-                    .cornerRadius(10)
+                    .foregroundStyle(ColorTheme.primary)
+                    .clipShape(.rect(cornerRadius: 10))
                     .overlay(
                         RoundedRectangle(cornerRadius: 10)
                             .stroke(ColorTheme.primary, lineWidth: 1)
@@ -170,19 +170,19 @@ private struct NutritionSummaryView: View {
                 Divider()
                 NutritionValueView(
                     label: "Protein",
-                    value: String(format: "%.1f", nutrition.protein ?? 0),
+                    value: (nutrition.protein ?? 0).formatted(.number.precision(.fractionLength(1))),
                     unit: "g"
                 )
                 Divider()
                 NutritionValueView(
                     label: "Carbs",
-                    value: String(format: "%.1f", nutrition.carbs ?? 0),
+                    value: (nutrition.carbs ?? 0).formatted(.number.precision(.fractionLength(1))),
                     unit: "g"
                 )
                 Divider()
                 NutritionValueView(
                     label: "Fat",
-                    value: String(format: "%.1f", nutrition.fat ?? 0),
+                    value: (nutrition.fat ?? 0).formatted(.number.precision(.fractionLength(1))),
                     unit: "g"
                 )
             }
@@ -191,20 +191,20 @@ private struct NutritionSummaryView: View {
                 HStack {
                     Label("Fiber", systemImage: "leaf")
                     Spacer()
-                    Text("\(String(format: "%.1f", fiber))g")
+                    Text("\(fiber.formatted(.number.precision(.fractionLength(1))))g")
                 }
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             }
             
             if let sugar = nutrition.sugar {
                 HStack {
                     Label("Sugar", systemImage: "cube")
                     Spacer()
-                    Text("\(String(format: "%.1f", sugar))g")
+                    Text("\(sugar.formatted(.number.precision(.fractionLength(1))))g")
                 }
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             }
         }
     }
@@ -219,12 +219,12 @@ private struct NutritionValueView: View {
         VStack(spacing: 4) {
             Text(label)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundStyle(.secondary)
             Text(value)
                 .font(.headline)
             Text(unit)
-                .font(.caption2)
-                .foregroundColor(.secondary)
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
     }
@@ -240,7 +240,7 @@ private struct MealConfirmationFoodItemRow: View {
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 60, height: 60)
-                .foregroundColor(ColorTheme.primary.opacity(0.3))
+                .foregroundStyle(ColorTheme.primary.opacity(0.3))
             
             VStack(alignment: .leading, spacing: 8) {
                 Text(item.name)
@@ -248,12 +248,12 @@ private struct MealConfirmationFoodItemRow: View {
                 
                 Text(item.quantity)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                 
                 if let brand = item.nutritionDetails["brand"] {
                     Text(brand)
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
             
@@ -262,7 +262,7 @@ private struct MealConfirmationFoodItemRow: View {
             if let calories = item.nutrition.calories {
                 Text("\(Int(calories)) cal")
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, 8)
@@ -277,10 +277,10 @@ struct MealAnalysis {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         MealConfirmationView(meal: Meal(
             name: "Lunch",
-            date: Date(),
+            date: Date.now,
             type: .lunch,
             source: .manual,
             foodItems: [
@@ -298,7 +298,7 @@ struct MealAnalysis {
             notes: "Quick lunch at home",
             createdBy: "preview-user"
         ))
-        .environmentObject(AppRouter.shared)
-        .environmentObject(ServerStatusService.shared)
+        .environment(AppRouter.shared)
+        .environment(ServerStatusService.shared)
     }
 }

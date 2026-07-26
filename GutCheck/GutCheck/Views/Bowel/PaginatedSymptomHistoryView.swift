@@ -8,13 +8,13 @@
 import SwiftUI
 
 struct PaginatedSymptomHistoryView: View {
-    @StateObject private var viewModel = SymptomHistoryViewModel()
-    @EnvironmentObject var authService: AuthService
+    @State private var viewModel = SymptomHistoryViewModel()
+    @Environment(AuthService.self) var authService
     @State private var optionalStartDate: Date? = nil
     @State private var optionalEndDate: Date? = nil
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 // Filter bar
                 FilterBar(selectedFilter: $viewModel.selectedFilter) { filter in
@@ -54,7 +54,7 @@ struct PaginatedSymptomHistoryView: View {
             .navigationTitle("Symptom History")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Export") {
                         Task {
                             await viewModel.exportSymptoms()
@@ -103,7 +103,7 @@ struct PaginatedSymptomHistoryView: View {
                 } else if !viewModel.groupedSymptoms.isEmpty {
                     Text("No more symptoms")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                         .padding()
                 }
             }
@@ -144,11 +144,11 @@ struct SymptomDaySection: View {
                     Text(dayFormatter.string(from: date))
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(ColorTheme.primary)
+                        .foregroundStyle(ColorTheme.primary)
                     
                     Text(dateFormatter.string(from: date))
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(.secondary)
                 }
                 
                 Spacer()
@@ -157,7 +157,7 @@ struct SymptomDaySection: View {
                 Text("\(symptoms.count)")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 4)
                     .background(ColorTheme.accent)
@@ -203,69 +203,70 @@ struct SymptomRowView: View {
     }()
     
     var body: some View {
-        HStack(spacing: 12) {
-            // Time
-            Text(timeFormatter.string(from: symptom.date))
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundColor(ColorTheme.primary)
-                .frame(width: 60, alignment: .leading)
-            
-            // Stool type indicator
-            Circle()
-                .fill(stoolTypeColor)
-                .frame(width: 12, height: 12)
-            
-            // Details
-            VStack(alignment: .leading, spacing: 2) {
-                HStack {
-                    Text("Type \(symptom.stoolType.typeNumber)")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                    
-                    if symptom.painLevel != .none {
-                        SimpleIndicator(
-                            icon: "exclamationmark.triangle.fill",
-                            text: symptom.painLevel.displayName,
-                            color: symptom.painLevel.color
-                        )
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                // Time
+                Text(timeFormatter.string(from: symptom.date))
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(ColorTheme.primary)
+                    .frame(width: 60, alignment: .leading)
+                
+                // Stool type indicator
+                Circle()
+                    .fill(stoolTypeColor)
+                    .frame(width: 12, height: 12)
+                
+                // Details
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack {
+                        Text("Type \(symptom.stoolType.typeNumber)")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                        
+                        if symptom.painLevel != .none {
+                            SimpleIndicator(
+                                icon: "exclamationmark.triangle.fill",
+                                text: symptom.painLevel.displayName,
+                                color: symptom.painLevel.color
+                            )
+                        }
+                        
+                        if symptom.urgencyLevel != .none {
+                            SimpleIndicator(
+                                icon: "timer",
+                                text: symptom.urgencyLevel.displayName,
+                                color: symptom.urgencyLevel.color
+                            )
+                        }
+                        
+                        Spacer()
                     }
                     
-                    if symptom.urgencyLevel != .none {
-                        SimpleIndicator(
-                            icon: "timer",
-                            text: symptom.urgencyLevel.displayName,
-                            color: symptom.urgencyLevel.color
-                        )
+                    if let notes = symptom.notes, !notes.isEmpty {
+                        Text(notes)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
                     }
-                    
-                    Spacer()
                 }
                 
-                if let notes = symptom.notes, !notes.isEmpty {
-                    Text(notes)
+                // Delete button
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
                         .font(.caption)
-                        .foregroundColor(.secondary)
-                        .lineLimit(2)
+                        .foregroundStyle(.red)
+                        .padding(8)
+                        .background(Circle().fill(Color.red.opacity(0.1)))
                 }
             }
-            
-            // Delete button
-            Button(action: onDelete) {
-                Image(systemName: "trash")
-                    .font(.caption)
-                    .foregroundColor(.red)
-                    .padding(8)
-                    .background(Circle().fill(Color.red.opacity(0.1)))
-            }
         }
+        .buttonStyle(.plain)
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color(.secondarySystemBackground))
         )
-        .contentShape(Rectangle())
-        .onTapGesture(perform: onTap)
     }
     
     private var stoolTypeColor: Color {
@@ -290,12 +291,12 @@ struct SimpleIndicator: View {
     var body: some View {
         HStack(spacing: 2) {
             Image(systemName: icon)
-                .font(.caption2)
-                .foregroundColor(color)
+                .font(.caption)
+                .foregroundStyle(color)
             
             Text(text)
-                .font(.caption2)
-                .foregroundColor(color)
+                .font(.caption)
+                .foregroundStyle(color)
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
@@ -364,11 +365,7 @@ extension StoolType {
 
 // MARK: - Preview
 
-#if DEBUG
-struct PaginatedSymptomHistoryView_Previews: PreviewProvider {
-    static var previews: some View {
-        PaginatedSymptomHistoryView()
-            .environmentObject(AuthService())
-    }
+#Preview {
+    PaginatedSymptomHistoryView()
+        .environment(AuthService())
 }
-#endif

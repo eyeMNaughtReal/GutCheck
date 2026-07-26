@@ -73,7 +73,7 @@ struct UnifiedFoodItemRow: View {
         }
         .padding(config.padding)
         .background(ColorTheme.cardBackground)
-        .cornerRadius(config.cornerRadius)
+        .clipShape(.rect(cornerRadius: config.cornerRadius))
         .shadow(color: ColorTheme.shadowColor, radius: config.shadowRadius, x: 0, y: 1)
     }
     
@@ -89,7 +89,7 @@ struct UnifiedFoodItemRow: View {
             .frame(width: config.iconSize, height: config.iconSize)
             .overlay(
                 Image(systemName: "fork.knife")
-                    .foregroundColor(ColorTheme.accent)
+                    .foregroundStyle(ColorTheme.accent)
                     .font(.system(size: config.iconSize * 0.4))
             )
     }
@@ -107,7 +107,7 @@ struct UnifiedFoodItemRow: View {
                     // Food name
                     Text(item.name)
                         .font(config.nameFont)
-                        .foregroundColor(ColorTheme.primaryText)
+                        .foregroundStyle(ColorTheme.primaryText)
                         .multilineTextAlignment(.leading)
                         .lineLimit(config.nameLineLimit)
                     
@@ -115,14 +115,14 @@ struct UnifiedFoodItemRow: View {
                     if config.showBrand, let brand = item.nutritionDetails["brand"] {
                         Text(brand)
                             .font(.subheadline)
-                            .foregroundColor(ColorTheme.accent)
+                            .foregroundStyle(ColorTheme.accent)
                             .lineLimit(1)
                     }
                     
                     // Quantity
                     Text(item.quantity)
                         .font(config.quantityFont)
-                        .foregroundColor(ColorTheme.secondaryText)
+                        .foregroundStyle(ColorTheme.secondaryText)
                         .lineLimit(1)
                 }
                 
@@ -142,6 +142,11 @@ struct UnifiedFoodItemRow: View {
             if config.showAllergens && !item.allergens.isEmpty {
                 allergenTags
             }
+            
+            // Dietary tags (mealBuilder style only)
+            if style == .mealBuilder {
+                dietaryTagsRow
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -159,7 +164,7 @@ struct UnifiedFoodItemRow: View {
             if config.showMacros {
                 if let protein = item.nutrition.protein {
                     NutritionBadge(
-                        text: config.compactMacros ? "\(String(format: "%.1f", protein)) P" : "P: \(String(format: "%.1f", protein))g",
+                        text: config.compactMacros ? "\(protein.formatted(.number.precision(.fractionLength(1)))) P" : "P: \(protein.formatted(.number.precision(.fractionLength(1))))g",
                         color: .blue,
                         size: config.badgeSize
                     )
@@ -167,7 +172,7 @@ struct UnifiedFoodItemRow: View {
                 
                 if let carbs = item.nutrition.carbs {
                     NutritionBadge(
-                        text: config.compactMacros ? "\(String(format: "%.1f", carbs)) C" : "C: \(String(format: "%.1f", carbs))g",
+                        text: config.compactMacros ? "\(carbs.formatted(.number.precision(.fractionLength(1)))) C" : "C: \(carbs.formatted(.number.precision(.fractionLength(1))))g",
                         color: .green,
                         size: config.badgeSize
                     )
@@ -175,7 +180,7 @@ struct UnifiedFoodItemRow: View {
                 
                 if let fat = item.nutrition.fat {
                     NutritionBadge(
-                        text: config.compactMacros ? "\(String(format: "%.1f", fat)) F" : "F: \(String(format: "%.1f", fat))g",
+                        text: config.compactMacros ? "\(fat.formatted(.number.precision(.fractionLength(1)))) F" : "F: \(fat.formatted(.number.precision(.fractionLength(1))))g",
                         color: .red,
                         size: config.badgeSize
                     )
@@ -188,18 +193,50 @@ struct UnifiedFoodItemRow: View {
         HStack {
             ForEach(item.allergens.prefix(config.maxAllergens), id: \.self) { allergen in
                 Text(allergen)
-                    .font(.caption2)
+                    .font(.caption)
                     .padding(.horizontal, 4)
                     .padding(.vertical, 2)
                     .background(ColorTheme.error.opacity(0.2))
-                    .foregroundColor(ColorTheme.error)
-                    .cornerRadius(4)
+                    .foregroundStyle(ColorTheme.error)
+                    .clipShape(.rect(cornerRadius: 4))
             }
             if item.allergens.count > config.maxAllergens {
                 Text("+\(item.allergens.count - config.maxAllergens)")
-                    .font(.caption2)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .font(.caption)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
+        }
+    }
+    
+    @ViewBuilder
+    private var dietaryTagsRow: some View {
+        let breakdown = IngredientBreakdownService.shared.analyzeFood(
+            name: item.name, existingIngredients: item.ingredients
+        )
+        if !breakdown.dietaryTags.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 4) {
+                    ForEach(breakdown.dietaryTags.prefix(5), id: \.self) { tag in
+                        HStack(spacing: 2) {
+                            Image(systemName: tag.icon)
+                                .font(.system(size: 8))
+                            Text(tag.displayName)
+                                .font(.caption2)
+                        }
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
+                        .background(tag.color.opacity(0.15))
+                        .foregroundStyle(tag.color)
+                        .clipShape(.rect(cornerRadius: 4))
+                    }
+                    if breakdown.dietaryTags.count > 5 {
+                        Text("+\(breakdown.dietaryTags.count - 5)")
+                            .font(.caption2)
+                            .foregroundStyle(ColorTheme.secondaryText)
+                    }
+                }
+            }
+            .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.ingredientBreakdownTags)
         }
     }
     
@@ -210,7 +247,7 @@ struct UnifiedFoodItemRow: View {
                 Button(action: onAdd) {
                     Image(systemName: "plus.circle.fill")
                         .font(config.actionButtonFont)
-                        .foregroundColor(ColorTheme.primary)
+                        .foregroundStyle(ColorTheme.primary)
                 }
                 .buttonStyle(PlainButtonStyle())
             }
@@ -220,7 +257,7 @@ struct UnifiedFoodItemRow: View {
                 Button(action: onEdit) {
                     Image(systemName: "pencil")
                         .font(config.actionButtonFont)
-                        .foregroundColor(ColorTheme.primary)
+                        .foregroundStyle(ColorTheme.primary)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .padding(.horizontal, 4)
@@ -231,7 +268,7 @@ struct UnifiedFoodItemRow: View {
                 Button(action: onDelete) {
                     Image(systemName: "trash")
                         .font(config.actionButtonFont)
-                        .foregroundColor(ColorTheme.error)
+                        .foregroundStyle(ColorTheme.error)
                 }
                 .buttonStyle(PlainButtonStyle())
                 .padding(.horizontal, 4)
@@ -253,8 +290,8 @@ struct NutritionBadge: View {
             .padding(.horizontal, size.horizontalPadding)
             .padding(.vertical, size.verticalPadding)
             .background(color.opacity(0.2))
-            .foregroundColor(color)
-            .cornerRadius(size.cornerRadius)
+            .foregroundStyle(color)
+            .clipShape(.rect(cornerRadius: size.cornerRadius))
     }
 }
 
@@ -265,7 +302,7 @@ enum BadgeSize {
     
     var font: Font {
         switch self {
-        case .small: return .caption2
+        case .small: return .caption
         case .medium: return .caption
         case .large: return .subheadline
         }
@@ -376,8 +413,8 @@ struct StyleConfig {
                 showBrand: false,
                 showMacros: true,
                 compactMacros: false,
-                showAllergens: false,
-                maxAllergens: 0
+                showAllergens: true,
+                maxAllergens: 3
             )
             
         case .mealDetail:

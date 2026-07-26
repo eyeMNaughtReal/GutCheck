@@ -2,21 +2,21 @@ import Foundation
 import FirebaseAuth
 
 @MainActor
-class PreviewAuthService: AuthenticationProtocol {
-    @Published private(set) var isAuthStateResolved: Bool = true
-    @Published private(set) var isAuthenticated: Bool = true
-    @Published private(set) var isLoading: Bool = false
-    @Published var errorMessage: String?
-    @Published private(set) var isPhoneVerificationInProgress: Bool = false
-    @Published private(set) var isAwaitingEmailVerification: Bool = false
-    @Published private(set) var currentUser: User? = User(
+@Observable class PreviewAuthService: AuthenticationProtocol {
+    private(set) var isAuthStateResolved: Bool = true
+    private(set) var isAuthenticated: Bool = true
+    private(set) var isLoading: Bool = false
+    var errorMessage: String?
+    private(set) var isPhoneVerificationInProgress: Bool = false
+    private(set) var isAwaitingEmailVerification: Bool = false
+    private(set) var currentUser: User? = User(
         id: "preview",
         email: "preview@example.com",
         firstName: "Preview",
         lastName: "User",
         signInMethod: .email,
-        createdAt: Date(),
-        updatedAt: Date()
+        createdAt: Date.now,
+        updatedAt: Date.now
     )
     
     // MARK: - Protocol Methods (Preview Implementation)
@@ -42,6 +42,30 @@ class PreviewAuthService: AuthenticationProtocol {
     }
     
     func signOut() throws {
+        // Preview implementation - no-op
+    }
+    
+    func resendVerificationEmail() async throws {
+        // Preview implementation - no-op
+    }
+    
+    func checkEmailVerification() async throws {
+        // Preview implementation - no-op
+    }
+    
+    func cancelEmailVerification() throws {
+        // Preview implementation - no-op
+    }
+    
+    func deleteAuthenticatedAccount() async throws {
+        // Preview implementation - no-op
+    }
+    
+    func updateUserProfile(_ updatedUser: User) async throws {
+        // Preview implementation - no-op
+    }
+    
+    func refreshCurrentUser() async {
         // Preview implementation - no-op
     }
 }

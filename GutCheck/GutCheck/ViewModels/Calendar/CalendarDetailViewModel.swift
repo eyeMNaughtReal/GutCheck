@@ -2,11 +2,20 @@ import Foundation
 import FirebaseFirestore
 
 @MainActor
-class CalendarDetailViewModel: ObservableObject {
-    @Published var meals: [Meal] = []
-    @Published var symptoms: [Symptom] = []
-    @Published var patterns: [String]?
-    @Published var potentialTriggers: [String]?
+@Observable class CalendarDetailViewModel {
+    var meals: [Meal] = []
+    var symptoms: [Symptom] = []
+    var patterns: [String]?
+    var potentialTriggers: [String]?
+    
+    private let mealRepository: any MealRepositoryProtocol
+    private let symptomRepository: any SymptomRepositoryProtocol
+    
+    init(mealRepository: any MealRepositoryProtocol = MealRepository.shared,
+         symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
+        self.mealRepository = mealRepository
+        self.symptomRepository = symptomRepository
+    }
     
     var hasAnalysis: Bool {
         (patterns != nil && !patterns!.isEmpty) || (potentialTriggers != nil && !potentialTriggers!.isEmpty)
@@ -19,13 +28,13 @@ class CalendarDetailViewModel: ObservableObject {
     func loadData(for date: Date, authService: AuthService) async {
         do {
             // Load meals for the day using MealRepository
-            meals = try await MealRepository.shared.fetchMealsForDate(
+            meals = try await mealRepository.fetchMealsForDate(
                 date, 
                 userId: authService.currentUser?.id ?? ""
             )
             
             // Load symptoms for the day using SymptomRepository
-            symptoms = try await SymptomRepository.shared.fetchSymptomsForDate(
+            symptoms = try await symptomRepository.fetchSymptomsForDate(
                 date,
                 userId: authService.currentUser?.id ?? ""
             )
@@ -33,7 +42,6 @@ class CalendarDetailViewModel: ObservableObject {
             // Analyze the data for the day
             await analyzeDayData()
         } catch {
-            print("Error loading calendar data: \(error)")
             meals = []
             symptoms = []
         }
@@ -41,23 +49,23 @@ class CalendarDetailViewModel: ObservableObject {
     
     func deleteSymptom(_ symptom: Symptom) async {
         do {
-            try await SymptomRepository.shared.delete(id: symptom.id)
+            try await symptomRepository.delete(id: symptom.id)
+            SpotlightIndexingService.shared.removeSymptom(id: symptom.id)
             // Remove from local array
             symptoms.removeAll { $0.id == symptom.id }
         } catch {
-            print("Error deleting symptom: \(error)")
         }
     }
     
     func updateSymptom(_ updatedSymptom: Symptom) async {
         do {
-            try await SymptomRepository.shared.save(updatedSymptom)
+            try await symptomRepository.save(updatedSymptom)
+            SpotlightIndexingService.shared.indexSymptom(updatedSymptom)
             // Update in local array
             if let index = symptoms.firstIndex(where: { $0.id == updatedSymptom.id }) {
                 symptoms[index] = updatedSymptom
             }
         } catch {
-            print("Error updating symptom: \(error)")
         }
     }
     
@@ -72,7 +80,6 @@ class CalendarDetailViewModel: ObservableObject {
             patterns = analysis.insights
             potentialTriggers = analysis.recommendations
         } catch {
-            print("Error analyzing day data: \(error)")
             patterns = nil
         }
     }

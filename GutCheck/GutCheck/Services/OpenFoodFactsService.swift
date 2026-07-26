@@ -3,11 +3,14 @@ import Foundation
 class OpenFoodFactsService {
     static let shared = OpenFoodFactsService()
     private let baseURL = "https://world.openfoodfacts.org"
-    
+    private let rateLimiter = RateLimitingService.shared
+
     private init() {}
     
     // Search for foods in OpenFoodFacts database
     func searchFoods(query: String, page: Int = 1, pageSize: Int = 20) async throws -> [OpenFoodFactsProduct] {
+        try rateLimiter.checkLimit(for: .foodSearchOpenFoodFacts)
+
         let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
         let urlString = "\(baseURL)/cgi/search.pl?search_terms=\(encodedQuery)&search_simple=1&action=process&page=\(page)&page_size=\(pageSize)&json=1"
         
@@ -15,20 +18,17 @@ class OpenFoodFactsService {
             throw OpenFoodFactsError.invalidURL
         }
         
-        print("🥫 OpenFoodFacts: Searching for '\(query)' at URL: \(urlString)")
         
         do {
             let (data, response) = try await URLSession.shared.data(from: url)
             
             if let httpResponse = response as? HTTPURLResponse {
-                print("🥫 OpenFoodFacts HTTP Status: \(httpResponse.statusCode)")
                 if httpResponse.statusCode != 200 {
                     throw OpenFoodFactsError.httpError(httpResponse.statusCode)
                 }
             }
             
             let searchResponse = try JSONDecoder().decode(OpenFoodFactsSearchResponse.self, from: data)
-            print("🥫 OpenFoodFacts: Found \(searchResponse.products.count) products")
             
             // Filter out products without names or basic nutrition data
             let validProducts = searchResponse.products.filter { product in
@@ -37,27 +37,25 @@ class OpenFoodFactsService {
                 product.nutriments?.energyKcal100g != nil
             }
             
-            print("🥫 OpenFoodFacts: \(validProducts.count) valid products after filtering")
             return validProducts
             
         } catch let decodingError as DecodingError {
-            print("🥫 OpenFoodFacts JSON decoding error: \(decodingError)")
             throw OpenFoodFactsError.decodingError(decodingError)
         } catch {
-            print("🥫 OpenFoodFacts search error: \(error)")
             throw OpenFoodFactsError.networkError(error)
         }
     }
     
     // Get detailed product information by barcode
     func getProduct(by barcode: String) async throws -> OpenFoodFactsProduct? {
+        try rateLimiter.checkLimit(for: .foodSearchOpenFoodFacts)
+
         let urlString = "\(baseURL)/api/v0/product/\(barcode).json"
         
         guard let url = URL(string: urlString) else {
             throw OpenFoodFactsError.invalidURL
         }
         
-        print("🥫 OpenFoodFacts: Getting product by barcode \(barcode)")
         
         do {
             let (data, response) = try await URLSession.shared.data(from: url)

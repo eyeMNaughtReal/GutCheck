@@ -8,26 +8,25 @@
 import Foundation
 import SwiftUI
 
-class DataSyncManager: ObservableObject {
+@MainActor
+@Observable class DataSyncManager {
     static let shared = DataSyncManager()
     
-    @Published private(set) var lastRefreshTime: Date = Date()
-    @Published private(set) var isRefreshing: Bool = false
+    private(set) var lastRefreshTime: Date = Date.now
+    private(set) var isRefreshing: Bool = false
     
     // Refresh triggers for different data types
-    @Published var shouldRefreshDashboard: Bool = false
-    @Published var shouldRefreshMeals: Bool = false
-    @Published var shouldRefreshSymptoms: Bool = false
-    @Published var shouldRefreshCalendar: Bool = false
+    var shouldRefreshDashboard: Bool = false
+    var shouldRefreshMeals: Bool = false
+    var shouldRefreshSymptoms: Bool = false
+    var shouldRefreshCalendar: Bool = false
     
     private init() {}
     
     // MARK: - Main Refresh Methods
     
     /// Trigger a dashboard refresh after data changes
-    @MainActor
     func triggerRefresh() {
-        print("🔄 DataSyncManager: Triggering dashboard refresh")
         updateRefreshStates()
         
         // Also trigger RefreshManager to ensure all views are updated
@@ -35,9 +34,7 @@ class DataSyncManager: ObservableObject {
     }
     
     /// Trigger a specific data type refresh
-    @MainActor
     func triggerRefresh(for dataType: DataType) {
-        print("🔄 DataSyncManager: Triggering \(dataType.rawValue) refresh")
         
         switch dataType {
         case .dashboard:
@@ -61,19 +58,16 @@ class DataSyncManager: ObservableObject {
     
     /// Trigger refresh after successful save operation
     func triggerRefreshAfterSave(operation: String, dataType: DataType = .dashboard) {
-        print("✅ DataSyncManager: \(operation) successful, triggering \(dataType.rawValue) refresh")
-        Task { @MainActor in
-            triggerRefresh(for: dataType)
-            
-            // Also trigger RefreshManager to ensure all views are updated
-            RefreshManager.shared.triggerRefresh()
-        }
+        triggerRefresh(for: dataType)
+        
+        // Also trigger RefreshManager to ensure all views are updated
+        RefreshManager.shared.triggerRefresh()
     }
     
     /// Trigger refresh with delay (useful for UI transitions)
     func triggerRefreshWithDelay(seconds: Double = 0.5, dataType: DataType = .dashboard) {
         Task {
-            try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            try? await Task.sleep(for: .seconds(seconds))
             await MainActor.run {
                 triggerRefresh(for: dataType)
             }
@@ -83,48 +77,40 @@ class DataSyncManager: ObservableObject {
     // MARK: - Batch Operations
     
     /// Start a batch operation that will trigger refresh when completed
-    @MainActor
     func startBatchOperation() {
         isRefreshing = true
-        print("🔄 DataSyncManager: Starting batch operation")
     }
     
     /// Complete a batch operation and trigger refresh
-    @MainActor
     func completeBatchOperation(dataType: DataType = .all) {
         defer { isRefreshing = false }
-        print("✅ DataSyncManager: Completing batch operation")
         triggerRefresh(for: dataType)
     }
     
     // MARK: - Private Helpers
     
-    @MainActor
     private func updateRefreshStates() {
         shouldRefreshDashboard.toggle()
-        lastRefreshTime = Date()
+        lastRefreshTime = Date.now
     }
     
-    @MainActor
     private func updateAllRefreshStates() {
         shouldRefreshDashboard.toggle()
         shouldRefreshMeals.toggle()
         shouldRefreshSymptoms.toggle()
         shouldRefreshCalendar.toggle()
-        lastRefreshTime = Date()
+        lastRefreshTime = Date.now
     }
     
     // MARK: - Reset Methods
     
     /// Reset all refresh states (useful for testing or state cleanup)
-    @MainActor
     func resetRefreshStates() {
         shouldRefreshDashboard = false
         shouldRefreshMeals = false
         shouldRefreshSymptoms = false
         shouldRefreshCalendar = false
         isRefreshing = false
-        print("🔄 DataSyncManager: Reset all refresh states")
     }
     
     // MARK: - Computed Properties
@@ -137,7 +123,7 @@ class DataSyncManager: ObservableObject {
     }
     
     var timeSinceLastRefresh: TimeInterval {
-        Date().timeIntervalSince(lastRefreshTime)
+        Date.now.timeIntervalSince(lastRefreshTime)
     }
 }
 
@@ -168,23 +154,17 @@ extension DataSyncManager {
 extension DataSyncManager {
     /// Convenience method for meal-related operations
     func triggerMealRefresh() {
-        Task { @MainActor in
-            triggerRefresh(for: .meals)
-        }
+        triggerRefresh(for: .meals)
     }
     
     /// Convenience method for symptom-related operations
     func triggerSymptomRefresh() {
-        Task { @MainActor in
-            triggerRefresh(for: .symptoms)
-        }
+        triggerRefresh(for: .symptoms)
     }
     
     /// Convenience method for calendar-related operations
     func triggerCalendarRefresh() {
-        Task { @MainActor in
-            triggerRefresh(for: .calendar)
-        }
+        triggerRefresh(for: .calendar)
     }
 }
 
@@ -195,9 +175,8 @@ protocol DataSyncCapable {
 }
 
 extension DataSyncCapable {
+    @MainActor
     func triggerDataRefresh() {
-        Task { @MainActor in
-            DataSyncManager.shared.triggerRefresh()
-        }
+        DataSyncManager.shared.triggerRefresh()
     }
 }

@@ -11,19 +11,19 @@ import FirebaseAuth
 import UserNotifications
 
 @MainActor
-class LogSymptomViewModel: ObservableObject, HasLoadingState {
+@Observable class LogSymptomViewModel: HasLoadingState {
     // Form state (unchanged)
-    @Published var symptomDate = Date()
-    @Published var selectedStoolType: StoolType?
-    @Published var selectedPainLevel: Int = 0
-    @Published var selectedUrgencyLevel: UrgencyLevel = .none
-    @Published var selectedTags: Set<String> = []
-    @Published var customTag: String = ""
-    @Published var notes: String = ""
+    var symptomDate = Date.now
+    var selectedStoolType: StoolType?
+    var selectedPainLevel: Int = 0
+    var selectedUrgencyLevel: UrgencyLevel = .none
+    var selectedTags: Set<String> = []
+    var customTag: String = ""
+    var notes: String = ""
     
     // UI state (unchanged)
-    @Published var showingSuccessAlert = false
-    @Published var showingErrorAlert = false
+    var showingSuccessAlert = false
+    var showingErrorAlert = false
     
     let loadingState = LoadingStateManager()
     
@@ -35,9 +35,9 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
     ]
     
     // Repository dependency
-    private let symptomRepository: SymptomRepository
+    private let symptomRepository: any SymptomRepositoryProtocol
     
-    init(symptomRepository: SymptomRepository = SymptomRepository.shared) {
+    init(symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
         self.symptomRepository = symptomRepository
     }
     
@@ -52,7 +52,7 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
         selectedUrgencyLevel != .none ||
         !selectedTags.isEmpty ||
         !notes.isEmpty ||
-        !Calendar.current.isDate(symptomDate, inSameDayAs: Date())
+        !Calendar.current.isDate(symptomDate, inSameDayAs: Date.now)
     }
     
     // MARK: - Tag Management (unchanged)
@@ -123,20 +123,17 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
             createdBy: userId
         )
         
-        print("🕐 LogSymptom: Symptom date: \(symptomDate)")
-        print("📝 LogSymptom: Current date: \(Date())")
-        print("🗓️ LogSymptom: Same day check: \(Calendar.current.isDate(symptomDate, inSameDayAs: Date()))")
-        print("🕐 LogSymptom: Symptom date components - year: \(Calendar.current.component(.year, from: symptomDate)), month: \(Calendar.current.component(.month, from: symptomDate)), day: \(Calendar.current.component(.day, from: symptomDate))")
         
         Task {
             do {
                 // Use repository instead of direct Firestore calls
                 #if DEBUG
-                print("💾 LogSymptom: Saving symptom — privacy: \(symptom.privacyLevel), requiresLocal: \(symptom.requiresLocalStorage), allowsCloud: \(symptom.allowsCloudSync)")
                 #endif
                 try await symptomRepository.save(symptom)
-                print("✅ LogSymptom: Successfully saved symptom")
-                
+
+                // Index in Spotlight for search
+                SpotlightIndexingService.shared.indexSymptom(symptom)
+
                 // Write to HealthKit
                 await self.writeToHealthKit(symptom)
                 
@@ -148,7 +145,6 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
                     DataSyncManager.shared.triggerRefreshAfterSave(operation: "Symptom save", dataType: .symptoms)
                 }
             } catch {
-                print("❌ LogSymptom: Error saving symptom: \(error)")
                 await MainActor.run {
                     self.loadingState.setError(error.localizedDescription)
                     self.showingErrorAlert = true
@@ -169,7 +165,6 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
         
         // Check permission through centralized system
         guard permissionManager.notificationStatus.isGranted else {
-            print("⚠️ LogSymptomViewModel: Cannot schedule reminder - notification permission not granted")
             return
         }
         
@@ -183,17 +178,11 @@ class LogSymptomViewModel: ObservableObject, HasLoadingState {
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: TimeInterval(interval * 60), repeats: false)
         let request = UNNotificationRequest(identifier: "symptomReminder_\(UUID().uuidString)", content: content, trigger: trigger)
         
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("❌ LogSymptomViewModel: Error scheduling reminder: \(error)")
-            } else {
-                print("✅ LogSymptomViewModel: Reminder scheduled successfully")
-            }
-        }
+        UNUserNotificationCenter.current().add(request)
     }
     
     func resetForm() {
-        symptomDate = Date()
+        symptomDate = Date.now
         selectedStoolType = nil
         selectedPainLevel = 0
         selectedUrgencyLevel = .none

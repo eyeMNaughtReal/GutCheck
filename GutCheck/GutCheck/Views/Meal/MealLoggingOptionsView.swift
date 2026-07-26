@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MealLoggingOptionsView: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var router: AppRouter
+    @Environment(AppRouter.self) var router
     @State private var showingSearchView = false
     
     var body: some View {
@@ -20,17 +20,17 @@ struct MealLoggingOptionsView: View {
                 // Icon
                 Image(systemName: "magnifyingglass.circle.fill")
                     .font(.system(size: 80))
-                    .foregroundColor(ColorTheme.accent)
+                    .foregroundStyle(ColorTheme.accent)
                 
                 // Title
                 Text("Add Food")
                     .font(.title.bold())
-                    .foregroundColor(ColorTheme.primaryText)
+                    .foregroundStyle(ColorTheme.primaryText)
                 
                 // Description
                 Text("Search our database to find and log your food")
                     .font(.body)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
                 
@@ -49,8 +49,8 @@ struct MealLoggingOptionsView: View {
                         .frame(maxWidth: .infinity)
                         .padding()
                         .background(ColorTheme.accent)
-                        .foregroundColor(.white)
-                        .cornerRadius(12)
+                        .foregroundStyle(.white)
+                        .clipShape(.rect(cornerRadius: 12))
                     }
                     
                     Button(action: {
@@ -61,8 +61,8 @@ struct MealLoggingOptionsView: View {
                             .frame(maxWidth: .infinity)
                             .padding()
                             .background(ColorTheme.surface)
-                            .foregroundColor(ColorTheme.primaryText)
-                            .cornerRadius(12)
+                            .foregroundStyle(ColorTheme.primaryText)
+                            .clipShape(.rect(cornerRadius: 12))
                     }
                 }
                 .padding(.horizontal, 24)
@@ -80,7 +80,7 @@ struct MealLoggingOptionsView: View {
                     // Close the search sheet to return to MealBuilderView
                     showingSearchView = false
                 }
-                .environmentObject(router)
+                .environment(router)
             }
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
@@ -91,6 +91,6 @@ struct MealLoggingOptionsView: View {
 // Preview
 #Preview {
     MealLoggingOptionsView()
-        .environmentObject(AppRouter.shared)
+        .environment(AppRouter.shared)
 }
 

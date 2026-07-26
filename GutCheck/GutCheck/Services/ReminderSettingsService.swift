@@ -11,12 +11,12 @@ import FirebaseFirestore
 import UserNotifications
 
 @MainActor
-class ReminderSettingsService: ObservableObject {
+@Observable class ReminderSettingsService {
     static let shared = ReminderSettingsService()
     
-    @Published var reminderSettings: ReminderSettings?
-    @Published var isLoading = false
-    @Published var errorMessage: String?
+    var reminderSettings: ReminderSettings?
+    var isLoading = false
+    var errorMessage: String?
     
     private let reminderRepository = ReminderSettingsRepository.shared
     
@@ -42,7 +42,6 @@ class ReminderSettingsService: ObservableObject {
             
         } catch {
             #if DEBUG
-            print("❌ ReminderSettingsService: Error loading settings: \(error)")
             #endif
             errorMessage = error.localizedDescription
             
@@ -66,7 +65,7 @@ class ReminderSettingsService: ObservableObject {
         
         var updatedSettings = settings
         updatedSettings.createdBy = userId
-        updatedSettings.lastUpdated = Date()
+        updatedSettings.lastUpdated = Date.now
         
         do {
             try await reminderRepository.save(updatedSettings)
@@ -82,12 +81,10 @@ class ReminderSettingsService: ObservableObject {
             await RemindersKitService.shared.syncReminders(from: updatedSettings)
 
             #if DEBUG
-            print("✅ ReminderSettingsService: Successfully saved reminder settings")
             #endif
             
         } catch {
             #if DEBUG
-            print("❌ ReminderSettingsService: Error saving settings: \(error)")
             #endif
             errorMessage = error.localizedDescription
         }
@@ -95,6 +92,18 @@ class ReminderSettingsService: ObservableObject {
         isLoading = false
     }
     
+    /// Re-schedules notifications using current settings and Focus Filter state.
+    /// Called by GutCheckFocusFilter.perform() when a Focus activates or deactivates.
+    func rescheduleNotificationsForFocusChange() async {
+        guard let settings = reminderSettings else {
+            await loadReminderSettings()
+            guard let settings = reminderSettings else { return }
+            await scheduleNotifications(for: settings)
+            return
+        }
+        await scheduleNotifications(for: settings)
+    }
+
     func updateReminderSettings(update: @escaping (inout ReminderSettings) -> Void) async {
         guard var settings = reminderSettings else {
             await createDefaultSettings()
@@ -150,7 +159,6 @@ class ReminderSettingsService: ObservableObject {
 
         guard isAuthorized else {
             #if DEBUG
-            print("⚠️ ReminderSettingsService: Notification permission not granted (\(authSettings.authorizationStatus.rawValue))")
             #endif
             // Don't request here - should be handled by proper UI flow
             return
@@ -169,7 +177,7 @@ class ReminderSettingsService: ObservableObject {
              "dinnerReminder",    "Time to Log Your Dinner")
         ]
 
-        for meal in mealReminders where meal.enabled {
+        for meal in mealReminders where meal.enabled && !FocusFilterState.mealRemindersSuppressed {
             let content = UNMutableNotificationContent()
             content.title = meal.title
             content.body  = "Don't forget to track what you ate. Consistent logging leads to better insights."
@@ -183,17 +191,15 @@ class ReminderSettingsService: ObservableObject {
             do {
                 try await center.add(request)
                 #if DEBUG
-                print("✅ ReminderSettingsService: Scheduled \(meal.identifier)")
                 #endif
             } catch {
                 #if DEBUG
-                print("❌ ReminderSettingsService: Error scheduling \(meal.identifier): \(error)")
                 #endif
             }
         }
 
         // Schedule symptom reminders
-        if settings.symptomReminderEnabled {
+        if settings.symptomReminderEnabled && !FocusFilterState.symptomRemindersSuppressed {
             let content = UNMutableNotificationContent()
             content.title = "Symptom Check-In"
             content.body = "How's your gut feeling today? Tap to log your symptoms."
@@ -205,17 +211,15 @@ class ReminderSettingsService: ObservableObject {
             do {
                 try await center.add(request)
                 #if DEBUG
-                print("✅ ReminderSettingsService: Scheduled symptom reminder")
                 #endif
             } catch {
                 #if DEBUG
-                print("❌ ReminderSettingsService: Error scheduling symptom reminder: \(error)")
                 #endif
             }
         }
 
         // Schedule medication reminders
-        if settings.medicationReminderEnabled {
+        if settings.medicationReminderEnabled && !FocusFilterState.medicationRemindersSuppressed {
             let content = UNMutableNotificationContent()
             content.title = "Medication Reminder"
             content.body = "Time to take your medication. Tap to log your dose."
@@ -227,17 +231,15 @@ class ReminderSettingsService: ObservableObject {
             do {
                 try await center.add(request)
                 #if DEBUG
-                print("✅ ReminderSettingsService: Scheduled medication reminder")
                 #endif
             } catch {
                 #if DEBUG
-                print("❌ ReminderSettingsService: Error scheduling medication reminder: \(error)")
                 #endif
             }
         }
 
         // Schedule weekly summary reminders
-        if settings.weeklyInsightEnabled {
+        if settings.weeklyInsightEnabled && !FocusFilterState.weeklyInsightsSuppressed {
             let content = UNMutableNotificationContent()
             content.title = "Your Weekly Gut Health Summary"
             content.body = "Your report for the past 7 days is ready. See your trends and patterns."
@@ -249,11 +251,9 @@ class ReminderSettingsService: ObservableObject {
             do {
                 try await center.add(request)
                 #if DEBUG
-                print("✅ ReminderSettingsService: Scheduled weekly summary reminder")
                 #endif
             } catch {
                 #if DEBUG
-                print("❌ ReminderSettingsService: Error scheduling weekly summary reminder: \(error)")
                 #endif
             }
         }

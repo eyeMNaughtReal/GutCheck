@@ -8,17 +8,17 @@
 import SwiftUI
 
 struct PhoneAuthView: View {
-    @StateObject private var viewModel: AuthenticationViewModel
-    @ObservedObject private var authService: AuthService
+    @State private var viewModel: AuthenticationViewModel
+    private var authService: AuthService
     @Environment(\.dismiss) private var dismiss
     
     init(authService: AuthService) {
         self.authService = authService
-        self._viewModel = StateObject(wrappedValue: AuthenticationViewModel(authService: authService))
+        self._viewModel = State(wrappedValue: AuthenticationViewModel(authService: authService))
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 24) {
                 if !authService.isPhoneVerificationInProgress {
                     phoneNumberSection
@@ -33,11 +33,11 @@ struct PhoneAuthView: View {
             .navigationTitle("Phone Sign In")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
-                    .foregroundColor(ColorTheme.primary)
+                    .foregroundStyle(ColorTheme.primary)
                 }
             }
         }
@@ -65,11 +65,11 @@ struct PhoneAuthView: View {
                 Text("Enter Phone Number")
                     .font(.title2)
                     .fontWeight(.bold)
-                    .foregroundColor(ColorTheme.text)
+                    .foregroundStyle(ColorTheme.text)
                 
                 Text("We'll send you a verification code to confirm your phone number.")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .multilineTextAlignment(.center)
             }
             
@@ -89,7 +89,7 @@ struct PhoneAuthView: View {
                 
                 Text("Format: +1 (555) 123-4567")
                     .font(.caption)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
             }
             
             CustomButton(
@@ -111,11 +111,11 @@ struct PhoneAuthView: View {
                 Text("Enter Verification Code")
                     .font(.title2)
                     .fontWeight(.bold)
-                    .foregroundColor(ColorTheme.text)
+                    .foregroundStyle(ColorTheme.text)
                 
                 Text("We sent a 6-digit code to \(viewModel.phoneNumber)")
                     .font(.subheadline)
-                    .foregroundColor(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText)
                     .multilineTextAlignment(.center)
             }
             
@@ -159,7 +159,7 @@ struct PhoneAuthView: View {
                     Task { await viewModel.sendPhoneVerification() }
                 }
                 .font(.footnote)
-                .foregroundColor(ColorTheme.primary)
+                .foregroundStyle(ColorTheme.primary)
                 .disabled(authService.isLoading)
             }
         }

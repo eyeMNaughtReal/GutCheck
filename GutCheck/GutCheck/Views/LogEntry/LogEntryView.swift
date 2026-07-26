@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct LogEntryView: View {
-    @EnvironmentObject var router: AppRouter
+    @Environment(AppRouter.self) var router
     
     var body: some View {
         VStack(spacing: 40) {
@@ -47,20 +47,20 @@ struct LogOptionButton: View {
             VStack(spacing: 15) {
                 Image(systemName: icon)
                     .font(.system(size: 40))
-                    .foregroundColor(color)
+                    .foregroundStyle(color)
                 
                 Text(title)
                     .font(.headline)
-                    .foregroundColor(.primary)
+                    .foregroundStyle(.primary)
             }
             .frame(width: 120, height: 120)
             .background(color.opacity(0.1))
-            .cornerRadius(20)
+            .clipShape(.rect(cornerRadius: 20))
         }
     }
 }
 
 #Preview {
     LogEntryView()
-        .environmentObject(AppRouter.shared)
+        .environment(AppRouter.shared)
 }
