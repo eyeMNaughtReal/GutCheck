@@ -350,8 +350,10 @@ class MealRepository: BaseFirebaseRepository<Meal>, MealRepositoryProtocol {
         }
         allMeals.append(contentsOf: firestoreMeals)
         
-        // Sort all meals by date (most recent first) and limit
-        let sortedMeals = allMeals.sorted { $0.date > $1.date }
+        // Collapse records arriving from both local storage and Firestore before
+        // limiting. Without this a meal present in both sources consumed two of
+        // the `limit` slots and appeared twice in the UI.
+        let sortedMeals = allMeals.deduplicatedKeepingNewest().sorted { $0.date > $1.date }
         let limitedMeals = Array(sortedMeals.prefix(limit))
         
         return limitedMeals
@@ -413,30 +415,13 @@ class SymptomRepository: BaseFirebaseRepository<Symptom>, SymptomRepositoryProto
         
         
         
-        // Sort all symptoms by date
-        let sortedSymptoms = allSymptoms.sorted { $0.date < $1.date }
-        
-        // Debug: Check for duplicates
-        let symptomIds = sortedSymptoms.map { $0.id }
-        let uniqueIds = Set(symptomIds)
-        if symptomIds.count != uniqueIds.count {
-            // Remove duplicates by keeping only the first occurrence of each ID
-            var deduplicatedSymptoms: [Symptom] = []
-            var seenIds = Set<String>()
-            
-            for symptom in sortedSymptoms {
-                if !seenIds.contains(symptom.id) {
-                    deduplicatedSymptoms.append(symptom)
-                    seenIds.insert(symptom.id)
-                } else {
-                }
-            }
-            
-            return deduplicatedSymptoms
-        }
-        
-        return sortedSymptoms
+        // The same record can arrive from both local storage and Firestore.
+        // Previously this sorted ascending by `date` and kept the *first*
+        // occurrence, which meant the oldest copy won and newer edits were
+        // silently discarded. Keep the most recently written copy instead.
+        return allSymptoms.deduplicatedKeepingNewest().sorted { $0.date < $1.date }
     }
+
     
     func fetchRecentSymptoms(userId: String, limit: Int = 20) async throws -> [Symptom] {
         var allSymptoms: [Symptom] = []
