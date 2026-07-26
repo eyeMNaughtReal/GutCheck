@@ -164,6 +164,9 @@ import FirebaseAuth
                 // Save to repository (using the new repository pattern)
                 try await mealRepository.save(meal)
 
+                // Index in Spotlight for search
+                SpotlightIndexingService.shared.indexMeal(meal)
+
                 // Write nutrition data to HealthKit (respects user preference)
                 if UserDefaults.standard.bool(forKey: "healthKitWriteMeals") {
                     await HealthKitAsyncWrapper.shared.writeMealWithLogging(meal)

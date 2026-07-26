@@ -130,7 +130,10 @@ import UserNotifications
                 #if DEBUG
                 #endif
                 try await symptomRepository.save(symptom)
-                
+
+                // Index in Spotlight for search
+                SpotlightIndexingService.shared.indexSymptom(symptom)
+
                 // Write to HealthKit
                 await self.writeToHealthKit(symptom)
                 
