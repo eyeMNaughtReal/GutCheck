@@ -4,6 +4,10 @@ GutCheck/GutCheck/Secrets.swift
 # Claude Code local configuration (contains local paths and automation permissions)
 .claude/
 
+# Agent skills installed via `npx skills add` (tooling, not app code)
+.agents/
+skills-lock.json
+
 # Xcode
 build/
 DerivedData/
