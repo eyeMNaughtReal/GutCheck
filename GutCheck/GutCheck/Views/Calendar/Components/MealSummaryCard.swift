@@ -6,7 +6,7 @@ struct MealSummaryCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(meal.type.rawValue)
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(.primary)
             
             ForEach(meal.foodItems) { food in
@@ -15,7 +15,7 @@ struct MealSummaryCard: View {
             }
             
             Text(meal.date.formatted(date: .omitted, time: .shortened))
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(.secondary)
         }
         .padding()

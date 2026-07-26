@@ -106,11 +106,11 @@ struct FoodSearchView: View {
                             .foregroundStyle(ColorTheme.accent.opacity(0.6))
 
                         Text("Ready to Search")
-                            .font(.headline)
+                            .typography(Typography.headline)
                             .foregroundStyle(ColorTheme.primaryText)
 
                         Text("Tap the Search button to find foods")
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(ColorTheme.secondaryText)
                             .multilineTextAlignment(.center)
                     }
@@ -302,7 +302,7 @@ struct FoodSearchView: View {
                                         .foregroundStyle(ColorTheme.primaryText)
                                     Spacer()
                                     Image(systemName: "arrow.up.left")
-                                        .font(.caption)
+                                        .typography(Typography.caption)
                                         .foregroundStyle(ColorTheme.secondaryText)
                                         .accessibleDecorative()
                                 }
@@ -439,7 +439,7 @@ struct FoodItemResultRow: View {
                         HStack {
                             ForEach(item.allergens.prefix(3), id: \.self) { allergen in
                                 Text(allergen)
-                                    .font(.caption)
+                                    .typography(Typography.caption)
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 2)
                                     .background(ColorTheme.error.opacity(0.2))
@@ -448,7 +448,7 @@ struct FoodItemResultRow: View {
                             }
                             if item.allergens.count > 3 {
                                 Text("+\(item.allergens.count - 3)")
-                                    .font(.caption)
+                                    .typography(Typography.caption)
                                     .foregroundStyle(ColorTheme.secondaryText)
                             }
                         }
@@ -465,7 +465,7 @@ struct FoodItemResultRow: View {
             // Add button - separate action for direct add
             Button(action: onAdd) {
                 Image(systemName: "plus.circle.fill")
-                    .font(.title2)
+                    .typography(Typography.title2)
                     .foregroundStyle(ColorTheme.primary)
             }
             .buttonStyle(PlainButtonStyle())
@@ -578,7 +578,7 @@ struct SimpleRecentFoodRow: View {
                         HStack {
                             ForEach(item.allergens.prefix(2), id: \.self) { allergen in
                                 Text(allergen)
-                                    .font(.caption)
+                                    .typography(Typography.caption)
                                     .padding(.horizontal, 4)
                                     .padding(.vertical, 2)
                                     .background(ColorTheme.error.opacity(0.2))
@@ -587,7 +587,7 @@ struct SimpleRecentFoodRow: View {
                             }
                             if item.allergens.count > 2 {
                                 Text("+\(item.allergens.count - 2)")
-                                    .font(.caption)
+                                    .typography(Typography.caption)
                                     .foregroundStyle(ColorTheme.secondaryText)
                             }
                         }
@@ -604,7 +604,7 @@ struct SimpleRecentFoodRow: View {
             // Add button - separate action for direct add
             Button(action: onAdd) {
                 Image(systemName: "plus.circle.fill")
-                    .font(.title3)
+                    .typography(Typography.title3)
                     .foregroundStyle(ColorTheme.primary)
             }
             .buttonStyle(PlainButtonStyle())

@@ -19,11 +19,11 @@ struct BristolStoolInfoView: View {
                     // Header section
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Medical Classification System")
-                            .font(.headline)
+                            .typography(Typography.headline)
                             .foregroundStyle(ColorTheme.primaryText)
                         
                         Text("Select the type that best matches your bowel movement consistency.")
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)

@@ -36,7 +36,7 @@ struct SymptomEditView: View {
 
                     // Bristol Stool Scale
                     Text("Bristol Stool Scale")
-                        .font(.title3)
+                        .typography(Typography.title3)
                         .fontWeight(.semibold)
                         .foregroundStyle(ColorTheme.primaryText)
                         .padding(.bottom, 2)
@@ -44,7 +44,7 @@ struct SymptomEditView: View {
 
                     // Pain Level
                     Text("Pain Level")
-                        .font(.title3)
+                        .typography(Typography.title3)
                         .fontWeight(.semibold)
                         .foregroundStyle(ColorTheme.primaryText)
                         .padding(.bottom, 2)
@@ -52,7 +52,7 @@ struct SymptomEditView: View {
 
                     // Urgency Level
                     Text("Urgency Level")
-                        .font(.title3)
+                        .typography(Typography.title3)
                         .fontWeight(.semibold)
                         .foregroundStyle(ColorTheme.primaryText)
                         .padding(.bottom, 2)
@@ -126,7 +126,7 @@ struct SymptomEditTimeSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Symptom Time")
-                .font(.title3)
+                .typography(Typography.title3)
                 .fontWeight(.semibold)
                 .foregroundStyle(ColorTheme.primaryText)
             DatePicker(
@@ -149,7 +149,7 @@ struct SymptomEditNotesSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Notes")
-                .font(.title3)
+                .typography(Typography.title3)
                 .fontWeight(.semibold)
                 .foregroundStyle(ColorTheme.primaryText)
             
@@ -186,11 +186,11 @@ struct SymptomEditActionButtons: View {
                             .scaleEffect(0.9)
                     } else {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.title3)
+                            .typography(Typography.title3)
                     }
                     
                     Text(isSaving ? "Saving..." : "Save Changes")
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .fontWeight(.semibold)
                 }
                 .foregroundStyle(.white)
@@ -206,7 +206,7 @@ struct SymptomEditActionButtons: View {
             // Cancel button
             Button(action: onCancel) {
                 Text("Cancel")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .fontWeight(.medium)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity)

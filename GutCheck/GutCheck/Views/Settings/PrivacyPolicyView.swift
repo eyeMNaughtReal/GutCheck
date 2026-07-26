@@ -8,11 +8,11 @@ struct PrivacyPolicyView: View {
             // Introduction Section
             Section {
                 Text("Last Updated: July 2025")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(.secondary)
                 
                 Text("This Privacy Policy describes how GutCheck collects, uses, and protects your personal information.")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
             }
             
             // Main Policy Sections
@@ -20,9 +20,9 @@ struct PrivacyPolicyView: View {
                 NavigationLink(value: PrivacyPolicyRoute.sectionDetail(section)) {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(section.title)
-                            .font(.headline)
+                            .typography(Typography.headline)
                         Text(section.summary)
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 4)
@@ -33,9 +33,9 @@ struct PrivacyPolicyView: View {
             Section {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Questions or Concerns?")
-                        .font(.headline)
+                        .typography(Typography.headline)
                     Text("Contact us at privacy@gutcheck.app")
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, 8)
@@ -61,11 +61,11 @@ private struct PolicyDetailView: View {
                 // Section Header
                 VStack(alignment: .leading, spacing: 12) {
                     Text(section.title)
-                        .font(.title2)
+                        .typography(Typography.title2)
                         .bold()
                     
                     Text(section.summary)
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .foregroundStyle(.secondary)
                 }
                 
@@ -89,10 +89,10 @@ private struct PolicyDetailSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(detail.title)
-                .font(.headline)
+                .typography(Typography.headline)
             
             Text(detail.content)
-                .font(.body)
+                .typography(Typography.body)
                 .foregroundStyle(ColorTheme.text.opacity(0.8))
             
             if !detail.bullets.isEmpty {
@@ -102,7 +102,7 @@ private struct PolicyDetailSection: View {
                             Text("•")
                             Text(bullet)
                         }
-                        .font(.body)
+                        .typography(Typography.body)
                         .foregroundStyle(ColorTheme.text.opacity(0.8))
                     }
                 }

@@ -66,7 +66,7 @@ struct NotificationPermissionView: View {
     private var reminderBenefitsView: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Helpful reminders for:")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
             
             VStack(alignment: .leading, spacing: 8) {
@@ -84,7 +84,7 @@ struct NotificationPermissionView: View {
     private func reminderBenefit(_ icon: String, _ title: String, _ description: String) -> some View {
         HStack(spacing: 12) {
             Text(icon)
-                .font(.title2)
+                .typography(Typography.title2)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
@@ -92,7 +92,7 @@ struct NotificationPermissionView: View {
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(description)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
             
@@ -113,7 +113,7 @@ struct NotificationPermissionView: View {
                         .foregroundStyle(ColorTheme.primaryText)
                     
                     Text(permissionManager.notificationStatus.statusText)
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(permissionManager.notificationStatus.statusColor)
                 }
                 
@@ -128,13 +128,13 @@ struct NotificationPermissionView: View {
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text("1. Open Settings → Notifications")
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.secondaryText)
                         Text("2. Find 'GutCheck' and tap it")
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.secondaryText)
                         Text("3. Turn on 'Allow Notifications'")
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
                 }
@@ -161,7 +161,7 @@ struct NotificationPermissionView: View {
                         Text("Enable Notifications")
                     }
                 }
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
@@ -172,14 +172,14 @@ struct NotificationPermissionView: View {
                 Button("Maybe Later") {
                     onPermissionResult(false)
                 }
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText)
                 
             } else if permissionManager.notificationStatus.canOpenSettings {
                 Button("Open Settings") {
                     permissionManager.openAppSettings()
                 }
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
@@ -189,14 +189,14 @@ struct NotificationPermissionView: View {
                 Button("Continue Without Notifications") {
                     onPermissionResult(false)
                 }
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText)
                 
             } else if permissionManager.notificationStatus.isGranted {
                 Button("Continue") {
                     onPermissionResult(true)
                 }
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()

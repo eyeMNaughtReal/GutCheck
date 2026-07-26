@@ -104,9 +104,39 @@ struct ColorTheme {
     static let inputBackground = Color("GutCheckInputBackground", bundle: nil)
     
     // MARK: - Legacy Support (for backward compatibility)
-    
+
     static let mint = accent  // Alias
     static let text = primaryText  // Alias
+
+    /// Text/icon color for content sitting on a surface that is always white
+    /// (e.g. the selected date circle in WeekSelector). Adaptive tokens can't be
+    /// used there — `primaryText` and `background` each go invisible in one of
+    /// the two appearances — so this stays fixed dark in both.
+    static let onFixedLightSurface = Color(red: 0.07, green: 0.09, blue: 0.15)
+
+    // MARK: - Severity Encoding
+
+    /// Maps a 0-3 severity scale to a consistent color ramp.
+    /// Use this everywhere a pain/urgency value is colored so the same value
+    /// never renders green in one place and red in another.
+    static func severity(_ level: Int) -> Color {
+        switch level {
+        case 0: return success
+        case 1: return warning
+        case 2: return accent
+        default: return error
+        }
+    }
+}
+
+// MARK: - Severity Colors
+
+extension PainLevel {
+    var severityColor: Color { ColorTheme.severity(rawValue) }
+}
+
+extension UrgencyLevel {
+    var severityColor: Color { ColorTheme.severity(rawValue) }
 }
 
 // Extension to create Color from hex string

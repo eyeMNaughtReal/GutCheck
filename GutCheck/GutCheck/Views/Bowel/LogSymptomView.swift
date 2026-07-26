@@ -43,7 +43,7 @@ struct BristolScaleSelectionView: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                             Text(info.description)
-                                .font(.caption)
+                                .typography(Typography.caption)
                                 .foregroundStyle(selectedStoolType == info.type ? .white.opacity(0.8) : ColorTheme.secondaryText)
                                 .multilineTextAlignment(.center)
                                 .lineLimit(1)
@@ -156,7 +156,7 @@ struct PainLevelSliderView: View {
                 }
                 if selectedPainLevel < descriptions.count {
                     Text(descriptions[selectedPainLevel])
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.top, 4)
@@ -395,7 +395,7 @@ struct SectionHeader: View {
                 onInfo()
             }) {
                 Image(systemName: "info.circle")
-                    .font(.title3)
+                    .typography(Typography.title3)
                     .foregroundStyle(ColorTheme.primary)
             }
             .accessibleButton(
@@ -491,7 +491,7 @@ struct SectionHeader: View {
                             .accessibleDecorative()
                     } else {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.title3)
+                            .typography(Typography.title3)
                             .accessibleDecorative()
                     }
                     

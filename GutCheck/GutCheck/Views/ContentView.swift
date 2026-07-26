@@ -17,7 +17,9 @@ struct ContentView: View {
     @Bindable var router = AppRouter.shared
     
     var body: some View {
-        ZStack(alignment: .bottom) {
+        // The tab bar is a safeAreaInset rather than a ZStack overlay so scroll
+        // content is inset by its height instead of scrolling underneath it.
+        Group {
             NavigationStack(path: $router.dashboardPath) {
                 Group {
                     switch router.selectedTab {
@@ -42,7 +44,8 @@ struct ContentView: View {
                 }
 
             }
-
+        }
+        .safeAreaInset(edge: .bottom) {
             CustomTabBar(selectedTab: $router.selectedTab) { action in
                 handleTabBarAction(action)
             }

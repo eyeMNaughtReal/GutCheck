@@ -91,8 +91,8 @@ struct MedicationCalendarView: View {
             .scrollContentBackground(.hidden)
         }
         .background(ColorTheme.background)
-        .navigationTitle("Meds")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 ProfileAvatarButton(user: authService.currentUser) {
@@ -146,7 +146,7 @@ struct CalendarMedicationsSectionHeader: View {
             // Section title + Log Dose button on the same row
             HStack {
                 Text("Medications")
-                    .font(.title3)
+                    .typography(Typography.title3)
                     .fontWeight(.semibold)
                     .foregroundStyle(ColorTheme.primaryText)
                 Spacer()
@@ -188,14 +188,14 @@ struct DailyMedicationCard: View {
         VStack(spacing: 12) {
             HStack {
                 Text("Daily Medications")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                 Spacer()
             }
 
             if doses.isEmpty {
                 Text("Log a dose to see your daily medication summary.")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
@@ -205,7 +205,7 @@ struct DailyMedicationCard: View {
                         .font(.system(size: 36, weight: .bold, design: .rounded))
                         .foregroundStyle(ColorTheme.primaryText)
                     Text("dose\(doses.count == 1 ? "" : "s") taken")
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .foregroundStyle(ColorTheme.secondaryText)
                     Spacer()
                 }
@@ -243,10 +243,10 @@ private struct MedNamePill: View {
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: "pills.fill")
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(.purple)
             Text(name)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.primaryText)
         }
         .padding(.horizontal, 8)

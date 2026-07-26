@@ -188,7 +188,7 @@ private struct SymptomRow: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(getSymptomDescription(symptom))
-                    .font(.headline)
+                    .typography(Typography.headline)
                 Spacer()
                 Text(symptom.date.formatted(.dateTime.hour().minute()))
                     .foregroundStyle(.secondary)
@@ -199,7 +199,7 @@ private struct SymptomRow: View {
                 
                 if let notes = symptom.notes, !notes.isEmpty {
                     Text(notes)
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }

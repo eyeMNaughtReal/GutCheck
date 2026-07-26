@@ -99,7 +99,7 @@ struct LogMedicationDoseView: View {
                     if viewModel.notes.isEmpty {
                         Text("e.g. Took with food, felt nauseous after…")
                             .foregroundStyle(.tertiary)
-                            .font(.body)
+                            .typography(Typography.body)
                             .padding(.top, 8)
                             .padding(.leading, 4)
                             .allowsHitTesting(false)
@@ -125,11 +125,11 @@ struct LogMedicationDoseView: View {
                 .foregroundStyle(.secondary)
 
             Text("No Active Medications")
-                .font(.title2)
+                .typography(Typography.title2)
                 .fontWeight(.semibold)
 
             Text("Add your medications in Settings → Health Data → My Medications before logging a dose.")
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
@@ -176,14 +176,14 @@ private struct MedicationPickerRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(medication.name)
-                .font(.body)
+                .typography(Typography.body)
             if medication.dosage.amount > 0 {
                 Text("\(formattedAmount(medication.dosage.amount)) \(medication.dosage.unit) · \(medication.dosage.frequency.displayName)")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(.secondary)
             } else {
                 Text(medication.dosage.frequency.displayName)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(.secondary)
             }
         }

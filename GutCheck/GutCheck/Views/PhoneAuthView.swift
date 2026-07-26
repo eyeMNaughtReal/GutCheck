@@ -63,12 +63,12 @@ struct PhoneAuthView: View {
         VStack(spacing: 24) {
             VStack(spacing: 8) {
                 Text("Enter Phone Number")
-                    .font(.title2)
+                    .typography(Typography.title2)
                     .fontWeight(.bold)
                     .foregroundStyle(ColorTheme.text)
                 
                 Text("We'll send you a verification code to confirm your phone number.")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .multilineTextAlignment(.center)
             }
@@ -88,7 +88,7 @@ struct PhoneAuthView: View {
                 }
                 
                 Text("Format: +1 (555) 123-4567")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
             
@@ -109,12 +109,12 @@ struct PhoneAuthView: View {
         VStack(spacing: 24) {
             VStack(spacing: 8) {
                 Text("Enter Verification Code")
-                    .font(.title2)
+                    .typography(Typography.title2)
                     .fontWeight(.bold)
                     .foregroundStyle(ColorTheme.text)
                 
                 Text("We sent a 6-digit code to \(viewModel.phoneNumber)")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .multilineTextAlignment(.center)
             }
@@ -158,7 +158,7 @@ struct PhoneAuthView: View {
                 Button("Resend Code") {
                     Task { await viewModel.sendPhoneVerification() }
                 }
-                .font(.footnote)
+                .typography(Typography.footnote)
                 .foregroundStyle(ColorTheme.primary)
                 .disabled(authService.isLoading)
             }

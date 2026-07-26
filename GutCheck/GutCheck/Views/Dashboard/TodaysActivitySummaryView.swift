@@ -42,7 +42,7 @@ struct TodaysActivitySummaryView: View {
             // Header with title
             HStack {
                 Text("Today's Summary")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
@@ -55,11 +55,11 @@ struct TodaysActivitySummaryView: View {
                     }) {
                         HStack(spacing: 4) {
                             Text(isExpanded ? "See Less" : "See All")
-                                .font(.caption)
+                                .typography(Typography.caption)
                                 .foregroundStyle(ColorTheme.primary)
                             
                             Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                                .font(.caption)
+                                .typography(Typography.caption)
                                 .foregroundStyle(ColorTheme.primary)
                         }
                     }
@@ -95,8 +95,8 @@ struct TodaysActivitySummaryView: View {
                     Spacer()
                 }
             }
-            .font(.subheadline)
-            
+            .typography(Typography.subheadline)
+
             // Expanded activity list
             if isExpanded {
                 Divider()
@@ -104,6 +104,10 @@ struct TodaysActivitySummaryView: View {
                 
                 if viewModel.isLoading {
                     LoadingStateView()
+                } else if let errorMessage = viewModel.errorMessage {
+                    RecentActivityErrorStateView(message: errorMessage) {
+                        viewModel.loadRecentActivity(for: selectedDate, authService: authService)
+                    }
                 } else if viewModel.recentEntries.isEmpty {
                     RecentActivityEmptyStateView()
                 } else {

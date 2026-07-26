@@ -115,15 +115,11 @@ struct DashboardView: View {
             }
             .background(ColorTheme.background)
         }
-        .navigationTitle("Dashboard")
-        .navigationBarTitleDisplayMode(.large)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                ProfileAvatarButton(user: authService.currentUser) {
-                    router.showProfile()
-                }
-            }
-        }
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        // The avatar and settings button live in GreetingHeaderView now, so the
+        // toolbar is intentionally empty here — a second avatar would duplicate it.
+        .toolbarBackground(.hidden, for: .navigationBar)
         .onAppear {
             loadDataIfAuthenticated()
         }
@@ -151,7 +147,12 @@ struct DashboardView: View {
         guard authService.isAuthenticated, authService.currentUser != nil else {
             return
         }
-        
+
+        // Also refresh the insight store here. It was previously only reachable via
+        // onChange(of: selectedDate), so on a cold launch — where onAppear runs before
+        // Firebase restores the session and the date never changes — Today's Focus,
+        // Watch Out and AI Insights stayed empty until the user tapped a date.
+        dashboardStore.loadDataForSelectedDate()
         recentActivityViewModel.loadRecentActivity(for: dashboardStore.selectedDate, authService: authService)
     }
 }

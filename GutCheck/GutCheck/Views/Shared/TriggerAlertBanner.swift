@@ -6,11 +6,11 @@ struct TriggerAlertBanner: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Label("Trigger Alert", systemImage: "exclamationmark.circle")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(.red)
             ForEach(alerts, id: \.self) { alert in
                 Text("• \(alert)")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
             }
         }
         .frame(maxWidth: .infinity)

@@ -29,7 +29,7 @@ struct LocalStorageSettingsView: View {
                     Spacer()
                     Text("Active")
                         .foregroundStyle(.green)
-                        .font(.caption)
+                        .typography(Typography.caption)
                 }
                 
                 HStack {
@@ -39,7 +39,7 @@ struct LocalStorageSettingsView: View {
                     Spacer()
                     Text("Enabled")
                         .foregroundStyle(.green)
-                        .font(.caption)
+                        .typography(Typography.caption)
                 }
             }
             
@@ -51,7 +51,7 @@ struct LocalStorageSettingsView: View {
                     Spacer()
                     Text(dataSyncService.getSyncStatus().description)
                         .foregroundStyle(.secondary)
-                        .font(.caption)
+                        .typography(Typography.caption)
                 }
                 
                 Button(action: {
@@ -71,7 +71,7 @@ struct LocalStorageSettingsView: View {
                         ProgressView(value: dataSyncService.syncProgress)
                             .progressViewStyle(LinearProgressViewStyle())
                         Text("\(Int(dataSyncService.syncProgress * 100))%")
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -110,7 +110,7 @@ struct LocalStorageSettingsView: View {
                     Spacer()
                     Text("Calculating...")
                         .foregroundStyle(.secondary)
-                        .font(.caption)
+                        .typography(Typography.caption)
                 }
                 
                 HStack {
@@ -120,7 +120,7 @@ struct LocalStorageSettingsView: View {
                     Spacer()
                     Text("Never")
                         .foregroundStyle(.secondary)
-                        .font(.caption)
+                        .typography(Typography.caption)
                 }
             }
         }

@@ -47,7 +47,7 @@ struct SymptomDetailView: View {
             ProgressView()
                 .scaleEffect(1.2)
             Text("Loading symptom details...")
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -120,7 +120,7 @@ struct SymptomDetailView: View {
             // Calendar day block
             VStack(spacing: 2) {
                 Text(viewModel.entity.date.formatted(.dateTime.month(.abbreviated)).uppercased())
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .fontWeight(.bold)
                     .foregroundStyle(ColorTheme.primary)
                     .kerning(0.5)
@@ -135,17 +135,17 @@ struct SymptomDetailView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(viewModel.entity.date.formatted(.dateTime.weekday(.wide)))
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                 Text(viewModel.entity.date.formatted(.dateTime.month(.wide).day().year()))
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
                 HStack(spacing: 4) {
                     Image(systemName: "clock")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.tertiaryText)
                     Text(viewModel.entity.date.formatted(.dateTime.hour().minute()))
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.tertiaryText)
                 }
             }
@@ -173,7 +173,7 @@ struct SymptomDetailView: View {
                                 .fill(stoolTypeColor)
                                 .frame(width: 8, height: 8)
                             Text("Type \(viewModel.entity.stoolType.rawValue)")
-                                .font(.subheadline)
+                                .typography(Typography.subheadline)
                                 .fontWeight(.semibold)
                                 .foregroundStyle(stoolTypeColor)
                         }
@@ -236,7 +236,7 @@ struct SymptomDetailView: View {
                 .clipShape(.rect(cornerRadius: 8))
 
             Text(label)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             Spacer()
@@ -258,12 +258,12 @@ struct SymptomDetailView: View {
                     .clipShape(.rect(cornerRadius: 8))
 
                 Text("Notes")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.primaryText)
             }
 
             Text(notes)
-                .font(.body)
+                .typography(Typography.body)
                 .foregroundStyle(ColorTheme.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.leading, 40)
@@ -283,7 +283,7 @@ struct SymptomDetailView: View {
                     .clipShape(.rect(cornerRadius: 8))
 
                 Text("Tags")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.primaryText)
             }
 
@@ -291,7 +291,7 @@ struct SymptomDetailView: View {
                 HStack(spacing: 8) {
                     ForEach(viewModel.entity.tags, id: \.self) { tag in
                         Text(tag)
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .fontWeight(.medium)
                             .foregroundStyle(ColorTheme.primary)
                             .padding(.horizontal, 12)
@@ -318,7 +318,7 @@ struct SymptomDetailView: View {
 
     private func severityBadge(label: String, color: Color) -> some View {
         Text(label)
-            .font(.caption)
+            .typography(Typography.caption)
             .fontWeight(.semibold)
             .foregroundStyle(color)
             .padding(.horizontal, 10)

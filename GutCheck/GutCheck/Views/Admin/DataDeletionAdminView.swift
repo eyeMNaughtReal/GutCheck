@@ -98,10 +98,10 @@ struct DeletionRequestRow: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(request.userName)
-                            .font(.headline)
+                            .typography(Typography.headline)
                         
                         Text(request.userEmail)
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(.secondary)
                     }
                     
@@ -111,21 +111,21 @@ struct DeletionRequestRow: View {
                         StatusBadge(status: request.status)
                         
                         Text(request.formattedRequestDate)
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(.secondary)
                     }
                 }
                 
                 if let reason = request.reason, !reason.isEmpty {
                     Text("Reason: \(reason)")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(.secondary)
                         .lineLimit(2)
                 }
                 
                 HStack {
                     Text("Data to delete:")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(.secondary)
                     
                     Spacer()
@@ -165,7 +165,7 @@ struct StatusBadge: View {
     
     var body: some View {
         Text(status.displayName)
-            .font(.caption)
+            .typography(Typography.caption)
             .fontWeight(.medium)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
@@ -183,7 +183,7 @@ struct DataTypeBadge: View {
     
     var body: some View {
         Text(text)
-            .font(.caption)
+            .typography(Typography.caption)
             .fontWeight(.medium)
             .padding(.horizontal, 6)
             .padding(.vertical, 2)
@@ -230,7 +230,7 @@ struct DeletionRequestDetailView: View {
                 if let reason = request.reason, !reason.isEmpty {
                     Section("Reason for Deletion") {
                         Text(reason)
-                            .font(.body)
+                            .typography(Typography.body)
                     }
                 }
                 
@@ -246,7 +246,7 @@ struct DeletionRequestDetailView: View {
                 if request.isProcessed, let adminNotes = request.adminNotes {
                     Section("Admin Notes") {
                         Text(adminNotes)
-                            .font(.body)
+                            .typography(Typography.body)
                     }
                 }
                 

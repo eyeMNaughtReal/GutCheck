@@ -105,11 +105,11 @@ struct MedicationListView: View {
                 .foregroundStyle(.secondary)
 
             Text("No Medications Yet")
-                .font(.title2)
+                .typography(Typography.title2)
                 .fontWeight(.semibold)
 
             Text("Add your current medications to track dosages and timing, and help GutCheck surface insights about how they affect your gut health.")
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
@@ -118,7 +118,7 @@ struct MedicationListView: View {
                 viewModel.showingAddMedication = true
             } label: {
                 Label("Add Medication", systemImage: "plus.circle.fill")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .padding(.horizontal, 8)
             }
             .buttonStyle(.borderedProminent)
@@ -150,11 +150,11 @@ private struct MedicationRowView: View {
             // Name + active badge
             HStack(alignment: .firstTextBaseline) {
                 Text(medication.name)
-                    .font(.headline)
+                    .typography(Typography.headline)
                 Spacer()
                 if medication.isActive {
                     Text("Active")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .fontWeight(.semibold)
                         .foregroundStyle(.green)
                         .padding(.horizontal, 6)
@@ -167,23 +167,23 @@ private struct MedicationRowView: View {
             HStack(spacing: 4) {
                 if medication.dosage.amount > 0 {
                     Text(formattedDosage)
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .foregroundStyle(.secondary)
                     Text("·")
                         .foregroundStyle(.tertiary)
                 }
                 Text(medication.dosage.frequency.displayName)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(.secondary)
             }
 
             // Source + start date
             HStack(spacing: 4) {
                 Image(systemName: sourceIcon)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(.tertiary)
                 Text(dateLabel)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(.tertiary)
             }
         }

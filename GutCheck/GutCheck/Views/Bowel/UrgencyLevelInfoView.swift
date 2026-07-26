@@ -19,11 +19,11 @@ struct UrgencyLevelInfoView: View {
                     // Header
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Urgency Classification")
-                            .font(.headline)
+                            .typography(Typography.headline)
                             .foregroundStyle(ColorTheme.primaryText)
                         
                         Text("How urgently did you need to use the bathroom?")
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -41,7 +41,7 @@ struct UrgencyLevelInfoView: View {
                                         .frame(width: 32, height: 32)
                                     
                                     Text(urgencyLabel(for: level))
-                                        .font(.caption)
+                                        .typography(Typography.caption)
                                         .fontWeight(.medium)
                                         .foregroundStyle(ColorTheme.secondaryText)
                                 }

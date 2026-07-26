@@ -6,7 +6,7 @@ struct TriggerSummaryCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Identified Triggers")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(.primary)
             
             ForEach(triggers, id: \.self) { trigger in

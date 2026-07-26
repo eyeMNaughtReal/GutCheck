@@ -23,7 +23,7 @@ struct CalendarDetailView: View {
                 if !viewModel.meals.isEmpty {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Meals")
-                            .font(.title2)
+                            .typography(Typography.title2)
                             .bold()
                         
                         ForEach(viewModel.meals) { meal in
@@ -37,7 +37,7 @@ struct CalendarDetailView: View {
                 if !viewModel.symptoms.isEmpty {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Symptoms")
-                            .font(.title2)
+                            .typography(Typography.title2)
                             .bold()
                         
                         ForEach(viewModel.symptoms) { symptom in
@@ -56,7 +56,7 @@ struct CalendarDetailView: View {
                 if viewModel.hasAnalysis {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Daily Analysis")
-                            .font(.title2)
+                            .typography(Typography.title2)
                             .bold()
                         
                         if let triggers = viewModel.potentialTriggers {

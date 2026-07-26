@@ -14,7 +14,7 @@ struct ReminderSettingsTestView: View {
         NavigationStack {
             VStack(spacing: 20) {
                 Text("Reminder Settings Test")
-                    .font(.title)
+                    .typography(Typography.title)
                     .padding()
                 
                 if reminderService.isLoading {
@@ -24,7 +24,7 @@ struct ReminderSettingsTestView: View {
                         if let settings = reminderService.reminderSettings {
                             Text("Settings loaded successfully!")
                                 .foregroundStyle(.green)
-                                .font(.headline)
+                                .typography(Typography.headline)
                             
                             Group {
                                 Text("Breakfast Reminder: \(settings.breakfastReminderEnabled ? "Enabled" : "Disabled")")
@@ -35,7 +35,7 @@ struct ReminderSettingsTestView: View {
                                 Text("Remind Later Interval: \(settings.remindMeLaterInterval) minutes")
                                 Text("Last Updated: \(settings.lastUpdated.formatted())")
                             }
-                            .font(.body)
+                            .typography(Typography.body)
                             .padding(.horizontal)
                         } else {
                             Text("No settings loaded")

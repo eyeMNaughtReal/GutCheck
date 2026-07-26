@@ -124,7 +124,7 @@ struct AddMedicationView: View {
                 if viewModel.notes.isEmpty {
                     Text("e.g. Take with food, prescribed by Dr. Smith…")
                         .foregroundStyle(.secondary)
-                        .font(.body)
+                        .typography(Typography.body)
                         .padding(.top, 8)
                         .padding(.leading, 4)
                         .allowsHitTesting(false)

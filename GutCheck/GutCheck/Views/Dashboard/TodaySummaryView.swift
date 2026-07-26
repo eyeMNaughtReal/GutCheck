@@ -7,7 +7,7 @@ struct TodaySummaryView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Today's Summary")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
             HStack(spacing: 16) {
                 Label("\(mealsCount) Meals", systemImage: "fork.knife")
@@ -16,7 +16,7 @@ struct TodaySummaryView: View {
                 Label("\(symptomsCount) Symptoms", systemImage: "exclamationmark.triangle")
                     .foregroundStyle(ColorTheme.warning)
             }
-            .font(.subheadline)
+            .typography(Typography.subheadline)
         }
         .padding()
         .background(ColorTheme.cardBackground)

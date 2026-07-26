@@ -22,13 +22,13 @@ struct ServerStatusRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .fontWeight(.medium)
                     .foregroundStyle(ColorTheme.primaryText)
 
                 if let subtitle {
                     Text(subtitle)
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                 }
             }

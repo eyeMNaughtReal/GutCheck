@@ -102,19 +102,19 @@ struct UnifiedMacroRow: View {
     var body: some View {
         HStack {
             Text(label)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.primaryText)
             
             Spacer()
             
             HStack(spacing: 4) {
                 Text(value)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(color)
                 
                 Text(unit)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
         }
@@ -142,13 +142,13 @@ struct UnifiedNutritionSummary: View {
             if let calories = nutrition.calories {
                 HStack {
                     Text("Nutrition Facts")
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .foregroundStyle(ColorTheme.primaryText)
                     
                     Spacer()
                     
                     Text("\(calories) calories")
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .foregroundStyle(ColorTheme.primary)
                 }
             }
@@ -234,15 +234,15 @@ struct NutrientColumn: View {
     var body: some View {
         VStack(spacing: 4) {
             Text(name)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
             
             Text(value.formatted(.number.precision(.fractionLength(1))))
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(color)
             
             Text(unit)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
         }
         .frame(maxWidth: .infinity)

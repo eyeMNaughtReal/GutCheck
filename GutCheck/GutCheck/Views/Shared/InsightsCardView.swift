@@ -6,9 +6,9 @@ struct InsightsCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Label("Insight", systemImage: "lightbulb")
-                .font(.headline)
+                .typography(Typography.headline)
             Text(message)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
         }
         .frame(maxWidth: .infinity)
         .padding()

@@ -14,7 +14,7 @@ struct SymptomSummaryCard: View {
                     Text("Urgency: \(symptom.urgencyLevel.rawValue)")
                 }
             }
-            .font(.headline)
+            .typography(Typography.headline)
             .foregroundStyle(.primary)
             
             if let notes = symptom.notes, !notes.isEmpty {
@@ -23,7 +23,7 @@ struct SymptomSummaryCard: View {
             }
             
             Text(symptom.date.formatted(date: .omitted, time: .shortened))
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(.secondary)
         }
         .padding()

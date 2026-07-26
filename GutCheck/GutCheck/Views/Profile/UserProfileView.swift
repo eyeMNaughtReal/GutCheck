@@ -39,7 +39,7 @@ struct ProfileImageView: View {
                         .scaleEffect(0.8)
                     
                     Text("Uploading...")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.accent)
                 }
                 .padding(12)
@@ -310,7 +310,7 @@ struct UserProfileView: View {
                 .padding(.top, 4)
             
             Text(user.email)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText)
                 .padding(.bottom, 8)
         }
@@ -324,15 +324,15 @@ struct ProfileInfoCard: View {
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.title2)
+                .typography(Typography.title2)
                 .foregroundStyle(ColorTheme.accent)
                 .padding(8)
                 .background(Circle().fill(ColorTheme.accent.opacity(0.08)))
             Text(title)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
             Text(value)
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
         }
         .frame(maxWidth: .infinity)
@@ -351,12 +351,12 @@ struct ProfileActionRow: View {
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .font(.title3)
+                .typography(Typography.title3)
                 .foregroundStyle(ColorTheme.accent)
                 .frame(width: 36, height: 36)
                 .background(Circle().fill(ColorTheme.accent.opacity(0.08)))
             Text(title)
-                .font(.body)
+                .typography(Typography.body)
                 .foregroundStyle(textColor)
             Spacer()
             Image(systemName: "chevron.right")

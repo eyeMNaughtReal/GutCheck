@@ -50,7 +50,7 @@ struct HealthDataIntegrationView: View {
                             Label("Manage HealthKit Permissions", systemImage: "lock.shield")
                             Spacer()
                             Image(systemName: "chevron.right")
-                                .font(.caption)
+                                .typography(Typography.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -285,7 +285,7 @@ struct HealthKitPermissionsGuideView: View {
             List {
                 Section {
                     Text("To adjust which data Apple Health and GutCheck share with each other, you'll need to manage permissions directly in the Health app.")
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .foregroundStyle(.secondary)
                         .padding(.vertical, 4)
                 }
@@ -330,7 +330,7 @@ struct HealthKitPermissionsGuideView: View {
                         HStack {
                             Spacer()
                             Label("Open Health App", systemImage: "heart.circle.fill")
-                                .font(.headline)
+                                .typography(Typography.headline)
                             Spacer()
                         }
                     }
@@ -376,10 +376,10 @@ private struct GuideStepRow: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(step)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .fontWeight(.semibold)
                 Text(detail)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(.secondary)
             }
         }
@@ -412,7 +412,7 @@ private struct WritePermissionRow: View {
             Color.clear.frame(width: 32, height: 1)
 
             Text(name)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(.primary)
 
             Spacer()

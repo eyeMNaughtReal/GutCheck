@@ -54,7 +54,7 @@ struct MealRiskAssessmentCard: View {
     private var headerContent: some View {
         HStack(spacing: 12) {
             Image(systemName: assessment.overallRiskLevel.icon)
-                .font(.title2)
+                .typography(Typography.title2)
                 .foregroundStyle(assessment.overallRiskLevel.color)
 
             VStack(alignment: .leading, spacing: 4) {
@@ -73,14 +73,14 @@ struct MealRiskAssessmentCard: View {
             riskScoreBadge
 
             Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
         }
     }
 
     private var riskScoreBadge: some View {
         Text("\(assessment.overallRiskScore)")
-            .font(.headline)
+            .typography(Typography.headline)
             .foregroundStyle(.white)
             .frame(width: 40, height: 40)
             .background(assessment.overallRiskLevel.color)
@@ -132,7 +132,7 @@ struct MealRiskAssessmentCard: View {
 
                     if itemRisk.dataSource == .historicalCorrelation || itemRisk.dataSource == .combined {
                         Image(systemName: "person.fill")
-                            .font(.caption2)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.primary)
                     }
 

@@ -34,14 +34,14 @@ struct DeleteAccountView: View {
                         .foregroundStyle(.red)
                     
                     Text("This action cannot be undone")
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .foregroundStyle(.secondary)
                 }
                 
                 // Consequences Warning
                 VStack(alignment: .leading, spacing: 16) {
                     Text("What will happen:")
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .foregroundStyle(.red)
                     
                     VStack(alignment: .leading, spacing: 8) {
@@ -59,7 +59,7 @@ struct DeleteAccountView: View {
                 // Data Summary
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Data that will be deleted:")
-                        .font(.headline)
+                        .typography(Typography.headline)
                     
                     VStack(alignment: .leading, spacing: 8) {
                         DataRow(icon: "fork.knife", text: "Meal logs and nutrition data")
@@ -165,7 +165,7 @@ struct WarningRow: View {
                 .frame(width: 20)
             
             Text(text)
-                .font(.body)
+                .typography(Typography.body)
             
             Spacer()
         }
@@ -183,7 +183,7 @@ struct DataRow: View {
                 .frame(width: 20)
             
             Text(text)
-                .font(.body)
+                .typography(Typography.body)
             
             Spacer()
         }

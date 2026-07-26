@@ -30,7 +30,7 @@ struct MealSuggestionsView: View {
         VStack(spacing: 8) {
             HStack {
                 Image(systemName: "leaf.circle.fill")
-                    .font(.title2)
+                    .typography(Typography.title2)
                     .foregroundStyle(ColorTheme.success)
 
                 Text("Safe Meal Ideas")
@@ -45,7 +45,7 @@ struct MealSuggestionsView: View {
             }
 
             Text("Based on your 30-day meal and symptom history")
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -60,7 +60,7 @@ struct MealSuggestionsView: View {
     private var suggestionsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Label("Recommended Meals", systemImage: "checkmark.seal.fill")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             ForEach(Array(suggestions.enumerated()), id: \.element.id) { index, suggestion in
@@ -89,11 +89,11 @@ struct MealSuggestionsView: View {
 
                     HStack(spacing: 8) {
                         Label(suggestion.mealType.rawValue.capitalized, systemImage: mealTypeIcon(suggestion.mealType))
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.secondaryText)
 
                         Text("\(suggestion.timesEaten)x eaten")
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
                 }
@@ -108,12 +108,12 @@ struct MealSuggestionsView: View {
 
             // Reasoning
             Label(suggestion.reasoning, systemImage: "info.circle")
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.accent)
 
             // Last eaten
             Text("Last eaten: \(formattedDate(suggestion.lastEaten))")
-                .font(.caption2)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
         }
         .padding()
@@ -128,7 +128,7 @@ struct MealSuggestionsView: View {
             HStack(spacing: 6) {
                 ForEach(items, id: \.self) { item in
                     Text(item)
-                        .font(.caption2)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.primaryText)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
@@ -144,7 +144,7 @@ struct MealSuggestionsView: View {
     private var tipsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("How This Works", systemImage: "lightbulb.fill")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             tipRow(
@@ -172,7 +172,7 @@ struct MealSuggestionsView: View {
 
     private func tipRow(icon: String, text: String) -> some View {
         Label(text, systemImage: icon)
-            .font(.subheadline)
+            .typography(Typography.subheadline)
             .foregroundStyle(ColorTheme.secondaryText)
     }
 

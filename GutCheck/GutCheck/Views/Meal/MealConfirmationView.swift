@@ -14,7 +14,7 @@ struct MealConfirmationView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack {
                         Text(meal.name)
-                            .font(.title2)
+                            .typography(Typography.title2)
                             .bold()
                         Spacer()
                         Text(meal.date.formatted(.dateTime.hour().minute()))
@@ -23,12 +23,12 @@ struct MealConfirmationView: View {
                     
                     if let notes = meal.notes {
                         Text(notes)
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(.secondary)
                     }
                     
                     Label("\(meal.type.rawValue)", systemImage: "clock")
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .foregroundStyle(.secondary)
                 }
                 .padding()
@@ -37,7 +37,7 @@ struct MealConfirmationView: View {
                 // Nutrition Summary
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Nutrition Summary")
-                        .font(.title2)
+                        .typography(Typography.title2)
                         .bold()
                     
                     if let nutrition = viewModel.totalNutrition {
@@ -50,7 +50,7 @@ struct MealConfirmationView: View {
                 // Food Items
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Food Items")
-                        .font(.title2)
+                        .typography(Typography.title2)
                         .bold()
                     
                     ForEach(meal.foodItems) { item in
@@ -66,7 +66,7 @@ struct MealConfirmationView: View {
                         Image(systemName: "wifi.slash")
                             .foregroundStyle(ColorTheme.secondaryText)
                         Text("AI analysis unavailable while offline")
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
                     .padding()
@@ -75,12 +75,12 @@ struct MealConfirmationView: View {
                 } else if let analysis = viewModel.aiAnalysis {
                     VStack(alignment: .leading, spacing: 16) {
                         Text("Smart Analysis")
-                            .font(.title2)
+                            .typography(Typography.title2)
                             .bold()
 
                         ForEach(analysis.insights, id: \.self) { insight in
                             Label(insight, systemImage: "brain")
-                                .font(.subheadline)
+                                .typography(Typography.subheadline)
                                 .padding(.vertical, 4)
                         }
 
@@ -89,7 +89,7 @@ struct MealConfirmationView: View {
 
                             ForEach(analysis.warnings, id: \.self) { warning in
                                 Label(warning, systemImage: "exclamationmark.triangle")
-                                    .font(.subheadline)
+                                    .typography(Typography.subheadline)
                                     .foregroundStyle(.orange)
                                     .padding(.vertical, 4)
                             }
@@ -193,7 +193,7 @@ private struct NutritionSummaryView: View {
                     Spacer()
                     Text("\(fiber.formatted(.number.precision(.fractionLength(1))))g")
                 }
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(.secondary)
             }
             
@@ -203,7 +203,7 @@ private struct NutritionSummaryView: View {
                     Spacer()
                     Text("\(sugar.formatted(.number.precision(.fractionLength(1))))g")
                 }
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(.secondary)
             }
         }
@@ -218,12 +218,12 @@ private struct NutritionValueView: View {
     var body: some View {
         VStack(spacing: 4) {
             Text(label)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(.secondary)
             Text(value)
-                .font(.headline)
+                .typography(Typography.headline)
             Text(unit)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -244,15 +244,15 @@ private struct MealConfirmationFoodItemRow: View {
             
             VStack(alignment: .leading, spacing: 8) {
                 Text(item.name)
-                    .font(.headline)
+                    .typography(Typography.headline)
                 
                 Text(item.quantity)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(.secondary)
                 
                 if let brand = item.nutritionDetails["brand"] {
                     Text(brand)
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -261,7 +261,7 @@ private struct MealConfirmationFoodItemRow: View {
             
             if let calories = item.nutrition.calories {
                 Text("\(Int(calories)) cal")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(.secondary)
             }
         }

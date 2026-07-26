@@ -165,9 +165,9 @@ struct SettingsView: View {
                             .accessibleDecorative()
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Privacy Policy Accepted")
-                                .font(.subheadline)
+                                .typography(Typography.subheadline)
                             Text("Version 1.0 - August 18, 2025")
-                                .font(.caption)
+                                .typography(Typography.caption)
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
@@ -188,7 +188,7 @@ struct SettingsView: View {
                             Text("Local Storage")
                             Spacer()
                             Text("Core Data")
-                                .font(.caption)
+                                .typography(Typography.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -257,10 +257,10 @@ struct SettingsView: View {
                                 .frame(width: 20)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Signed in with \(user.signInMethod.displayName)")
-                                    .font(.subheadline)
+                                    .typography(Typography.subheadline)
                                     .fontWeight(.medium)
                                 Text(user.email)
-                                    .font(.caption)
+                                    .typography(Typography.caption)
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
@@ -295,7 +295,7 @@ struct SettingsView: View {
                             Text("Delete Account")
                             Spacer()
                             Text("Permanent")
-                                .font(.caption)
+                                .typography(Typography.caption)
                                 .foregroundStyle(.red)
                         }
                     }

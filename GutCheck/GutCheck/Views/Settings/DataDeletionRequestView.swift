@@ -33,11 +33,11 @@ struct DataDeletionRequestView: View {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundStyle(.orange)
                             Text("Data Deletion Request")
-                                .font(.headline)
+                                .typography(Typography.headline)
                         }
                         
                         Text("This will submit a request to delete your data. The request will be reviewed by our team before any data is permanently removed.")
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 8)
@@ -71,7 +71,7 @@ struct DataDeletionRequestView: View {
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Important Notes:")
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .fontWeight(.semibold)
                         
                         Text("• This is a request, not an immediate deletion")
@@ -80,7 +80,7 @@ struct DataDeletionRequestView: View {
                         Text("• You can cancel this request at any time")
                         Text("• Some data may be retained for legal compliance")
                     }
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(.secondary)
                 }
                 

@@ -148,9 +148,9 @@ private struct NetworkDebugger: View {
         List(viewModel.requests) { request in
             VStack(alignment: .leading, spacing: 8) {
                 Text(request.url)
-                    .font(.headline)
+                    .typography(Typography.headline)
                 Text(request.method)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(.secondary)
                 if let statusCode = request.statusCode {
                     Text("Status: \(statusCode)")

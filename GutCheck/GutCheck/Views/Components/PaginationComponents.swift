@@ -26,7 +26,7 @@ struct LoadMoreButton: View {
                     }
                     
                     Text(isLoading ? "Loading..." : "Load More")
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .fontWeight(.medium)
                 }
                 .foregroundStyle(ColorTheme.primary)
@@ -92,7 +92,7 @@ struct LoadMoreTrigger: View {
                 ProgressView()
                     .scaleEffect(0.8)
                 Text("Loading more...")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(.secondary)
             } else {
                 Spacer()
@@ -119,7 +119,7 @@ struct PaginationStatusBar: View {
         HStack {
             if let totalItems = totalItems {
                 Text("\(totalItems) items")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(.secondary)
             }
             
@@ -132,12 +132,12 @@ struct PaginationStatusBar: View {
                 }
                 
                 Text("Page \(currentPage)")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(.secondary)
                 
                 if hasMoreData {
                     Image(systemName: "ellipsis")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -227,7 +227,7 @@ struct PaginatedListView<Item: Identifiable, ItemView: View>: View {
                         )
                     } else if !items.isEmpty {
                         Text("No more items")
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(.secondary)
                             .padding()
                     }
@@ -247,7 +247,7 @@ struct LoadingView: View {
                 .scaleEffect(1.2)
             
             Text("Loading...")
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -291,7 +291,7 @@ struct FilterChip: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .fontWeight(.medium)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 8)
@@ -329,7 +329,7 @@ struct DateRangePicker: View {
                 HStack {
                     Image(systemName: "calendar")
                     Text(dateRangeText)
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                 }
                 .foregroundStyle(ColorTheme.primary)
                 .padding(.horizontal, 12)
@@ -346,7 +346,7 @@ struct DateRangePicker: View {
                     endDate = nil
                     onRangeChange()
                 }
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(.secondary)
             }
             

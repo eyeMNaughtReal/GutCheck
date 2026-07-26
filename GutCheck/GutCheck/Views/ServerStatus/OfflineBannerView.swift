@@ -22,7 +22,7 @@ struct OfflineBannerView: View {
                     Image(systemName: "icloud.slash")
                         .font(.system(size: 14, weight: .semibold))
                     Text("Offline")
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .fontWeight(.semibold)
                 }
                 .foregroundStyle(.white)

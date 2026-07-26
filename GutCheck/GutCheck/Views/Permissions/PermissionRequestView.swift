@@ -60,7 +60,7 @@ struct PermissionRequestView: View {
                 Button("Skip") {
                     skipToEnd()
                 }
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.primary)
             }
             
@@ -87,7 +87,7 @@ struct PermissionRequestView: View {
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(permissionType.description)
-                    .font(.title3)
+                    .typography(Typography.title3)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .lineLimit(nil)
@@ -116,7 +116,7 @@ struct PermissionRequestView: View {
                         .foregroundStyle(ColorTheme.primaryText)
                     
                     Text("Optional")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 4)
@@ -125,7 +125,7 @@ struct PermissionRequestView: View {
                 }
                 
                 Text(permissionType.description)
-                    .font(.title3)
+                    .typography(Typography.title3)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .lineLimit(nil)
@@ -143,7 +143,7 @@ struct PermissionRequestView: View {
     private func permissionBenefitsView(_ permissionType: PermissionManager.PermissionType) -> some View {
         return VStack(alignment: .leading, spacing: 12) {
             Text("This helps you:")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
             
             VStack(alignment: .leading, spacing: 8) {
@@ -154,7 +154,7 @@ struct PermissionRequestView: View {
                             .font(.system(size: 16))
                         
                         Text(benefit)
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(ColorTheme.secondaryText)
                         
                         Spacer()
@@ -177,7 +177,7 @@ struct PermissionRequestView: View {
                 .font(.system(size: 16))
             
             Text(status.statusText)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(status.statusColor)
             
             Spacer()
@@ -186,7 +186,7 @@ struct PermissionRequestView: View {
                 Button("Open Settings") {
                     permissionManager.openAppSettings()
                 }
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.primary)
             }
         }
@@ -208,7 +208,7 @@ struct PermissionRequestView: View {
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Text("GutCheck is ready to help you track your digestive health with personalized insights.")
-                    .font(.title3)
+                    .typography(Typography.title3)
                     .multilineTextAlignment(.center)
                     .foregroundStyle(ColorTheme.secondaryText)
             }
@@ -221,7 +221,7 @@ struct PermissionRequestView: View {
     private var permissionSummaryView: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Enabled Features:")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
             
             ForEach(PermissionManager.PermissionType.allCases, id: \.self) { type in
@@ -232,7 +232,7 @@ struct PermissionRequestView: View {
                             .frame(width: 20)
                         
                         Text(type.title)
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(ColorTheme.primaryText)
                         
                         Spacer()
@@ -266,7 +266,7 @@ struct PermissionRequestView: View {
                             Text(permissionType.isRequired ? "Allow \(permissionType.title)" : "Enable \(permissionType.title)")
                         }
                     }
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -278,14 +278,14 @@ struct PermissionRequestView: View {
                         Button("Maybe Later") {
                             nextStep()
                         }
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .foregroundStyle(ColorTheme.secondaryText)
                     }
                 } else {
                     Button("Continue") {
                         nextStep()
                     }
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -297,7 +297,7 @@ struct PermissionRequestView: View {
                 Button("Get Started") {
                     dismiss()
                 }
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
                 .padding()

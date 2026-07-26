@@ -7,9 +7,9 @@ struct GraphPreviewView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Symptoms vs Meals")
-                .font(.headline)
+                .typography(Typography.headline)
             Text("AI trend analysis coming soon...")
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(.secondary)
             Rectangle()
                 .fill(Color.gray.opacity(0.1))
