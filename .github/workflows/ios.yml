@@ -82,6 +82,16 @@ jobs:
         EOF
       working-directory: GutCheck/GutCheck
 
+    - name: Diagnose toolchain (temporary)
+      continue-on-error: true
+      run: |
+        echo "=== xcodebuild version ==="; xcodebuild -version
+        echo "=== installed SDKs ==="; xcodebuild -showsdks
+        echo "=== simulator runtimes ==="; xcrun simctl list runtimes
+        echo "=== available simulator devices ==="; xcrun simctl list devices available
+        echo "=== scheme destinations ==="; xcodebuild -showdestinations -project GutCheck.xcodeproj -scheme GutCheck || true
+      working-directory: GutCheck
+
     - name: Build GutCheck
       run: |
         xcodebuild build \
