@@ -9,6 +9,7 @@
 
 import Foundation
 import HealthKit
+import CryptoKit
 
 @MainActor
 @Observable class HealthKitSyncManager {
@@ -20,17 +21,34 @@ import HealthKit
     private let authorizedKey   = "healthKitEverAuthorized"
     private let lastSyncKey     = "lastHealthKitSyncTimestamp"
 
-    // UserDefaults keys for stored snapshot (change detection)
-    private enum SnapshotKey {
-        static let weight    = "hkSnap_weight"
-        static let height    = "hkSnap_height"
-        static let systolic  = "hkSnap_systolic"
-        static let diastolic = "hkSnap_diastolic"
-        static let glucose   = "hkSnap_glucose"
-        static let heartRate = "hkSnap_heartRate"
+    /// Digest of the last-seen metrics, used purely for change detection.
+    ///
+    /// This previously stored blood pressure, blood glucose, heart rate, weight
+    /// and height as plain values in UserDefaults — an unencrypted plist in the
+    /// app container — which CodeQL flagged as cleartext storage of sensitive
+    /// information (alerts #5-#8). Nothing ever read those values back; they only
+    /// answered "has anything changed since last sync?". A one-way digest answers
+    /// that identically while persisting no health data at all.
+    private let snapshotDigestKey = "hkSnap_digest"
+
+    /// Pre-fix keys, removed on first run so existing installs don't keep
+    /// cleartext health values sitting on disk.
+    private static let legacySnapshotKeys = [
+        "hkSnap_weight", "hkSnap_height", "hkSnap_systolic",
+        "hkSnap_diastolic", "hkSnap_glucose", "hkSnap_heartRate"
+    ]
+
+    private init() {
+        purgeLegacySnapshotIfNeeded()
     }
 
-    private init() {}
+    /// Clears any plaintext health values written by earlier builds.
+    private func purgeLegacySnapshotIfNeeded() {
+        let defaults = UserDefaults.standard
+        for key in Self.legacySnapshotKeys where defaults.object(forKey: key) != nil {
+            defaults.removeObject(forKey: key)
+        }
+    }
 
     // Call this after the user successfully grants HealthKit authorization.
     func markAuthorized() {
@@ -69,23 +87,31 @@ import HealthKit
 
     // MARK: - Change Detection
 
+    /// SHA-256 over the tracked metrics. One-way, so nothing about the user's
+    /// health can be recovered from what's persisted. `nil` is encoded distinctly
+    /// from `0` so "not recorded" and "recorded as zero" don't collide.
+    private func snapshotDigest(for data: UserHealthData) -> String {
+        let fields: [Double?] = [
+            data.weight,
+            data.height,
+            data.bloodPressureSystolic,
+            data.bloodPressureDiastolic,
+            data.bloodGlucose,
+            data.heartRate
+        ]
+        let encoded: String = fields
+            .map { value -> String in value.map { "\($0)" } ?? "nil" }
+            .joined(separator: "|")
+        return SHA256.hash(data: Data(encoded.utf8))
+            .map { String(format: "%02x", $0) }
+            .joined()
+    }
+
     private func hasChanges(_ data: UserHealthData) -> Bool {
-        let d = UserDefaults.standard
-        return (data.weight ?? 0)                != d.double(forKey: SnapshotKey.weight)
-            || (data.height ?? 0)                != d.double(forKey: SnapshotKey.height)
-            || (data.bloodPressureSystolic ?? 0)  != d.double(forKey: SnapshotKey.systolic)
-            || (data.bloodPressureDiastolic ?? 0) != d.double(forKey: SnapshotKey.diastolic)
-            || (data.bloodGlucose ?? 0)           != d.double(forKey: SnapshotKey.glucose)
-            || (data.heartRate ?? 0)              != d.double(forKey: SnapshotKey.heartRate)
+        snapshotDigest(for: data) != UserDefaults.standard.string(forKey: snapshotDigestKey)
     }
 
     private func saveSnapshot(_ data: UserHealthData) {
-        let d = UserDefaults.standard
-        d.set(data.weight ?? 0,                forKey: SnapshotKey.weight)
-        d.set(data.height ?? 0,                forKey: SnapshotKey.height)
-        d.set(data.bloodPressureSystolic ?? 0,  forKey: SnapshotKey.systolic)
-        d.set(data.bloodPressureDiastolic ?? 0, forKey: SnapshotKey.diastolic)
-        d.set(data.bloodGlucose ?? 0,           forKey: SnapshotKey.glucose)
-        d.set(data.heartRate ?? 0,              forKey: SnapshotKey.heartRate)
+        UserDefaults.standard.set(snapshotDigest(for: data), forKey: snapshotDigestKey)
     }
 }
