@@ -8,6 +8,8 @@
 import SwiftUI
 import UIKit
 import UserNotifications
+import BackgroundTasks
+import CoreSpotlight
 import FirebaseCore
 import FirebaseFirestore
 
@@ -56,6 +58,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // Register as the notification delegate so banners appear while the
         // app is in the foreground and taps can be routed to the right screen
         UNUserNotificationCenter.current().delegate = self
+
+        // Register background task handlers for pre-computed insights and data sync
+        BackgroundTaskService.shared.registerBackgroundTasks()
 
         // Test basic Firebase connectivity
         Task {
@@ -186,6 +191,22 @@ struct GutCheckApp: App {
                     serverStatusService.startMonitoring()
                 } else {
                     serverStatusService.stopMonitoring()
+                    // Clear Spotlight index when user signs out
+                    SpotlightIndexingService.shared.removeAllItems()
+                }
+            }
+            .onContinueUserActivity(CSSearchableItemActionType) { activity in
+                guard let identifier = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String,
+                      let parsed = SpotlightIndexingService.parseIdentifier(identifier) else {
+                    return
+                }
+                switch parsed.type {
+                case "meal":
+                    AppRouter.shared.viewMealDetails(id: parsed.id)
+                case "symptom":
+                    AppRouter.shared.viewSymptomDetails(id: parsed.id)
+                default:
+                    break
                 }
             }
             .onChange(of: scenePhase) { oldPhase, newPhase in
@@ -193,12 +214,15 @@ struct GutCheckApp: App {
                 case .background:
                     TimeoutManager.shared.applicationDidEnterBackground()
                     serverStatusService.stopMonitoring()
+                    BackgroundTaskService.shared.scheduleAllTasks()
                 case .active:
                     TimeoutManager.shared.applicationWillEnterForeground()
                     Task { await HealthKitSyncManager.shared.syncIfNeeded() }
                     if authService.isAuthenticated {
                         serverStatusService.startMonitoring()
                         Task { try? await dataSyncService.performFullSync() }
+                        // Re-evaluate notifications in case Focus Filter state changed
+                        Task { await ReminderSettingsService.shared.rescheduleNotificationsForFocusChange() }
                     }
                 default:
                     break

@@ -131,6 +131,14 @@ private struct DayCell: View {
     let day: CalendarDay
     let isSelected: Bool
     
+    private var correlationColor: Color {
+        guard let severity = day.correlation?.severity else { return .clear }
+        switch severity {
+        case .high: return .red
+        case .medium, .low: return .orange
+        }
+    }
+    
     var body: some View {
         VStack(spacing: 4) {
             Text("\(Calendar.current.component(.day, from: day.date))")
@@ -148,6 +156,11 @@ private struct DayCell: View {
                         Circle()
                             .fill(ColorTheme.bowelTracking)
                             .frame(width: 6, height: 6)
+                    }
+                    if day.hasCorrelation {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 8))
+                            .foregroundStyle(correlationColor)
                     }
                 }
             }
@@ -190,10 +203,63 @@ private struct DailySummaryCard: View {
                     }
                 }
             }
+            
+            if let correlation = day.correlation {
+                CorrelationSummaryView(correlation: correlation)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .roundedCard()
+    }
+}
+
+private struct CorrelationSummaryView: View {
+    let correlation: DayCorrelation
+    
+    private var severityColor: Color {
+        switch correlation.severity {
+        case .high: return .red
+        case .medium: return .orange
+        case .low: return .yellow
+        }
+    }
+    
+    private var severityLabel: String {
+        switch correlation.severity {
+        case .high: return "High"
+        case .medium: return "Moderate"
+        case .low: return "Low"
+        }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Possible Triggers", systemImage: "exclamationmark.triangle.fill")
+                .foregroundStyle(severityColor)
+            
+            Text("\(correlation.symptomCount) symptom\(correlation.symptomCount == 1 ? "" : "s") detected 2–8 hours after eating")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            
+            HStack(spacing: 4) {
+                Text("Severity:")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(severityLabel)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(severityColor)
+            }
+            
+            Text(correlation.triggerFoodNames.joined(separator: ", "))
+                .font(.subheadline)
+                .foregroundStyle(.primary)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(severityColor.opacity(0.08))
+        .clipShape(.rect(cornerRadius: 10))
     }
 }
 

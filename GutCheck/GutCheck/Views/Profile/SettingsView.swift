@@ -193,7 +193,61 @@ struct SettingsView: View {
                         }
                     }
                 }
-                
+
+                #if DEBUG
+                Section {
+                    Toggle(isOn: Bindable(settingsVM).testMealModeEnabled) {
+                        HStack {
+                            Image(systemName: "fork.knife.circle")
+                                .foregroundStyle(.mint)
+                                .accessibleDecorative()
+                            Text("Test Meal Mode")
+                                .typography(Typography.body)
+                        }
+                    }
+                    .accessibilityLabel("Test Meal Mode")
+                    .accessibilityHint("Toggle to enable sample meal data for testing")
+
+                    Toggle(isOn: Bindable(settingsVM).experimentalAIEnabled) {
+                        HStack {
+                            Image(systemName: "brain")
+                                .foregroundStyle(.purple)
+                                .accessibleDecorative()
+                            Text("Experimental AI Predictions")
+                                .typography(Typography.body)
+                        }
+                    }
+                    .accessibilityLabel("Experimental AI Predictions")
+                    .accessibilityHint("Toggle to enable experimental AI analysis features")
+
+                    Toggle(isOn: Bindable(settingsVM).showSyncDebugInfo) {
+                        HStack {
+                            Image(systemName: "ant.circle")
+                                .foregroundStyle(.orange)
+                                .accessibleDecorative()
+                            Text("Show Sync/Debug Info")
+                                .typography(Typography.body)
+                        }
+                    }
+                    .accessibilityLabel("Show Sync and Debug Info")
+                    .accessibilityHint("Toggle to display sync status and debug logs")
+
+                    NavigationLink(value: SettingsRoute.debugMenu) {
+                        HStack {
+                            Image(systemName: "ladybug")
+                                .foregroundStyle(.red)
+                                .accessibleDecorative()
+                            Text("Debug Menu")
+                                .typography(Typography.body)
+                        }
+                    }
+                    .accessibilityLabel("Debug Menu")
+                    .accessibilityHint("Tap to open the debug menu")
+                } header: {
+                    Label("Developer", systemImage: "hammer.fill")
+                }
+                #endif
+
                 Section("Account Management") {
                     // Linked account display
                     if let user = authService.currentUser {
