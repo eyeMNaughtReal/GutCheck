@@ -102,7 +102,7 @@ struct PaginatedSymptomHistoryView: View {
                     )
                 } else if !viewModel.groupedSymptoms.isEmpty {
                     Text("No more symptoms")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(.secondary)
                         .padding()
                 }
@@ -142,12 +142,12 @@ struct SymptomDaySection: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(dayFormatter.string(from: date))
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .fontWeight(.medium)
                         .foregroundStyle(ColorTheme.primary)
                     
                     Text(dateFormatter.string(from: date))
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(.secondary)
                 }
                 
@@ -155,7 +155,7 @@ struct SymptomDaySection: View {
                 
                 // Symptom count badge
                 Text("\(symptoms.count)")
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .fontWeight(.medium)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 8)
@@ -207,7 +207,7 @@ struct SymptomRowView: View {
             HStack(spacing: 12) {
                 // Time
                 Text(timeFormatter.string(from: symptom.date))
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .fontWeight(.medium)
                     .foregroundStyle(ColorTheme.primary)
                     .frame(width: 60, alignment: .leading)
@@ -221,7 +221,7 @@ struct SymptomRowView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack {
                         Text("Type \(symptom.stoolType.typeNumber)")
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .fontWeight(.medium)
                         
                         if symptom.painLevel != .none {
@@ -245,7 +245,7 @@ struct SymptomRowView: View {
                     
                     if let notes = symptom.notes, !notes.isEmpty {
                         Text(notes)
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(2)
                     }
@@ -254,7 +254,7 @@ struct SymptomRowView: View {
                 // Delete button
                 Button(action: onDelete) {
                     Image(systemName: "trash")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(.red)
                         .padding(8)
                         .background(Circle().fill(Color.red.opacity(0.1)))
@@ -291,11 +291,11 @@ struct SimpleIndicator: View {
     var body: some View {
         HStack(spacing: 2) {
             Image(systemName: icon)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(color)
             
             Text(text)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(color)
         }
         .padding(.horizontal, 6)
@@ -310,15 +310,9 @@ struct SimpleIndicator: View {
 // MARK: - Extensions
 
 extension PainLevel {
-    var color: Color {
-        switch self {
-        case .none: return .gray
-        case .mild: return .yellow
-        case .moderate: return .orange
-        case .severe: return .red
-        }
-    }
-    
+    /// Delegates to the shared severity ramp — see ColorTheme.severity(_:).
+    var color: Color { severityColor }
+
     var displayName: String {
         switch self {
         case .none: return "None"
@@ -330,15 +324,9 @@ extension PainLevel {
 }
 
 extension UrgencyLevel {
-    var color: Color {
-        switch self {
-        case .none: return .gray
-        case .mild: return .blue
-        case .moderate: return .orange
-        case .urgent: return .red
-        }
-    }
-    
+    /// Delegates to the shared severity ramp — see ColorTheme.severity(_:).
+    var color: Color { severityColor }
+
     var displayName: String {
         switch self {
         case .none: return "None"

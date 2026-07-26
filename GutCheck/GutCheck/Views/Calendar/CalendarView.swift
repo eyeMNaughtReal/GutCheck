@@ -193,8 +193,10 @@ struct CalendarView: View {
             }
         }
         .background(ColorTheme.background)
-        .navigationTitle(title)
-        .navigationBarTitleDisplayMode(.large)
+        // The tab bar already names this screen, and each section carries its own
+        // header — a large title here just duplicates both and costs ~100pt above the fold.
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 ProfileAvatarButton(user: authService.currentUser) {
@@ -256,7 +258,7 @@ struct CalendarMealsSectionHeader: View {
             // Section title + Log Meal button on the same row
             HStack {
                 Text("Meals")
-                    .font(.title3)
+                    .typography(Typography.title3)
                     .fontWeight(.semibold)
                     .foregroundStyle(ColorTheme.primaryText)
                 Spacer()
@@ -273,7 +275,7 @@ struct CalendarMealsSectionHeader: View {
                     .frame(minWidth: 148)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(Color.orange, in: Capsule())
+                    .background(ColorTheme.accent, in: Capsule())
                     .foregroundStyle(.white)
                 }
                 .accessibleButton(label: "Log Meal", hint: "Tap to log a new meal")
@@ -303,7 +305,7 @@ struct CalendarSymptomsSectionHeader: View {
             // Section title + Log Symptom button on the same row
             HStack {
                 Text("Symptoms")
-                    .font(.title3)
+                    .typography(Typography.title3)
                     .fontWeight(.semibold)
                     .foregroundStyle(ColorTheme.primaryText)
                 Spacer()
@@ -320,7 +322,7 @@ struct CalendarSymptomsSectionHeader: View {
                     .frame(minWidth: 148)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(Color.orange, in: Capsule())
+                    .background(ColorTheme.accent, in: Capsule())
                     .foregroundStyle(.white)
                 }
                 .accessibleButton(label: "Log Symptom", hint: "Tap to log a new symptom")
@@ -346,11 +348,11 @@ struct EmptyStateCard: View {
                 .foregroundStyle(ColorTheme.secondaryText.opacity(0.5))
             
             Text(title)
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.secondaryText)
             
             Text(message)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText.opacity(0.8))
                 .multilineTextAlignment(.center)
         }
@@ -818,34 +820,41 @@ struct SymptomCalendarRow: View {
                 
                 // Content
                 VStack(alignment: .leading, spacing: 8) {
-                    HStack {
+                    HStack(alignment: .firstTextBaseline) {
+                        // "Type 7" alone is meaningless — always pair it with the
+                        // plain-language summary the Bristol picker already shows.
                         Text("Type \(symptom.stoolType.rawValue)")
-                            .font(.system(size: 17, weight: .semibold))
+                            .typography(Typography.headline)
                             .foregroundStyle(ColorTheme.primaryText)
-                        
+
+                        Text(symptom.stoolType.summary)
+                            .typography(Typography.subheadline)
+                            .foregroundStyle(ColorTheme.secondaryText)
+                            .lineLimit(1)
+
                         Spacer()
-                        
+
                         Text(formattedTime)
-                            .font(.system(size: 15))
+                            .typography(Typography.subheadline)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
-                    
+
                     HStack(spacing: 16) {
                         HStack(spacing: 6) {
                             Image(systemName: "bolt.fill")
-                                .font(.system(size: 12))
-                                .foregroundStyle(.red)
+                                .typography(Typography.caption)
+                                .foregroundStyle(symptom.painLevel.severityColor)
                             Text(painLevelText)
-                                .font(.system(size: 14))
+                                .typography(Typography.footnote)
                                 .foregroundStyle(ColorTheme.secondaryText)
                         }
-                        
+
                         HStack(spacing: 6) {
                             Image(systemName: "exclamationmark.triangle.fill")
-                                .font(.system(size: 12))
-                                .foregroundStyle(.orange)
+                                .typography(Typography.caption)
+                                .foregroundStyle(symptom.urgencyLevel.severityColor)
                             Text(urgencyLevelText)
-                                .font(.system(size: 14))
+                                .typography(Typography.footnote)
                                 .foregroundStyle(ColorTheme.secondaryText)
                         }
                     }
@@ -875,23 +884,9 @@ struct SymptomCalendarRow: View {
         symptom.date.formattedTime
     }
     
-    private var painLevelText: String {
-        switch symptom.painLevel {
-        case .none: return "None"
-        case .mild: return "Mild"
-        case .moderate: return "Moderate"
-        case .severe: return "Severe"
-        }
-    }
-    
-    private var urgencyLevelText: String {
-        switch symptom.urgencyLevel {
-        case .none: return "None"
-        case .mild: return "Mild"
-        case .moderate: return "Moderate"
-        case .urgent: return "Urgent"
-        }
-    }
+    private var painLevelText: String { symptom.painLevel.displayName }
+
+    private var urgencyLevelText: String { symptom.urgencyLevel.displayName }
 }
 
 // MARK: - Daily Nutrition Card
@@ -905,22 +900,22 @@ struct DailyNutritionCard: View {
         VStack(spacing: 12) {
             HStack {
                 Text("Daily Nutrition")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                 Spacer()
                 if mealCount > 0 {
                     Text("See details")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(Color.accentColor)
                     Image(systemName: "chevron.right")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(Color.accentColor)
                 }
             }
 
             if mealCount == 0 {
                 Text("Log a meal to see your daily nutrition totals.")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
@@ -930,19 +925,20 @@ struct DailyNutritionCard: View {
                         .font(.system(size: 36, weight: .bold, design: .rounded))
                         .foregroundStyle(ColorTheme.primaryText)
                     Text("kcal")
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .foregroundStyle(ColorTheme.secondaryText)
                     Spacer()
                     Text("\(mealCount) meal\(mealCount == 1 ? "" : "s")")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                 }
 
-                // P / C / F pills
+                // Macro pills — spelled out rather than P/C/F, which forces the
+                // user to decode single letters (and "F" reads as fat or fiber).
                 HStack(spacing: 8) {
-                    MacroPill(label: "P", value: nutrition.protein, color: .blue)
-                    MacroPill(label: "C", value: nutrition.carbs,   color: .green)
-                    MacroPill(label: "F", value: nutrition.fat,     color: .red)
+                    MacroPill(label: "Protein", value: nutrition.protein, color: .blue)
+                    MacroPill(label: "Carbs",   value: nutrition.carbs,   color: .green)
+                    MacroPill(label: "Fat",     value: nutrition.fat,     color: .red)
                     if let fiber = nutrition.fiber, fiber > 0 {
                         MacroPill(label: "Fiber", value: fiber, color: .orange)
                     }
@@ -984,11 +980,11 @@ private struct MacroPill: View {
     var body: some View {
         HStack(spacing: 3) {
             Text(label)
-                .font(.caption)
+                .typography(Typography.caption)
                 .fontWeight(.semibold)
                 .foregroundStyle(color)
             Text(value.map { "\($0.formatted(.number.precision(.fractionLength(1))))g" } ?? "--")
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.primaryText)
         }
         .padding(.horizontal, 8)
@@ -1019,14 +1015,14 @@ struct DailySymptomCard: View {
         VStack(spacing: 12) {
             HStack {
                 Text("Daily Summary")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                 Spacer()
             }
 
             if symptoms.isEmpty {
                 Text("Log a symptom to see your daily summary.")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
@@ -1036,7 +1032,7 @@ struct DailySymptomCard: View {
                         .font(.system(size: 36, weight: .bold, design: .rounded))
                         .foregroundStyle(ColorTheme.primaryText)
                     Text("symptom\(symptoms.count == 1 ? "" : "s")")
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .foregroundStyle(ColorTheme.secondaryText)
                     Spacer()
                 }
@@ -1074,11 +1070,11 @@ private struct SymptomStatPill: View {
     var body: some View {
         HStack(spacing: 3) {
             Text(label)
-                .font(.caption)
+                .typography(Typography.caption)
                 .fontWeight(.semibold)
                 .foregroundStyle(color)
             Text(value)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.primaryText)
         }
         .padding(.horizontal, 8)
@@ -1088,26 +1084,14 @@ private struct SymptomStatPill: View {
     }
 }
 
+// Both delegate to the shared severity ramp so a given level renders the same
+// color here as it does in the symptom rows and history list.
 private extension PainLevel {
-    var pillColor: Color {
-        switch self {
-        case .none:     return .secondary
-        case .mild:     return .green
-        case .moderate: return .orange
-        case .severe:   return .red
-        }
-    }
+    var pillColor: Color { severityColor }
 }
 
 private extension UrgencyLevel {
-    var pillColor: Color {
-        switch self {
-        case .none:     return .secondary
-        case .mild:     return .yellow
-        case .moderate: return .orange
-        case .urgent:   return .red
-        }
-    }
+    var pillColor: Color { severityColor }
 }
 
 // MARK: - Daily Nutrition Detail View
@@ -1240,7 +1224,7 @@ struct DailyNutritionDetailView: View {
                                     .textCase(nil)
                                 Spacer()
                                 Text("\(mealCalories) kcal")
-                                    .font(.caption)
+                                    .typography(Typography.caption)
                                     .foregroundStyle(.secondary)
                                     .monospacedDigit()
                                     .textCase(nil)
@@ -1249,7 +1233,7 @@ struct DailyNutritionDetailView: View {
                             if meal.foodItems.isEmpty {
                                 Text("No food items logged")
                                     .foregroundStyle(.secondary)
-                                    .font(.subheadline)
+                                    .typography(Typography.subheadline)
                             } else {
                                 ForEach(meal.foodItems) { item in
                                     NutritionDetailFoodRow(item: item)
@@ -1263,7 +1247,7 @@ struct DailyNutritionDetailView: View {
                     Section {
                         Text("No nutrition data for this day. Log a meal to see your breakdown.")
                             .foregroundStyle(.secondary)
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                     }
                 }
             }
@@ -1331,11 +1315,11 @@ private struct NutritionDetailFoodRow: View {
                 if !item.allergens.isEmpty {
                     HStack(alignment: .top, spacing: 8) {
                         Text("Allergens")
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(.primary)
                         Spacer()
                         Text(item.allergens.joined(separator: ", "))
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.trailing)
                     }
@@ -1346,10 +1330,10 @@ private struct NutritionDetailFoodRow: View {
                 if !item.ingredients.isEmpty {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Ingredients")
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(.primary)
                         Text(item.ingredients.joined(separator: ", "))
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -1362,17 +1346,17 @@ private struct NutritionDetailFoodRow: View {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.name)
-                        .font(.subheadline)
+                        .typography(Typography.subheadline)
                         .fontWeight(.medium)
                         .foregroundStyle(.primary)
                     Text(item.quantity)
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
                 if let cal = item.nutrition.calories {
                     Text("\(cal) kcal")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(.secondary)
                         .monospacedDigit()
                 }

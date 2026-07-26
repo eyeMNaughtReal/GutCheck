@@ -13,7 +13,7 @@ struct RecentActivityListView: View {
             // Header with "See All" button
             HStack {
                 Text("Today's Activity")
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Spacer()
@@ -22,7 +22,7 @@ struct RecentActivityListView: View {
                     // Switch to meals tab which shows the calendar view
                     router.selectedTab = .meals
                 }
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.primary)
             }
             
@@ -77,7 +77,7 @@ struct ActivityRowView: View {
             HStack(spacing: 12) {
                 // Icon
                 Image(systemName: entry.icon)
-                    .font(.title3)
+                    .typography(Typography.title3)
                     .foregroundStyle(entry.iconColor)
                     .frame(width: 24, height: 24)
                 
@@ -85,7 +85,7 @@ struct ActivityRowView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     HStack {
                         Text(entry.title)
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .fontWeight(.medium)
                             .foregroundStyle(ColorTheme.primaryText)
                         
@@ -98,7 +98,7 @@ struct ActivityRowView: View {
                     
                     if let subtitle = entry.subtitle {
                         Text(subtitle)
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
                 }
@@ -106,11 +106,11 @@ struct ActivityRowView: View {
                 // Timestamp
                 VStack(alignment: .trailing) {
                     Text(entry.timestamp, style: .time)
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                     
                     Image(systemName: "chevron.right")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                 }
             }
@@ -129,7 +129,7 @@ struct BristolStoolBadge: View {
     
     var body: some View {
         Text("\(stoolType.rawValue)")
-            .font(.caption)
+            .typography(Typography.caption)
             .fontWeight(.bold)
             .foregroundStyle(.white)
             .frame(width: 20, height: 20)
@@ -188,20 +188,53 @@ struct LoadingStateView: View {
     }
 }
 
+// MARK: - Error State
+struct RecentActivityErrorStateView: View {
+    let message: String
+    let onRetry: () -> Void
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle")
+                .typography(Typography.title2)
+                .foregroundStyle(ColorTheme.error)
+
+            Text("Couldn't load today's activity")
+                .typography(Typography.subheadline)
+                .foregroundStyle(ColorTheme.primaryText)
+
+            Text(message)
+                .typography(Typography.caption)
+                .foregroundStyle(ColorTheme.secondaryText)
+                .multilineTextAlignment(.center)
+
+            Button(action: onRetry) {
+                Text("Try Again")
+                    .typography(Typography.smallButton)
+                    .foregroundStyle(ColorTheme.primary)
+            }
+            .padding(.top, 4)
+            .accessibilityIdentifier("RetryLoadActivityButton")
+        }
+        .padding(.vertical, 20)
+        .frame(maxWidth: .infinity)
+    }
+}
+
 // MARK: - Empty State
 struct RecentActivityEmptyStateView: View {
     var body: some View {
         VStack(spacing: 8) {
             Image(systemName: "tray")
-                .font(.title2)
+                .typography(Typography.title2)
                 .foregroundStyle(ColorTheme.secondaryText)
             
             Text("No activity logged today")
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText)
             
             Text("Start by logging a meal or symptom")
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
         }
         .padding(.vertical, 20)

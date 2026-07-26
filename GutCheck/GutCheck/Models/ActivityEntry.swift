@@ -33,7 +33,7 @@ struct ActivityEntry: Identifiable, Hashable {
             return components.isEmpty ? nil : components.joined(separator: "\n")
         case .medication(let medication):
             var components: [String] = []
-            components.append("\(medication.dosage.amount) \(medication.dosage.unit)")
+            components.append(medication.dosage.formatted)
             if let notes = medication.notes, !notes.isEmpty {
                 components.append(notes)
             }

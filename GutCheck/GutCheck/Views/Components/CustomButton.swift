@@ -66,8 +66,7 @@ struct CustomButton: View {
                         .scaleEffect(0.8)
                 } else {
                     Text(title)
-                        .font(.headline)
-                        .fontWeight(.semibold)
+                        .typography(Typography.button)
                 }
             }
             .frame(maxWidth: .infinity)

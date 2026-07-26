@@ -65,7 +65,11 @@ struct InsightsView: View {
             }
             .padding()
         }
-        .navigationTitle("Insights")
+        // Without this the view falls through to the system background and renders
+        // black, while every other tab renders navy.
+        .background(ColorTheme.background)
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(for: InsightsRoute.self) { route in
             switch route {
             case .insightDetail(let insight):
@@ -190,15 +194,15 @@ struct InsightsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Image(systemName: "doc.text.magnifyingglass")
-                        .font(.title2)
+                        .typography(Typography.title2)
                         .foregroundStyle(ColorTheme.accent)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Weekly Trigger Report")
-                            .font(.headline)
+                            .typography(Typography.headline)
                             .foregroundStyle(ColorTheme.primaryText)
                         Text(reportDateRange(report))
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
 
@@ -237,7 +241,7 @@ struct InsightsView: View {
     private var triggerPatternSummarySection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Top Trigger Patterns", systemImage: "exclamationmark.triangle.fill")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             ForEach(Array(viewModel.topTriggerPatterns.enumerated()), id: \.element.id) { index, pattern in
@@ -260,7 +264,7 @@ struct InsightsView: View {
 
                             if let topInsight = pattern.summaryInsights.first {
                                 Text(topInsight.headline)
-                                    .font(.caption)
+                                    .typography(Typography.caption)
                                     .foregroundStyle(ColorTheme.secondaryText)
                                     .lineLimit(1)
                             }
@@ -269,7 +273,7 @@ struct InsightsView: View {
                         Spacer()
 
                         Image(systemName: "chevron.right")
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
                     .padding(12)
@@ -294,15 +298,15 @@ struct InsightsView: View {
         NavigationLink(value: InsightsRoute.mealSuggestions(viewModel.mealSuggestions)) {
             HStack(spacing: 12) {
                 Image(systemName: "leaf.circle.fill")
-                    .font(.title2)
+                    .typography(Typography.title2)
                     .foregroundStyle(ColorTheme.success)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Safe Meal Ideas")
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .foregroundStyle(ColorTheme.primaryText)
                     Text("\(viewModel.mealSuggestions.count) suggestions based on your history")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                 }
 
@@ -325,15 +329,15 @@ struct InsightsView: View {
         NavigationLink(value: InsightsRoute.symptomCharts) {
             HStack(spacing: 12) {
                 Image(systemName: "chart.xyaxis.line")
-                    .font(.title2)
+                    .typography(Typography.title2)
                     .foregroundStyle(ColorTheme.accent)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Symptom Charts")
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .foregroundStyle(ColorTheme.primaryText)
                     Text("Interactive graphs and trends")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                 }
 
@@ -356,15 +360,15 @@ struct InsightsView: View {
         NavigationLink(value: InsightsRoute.symptomExplorer) {
             HStack(spacing: 12) {
                 Image(systemName: "magnifyingglass.circle.fill")
-                    .font(.title2)
+                    .typography(Typography.title2)
                     .foregroundStyle(ColorTheme.accent)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Symptom Explorer")
-                        .font(.headline)
+                        .typography(Typography.headline)
                         .foregroundStyle(ColorTheme.primaryText)
                     Text("Investigate meals before symptoms")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                 }
 
@@ -384,12 +388,12 @@ struct InsightsView: View {
     private var topSymptomsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Most Frequent Symptoms", systemImage: "chart.bar.fill")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             if viewModel.topSymptoms.isEmpty {
                 Text("No symptoms logged this week")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 4)
@@ -403,7 +407,7 @@ struct InsightsView: View {
                             .background(Circle().fill(rankColor(index)))
 
                         Text(item.name)
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(ColorTheme.primaryText)
 
                         Spacer()
@@ -424,12 +428,12 @@ struct InsightsView: View {
     private var triggerFoodsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Top Triggering Foods", systemImage: "exclamationmark.triangle.fill")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             if viewModel.topTriggerFoods.isEmpty {
                 Text("Not enough data to identify triggers yet")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 4)
@@ -437,18 +441,18 @@ struct InsightsView: View {
                 ForEach(Array(viewModel.topTriggerFoods.enumerated()), id: \.element.id) { index, item in
                     HStack(spacing: 12) {
                         Image(systemName: "exclamationmark.triangle")
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(rankColor(index))
 
                         Text(item.name)
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(ColorTheme.primaryText)
                             .lineLimit(1)
 
                         Spacer()
 
                         Text("\(item.count) correlation\(item.count == 1 ? "" : "s")")
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.secondaryText)
                     }
                 }
@@ -463,12 +467,12 @@ struct InsightsView: View {
     private var bestDaysCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Label("Best Days", systemImage: "checkmark.seal.fill")
-                .font(.headline)
+                .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
 
             if viewModel.bestDays.isEmpty {
                 Text("Log symptoms for a week to see your best days")
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 4)
@@ -479,18 +483,18 @@ struct InsightsView: View {
                             .foregroundStyle(ColorTheme.success)
 
                         Text(item.name)
-                            .font(.subheadline)
+                            .typography(Typography.subheadline)
                             .foregroundStyle(ColorTheme.primaryText)
 
                         Spacer()
 
                         if item.count == 0 {
                             Text("Symptom-free")
-                                .font(.caption)
+                                .typography(Typography.caption)
                                 .foregroundStyle(ColorTheme.success)
                         } else {
                             Text("Low symptoms")
-                                .font(.caption)
+                                .typography(Typography.caption)
                                 .foregroundStyle(ColorTheme.secondaryText)
                         }
                     }
@@ -524,7 +528,7 @@ private struct WeeklyStatPill: View {
     var body: some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.title3)
+                .typography(Typography.title3)
                 .foregroundStyle(color)
 
             Text(value)
@@ -532,7 +536,7 @@ private struct WeeklyStatPill: View {
                 .foregroundStyle(ColorTheme.primaryText)
 
             Text(label)
-                .font(.caption)
+                .typography(Typography.caption)
                 .foregroundStyle(ColorTheme.secondaryText)
         }
         .frame(maxWidth: .infinity)
@@ -551,29 +555,29 @@ private struct AnalyticsInsightCard: View {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Image(systemName: insight.iconName)
-                        .font(.title2)
+                        .typography(Typography.title2)
                         .foregroundStyle(ColorTheme.accent)
                     
                     Spacer()
                     
                     Text("\(insight.confidenceLevel)%")
-                        .font(.caption)
+                        .typography(Typography.caption)
                         .foregroundStyle(ColorTheme.secondaryText)
                 }
                 
                 Text(insight.title)
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                     .lineLimit(1)
                     .truncationMode(.tail)
                 
                 Text(insight.summary)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .lineLimit(2)
                 
                 Text(insight.dateRange)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.accent)
             }
             .padding()
@@ -591,20 +595,23 @@ private struct CategoryCard: View {
         NavigationLink(value: InsightsRoute.categoryInsights(category)) {
             VStack(spacing: 12) {
                 Image(systemName: category.iconName)
-                    .font(.title)
+                    .typography(Typography.title)
                     .foregroundStyle(category.accentColor)
                 
                 Text(category.title)
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                     .lineLimit(1)
                     .truncationMode(.tail)
                 
                 Text(category.description)
-                    .font(.caption)
+                    .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .multilineTextAlignment(.center)
-                    .lineLimit(2)
+                    // 2 lines clipped "Get personalized suggestions…"; grid rows
+                    // size to the tallest card, so letting it wrap costs nothing.
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding()
             .frame(maxWidth: .infinity, minHeight: 140, maxHeight: 140)
@@ -621,16 +628,16 @@ private struct PatternRow: View {
     var body: some View {
         HStack(spacing: 16) {
             Image(systemName: pattern.iconName)
-                .font(.title2)
+                .typography(Typography.title2)
                 .foregroundStyle(ColorTheme.accent)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(pattern.title)
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
                 
                 Text(pattern.description)
-                    .font(.subheadline)
+                    .typography(Typography.subheadline)
                     .foregroundStyle(ColorTheme.secondaryText)
                     .lineLimit(2)
             }
@@ -653,23 +660,23 @@ private struct RecommendationCard: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: recommendation.iconName)
-                    .font(.title2)
+                    .typography(Typography.title2)
                     .foregroundStyle(ColorTheme.accent)
                 
                 Text(recommendation.title)
-                    .font(.headline)
+                    .typography(Typography.headline)
                     .foregroundStyle(ColorTheme.primaryText)
             }
             
             Text(recommendation.description)
-                .font(.subheadline)
+                .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText)
             
             if !recommendation.actionItems.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(recommendation.actionItems, id: \.self) { action in
                         Label(action, systemImage: "checkmark.circle")
-                            .font(.caption)
+                            .typography(Typography.caption)
                             .foregroundStyle(ColorTheme.accent)
                     }
                 }

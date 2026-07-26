@@ -145,7 +145,16 @@ struct MedicationDosage: Codable {
     let unit: String
     let frequency: MedicationFrequency
     let instructions: String?
-    
+
+    /// "20 mg" rather than "20.0 mg" — whole numbers drop the decimal.
+    /// Use this everywhere a dose is displayed so formatting matches across screens.
+    var formatted: String {
+        let amountText = amount.truncatingRemainder(dividingBy: 1) == 0
+            ? String(Int(amount))
+            : amount.formatted(.number.precision(.fractionLength(1)))
+        return "\(amountText) \(unit)"
+    }
+
     init(
         amount: Double,
         unit: String,

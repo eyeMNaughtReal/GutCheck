@@ -31,6 +31,41 @@ enum UrgencyLevel: Int, Codable, CaseIterable {
     case none = 0, mild = 1, moderate = 2, urgent = 3
 }
 
+// MARK: - Display Text
+// Single source of truth for how symptom values are described in the UI.
+// A bare "Type 7" is meaningless to a user; always pair it with `summary`.
+
+extension StoolType {
+    /// Short clinical summary, e.g. "Diarrhea".
+    var summary: String {
+        switch self {
+        case .type1: return "Severe constipation"
+        case .type2: return "Mild constipation"
+        case .type3: return "Borderline normal"
+        case .type4: return "Ideal"
+        case .type5: return "Borderline normal"
+        case .type6: return "Mild diarrhea"
+        case .type7: return "Diarrhea"
+        }
+    }
+
+    /// Physical consistency, e.g. "Watery liquid".
+    var consistency: String {
+        switch self {
+        case .type1: return "Hard lumps"
+        case .type2: return "Lumpy & sausage-like"
+        case .type3: return "Sausage with cracks"
+        case .type4: return "Smooth sausage"
+        case .type5: return "Soft blobs"
+        case .type6: return "Mushy consistency"
+        case .type7: return "Watery liquid"
+        }
+    }
+}
+
+// `displayName` for PainLevel/UrgencyLevel already lives in
+// Views/Bowel/PaginatedSymptomHistoryView.swift — not redeclared here.
+
 struct Symptom: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
     var id: String = UUID().uuidString
     var date: Date
