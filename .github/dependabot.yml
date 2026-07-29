@@ -10,6 +10,18 @@ updates:
       time: "08:00"
       timezone: "America/Chicago"
     open-pull-requests-limit: 5
+    # Only direct dependencies. The project declares exactly one package
+    # reference — firebase-ios-sdk — and the other 13 entries in
+    # Package.resolved (promises, googleutilities, nanopb, app-check,
+    # googleappmeasurement, grpc-binary, abseil, …) are transitive, with their
+    # versions decided by Firebase's own manifest.
+    #
+    # Dependabot can edit those lines in the lockfile, but SPM overwrites them
+    # on the next resolve. The result is a PR that appears to upgrade something,
+    # merges green, and leaves Package.resolved inconsistent with what actually
+    # resolves. That happened twice (see #326) before this was scoped.
+    allow:
+      - dependency-type: "direct"
     labels:
       - "dependencies"
       - "swift"
