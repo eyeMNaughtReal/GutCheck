@@ -77,6 +77,13 @@ struct SettingsView: View {
                     .accessibilityHint("Tap to manage notification reminders")
                 }
 
+                if #available(iOS 16.4, *) {
+                    Section("Siri & Shortcuts") {
+                        SiriShortcutsTipView()
+                            .padding(.vertical, 4)
+                    }
+                }
+
                 Section("Medications") {
                     NavigationLink(value: SettingsRoute.medications) {
                         HStack {

@@ -359,6 +359,10 @@ struct LogSymptomView: View {
             .background(ColorTheme.background)
             .navigationTitle("Log Symptoms")
             .navigationBarTitleDisplayMode(.large)
+            .onAppear {
+                // Adopt anything Siri captured before this screen opened
+                coordinator.applyPendingIntentPrefill()
+            }
             .sheet(item: $infoTypeToShow) { infoType in
                 SymptomInfoViews(infoType: infoType)
             }

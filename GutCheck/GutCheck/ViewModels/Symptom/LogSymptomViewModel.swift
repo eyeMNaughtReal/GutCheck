@@ -55,6 +55,33 @@ import UserNotifications
         !Calendar.current.isDate(symptomDate, inSameDayAs: Date.now)
     }
     
+    // MARK: - App Intent Prefill
+
+    /// Adopt values captured by a Siri / Shortcuts request, if one is waiting.
+    ///
+    /// Only the fields Siri can reliably capture are filled in — the Bristol
+    /// type is deliberately left unset so the user still confirms it, which is
+    /// also what keeps `isFormValid` false until they do.
+    func applyPendingIntentPrefill() {
+        guard let prefill = IntentNavigationCoordinator.shared.consumeSymptomPrefill() else { return }
+
+        let symptomType = SymptomType(rawValue: prefill.symptomType) ?? .other
+
+        switch symptomType {
+        case .urgency:
+            selectedUrgencyLevel = UrgencyLevel(rawValue: prefill.severity) ?? .none
+        case .bowelMovement:
+            break
+        default:
+            selectedPainLevel = prefill.severity
+        }
+
+        // Record what was spoken so the entry keeps its context.
+        if symptomType != .bowelMovement {
+            selectedTags.insert(symptomType.rawValue)
+        }
+    }
+
     // MARK: - Tag Management (unchanged)
     
     func toggleTag(_ tag: String) {
@@ -140,9 +167,13 @@ import UserNotifications
                 await MainActor.run {
                     self.loadingState.stopSaving()
                     self.showingSuccessAlert = true
-                    
+
                     // Trigger dashboard refresh after successful save
                     DataSyncManager.shared.triggerRefreshAfterSave(operation: "Symptom save", dataType: .symptoms)
+
+                    // A new symptom moves the health score, so republish the
+                    // snapshot the home/lock screen widgets read from
+                    WidgetSyncService.shared.scheduleRefresh()
                 }
             } catch {
                 await MainActor.run {

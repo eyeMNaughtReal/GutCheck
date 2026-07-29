@@ -193,6 +193,10 @@ struct GutCheckApp: App {
                     serverStatusService.stopMonitoring()
                     // Clear Spotlight index when user signs out
                     SpotlightIndexingService.shared.removeAllItems()
+                    // Blank the widgets and drop any queued Siri request so the
+                    // next user never sees the previous one's health data
+                    WidgetSyncService.shared.clear()
+                    IntentNavigationCoordinator.shared.clear()
                 }
             }
             .onContinueUserActivity(CSSearchableItemActionType) { activity in
@@ -209,6 +213,18 @@ struct GutCheckApp: App {
                     break
                 }
             }
+            // Siri-initiated deep links. App Intents that open the app hand off
+            // through IntentNavigationCoordinator; these continuations cover
+            // NSUserActivity-based launches (Siri suggestions, Handoff).
+            .onContinueUserActivity(GutCheckActivityType.logMeal) { activity in
+                _ = IntentNavigationCoordinator.shared.handle(userActivity: activity)
+            }
+            .onContinueUserActivity(GutCheckActivityType.logSymptom) { activity in
+                _ = IntentNavigationCoordinator.shared.handle(userActivity: activity)
+            }
+            .onContinueUserActivity(GutCheckActivityType.healthScore) { activity in
+                _ = IntentNavigationCoordinator.shared.handle(userActivity: activity)
+            }
             .onChange(of: scenePhase) { oldPhase, newPhase in
                 switch newPhase {
                 case .background:
@@ -223,6 +239,10 @@ struct GutCheckApp: App {
                         Task { try? await dataSyncService.performFullSync() }
                         // Re-evaluate notifications in case Focus Filter state changed
                         Task { await ReminderSettingsService.shared.rescheduleNotificationsForFocusChange() }
+                        // Route any Siri request that arrived while backgrounded
+                        IntentNavigationCoordinator.shared.applyPendingRoute()
+                        // Keep widgets current after time away from the app
+                        WidgetSyncService.shared.scheduleRefresh()
                     }
                 default:
                     break

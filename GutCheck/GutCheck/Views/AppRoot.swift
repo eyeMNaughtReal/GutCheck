@@ -94,6 +94,12 @@ struct AppRoot: View {
 
         .environment(router)
         .environment(refreshManager)
+        .task {
+            // Cold launches from Siri land here: scenePhase never *changes* to
+            // .active on first run, so the queued route is drained once the
+            // authenticated UI is on screen.
+            IntentNavigationCoordinator.shared.applyPendingRoute()
+        }
     }
 }
 
