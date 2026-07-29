@@ -14,7 +14,9 @@ struct InsightsView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 24) {
+            // Leading alignment so any section narrower than the screen lines up
+            // with the rest rather than being centred.
+            VStack(alignment: .leading, spacing: 24) {
                 // Weekly Stats Row
                 weeklyStatsRow
 
@@ -682,6 +684,11 @@ private struct RecommendationCard: View {
                 }
             }
         }
+        // Without this the card hugs its content instead of filling the width.
+        // PatternRow fills via a Spacer in its HStack, so the two sections
+        // rendered at different widths — and since the parent VStack centres by
+        // default, the narrower Recommendations block looked indented.
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .background(ColorTheme.surface)
         .clipShape(.rect(cornerRadius: 12))

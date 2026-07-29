@@ -331,17 +331,23 @@ struct EmptyStateCard: View {
             Image(systemName: icon)
                 .font(.system(size: 40))
                 .foregroundStyle(ColorTheme.secondaryText.opacity(0.5))
-            
+                // Decorative. The title and message already say everything the
+                // glyph does, so describing it would make VoiceOver announce the
+                // same thing twice.
+                .accessibilityHidden(true)
+
             Text(title)
                 .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.secondaryText)
-            
+
             Text(message)
                 .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText.opacity(0.8))
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
+        // Read as one announcement instead of two separate text fragments.
+        .accessibilityElement(children: .combine)
         .padding(.vertical, 40)
         .background(
             RoundedRectangle(cornerRadius: 16)

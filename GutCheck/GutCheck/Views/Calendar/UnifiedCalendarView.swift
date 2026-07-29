@@ -163,6 +163,10 @@ private struct DayCell: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.system(size: 8))
                             .foregroundStyle(correlationColor)
+                            // An 8pt glyph is the only signal that this day has a
+                            // possible trigger — without a label it's invisible to
+                            // VoiceOver, and colour alone can't carry it either.
+                            .accessibilityLabel("Possible food trigger")
                     }
                 }
             }
@@ -262,6 +266,17 @@ private struct CorrelationSummaryView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(severityColor.opacity(0.08))
         .clipShape(.rect(cornerRadius: 10))
+        // Read as one statement rather than five disconnected fragments
+        // ("Possible Triggers" / "2 symptoms detected…" / "Severity:" / "High" /
+        // the food list), which is how VoiceOver would otherwise announce it.
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "Possible triggers. "
+            + "\(correlation.symptomCount) symptom\(correlation.symptomCount == 1 ? "" : "s") "
+            + "detected 2 to 8 hours after eating. "
+            + "Severity \(severityLabel). "
+            + "Foods: \(correlation.triggerFoodNames.joined(separator: ", "))."
+        )
     }
 }
 
