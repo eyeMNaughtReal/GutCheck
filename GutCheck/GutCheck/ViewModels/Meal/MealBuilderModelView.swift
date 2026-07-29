@@ -174,6 +174,9 @@ import FirebaseAuth
 
                 // Update UI
                 await MainActor.run {
+                    // Republish the glanceable snapshot the widgets read from
+                    WidgetSyncService.shared.scheduleRefresh()
+
                     self.isSaving = false
                     self.resetForm()
                 }

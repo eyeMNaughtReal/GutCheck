@@ -142,7 +142,10 @@ import Combine
         
         // Trigger dashboard refresh after successful save
         DataSyncManager.shared.triggerRefreshAfterSave(operation: "Meal builder save", dataType: .meals)
-        
+
+        // Republish the glanceable snapshot the widgets read from
+        WidgetSyncService.shared.scheduleRefresh()
+
         // Clear after successful save
         clearMeal()
         

@@ -80,6 +80,9 @@ import UserNotifications
             // Sync to Apple Reminders app (opt-in, no-op if not enabled/authorized)
             await RemindersKitService.shared.syncReminders(from: updatedSettings)
 
+            // The widgets surface the next reminder, so republish after a change
+            WidgetSyncService.shared.scheduleRefresh()
+
             #if DEBUG
             #endif
             

@@ -129,46 +129,28 @@ enum AIInsightSeverity {
     
     // MARK: - Private Methods
     
-    /// Calculate health score based on current symptoms and meals
-    /// Score ranges from 1-10 with the following logic:
-    /// - Base score: 7 (neutral)
-    /// - No symptoms: +2 points
-    /// - Symptom severity: -1 to -4 points based on pain/urgency levels
-    /// - Meal frequency: +1 point for 2+ meals
-    /// - Final score clamped to 1-10 range
+    /// Calculate health score based on current symptoms and meals.
+    ///
+    /// The rules live in `HealthScoreCalculator` so Siri (App Intents) and the
+    /// widgets report exactly the same number as the dashboard.
     private func calculateHealthScore() -> Int {
-        var score = 7 // Base neutral score
-        
-        // Bonus for no symptoms
-        if todaysSymptoms.isEmpty {
-            score += 2
-        } else {
-            // Penalty based on symptom severity
-            let totalSeverity = todaysSymptoms.reduce(0) { total, symptom in
-                total + symptom.painLevel.rawValue + symptom.urgencyLevel.rawValue
-            }
-            let averageSeverity = totalSeverity / max(todaysSymptoms.count, 1)
-            
-            if averageSeverity >= 8 {
-                score -= 4
-            } else if averageSeverity >= 6 {
-                score -= 3
-            } else if averageSeverity >= 4 {
-                score -= 2
-            } else {
-                score -= 1
-            }
-        }
-        
-        // Bonus for regular meals
-        if todaysMeals.count >= 2 {
-            score += 1
-        }
-        
-        // Clamp score to 1-10 range
-        return max(1, min(10, score))
+        HealthScoreCalculator.score(meals: todaysMeals, symptoms: todaysSymptoms)
     }
-    
+
+    /// Push the freshly calculated score to the App Group the widgets read.
+    /// Only today's data is published — the widgets always show today.
+    @MainActor
+    private func publishWidgetSnapshot() {
+        guard Calendar.current.isDateInToday(selectedDate) else { return }
+
+        let lastMeal = todaysMeals.max(by: { $0.date < $1.date })
+        WidgetSyncService.shared.publish(
+            score: todaysHealthScore,
+            lastMealName: lastMeal?.name,
+            lastMealDate: lastMeal?.date
+        )
+    }
+
     /// Generate insights based on current data
     private func generateInsights() {
         // Generate focus message based on current data
@@ -297,10 +279,13 @@ enum AIInsightSeverity {
                     
                     // Calculate health score based on actual data
                     self.todaysHealthScore = self.calculateHealthScore()
-                    
+
+                    // Keep the home/lock screen widgets in step with the dashboard
+                    self.publishWidgetSnapshot()
+
                     // Generate focus and avoidance tips based on data
                     self.generateInsights()
-                    
+
                     // Clear other mock data for now
                     self.triggerAlerts = []
                     self.insightMessage = nil
