@@ -4,6 +4,11 @@ updates:
   # Swift Package Manager — Firebase SDK and other Swift dependencies
   - package-ecosystem: "swift"
     directory: "/GutCheck"
+    # Day-to-day work happens on `development`; main is the release branch.
+    # Without this Dependabot targets the repo default (main), so dependency
+    # PRs would land on a branch the feature work never merges through and the
+    # two would silently diverge.
+    target-branch: "development"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -29,6 +34,11 @@ updates:
   # GitHub Actions — keep workflow action versions up to date
   - package-ecosystem: "github-actions"
     directory: "/"
+    # Day-to-day work happens on `development`; main is the release branch.
+    # Without this Dependabot targets the repo default (main), so dependency
+    # PRs would land on a branch the feature work never merges through and the
+    # two would silently diverge.
+    target-branch: "development"
     schedule:
       interval: "weekly"
       day: "monday"
