@@ -41,7 +41,9 @@ import CoreData
                 localFoodItem.name = foodItem.name
                 localFoodItem.quantity = Double(foodItem.quantity) ?? 1.0
                 // Note: FoodItem model doesn't have unit property
-                localFoodItem.servingSize = String(foodItem.estimatedWeightInGrams ?? 0)
+                // Empty string rather than "0" when there's no weight, so the read
+                // side can tell "not recorded" from a genuine zero.
+                localFoodItem.servingSize = foodItem.estimatedWeightInGrams.map { "\($0)" } ?? ""
                 localFoodItem.calories = Double(foodItem.nutrition.calories ?? 0)
                 localFoodItem.protein = foodItem.nutrition.protein ?? 0.0
                 localFoodItem.carbohydrates = foodItem.nutrition.carbs ?? 0.0
@@ -59,7 +61,10 @@ import CoreData
     func fetchMeals(for dateRange: DateInterval) async throws -> [Meal] {
         return try await coreDataStack.performBackgroundTask { context in
             let fetchRequest: NSFetchRequest<LocalMeal> = LocalMeal.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "date >= %@ AND date <= %@", dateRange.start as CVarArg, dateRange.end as CVarArg)
+            // Half-open [start, end) to match FirebaseRepository. A closed interval
+            // double-counts a record landing exactly on the boundary, so a meal at
+            // midnight appeared in both the day before and the day after.
+            fetchRequest.predicate = NSPredicate(format: "date >= %@ AND date < %@", dateRange.start as CVarArg, dateRange.end as CVarArg)
             fetchRequest.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
             
             let localMeals = try context.fetch(fetchRequest)
@@ -86,7 +91,10 @@ import CoreData
                             id: foodId,
                             name: foodName,
                             quantity: String(localFoodItem.quantity),
-                            estimatedWeightInGrams: nil,
+                            // Was hardcoded nil, so the weight written on save was
+                            // silently dropped on every read — a meal round-tripped
+                            // through Core Data came back without its portion size.
+                            estimatedWeightInGrams: localFoodItem.servingSize.flatMap { Double($0) },
                             ingredients: [],
                             allergens: [],
                             nutrition: NutritionInfo(
@@ -164,7 +172,10 @@ import CoreData
     func fetchSymptoms(for dateRange: DateInterval) async throws -> [Symptom] {
         return try await coreDataStack.performBackgroundTask { context in
             let fetchRequest: NSFetchRequest<LocalSymptom> = LocalSymptom.fetchRequest()
-            fetchRequest.predicate = NSPredicate(format: "date >= %@ AND date <= %@", dateRange.start as CVarArg, dateRange.end as CVarArg)
+            // Half-open [start, end) to match FirebaseRepository. A closed interval
+            // double-counts a record landing exactly on the boundary, so a meal at
+            // midnight appeared in both the day before and the day after.
+            fetchRequest.predicate = NSPredicate(format: "date >= %@ AND date < %@", dateRange.start as CVarArg, dateRange.end as CVarArg)
             fetchRequest.sortDescriptors = [NSSortDescriptor(key: "date", ascending: false)]
             
             let localSymptoms = try context.fetch(fetchRequest)
