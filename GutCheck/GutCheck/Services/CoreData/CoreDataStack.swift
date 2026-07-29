@@ -21,16 +21,28 @@ import Security
     @ObservationIgnored lazy var persistentContainer: NSPersistentContainer = {
         let container = NSPersistentContainer(name: "GutCheck")
         
-        // Configure persistent store with encryption
         let description = NSPersistentStoreDescription()
         description.type = NSSQLiteStoreType
-        
-        // Enable encryption for sensitive data
-        // Note: NSPersistentStoreEncryptionKeyOption is not available in all iOS versions
-        // For now, we'll use standard Core Data security features
-        // In production, consider using Data Protection or other encryption methods
-        
-        // Set store options
+
+        // Data Protection for the store file.
+        //
+        // The store holds PII and health data — email, date of birth, weight,
+        // height, meals and symptoms — which CodeQL flags as cleartext storage
+        // in a local database (alerts #9, #10). Without this option the file
+        // gets iOS's default, `completeUntilFirstUserAuthentication`, meaning it
+        // stays readable from the moment the device is first unlocked after
+        // boot until it powers off.
+        //
+        // `.completeUnlessOpen` is used rather than `.complete` deliberately.
+        // `.complete` makes the file unreadable whenever the device is locked,
+        // which would break the BGProcessingTask insight refresh — background
+        // tasks typically run while locked, and it would fail every time.
+        // `.completeUnlessOpen` protects the file at rest but lets a handle
+        // opened before locking keep working, which is the balance this app
+        // needs.
+        description.setOption(FileProtectionType.completeUnlessOpen as NSObject,
+                              forKey: NSPersistentStoreFileProtectionKey)
+
         description.setOption(true as NSNumber, forKey: NSPersistentHistoryTrackingKey)
         description.setOption(true as NSNumber, forKey: NSPersistentStoreRemoteChangeNotificationPostOptionKey)
         
@@ -67,11 +79,15 @@ import Security
     // The key is generated once (random 256-bit), stored in the Keychain, and
     // retrieved on subsequent launches. Never hardcode the key in source.
     //
-    // NOTE: NSPersistentStoreEncryptionKeyOption is not currently wired up
-    // because Core Data's SQLite backend relies on file-system Data Protection
-    // (NSFileProtectionComplete) which iOS enforces automatically when the
-    // device is locked. This method is provided for future use if explicit
-    // at-rest encryption is required.
+    // NOTE: NSPersistentStoreEncryptionKeyOption is not currently wired up.
+    // At-rest protection comes from file-system Data Protection, now set
+    // explicitly as `.completeUnlessOpen` on the store description above.
+    //
+    // This comment previously claimed iOS applied NSFileProtectionComplete
+    // "automatically". It does not — the default for app container files is
+    // `completeUntilFirstUserAuthentication`, which is materially weaker, and
+    // no protection level was being set at all. This method remains available
+    // if explicit at-rest encryption is required later.
 
     private static let keychainService  = "com.gutcheck.coredata"
     private static let keychainAccount  = "CoreDataEncryptionKey"
