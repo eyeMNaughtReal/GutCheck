@@ -23,6 +23,27 @@ final class SpotlightIndexingService: Sendable {
 
     private init() {}
 
+    // MARK: - Shared, Built Once
+    //
+    // These were previously rebuilt on every index call. DateFormatter
+    // construction is expensive, and pngData() re-encodes a static SF Symbol
+    // from scratch each time — wasted work for two glyphs that never change.
+    // Configured once here and only read afterwards, which DateFormatter
+    // supports safely.
+
+    private static let displayDateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter
+    }()
+
+    private static let mealThumbnail: Data? =
+        UIImage(systemName: "fork.knife.circle.fill")?.pngData()
+
+    private static let symptomThumbnail: Data? =
+        UIImage(systemName: "heart.text.square.fill")?.pngData()
+
     // MARK: - Identifier Helpers
 
     static func mealIdentifier(for id: String) -> String {
@@ -76,8 +97,8 @@ final class SpotlightIndexingService: Sendable {
         attributes.keywords = keywords
 
         // Thumbnail via SF Symbol
-        if let image = UIImage(systemName: "fork.knife.circle.fill") {
-            attributes.thumbnailData = image.pngData()
+        if let thumbnail = Self.mealThumbnail {
+            attributes.thumbnailData = thumbnail
         }
 
         let item = CSSearchableItem(
@@ -100,10 +121,7 @@ final class SpotlightIndexingService: Sendable {
 
         let attributes = CSSearchableItemAttributeSet(contentType: .content)
 
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .medium
-        dateFormatter.timeStyle = .short
-        let dateString = dateFormatter.string(from: symptom.date)
+        let dateString = Self.displayDateFormatter.string(from: symptom.date)
 
         attributes.title = "Symptom Log — \(dateString)"
         attributes.displayName = "Symptom Log — \(dateString)"
@@ -123,8 +141,8 @@ final class SpotlightIndexingService: Sendable {
         attributes.keywords = keywords
 
         // Thumbnail via SF Symbol
-        if let image = UIImage(systemName: "heart.text.square.fill") {
-            attributes.thumbnailData = image.pngData()
+        if let thumbnail = Self.symptomThumbnail {
+            attributes.thumbnailData = thumbnail
         }
 
         let item = CSSearchableItem(
