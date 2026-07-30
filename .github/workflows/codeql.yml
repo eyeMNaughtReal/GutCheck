@@ -21,17 +21,6 @@ jobs:
     # Swift requires macOS; all other languages run on ubuntu for speed
     runs-on: ${{ matrix.language == 'swift' && 'macos-15' || 'ubuntu-latest' }}
 
-    # The Swift leg builds the entire app (Firebase, gRPC, abseil) so CodeQL can
-    # trace compilation, and has measured 48-107 minutes. Build and Test covers
-    # the same commit in about 5. Running it on every PR push made it the
-    # dominant cost of shipping anything - a markdown-only PR paid 48 minutes.
-    #
-    # It still runs on every push to main and development, so nothing reaches
-    # either branch unanalysed, plus the Monday schedule. What's given up is
-    # pre-merge notice on a PR branch; what's gained is PRs that complete in
-    # minutes instead of over an hour.
-    if: matrix.language != 'swift' || github.event_name != 'pull_request'
-
     permissions:
       security-events: write
       packages: read
@@ -41,13 +30,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          # Primary language — Swift/iOS app
-          - language: swift
-            build-mode: manual
-          # GitHub Actions workflow files
-          - language: actions
-            build-mode: none
+        # The Swift leg rebuilds the entire app (Firebase, gRPC, abseil) so
+        # CodeQL can trace compilation, and has measured 48-107 minutes against
+        # about 5 for Build and Test. Dropping it from pull_request leaves PRs
+        # completing in minutes; it still runs on every push to main and
+        # development, plus the Monday schedule, so nothing reaches either
+        # branch unanalysed.
+        #
+        # Filtered here rather than with a job-level `if`, because the matrix
+        # context isn't available in job-level conditions - doing that produced
+        # a workflow that failed to start at all.
+        include: ${{ github.event_name == 'pull_request'
+          && fromJSON('[{"language":"actions","build-mode":"none"}]')
+          || fromJSON('[{"language":"swift","build-mode":"manual"},{"language":"actions","build-mode":"none"}]') }}
 
     steps:
       - name: Checkout repository
