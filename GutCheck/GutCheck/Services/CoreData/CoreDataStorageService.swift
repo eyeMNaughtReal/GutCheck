@@ -237,7 +237,6 @@ import CoreData
             localUser.createdAt = user.createdAt
             localUser.updatedAt = user.updatedAt
             localUser.profileImageURL = user.profileImageURL
-            localUser.dateOfBirth = user.dateOfBirth
             localUser.biologicalSexRawValue = Int16(user.biologicalSexRawValue ?? 0)
             localUser.weight = user.weight ?? 0.0
             localUser.height = user.height ?? 0.0
