@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ProfileSetupView: View {
-    @Environment(AuthService.self) var authService
+    @Environment(LocalUserService.self) var userService
     @State private var firstName: String = ""
     @State private var lastName: String = ""
     @State private var isSaving = false
@@ -41,20 +41,18 @@ struct ProfileSetupView: View {
     }
     
     private func saveProfile() {
-        guard let firebaseUser = authService.authUser else { return }
+        // The profile already exists — it is created on first launch. This
+        // screen only fills in the name, so it updates rather than creates.
+        guard var user = userService.currentUser else { return }
         isSaving = true
         errorMessage = nil
+
+        user.firstName = firstName
+        user.lastName = lastName
+
         Task {
             do {
-                let newUser = try await authService.createUserProfile(
-                    userId: firebaseUser.uid,
-                    email: firebaseUser.email ?? "",
-                    firstName: firstName,
-                    lastName: lastName,
-                    signInMethod: .email // or .phone if needed
-                )
-                // Update the current user in AuthService
-                try await authService.updateUserProfile(newUser)
+                try await userService.updateUserProfile(user)
                 await MainActor.run {
                     isSaving = false
                 }

@@ -182,7 +182,7 @@ struct MedicationsView: View {
     // MARK: - Load today's doses
 
     private func loadTodayDoses() async {
-        guard let userId = AuthenticationManager.shared.currentUserId else { return }
+        let userId = LocalUserService.currentProfileId
         isLoadingDoses = true
         do {
             todayDoses = try await MedicationDoseRepository.shared.fetchDosesForDate(Date.now, userId: userId)

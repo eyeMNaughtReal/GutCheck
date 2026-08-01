@@ -125,67 +125,64 @@ struct MedicationModelsTests {
         #expect(dosage.instructions == "Take with food")
     }
 
-    @Test("MedicationDosage from dictionary")
-    func dosageFromDictionary() {
-        let dict: [String: Any] = [
-            "amount": 250.0,
-            "unit": "ml",
-            "frequency": "onceDaily",
-            "instructions": "Before bed"
-        ]
-        let dosage = MedicationDosage(from: dict)
-        #expect(dosage.amount == 250.0)
-        #expect(dosage.unit == "ml")
-        #expect(dosage.frequency == .onceDaily)
-        #expect(dosage.instructions == "Before bed")
-    }
-
-    @Test("MedicationDosage from empty dictionary uses defaults")
-    func dosageFromEmptyDictionary() {
-        let dosage = MedicationDosage(from: [:])
-        #expect(dosage.amount == 0.0)
-        #expect(dosage.unit == "mg")
-        #expect(dosage.frequency == .asNeeded)
-        #expect(dosage.instructions == nil)
-    }
-
-    @Test("MedicationDosage toFirestore round-trip")
-    func dosageFirestoreRoundTrip() {
+    // Dosage is persisted as a JSON blob inside StoredMedication, so the
+    // Codable round-trip is what the storage layer actually depends on. It
+    // replaced a dictionary round-trip that existed only for Firestore.
+    @Test("MedicationDosage Codable round-trip preserves every field")
+    func dosageCodableRoundTrip() throws {
         let original = MedicationDosage(
             amount: 100.0,
             unit: "mcg",
             frequency: .weekly,
             instructions: "Take in morning"
         )
-        let dict = original.toFirestore()
-        let restored = MedicationDosage(from: dict)
+
+        let data = try JSONEncoder().encode(original)
+        let restored = try JSONDecoder().decode(MedicationDosage.self, from: data)
+
         #expect(restored.amount == original.amount)
         #expect(restored.unit == original.unit)
         #expect(restored.frequency == original.frequency)
         #expect(restored.instructions == original.instructions)
     }
 
-    // MARK: - MedicationRecord computed properties
+    @Test("MedicationDosage round-trips a nil instruction")
+    func dosageCodableRoundTripWithoutInstructions() throws {
+        let original = MedicationDosage(amount: 5, unit: "mg", frequency: .asNeeded)
 
-    @Test("MedicationRecord with public privacy allows cloud sync")
-    func publicAllowsSync() {
-        let record = MedicationRecord(
+        let data = try JSONEncoder().encode(original)
+        let restored = try JSONDecoder().decode(MedicationDosage.self, from: data)
+
+        #expect(restored.instructions == nil)
+        #expect(restored.frequency == .asNeeded)
+    }
+
+    // MARK: - MedicationRecord privacy classification
+
+    @Test("MedicationRecord keeps the privacy level it was created with")
+    func privacyLevelIsPreserved() {
+        let publicRecord = MedicationRecord(
             name: "Vitamin D",
             dosage: MedicationDosage(amount: 1000, unit: "IU", frequency: .onceDaily),
             privacyLevel: .public
         )
-        #expect(record.allowsCloudSync)
-        #expect(!record.requiresLocalStorage)
-    }
+        #expect(publicRecord.privacyLevel == .public)
 
-    @Test("MedicationRecord with private privacy requires local storage")
-    func privateRequiresLocal() {
-        let record = MedicationRecord(
+        let privateRecord = MedicationRecord(
             name: "Medication X",
             dosage: MedicationDosage(amount: 50, unit: "mg", frequency: .twiceDaily),
             privacyLevel: .private
         )
-        #expect(!record.allowsCloudSync)
-        #expect(record.requiresLocalStorage)
+        #expect(privateRecord.privacyLevel == .private)
+        #expect(privateRecord.privacyLevel.requiresEncryption)
+    }
+
+    @Test("MedicationRecord defaults to private")
+    func defaultsToPrivate() {
+        let record = MedicationRecord(
+            name: "Medication Y",
+            dosage: MedicationDosage(amount: 10, unit: "mg", frequency: .onceDaily)
+        )
+        #expect(record.privacyLevel == .private)
     }
 }

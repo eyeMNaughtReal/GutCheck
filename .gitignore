@@ -26,8 +26,7 @@ Packages/
 Package.pins
 .swiftpm/
 
-# Firebase config
-**/GoogleService-Info.plist
+# (Secrets.swift is ignored above)
 
 # Logs
 *.log

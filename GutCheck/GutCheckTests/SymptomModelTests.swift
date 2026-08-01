@@ -78,8 +78,7 @@ struct SymptomModelTests {
             notes: "Some personal notes"
         )
         #expect(symptom.privacyLevel == .private)
-        #expect(symptom.requiresLocalStorage)
-        #expect(!symptom.allowsCloudSync)
+        #expect(symptom.privacyLevel.requiresEncryption)
     }
 
     @Test("Symptom with severe pain is private")
@@ -125,8 +124,7 @@ struct SymptomModelTests {
             urgencyLevel: .none
         )
         #expect(symptom.privacyLevel == .public)
-        #expect(!symptom.requiresLocalStorage)
-        #expect(symptom.allowsCloudSync)
+        #expect(!symptom.privacyLevel.requiresEncryption)
     }
 
     // MARK: - Symptom Codable

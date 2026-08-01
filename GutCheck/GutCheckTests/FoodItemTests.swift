@@ -42,10 +42,14 @@ struct FoodItemTests {
         #expect(item.nutritionDetails["vitamin_a"] == "10%")
     }
 
-    // MARK: - Dictionary round-trip
+    // MARK: - Codable round-trip
+    //
+    // Food items are persisted as a JSON blob on StoredMeal, so this is the
+    // path the storage layer actually uses. It replaced a dictionary
+    // round-trip that existed only to talk to Firestore.
 
-    @Test("toDictionary and fromDictionary round-trip preserves data")
-    func dictionaryRoundTrip() throws {
+    @Test("Codable round-trip preserves data")
+    func codableRoundTrip() throws {
         let nutrition = NutritionInfo(calories: 200, protein: 15.0, carbs: 25.0, fat: 5.0, fiber: 3.0, sugar: 2.0, sodium: 100.0)
         let original = FoodItem(
             id: "test-id",
@@ -61,8 +65,8 @@ struct FoodItemTests {
             nutritionDetails: ["iron": "8%"]
         )
 
-        let dict = original.toDictionary()
-        let restored = try FoodItem.fromDictionary(dict)
+        let data = try JSONEncoder().encode(original)
+        let restored = try JSONDecoder().decode(FoodItem.self, from: data)
 
         #expect(restored.id == "test-id")
         #expect(restored.name == "Rice Bowl")
@@ -83,23 +87,22 @@ struct FoodItemTests {
         #expect(restored.nutrition.sodium == 100.0)
     }
 
-    @Test("fromDictionary throws for missing required fields")
-    func fromDictionaryThrowsForMissing() {
-        let dict: [String: Any] = ["name": "Apple"]
-        // Missing "id" and "quantity"
+    @Test("Decoding fails when a required field is missing")
+    func decodingThrowsForMissingFields() {
+        // No "quantity", which has no default on the decoding side.
+        let json = Data(#"{"id":"test-id","name":"Apple"}"#.utf8)
         #expect(throws: (any Error).self) {
-            try FoodItem.fromDictionary(dict)
+            try JSONDecoder().decode(FoodItem.self, from: json)
         }
     }
 
-    @Test("fromDictionary handles missing optional fields gracefully")
-    func fromDictionaryHandlesOptionals() throws {
-        let dict: [String: Any] = [
-            "id": "test-id",
-            "name": "Banana",
-            "quantity": "1 medium"
-        ]
-        let item = try FoodItem.fromDictionary(dict)
+    @Test("A round-tripped item keeps its empty optionals empty")
+    func roundTripPreservesEmptyOptionals() throws {
+        let original = FoodItem(id: "test-id", name: "Banana", quantity: "1 medium")
+
+        let data = try JSONEncoder().encode(original)
+        let item = try JSONDecoder().decode(FoodItem.self, from: data)
+
         #expect(item.name == "Banana")
         #expect(item.ingredients.isEmpty)
         #expect(item.allergens.isEmpty)

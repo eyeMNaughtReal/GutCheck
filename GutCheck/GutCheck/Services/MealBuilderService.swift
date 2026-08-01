@@ -118,9 +118,7 @@ import Combine
             throw MealBuilderError.noFoodItems
         }
         
-        guard let userId = AuthenticationManager.shared.currentUserId else {
-            throw MealBuilderError.notAuthenticated
-        }
+        let userId = LocalUserService.currentProfileId
         
         // Generate meal name if empty
         let finalMealName = mealName.isEmpty ? generateDefaultMealName() : mealName

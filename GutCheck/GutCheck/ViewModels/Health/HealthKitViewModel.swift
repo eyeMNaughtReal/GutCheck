@@ -33,25 +33,25 @@ import HealthKit
     
     // Inject settings and auth service for unit preferences and profile updates
     private var settingsViewModel: SettingsViewModel
-    private var authService: AuthService
+    private var userService: LocalUserService
     private let healthKitManager: any HealthKitManagerProtocol
     
     init(healthKitManager: any HealthKitManagerProtocol = HealthKitManager.shared) {
         self.settingsViewModel = SettingsViewModel()
-        self.authService = AuthService()
+        self.userService = LocalUserService.shared
         self.healthKitManager = healthKitManager
     }
     
-    init(settingsViewModel: SettingsViewModel, authService: AuthService, healthKitManager: any HealthKitManagerProtocol = HealthKitManager.shared) {
+    init(settingsViewModel: SettingsViewModel, userService: LocalUserService, healthKitManager: any HealthKitManagerProtocol = HealthKitManager.shared) {
         self.settingsViewModel = settingsViewModel
-        self.authService = authService
+        self.userService = userService
         self.healthKitManager = healthKitManager
     }
     
     // Allow updating dependencies after initialization (for environment objects)
-    func updateDependencies(settingsViewModel: SettingsViewModel, authService: AuthService) {
+    func updateDependencies(settingsViewModel: SettingsViewModel, userService: LocalUserService) {
         self.settingsViewModel = settingsViewModel
-        self.authService = authService
+        self.userService = userService
     }
 
     func requestHealthKitAccess() async {
@@ -110,7 +110,7 @@ import HealthKit
     // Update user profile with health data
     func updateUserProfileWithHealthData() async {
         guard let healthData = healthData,
-              let currentUser = authService.currentUser else {
+              let currentUser = userService.currentUser else {
             return
         }
         
@@ -123,7 +123,7 @@ import HealthKit
             updatedUserData.height = healthData.height
             
             // Update the user profile
-            try await authService.updateUserProfile(updatedUserData)
+            try await userService.updateUserProfile(updatedUserData)
         } catch {
         }
     }

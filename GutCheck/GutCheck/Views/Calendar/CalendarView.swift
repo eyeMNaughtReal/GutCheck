@@ -7,7 +7,6 @@
 //
 
 import SwiftUI
-import FirebaseAuth
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -19,7 +18,7 @@ import Foundation // Required for Tab enum
 
 struct CalendarView: View {
     @Environment(AppRouter.self) var router
-    @Environment(AuthService.self) var authService
+    @Environment(LocalUserService.self) var userService
     @Environment(RefreshManager.self) var refreshManager
     @State private var viewModel = CalendarViewModel()
     @State private var isShowingActionMenu = false
@@ -221,7 +220,7 @@ struct CalendarView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                ProfileAvatarButton(user: authService.currentUser) {
+                ProfileAvatarButton(user: userService.currentUser) {
                     router.showProfile()
                 }
             }
@@ -425,19 +424,13 @@ struct EmptyStateCard: View {
     private var mealsLoadTask: Task<Void, Never>?
     private var symptomsLoadTask: Task<Void, Never>?
 
-    // Public method to load meals from Firebase
+    // Public method to load meals for the selected date
     func loadMeals() {
         mealsLoadTask?.cancel()
         isLoadingMeals = true
         mealsLoadTask = Task {
             do {
-                guard let userId = AuthenticationManager.shared.currentUserId else {
-                    await MainActor.run {
-                        self.meals = []
-                        self.isLoadingMeals = false
-                    }
-                    return
-                }
+                let userId = LocalUserService.currentProfileId
                 let loadedMeals = try await MealRepository.shared.fetchMealsForDate(selectedDate, userId: userId)
                 guard !Task.isCancelled else { return }
                 await MainActor.run {
@@ -454,7 +447,7 @@ struct EmptyStateCard: View {
         }
     }
 
-    // Public method to load symptoms from Firebase
+    // Public method to load symptoms for the selected date
     func loadSymptoms() {
         symptomsLoadTask?.cancel()
         isLoadingSymptoms = true
@@ -492,8 +485,8 @@ struct EmptyStateCard: View {
     /// Fetch all meals and symptoms for the visible month, then compute correlations
     private func loadMonthData(for date: Date) async {
         let calendar = Calendar.current
-        guard let userId = AuthenticationManager.shared.currentUserId,
-              let monthInterval = calendar.dateInterval(of: .month, for: date) else {
+        let userId = LocalUserService.currentProfileId
+        guard let monthInterval = calendar.dateInterval(of: .month, for: date) else {
             return
         }
         
@@ -1433,7 +1426,7 @@ private struct NutritionDetailFoodRow: View {
 #Preview {
     CalendarView(selectedTab: Tab.meals)
         .environment(AppRouter())
-        .environment(AuthService())
+        .environment(LocalUserService.shared)
 }
 
 // MARK: - Nutrition Summary Header

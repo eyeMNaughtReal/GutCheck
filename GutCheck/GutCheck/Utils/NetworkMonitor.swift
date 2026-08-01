@@ -2,6 +2,11 @@ import Network
 import Foundation
 
 @Observable class NetworkMonitor {
+    /// Shared instance. Food and nutrition lookups are the only part of the app
+    /// that needs the network — everything else reads the on-device store — so
+    /// one monitor serves the whole app rather than one per view.
+    static let shared = NetworkMonitor()
+
     @ObservationIgnored private let monitor = NWPathMonitor()
     private let queue = DispatchQueue(label: "NetworkMonitor")
     

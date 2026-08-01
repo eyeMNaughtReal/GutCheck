@@ -92,11 +92,7 @@ import SwiftUI
             return
         }
 
-        guard let userId = AuthenticationManager.shared.currentUserId else {
-            loadingState.setError("You must be signed in to save medications.")
-            showingErrorAlert = true
-            return
-        }
+        let userId = LocalUserService.currentProfileId
 
         loadingState.startSaving()
 

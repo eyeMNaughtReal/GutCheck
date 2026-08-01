@@ -297,7 +297,7 @@ struct SymptomChartsView: View {
 #Preview {
     NavigationStack {
         SymptomChartsView()
-            .environment(AuthService())
+            .environment(LocalUserService.shared)
             .environment(AppRouter.shared)
     }
 }

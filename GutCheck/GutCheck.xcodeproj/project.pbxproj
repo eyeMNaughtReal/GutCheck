@@ -7,11 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6DEADC292E1F365E00CAF395 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 6DEADC282E1F365E00CAF395 /* FirebaseAnalytics */; };
-		6DEADC2B2E1F365E00CAF395 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 6DEADC2A2E1F365E00CAF395 /* FirebaseAuth */; };
-		6DEADC2D2E1F365E00CAF395 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 6DEADC2C2E1F365E00CAF395 /* FirebaseFirestore */; };
-		6DEADC2F2E1F365E00CAF395 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = 6DEADC2E2E1F365E00CAF395 /* FirebaseStorage */; };
-		6DF1632E2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF1632D2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift */; };
 		6DF1633C2F4CDE70002C0671 /* HapticManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF1633B2F4CDE70002C0671 /* HapticManager.swift */; };
 		6DF1633E2F4CDEA1002C0671 /* AccessibilityHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF1633D2F4CDEA1002C0671 /* AccessibilityHelpers.swift */; };
 		6DF163402F4CDEC6002C0671 /* AccessibilityIdentifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DF1633F2F4CDEC6002C0671 /* AccessibilityIdentifiers.swift */; };
@@ -39,7 +34,6 @@
 		6DEADBED2E1F312300CAF395 /* GutCheck.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GutCheck.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6DEADBFA2E1F312500CAF395 /* GutCheckTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GutCheckTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6DEADC042E1F312500CAF395 /* GutCheckUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GutCheckUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		6DF1632D2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnoseFirebaseSetup.swift; sourceTree = "<group>"; };
 		6DF1633B2F4CDE70002C0671 /* HapticManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HapticManager.swift; sourceTree = "<group>"; };
 		6DF1633D2F4CDEA1002C0671 /* AccessibilityHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityHelpers.swift; sourceTree = "<group>"; };
 		6DF1633F2F4CDEC6002C0671 /* AccessibilityIdentifiers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityIdentifiers.swift; sourceTree = "<group>"; };
@@ -82,10 +76,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6DEADC292E1F365E00CAF395 /* FirebaseAnalytics in Frameworks */,
-				6DEADC2F2E1F365E00CAF395 /* FirebaseStorage in Frameworks */,
-				6DEADC2B2E1F365E00CAF395 /* FirebaseAuth in Frameworks */,
-				6DEADC2D2E1F365E00CAF395 /* FirebaseFirestore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -113,7 +103,6 @@
 				6DEADBFD2E1F312500CAF395 /* GutCheckTests */,
 				6DEADC072E1F312500CAF395 /* GutCheckUITests */,
 				6DEADBEE2E1F312300CAF395 /* Products */,
-				6DF1632D2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift */,
 				6DF1633B2F4CDE70002C0671 /* HapticManager.swift */,
 				6DF1633D2F4CDEA1002C0671 /* AccessibilityHelpers.swift */,
 				6DF1633F2F4CDEC6002C0671 /* AccessibilityIdentifiers.swift */,
@@ -150,12 +139,6 @@
 				6DEADBEF2E1F312300CAF395 /* GutCheck */,
 			);
 			name = GutCheck;
-			packageProductDependencies = (
-				6DEADC282E1F365E00CAF395 /* FirebaseAnalytics */,
-				6DEADC2A2E1F365E00CAF395 /* FirebaseAuth */,
-				6DEADC2C2E1F365E00CAF395 /* FirebaseFirestore */,
-				6DEADC2E2E1F365E00CAF395 /* FirebaseStorage */,
-			);
 			productName = GutCheck;
 			productReference = 6DEADBED2E1F312300CAF395 /* GutCheck.app */;
 			productType = "com.apple.product-type.application";
@@ -238,9 +221,6 @@
 			);
 			mainGroup = 6DEADBE42E1F312300CAF395;
 			minimizedProjectReferenceProxies = 1;
-			packageReferences = (
-				6DEADC272E1F365E00CAF395 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
-			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 6DEADBEE2E1F312300CAF395 /* Products */;
 			projectDirPath = "";
@@ -282,7 +262,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6DF1632E2F4CD6CC002C0671 /* DiagnoseFirebaseSetup.swift in Sources */,
 				6DF163422F4CDEEE002C0671 /* Typography.swift in Sources */,
 				6DF1633C2F4CDE70002C0671 /* HapticManager.swift in Sources */,
 				6DF1633E2F4CDEA1002C0671 /* AccessibilityHelpers.swift in Sources */,
@@ -633,39 +612,6 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		6DEADC272E1F365E00CAF395 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 11.15.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		6DEADC282E1F365E00CAF395 /* FirebaseAnalytics */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 6DEADC272E1F365E00CAF395 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAnalytics;
-		};
-		6DEADC2A2E1F365E00CAF395 /* FirebaseAuth */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 6DEADC272E1F365E00CAF395 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseAuth;
-		};
-		6DEADC2C2E1F365E00CAF395 /* FirebaseFirestore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 6DEADC272E1F365E00CAF395 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseFirestore;
-		};
-		6DEADC2E2E1F365E00CAF395 /* FirebaseStorage */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 6DEADC272E1F365E00CAF395 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseStorage;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 6DEADBE52E1F312300CAF395 /* Project object */;
 }

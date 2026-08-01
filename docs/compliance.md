@@ -434,37 +434,44 @@ Users have the right to permanently delete their profile and all associated data
 
 **Implementation Requirements:**
 ```swift
-// Enhanced AuthService.deleteAccount() method
-func deleteUserProfileCompletely() async throws {
-    guard let currentUser = authUser else {
-        throw AuthError.noUser
+// LocalUserService.deleteAllLocalData()
+func deleteAllLocalData() async throws {
+    let profileId = currentProfileId
+
+    // 1. Every record in the SwiftData store
+    try await MealRepository.shared.deleteAll(userId: profileId)
+    try await SymptomRepository.shared.deleteAll(userId: profileId)
+    try await MedicationRepository.shared.deleteAll(userId: profileId)
+    try await MedicationDoseRepository.shared.deleteAll(userId: profileId)
+
+    // 2. Reminder settings
+    if let settings = try? await ReminderSettingsRepository.shared.fetch(forUser: profileId) {
+        try await ReminderSettingsRepository.shared.delete(settings)
     }
-    
-    let userId = currentUser.uid
-    
-    // 1. Delete all Firebase data
-    try await deleteAllUserFirebaseData(userId: userId)
-    
-    // 2. Delete all local private data
-    try await deleteAllLocalPrivateData(userId: userId)
-    
-    // 3. Delete Firebase Auth account
-    try await currentUser.delete()
-    
-    // 4. Clear local session
-    clearAllLocalData()
+
+    // 3. Encrypted loose files written by earlier versions
+    try await LocalStorageService.shared.clearAllPrivateData()
+
+    // 4. The profile itself, replaced by a fresh empty one
+    deleteProfileRow(profileId)
+    currentUser = try createProfile()
 }
 ```
 
+There is no remote tier to revoke and no request to file: the delete happens
+on-device and is complete when the call returns.
+
 #### **Data Deletion Scope**
 **Complete removal includes:**
-- ✅ **Firebase Collections**: Users, meals, symptoms, activities, reminders
-- ✅ **Firebase Storage**: Profile images, meal photos
-- ✅ **Local Private Data**: Cached symptoms, sensitive notes, biometric data
+- ✅ **SwiftData Store**: Meals, symptoms, medications, doses, reminders, profile
+- ✅ **Local Private Data**: Encrypted files written by earlier versions
+- ✅ **Profile Images**: Files under `Documents/ProfileImages`
 - ✅ **HealthKit Data**: All written nutrition data (user must revoke separately)
 - ✅ **Local Caches**: All cached API responses, images, temporary files
-- ✅ **Authentication**: Firebase Auth account deletion
 - ✅ **Device Storage**: All app-specific data, keychain entries
+
+There is no cloud tier and no account, so nothing survives this outside
+HealthKit — which the user revokes through iOS Settings.
 
 ---
 
@@ -497,31 +504,21 @@ func deleteUserProfileCompletely() async throws {
 
 **Implementation:**
 ```swift
-enum DataPrivacyLevel {
-    case privateLocal     // Encrypted local storage only
-    case nonPrivateCloud  // Firebase sync allowed
-    case publicReference  // Shareable/cacheable
-}
-
-// Local encrypted storage for private data
-class PrivateDataManager {
-    private let keychain = KeychainManager.shared
-    private let localEncryption = LocalEncryptionService.shared
-    
-    func storePrivateData<T: Codable>(_ data: T, key: String) async throws {
-        let encryptedData = try localEncryption.encrypt(data)
-        try keychain.store(encryptedData, key: key)
-    }
-    
-    func retrievePrivateData<T: Codable>(_ type: T.Type, key: String) async throws -> T? {
-        guard let encryptedData = try keychain.retrieve(key: key) else { return nil }
-        return try localEncryption.decrypt(encryptedData, as: type)
-    }
+enum DataPrivacyLevel: String, CaseIterable, Codable {
+    case `public`        // Structural data — no free text, no severity detail
+    case `private`       // Personal notes, high-severity entries
+    case confidential    // Reserved for the most sensitive categories
 }
 ```
 
-#### **🌐 NON-PRIVATE DATA (Firebase Cloud Storage)**
-**Safe for cloud sync, contains no sensitive personal details:**
+**This classification no longer decides where a record is stored.** Everything
+lives in the same on-device SwiftData store. It marks which entries carry free
+text or personal detail so features that move data *off* the device — the
+healthcare export above all — can treat them differently from bare structural
+data.
+
+#### **🌐 NON-PRIVATE DATA (`.public` classification)**
+**Structural data, containing no sensitive personal details:**
 
 **Basic Meal Information:**
 - Food names and basic nutrition facts (calories, macros)
@@ -542,122 +539,78 @@ class PrivateDataManager {
 - Language and region settings
 
 **User Profile (Basic):**
-- Name, email (for authentication)
+- Name and optional contact email (not used to sign in — there are no accounts)
 - Profile image (user-controllable)
-- App version and device info (analytics)
 - Creation date and basic demographics
 
 **Food Database References:**
-- Nutritionix API responses (non-personal)
+- USDA FoodData Central responses (non-personal)
 - OpenFoodFacts product references
 - Barcode scan results (product info only)
-- Custom food definitions (generic, shareable)
+- Custom food definitions (generic)
 
 ---
 
 ## 🏗️ **IMPLEMENTATION ARCHITECTURE**
 
-### **Dual Storage System**
+### **Single On-Device Store**
 
-#### **Local Private Storage Stack**
-```swift
-// Layered security for private data
-LocalPrivateData/
-├── CoreData (encrypted database)
-├── Keychain (sensitive credentials)
-├── FileManager (encrypted files)
-└── HealthKit (system-managed privacy)
+The app previously split writes between encrypted local files and a Firestore
+backend, choosing per record. That split is gone: there is one store, and
+nothing is uploaded.
 
-// Encryption at rest
-class LocalEncryptionService {
-    private let encryptionKey: SymmetricKey
-    
-    func encrypt<T: Codable>(_ data: T) throws -> Data {
-        let encoder = JSONEncoder()
-        let jsonData = try encoder.encode(data)
-        return try ChaChaPoly.seal(jsonData, using: encryptionKey).combined
-    }
-    
-    func decrypt<T: Codable>(_ encryptedData: Data, as type: T.Type) throws -> T {
-        let sealedBox = try ChaChaPoly.SealedBox(combined: encryptedData)
-        let decryptedData = try ChaChaPoly.open(sealedBox, using: encryptionKey)
-        return try JSONDecoder().decode(type, from: decryptedData)
-    }
-}
+```
+Application Support/GutCheck/
+├── GutCheck.store       (SwiftData / SQLite)
+├── GutCheck.store-wal   (write-ahead log)
+└── GutCheck.store-shm   (shared memory)
+
+Documents/
+└── ProfileImages/       (user-chosen avatar)
+
+HealthKit                (system-managed privacy)
+Keychain                 (encryption key for legacy files)
 ```
 
-#### **Firebase Cloud Storage Stack**
-```swift
-// Standard Firebase collections for non-private data
-FirebaseCloudData/
-├── users/{userId}
-├── meals/{userId}/meals/{mealId}
-├── symptoms/{userId}/symptoms/{symptomId}
-├── settings/{userId}/preferences
-└── activities/{userId}/activities/{activityId}
+#### **Protection at rest**
 
-// Cloud storage rules
-service cloud.firestore {
-  match /databases/{database}/documents {
-    // Users can only access their own data
-    match /users/{userId}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-  }
-}
+File protection is set explicitly on the store and both journal files:
+
+```swift
+description.setOption(FileProtectionType.completeUnlessOpen as NSObject,
+                      forKey: NSPersistentStoreFileProtectionKey)
 ```
 
-### **Data Migration & Sync Strategy**
+The iOS default for app container files is
+`completeUntilFirstUserAuthentication`, which leaves the file readable from the
+first unlock after boot until power off. `.completeUnlessOpen` rather than
+`.complete` is deliberate: `.complete` makes the file unreadable whenever the
+device is locked, which would break the background insight refresh, since
+background tasks typically run while locked.
 
-#### **Smart Data Classification**
+Protecting only the store would leave recent writes readable in the `-wal`
+file, so all three are covered.
+
+### **Data Classification**
+
 ```swift
 protocol DataClassifiable {
     var privacyLevel: DataPrivacyLevel { get }
-    var requiresLocalStorage: Bool { get }
-    var allowsCloudSync: Bool { get }
 }
 
-extension Symptom: DataClassifiable {
+extension Symptom {
     var privacyLevel: DataPrivacyLevel {
-        // Notes and detailed descriptions stay private
-        return notes?.isEmpty == false ? .privateLocal : .nonPrivateCloud
-    }
-}
-
-extension Meal: DataClassifiable {
-    var privacyLevel: DataPrivacyLevel {
-        // Location context stays private, basic meal info syncs
-        return hasLocationData ? .privateLocal : .nonPrivateCloud
+        // Free text and high-severity entries are the sensitive ones
+        if notes?.isEmpty == false { return .private }
+        if painLevel == .severe || urgencyLevel == .urgent { return .private }
+        if tags.contains("personal") || tags.contains("private") { return .private }
+        return .public
     }
 }
 ```
 
-#### **Unified Data Service**
-```swift
-class UnifiedDataService {
-    private let privateStorage = PrivateDataManager.shared
-    private let cloudStorage = FirebaseRepository.shared
-    
-    func save<T: DataClassifiable & Codable>(_ item: T) async throws {
-        switch item.privacyLevel {
-        case .privateLocal:
-            try await privateStorage.store(item)
-        case .nonPrivateCloud:
-            try await cloudStorage.save(item)
-        case .publicReference:
-            try await cloudStorage.savePublic(item)
-        }
-    }
-    
-    func fetch<T: DataClassifiable & Codable>(_ type: T.Type, id: String) async throws -> T? {
-        // Try private storage first, then cloud
-        if let privateItem = try await privateStorage.retrieve(type, id: id) {
-            return privateItem
-        }
-        return try await cloudStorage.fetch(type, id: id)
-    }
-}
-```
+The classification is descriptive, not a routing decision. Its consumer is the
+healthcare export, which is the only path by which data leaves the device.
 
 ---
 
@@ -665,59 +618,35 @@ class UnifiedDataService {
 
 ### **Complete Deletion Process**
 
-#### **Phase 1: User Confirmation & Security**
-1. **Settings Access**: Profile → Account Management → Delete Account
-2. **Impact Warning**: Clear explanation of data loss
-3. **Re-authentication**: Require password/biometric confirmation
-4. **Final Confirmation**: "Delete My Account" with consequences listed
+#### **Phase 1: User Confirmation**
+1. **Settings Access**: Profile → Your Data → Delete All Data
+2. **Impact Warning**: Clear explanation of data loss, stating that this is the
+   only copy
+3. **Final Confirmation**: "Delete Everything" with consequences listed
 
-#### **Phase 2: Data Inventory & Deletion**
-```swift
-struct DeletionInventory {
-    let firebaseData: [String]     // Collection paths to delete
-    let localPrivateData: [String] // Local data keys to remove
-    let healthKitData: [String]    // HealthKit types to revoke
-    let cacheData: [String]        // Cached files to clear
-    let keychainItems: [String]    // Keychain entries to remove
-}
+There is no re-authentication step because there is no account to
+re-authenticate against. The confirmation alert is the last gate.
 
-class ProfileDeletionService {
-    func executeCompleteDeletion() async throws {
-        let inventory = try await generateDeletionInventory()
-        
-        // Delete in specific order to prevent orphaned data
-        try await deleteFirebaseData(inventory.firebaseData)
-        try await deleteLocalPrivateData(inventory.localPrivateData)
-        try await revokeHealthKitAccess(inventory.healthKitData)
-        try await clearCacheData(inventory.cacheData)
-        try await removeKeychainItems(inventory.keychainItems)
-        
-        // Final auth account deletion
-        try await deleteFirebaseAuthAccount()
-    }
-}
-```
+#### **Phase 2: Deletion**
 
-#### **Phase 3: Verification & Cleanup**
-```swift
-func verifyCompleteDeletion() async throws -> DeletionVerificationResult {
-    var result = DeletionVerificationResult()
-    
-    // Verify Firebase data removal
-    result.firebaseDataRemoved = try await verifyFirebaseCleanup()
-    
-    // Verify local data removal
-    result.localDataRemoved = verifyLocalCleanup()
-    
-    // Verify auth account deletion
-    result.authAccountDeleted = verifyAuthDeletion()
-    
-    // Verify HealthKit revocation
-    result.healthKitRevoked = await verifyHealthKitCleanup()
-    
-    return result
-}
-```
+`LocalUserService.deleteAllLocalData()` clears every repository, the reminder
+settings, the encrypted files written by earlier versions, and the profile row,
+then creates a fresh empty profile so the app still has an owner for new
+records. See the implementation above.
+
+`DataDeletionService` wraps the same work when the user chooses a partial
+scope — meals only, symptoms only, and so on — and records a
+`DataDeletionRequest` describing what was erased and when. That record is the
+user's receipt; it is kept after processing rather than queued for review,
+because there is no reviewer.
+
+#### **Phase 3: What the user must do separately**
+
+- **HealthKit**: revoke through iOS Settings → Privacy & Security → Health.
+  The app cannot revoke its own authorization.
+- **Backups**: an iCloud or encrypted local device backup taken before the
+  delete may still contain the store. Deleting the app removes it from future
+  backups.
 
 ### **User Communication During Deletion**
 ```swift

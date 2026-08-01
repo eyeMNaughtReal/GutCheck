@@ -1,20 +1,20 @@
 # Copilot Instructions for GutCheck
 
 ## Project Overview
-GutCheck is a SwiftUI iOS app for tracking meals, symptoms, and AI-powered health insights. It integrates with Firebase, HealthKit, Core Data, and uses LiDAR/ARKit for food portion estimation. The app is modular, privacy-focused, and designed for extensibility.
+GutCheck is a SwiftUI iOS app for tracking meals, symptoms, and AI-powered health insights. It stores everything on-device with SwiftData, integrates with HealthKit, and uses LiDAR/ARKit for food portion estimation. There is no backend and no user accounts. The app is modular, privacy-focused, and designed for extensibility.
 
 ## Architecture & Key Patterns
 - **Views/**: Organized by feature (Dashboard, Calendar, Meal, Bowel, Profile, etc.). Each feature has its own folder.
 - **Models/**: Data structures (e.g., `Meal`, `Symptom`, `UserProfile`) are in `Models/`.
 - **ViewModels/**: State and logic for each feature, using `@StateObject` and `@ObservedObject`.
-- **Services/**: External integrations (Firebase, HealthKit, AI, Sync, Local Storage) are in `Services/`.
+- **Services/**: Integrations and infrastructure (SwiftData store, HealthKit, AI, Local Storage) are in `Services/`.
 - **Extensions/**: Utility extensions (e.g., `Date+Extensions.swift`) are in `Extensions/`.
 - **Components/**: Reusable UI elements (e.g., `ProfileAvatarButton`) are in `Views/Components/`.
 
 ## Data Flow & Integration
-- **Firebase**: Used for authentication and cloud data sync. User data is scoped to the authenticated user.
+- **SwiftData**: The single source of truth. `SwiftDataStack` owns the `ModelContainer`; repositories in `Services/Repository/` map between `@Model` rows and the value-type domain models the rest of the app uses. Nothing above the repository layer touches SwiftData.
+- **Local profile**: There are no accounts. `LocalUserService` owns one device-local profile, and its id is what every record's `createdBy` points at.
 - **HealthKit**: Optional sync for health data.
-- **Core Data**: Local persistence for offline support.
 - **AI/ML**: Used for food recognition and insights (see `AIAnalysisService.swift`).
 - **Notifications**: Local reminders are managed via `UNUserNotificationCenter` (see `UserRemindersView`).
 
@@ -28,7 +28,7 @@ GutCheck is a SwiftUI iOS app for tracking meals, symptoms, and AI-powered healt
 - **Build**: Open `GutCheck.xcodeproj` in Xcode and build/run as a standard SwiftUI app.
 - **Test**: Unit and UI tests are in `GutCheckTests/` and `GutCheckUITests/`.
 - **CI/CD**: GitHub Actions workflow in `.github/workflows/ci.yml` runs tests and checks code coverage on PRs.
-- **Secrets**: `GoogleService-Info.plist` is required for Firebase but not checked into git.
+- **Secrets**: `Secrets.swift` holds the USDA FoodData Central API key and is not checked into git. CI generates a stub.
 
 ## Project-Specific Patterns
 - **Feature Folders**: Group files by feature, not by type, for scalability.
@@ -47,7 +47,7 @@ GutCheck is a SwiftUI iOS app for tracking meals, symptoms, and AI-powered healt
 - `Views/` — All UI, grouped by feature
 - `Models/` — Data models
 - `ViewModels/` — State and logic
-- `Services/` — Integrations (Firebase, HealthKit, AI, etc.)
+- `Services/` — Integrations and infrastructure (SwiftData, HealthKit, AI, etc.)
 - `Extensions/` — Utility extensions
 - `GutCheck.xcodeproj` — Xcode project
 - `.github/workflows/ci.yml` — CI/CD pipeline

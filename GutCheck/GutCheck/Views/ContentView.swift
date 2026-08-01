@@ -1,6 +1,6 @@
 #Preview {
     ContentView()
-        .environment(AuthService())
+        .environment(LocalUserService.shared)
         .environment(AppRouter.shared)
 }
 //
@@ -13,7 +13,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @Environment(AuthService.self) var authService
+    @Environment(LocalUserService.self) var userService
     @Bindable var router = AppRouter.shared
     
     var body: some View {
@@ -97,7 +97,7 @@ struct ContentView: View {
     private func sheetView(for sheet: SheetDestination) -> some View {
         switch sheet {
         case .profile:
-            if let currentUser = authService.currentUser {
+            if let currentUser = userService.currentUser {
                 UserProfileView(user: currentUser)
             } else {
                 Text("User information unavailable")

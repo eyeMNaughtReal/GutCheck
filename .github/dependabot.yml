@@ -1,7 +1,12 @@
 version: 2
 
 updates:
-  # Swift Package Manager — Firebase SDK and other Swift dependencies
+  # Swift Package Manager
+  #
+  # The project currently declares no package dependencies — removing Firebase
+  # took the only one with it, and everything the app needs now ships with the
+  # platform (SwiftData, HealthKit, BackgroundTasks). This entry is kept so
+  # updates start flowing again the moment a package is added.
   - package-ecosystem: "swift"
     directory: "/GutCheck"
     # Day-to-day work happens on `development`; main is the release branch.
@@ -15,16 +20,12 @@ updates:
       time: "08:00"
       timezone: "America/Chicago"
     open-pull-requests-limit: 5
-    # Only direct dependencies. The project declares exactly one package
-    # reference — firebase-ios-sdk — and the other 13 entries in
-    # Package.resolved (promises, googleutilities, nanopb, app-check,
-    # googleappmeasurement, grpc-binary, abseil, …) are transitive, with their
-    # versions decided by Firebase's own manifest.
-    #
-    # Dependabot can edit those lines in the lockfile, but SPM overwrites them
-    # on the next resolve. The result is a PR that appears to upgrade something,
-    # merges green, and leaves Package.resolved inconsistent with what actually
-    # resolves. That happened twice (see #326) before this was scoped.
+    # Only direct dependencies. Transitive entries in Package.resolved are
+    # chosen by their parent package's manifest: Dependabot can edit those
+    # lines, but SPM overwrites them on the next resolve, producing a PR that
+    # appears to upgrade something, merges green, and leaves the lockfile
+    # inconsistent with what actually resolves. That happened twice (see #326)
+    # before this was scoped.
     allow:
       - dependency-type: "direct"
     labels:

@@ -22,10 +22,10 @@ A comprehensive iOS application for tracking digestive health, meals, symptoms, 
 - **iOS Notification Support**: Full UNUserNotificationCenter delegate for foreground and background notifications
 
 ### **🔒 Privacy-First Design**
-- **Local Processing**: Sensitive data processed on-device
-- **Encrypted Storage**: Local data encrypted with CryptoKit
+- **On-Device Only**: No accounts, no backend — your history never leaves the device
+- **Protected Storage**: SwiftData store guarded by iOS Data Protection
 - **HealthKit Integration**: Secure health data access
-- **User Control**: Complete data ownership and deletion
+- **User Control**: Complete data ownership, export, and immediate deletion
 
 ### **🧠 AI-Powered Analysis**
 - **Food Recognition**: Core ML integration for food identification
@@ -35,27 +35,33 @@ A comprehensive iOS application for tracking digestive health, meals, symptoms, 
 
 ## 🏗️ **Architecture**
 
-- **Platform**: iOS 15.0+ (SwiftUI)
+- **Platform**: iOS 18.2+ (SwiftUI)
 - **Architecture**: MVVM with Repository Pattern
-- **Backend**: Firebase (Firestore, Authentication, Storage)
-- **AI/ML**: Core ML, Google Vision API, Custom AI services
+- **Persistence**: SwiftData, on-device only — no backend and no accounts
+- **AI/ML**: Core ML and on-device analysis
 - **Health Integration**: HealthKit with real-time observers
 - **Notifications**: UNUserNotificationCenter + EventKit (Apple Reminders)
-- **Data Privacy**: Local encryption + cloud storage hybrid
+- **Network**: Only for food lookups (Open Food Facts, USDA FoodData Central)
 
 ## 🚀 **Getting Started**
 
 ### **Prerequisites**
-- Xcode 15.0+
-- iOS 15.0+ deployment target
-- Firebase project setup
-- Google Cloud Vision API key
+- Xcode 16.0+
+- iOS 18.2+ deployment target
+- A USDA FoodData Central API key (free) for food search
 
 ### **Installation**
 1. Clone the repository
-2. Install dependencies via Swift Package Manager
-3. Configure Firebase and Google Cloud services
-4. Build and run on iOS device or simulator
+2. Create `GutCheck/GutCheck/Secrets.swift` with your USDA key:
+   ```swift
+   enum Secrets {
+       static let usdaAPIKey = "your-key-here"
+   }
+   ```
+3. Open `GutCheck/GutCheck.xcodeproj` and build/run on a device or simulator
+
+The project has no external package dependencies — everything it needs ships
+with the platform.
 
 ## 📊 **Current Status**
 
@@ -63,7 +69,7 @@ A comprehensive iOS application for tracking digestive health, meals, symptoms, 
 
 **Completed Features**:
 - ✅ Core app architecture and navigation
-- ✅ Authentication and user management
+- ✅ On-device data storage with SwiftData
 - ✅ Unified meal tracking system
 - ✅ Comprehensive symptom tracking
 - ✅ Dashboard insights and health scoring
@@ -103,13 +109,12 @@ All documentation lives in the **[`docs/`](docs/)** folder:
 |---|---|
 | [documentation.md](docs/documentation.md) | Complete project guide — architecture, workflows, API integration |
 | [contributing.md](docs/contributing.md) | How to contribute, code style, PR process |
-| [firebase-setup.md](docs/firebase-setup.md) | Firebase setup, Firestore rules, security testing |
 | [compliance.md](docs/compliance.md) | GDPR/CCPA/HIPAA compliance, permissions guide |
 | [accessibility.md](docs/accessibility.md) | Accessibility checklist and design standards |
 | [accessibility-progress.md](docs/accessibility-progress.md) | Phase 0–2 implementation progress |
 | [color-system.md](docs/color-system.md) | Color palette, assets, and installation guide |
 | [insights-system.md](docs/insights-system.md) | Insights and pattern recognition system |
-| [core-data.md](docs/core-data.md) | CoreData implementation details |
+| [persistence.md](docs/persistence.md) | SwiftData store, entities, and legacy migration |
 | [performance-profiling.md](docs/performance-profiling.md) | Performance monitoring system |
 | [compliance.md](docs/compliance.md) | Privacy compliance and permissions |
 | [navigation-plan.md](docs/navigation-plan.md) | Native navigation architecture |

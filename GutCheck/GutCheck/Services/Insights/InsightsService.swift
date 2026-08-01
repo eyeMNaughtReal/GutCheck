@@ -85,9 +85,7 @@ import Combine
     
     private func fetchMeals(for timeRange: DateInterval) async -> [Meal] {
         do {
-            guard let userId = AuthenticationManager.shared.currentUserId else {
-                return []
-            }
+            let userId = LocalUserService.currentProfileId
             
             // Use the date range extension method
             return try await MealRepository.shared.fetchMealsForDateRange(
@@ -102,9 +100,7 @@ import Combine
     
     private func fetchSymptoms(for timeRange: DateInterval) async -> [Symptom] {
         do {
-            guard let userId = AuthenticationManager.shared.currentUserId else {
-                return []
-            }
+            let userId = LocalUserService.currentProfileId
             
             // Use the date range extension method
             return try await SymptomRepository.shared.fetchSymptomsForDateRange(

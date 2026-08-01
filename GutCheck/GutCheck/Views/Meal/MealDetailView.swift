@@ -1,5 +1,4 @@
 import SwiftUI
-import FirebaseFirestore
 
 struct MealDetailView: View {
     @State private var viewModel: MealDetailViewModel

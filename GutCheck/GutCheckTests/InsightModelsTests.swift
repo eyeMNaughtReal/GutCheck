@@ -110,8 +110,7 @@ struct InsightModelsTests {
             notes: "Had a bad reaction"
         )
         #expect(meal.privacyLevel == .private)
-        #expect(meal.requiresLocalStorage)
-        #expect(!meal.allowsCloudSync)
+        #expect(meal.privacyLevel.requiresEncryption)
     }
 
     @Test("Meal with location tag is private")
@@ -137,7 +136,6 @@ struct InsightModelsTests {
             foodItems: []
         )
         #expect(meal.privacyLevel == .public)
-        #expect(!meal.requiresLocalStorage)
-        #expect(meal.allowsCloudSync)
+        #expect(!meal.privacyLevel.requiresEncryption)
     }
 }

@@ -40,7 +40,7 @@ import SwiftUI
     // MARK: - Load
 
     func loadMedications() async {
-        guard let userId = AuthenticationManager.shared.currentUserId else { return }
+        let userId = LocalUserService.currentProfileId
 
         loadingState.startLoading()
         do {

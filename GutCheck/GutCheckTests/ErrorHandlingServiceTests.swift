@@ -7,25 +7,25 @@ struct ErrorHandlingServiceTests {
 
     // MARK: - AppError handling
 
-    @Test("Handles AuthenticationError with correct title and message")
-    func handlesAuthenticationError() {
-        let error = AuthenticationError.invalidCredentials
+    @Test("Handles ProfileError with correct title and message")
+    func handlesProfileError() {
+        let error = ProfileError.profileUnavailable
         let (title, message) = service.handle(error)
-        #expect(title == "Authentication Error")
-        #expect(message == "Invalid email or password")
+        #expect(title == "Profile Error")
+        #expect(message == "Your profile could not be opened")
     }
 
     @Test("Handles DataError with correct title and message")
     func handlesDataError() {
-        let error = DataError.networkError
+        let error = DataError.storeUnavailable
         let (title, message) = service.handle(error)
         #expect(title == "Data Error")
-        #expect(message == "Network connection error")
+        #expect(message == "The local data store is unavailable")
     }
 
-    @Test("All AuthenticationError cases have error codes", arguments: AuthenticationError.allCases)
-    func authenticationErrorCodes(error: AuthenticationError) {
-        #expect(error.errorCode.hasPrefix("AUTH"))
+    @Test("All ProfileError cases have error codes", arguments: ProfileError.allCases)
+    func profileErrorCodes(error: ProfileError) {
+        #expect(error.errorCode.hasPrefix("PROFILE"))
         #expect(!error.errorCode.isEmpty)
     }
 
@@ -35,8 +35,8 @@ struct ErrorHandlingServiceTests {
         #expect(!error.errorCode.isEmpty)
     }
 
-    @Test("All AuthenticationError cases have descriptions", arguments: AuthenticationError.allCases)
-    func authenticationErrorDescriptions(error: AuthenticationError) {
+    @Test("All ProfileError cases have descriptions", arguments: ProfileError.allCases)
+    func profileErrorDescriptions(error: ProfileError) {
         #expect(error.errorDescription != nil)
         #expect(!error.errorDescription!.isEmpty)
     }
@@ -47,46 +47,32 @@ struct ErrorHandlingServiceTests {
         #expect(!error.errorDescription!.isEmpty)
     }
 
-    // MARK: - Firebase error handling
+    // MARK: - Storage error handling
 
-    @Test("Handles Firebase auth no-network error")
-    func handlesFirebaseAuthNoNetwork() {
-        let error = NSError(domain: "FIRAuthErrorDomain", code: 17020)
-        let (title, message) = service.handle(error)
-        #expect(title == "Authentication Error")
-        #expect(message == "No network connection")
+    @Test("Surfaces a missing record as a data error")
+    func handlesRecordNotFound() {
+        let (title, message) = service.handle(RepositoryError.recordNotFound("abc"))
+        #expect(title == "Data Error")
+        #expect(message.contains("abc"))
     }
 
-    @Test("Handles Firebase auth weak password error")
-    func handlesFirebaseAuthWeakPassword() {
-        let error = NSError(domain: "FIRAuthErrorDomain", code: 17026)
-        let (title, message) = service.handle(error)
-        #expect(title == "Authentication Error")
-        #expect(message == "Password is too weak")
+    @Test("Surfaces a store failure as a data error")
+    func handlesStorageError() {
+        let underlying = NSError(
+            domain: "NSCocoaErrorDomain",
+            code: 134060,
+            userInfo: [NSLocalizedDescriptionKey: "The operation couldn't be completed"]
+        )
+        let (title, message) = service.handle(RepositoryError.storageError(underlying))
+        #expect(title == "Data Error")
+        #expect(message.contains("The operation couldn't be completed"))
     }
 
-    @Test("Handles Firebase auth email in use error")
-    func handlesFirebaseAuthEmailInUse() {
-        let error = NSError(domain: "FIRAuthErrorDomain", code: 17007)
-        let (title, message) = service.handle(error)
-        #expect(title == "Authentication Error")
-        #expect(message == "Email already in use")
-    }
-
-    @Test("Handles Firestore permission denied error")
-    func handlesFirestorePermissionDenied() {
-        let error = NSError(domain: "FIRFirestoreErrorDomain", code: 7)
-        let (title, message) = service.handle(error)
-        #expect(title == "Database Error")
-        #expect(message == "Permission denied")
-    }
-
-    @Test("Handles Firestore connection failed error")
-    func handlesFirestoreConnectionFailed() {
-        let error = NSError(domain: "FIRFirestoreErrorDomain", code: 13)
-        let (title, message) = service.handle(error)
-        #expect(title == "Database Error")
-        #expect(message == "Database connection failed")
+    @Test("Reports a missing profile through the repository error path")
+    func handlesNoActiveProfile() {
+        let (title, message) = service.handle(RepositoryError.noActiveProfile)
+        #expect(title == "Data Error")
+        #expect(message == "No local profile is available")
     }
 
     // MARK: - Default error handling
@@ -101,14 +87,14 @@ struct ErrorHandlingServiceTests {
 }
 
 // Make error enums CaseIterable for parameterized tests
-extension AuthenticationError: CaseIterable {
-    public static var allCases: [AuthenticationError] {
-        [.invalidCredentials, .accountExists, .weakPassword, .invalidPhoneNumber, .verificationFailed, .notAuthenticated]
+extension ProfileError: CaseIterable {
+    public static var allCases: [ProfileError] {
+        [.profileUnavailable, .updateFailed, .deletionFailed]
     }
 }
 
 extension DataError: CaseIterable {
     public static var allCases: [DataError] {
-        [.saveFailed, .loadFailed, .deleteFailed, .networkError, .syncFailed]
+        [.saveFailed, .loadFailed, .deleteFailed, .storeUnavailable, .migrationFailed]
     }
 }

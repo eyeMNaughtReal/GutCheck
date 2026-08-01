@@ -4,7 +4,7 @@ struct MealConfirmationView: View {
     let meal: Meal
     @Environment(\.dismiss) private var dismiss
     @Environment(AppRouter.self) private var router
-    @Environment(ServerStatusService.self) private var serverStatus
+    @State private var networkMonitor = NetworkMonitor.shared
     @State private var viewModel = MealConfirmationViewModel()
     
     var body: some View {
@@ -61,7 +61,7 @@ struct MealConfirmationView: View {
                 .roundedCard()
                 
                 // AI Analysis
-                if serverStatus.isOffline {
+                if !networkMonitor.isConnected {
                     HStack(spacing: 8) {
                         Image(systemName: "wifi.slash")
                             .foregroundStyle(ColorTheme.secondaryText)
@@ -140,7 +140,7 @@ struct MealConfirmationView: View {
             Text(viewModel.errorMessage ?? "An unknown error occurred")
         })
         .task {
-            guard !serverStatus.isOffline else { return }
+            guard networkMonitor.isConnected else { return }
             await viewModel.analyzeMeal(meal)
         }
     }
@@ -299,6 +299,5 @@ struct MealAnalysis {
             createdBy: "preview-user"
         ))
         .environment(AppRouter.shared)
-        .environment(ServerStatusService.shared)
-    }
+            }
 }

@@ -3,9 +3,7 @@ import SwiftUI
 struct AppRoot: View {
     @State private var router = AppRouter.shared
     @State private var refreshManager = RefreshManager.shared
-    @Environment(AuthService.self) var authService
-    @Environment(ServerStatusService.self) var serverStatusService
-    @State private var showingServerStatusSheet = false
+    @Environment(LocalUserService.self) var userService
     
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -44,29 +42,18 @@ struct AppRoot: View {
                     }
                 }
             }
-            
-            .safeAreaInset(edge: .top) {
-                OfflineBannerView(showingStatusSheet: $showingServerStatusSheet)
-                    .animation(.easeInOut(duration: 0.3), value: serverStatusService.isOffline)
-            }
-            
-            // Server status sheet (separate from router sheets)
-            .sheet(isPresented: $showingServerStatusSheet) {
-                ServerStatusSheet()
-                    .environment(serverStatusService)
-            }
-            
+
             // Handle the sheet presentations
             .sheet(item: $router.activeSheet) { sheetType in
                 NavigationStack {
                     switch sheetType {
                     case .profile:
-                        if let currentUser = authService.currentUser {
+                        if let currentUser = userService.currentUser {
                             UserProfileView(user: currentUser)
-                                .environment(authService)
+                                .environment(userService)
                         } else {
                             Text("User information unavailable")
-                                .environment(authService)
+                                .environment(userService)
                         }
                     case .mealForm(let id):
                         MealBuilderView(mealId: id)
@@ -151,5 +138,5 @@ extension View {
 
 #Preview {
     AppRoot()
-        .environment(PreviewAuthService())
+        .environment(LocalUserService.shared)
 }

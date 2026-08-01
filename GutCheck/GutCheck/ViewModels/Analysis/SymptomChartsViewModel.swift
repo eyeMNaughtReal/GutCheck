@@ -21,7 +21,6 @@ import Foundation
 
     private let mealRepository: any MealRepositoryProtocol
     private let symptomRepository: any SymptomRepositoryProtocol
-    private let authService = AuthService()
     
     init(mealRepository: any MealRepositoryProtocol = MealRepository.shared,
          symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
@@ -40,7 +39,7 @@ import Foundation
         error = nil
 
         do {
-            let userId = authService.currentUser?.id ?? "default_user"
+            let userId = LocalUserService.currentProfileId
             let endDate = Date.now
             let startDate = Calendar.current.date(
                 byAdding: .day, value: -selectedTimeRange.days, to: endDate

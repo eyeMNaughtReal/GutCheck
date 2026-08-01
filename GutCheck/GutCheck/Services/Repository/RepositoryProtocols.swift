@@ -3,11 +3,45 @@
 //  GutCheck
 //
 //  Concrete, non-generic protocols for each repository type.
-//  These enable dependency injection in ViewModels without
-//  the associatedtype constraint of the generic FirebaseRepository protocol.
+//  These enable dependency injection in ViewModels, and let the test suite
+//  substitute mocks without standing up a store.
 //
 
 import Foundation
+
+// MARK: - LocalRecord
+
+/// A record the app persists on-device.
+///
+/// `createdBy` holds the local profile id. There are no accounts, so it never
+/// varies in practice — it is retained so records stay attributable across a
+/// profile reset, and so a future multi-profile mode has somewhere to hang.
+protocol LocalRecord: Codable, Identifiable {
+    var id: String { get set }
+    var createdBy: String { get set }
+}
+
+// MARK: - Repository Errors
+
+enum RepositoryError: LocalizedError {
+    case noActiveProfile
+    case recordNotFound(String)
+    case invalidData(String)
+    case storageError(Error)
+
+    var errorDescription: String? {
+        switch self {
+        case .noActiveProfile:
+            return "No local profile is available"
+        case .recordNotFound(let id):
+            return "Record with ID \(id) not found"
+        case .invalidData(let message):
+            return "Invalid data: \(message)"
+        case .storageError(let error):
+            return "Storage error: \(error.localizedDescription)"
+        }
+    }
+}
 
 // MARK: - MealRepositoryProtocol
 

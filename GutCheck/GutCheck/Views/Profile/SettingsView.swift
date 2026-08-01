@@ -7,7 +7,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(SettingsViewModel.self) var settingsVM
-    @Environment(AuthService.self) var authService
+    @Environment(LocalUserService.self) var userService
     @Environment(\.dismiss) private var dismiss
     @AppStorage("lastHealthKitSyncTimestamp") private var lastHealthKitSyncTimestamp: Double = 0
     @State private var showAppleHealth = false
@@ -248,51 +248,34 @@ struct SettingsView: View {
                 }
                 #endif
 
-                Section("Account Management") {
-                    // Linked account display
-                    if let user = authService.currentUser {
-                        HStack(spacing: 12) {
-                            Image(systemName: user.signInMethod.icon)
-                                .foregroundStyle(ColorTheme.primary)
-                                .frame(width: 20)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Signed in with \(user.signInMethod.displayName)")
-                                    .typography(Typography.subheadline)
-                                    .fontWeight(.medium)
-                                Text(user.email)
-                                    .typography(Typography.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(ColorTheme.success)
+                Section("Your Data") {
+                    // There is no account and no server: this describes where
+                    // the data actually is, which is the thing a user opening
+                    // this section wants to know.
+                    HStack(spacing: 12) {
+                        Image(systemName: "iphone")
+                            .foregroundStyle(ColorTheme.primary)
+                            .frame(width: 20)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Stored on this device")
+                                .typography(Typography.subheadline)
+                                .fontWeight(.medium)
+                            Text("Your history is never uploaded. Export it to keep a copy.")
+                                .typography(Typography.caption)
+                                .foregroundStyle(.secondary)
                         }
-                        .padding(.vertical, 4)
-                        .accessibilityElement(children: .combine)
-                        .accessibilityLabel("Signed in with \(user.signInMethod.displayName), \(user.email)")
+                        Spacer()
                     }
-                    
-                    // Sign out
-                    Button {
-                        HapticManager.shared.medium()
-                        try? authService.signOut()
-                    } label: {
-                        HStack {
-                            Image(systemName: "rectangle.portrait.and.arrow.right")
-                                .foregroundStyle(.orange)
-                            Text("Sign Out")
-                                .foregroundStyle(ColorTheme.primaryText)
-                        }
-                    }
-                    .accessibilityLabel("Sign Out")
-                    .accessibilityHint("Tap to sign out of your account")
-                    
-                    // Delete account
+                    .padding(.vertical, 4)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Your data is stored on this device and is never uploaded")
+
+                    // Delete all data
                     NavigationLink(value: SettingsRoute.deleteAccount) {
                         HStack {
                             Image(systemName: "trash")
                                 .foregroundStyle(.red)
-                            Text("Delete Account")
+                            Text("Delete All Data")
                             Spacer()
                             Text("Permanent")
                                 .typography(Typography.caption)
@@ -322,7 +305,7 @@ struct SettingsView: View {
         .sheet(isPresented: $showAppleHealth) {
             HealthDataIntegrationView()
                 .environment(settingsVM)
-                .environment(authService)
+                .environment(userService)
         }
     }
 }

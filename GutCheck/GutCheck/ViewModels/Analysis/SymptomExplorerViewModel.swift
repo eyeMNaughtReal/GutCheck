@@ -16,7 +16,6 @@ import Foundation
 
     private let mealRepository: any MealRepositoryProtocol
     private let symptomRepository: any SymptomRepositoryProtocol
-    private let authService = AuthService()
     private let compoundDatabase = FoodCompoundDatabase.shared
     
     init(mealRepository: any MealRepositoryProtocol = MealRepository.shared,
@@ -36,7 +35,7 @@ import Foundation
         error = nil
 
         do {
-            let userId = getCurrentUserId()
+            let userId = LocalUserService.currentProfileId
             let endDate = Date.now
             let startDate = Calendar.current.date(byAdding: .day, value: -30, to: endDate) ?? endDate
 
@@ -163,10 +162,6 @@ import Foundation
     }
 
     // MARK: - Helpers
-
-    private func getCurrentUserId() -> String {
-        authService.currentUser?.id ?? "default_user"
-    }
 
     private func hasSignificantSymptoms(_ symptom: Symptom) -> Bool {
         symptom.painLevel != .none
