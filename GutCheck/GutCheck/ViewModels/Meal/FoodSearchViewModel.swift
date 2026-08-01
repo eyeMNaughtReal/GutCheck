@@ -138,8 +138,12 @@ import Combine
             nutritionDict["iron_dv"] = iron.formatted(.number.precision(.fractionLength(0)).grouping(.never).locale(FoodSearchResult.storageLocale))
         }
         
-        // Extract allergens with enhanced detection
-        let allergens = detectAllergens(from: nfood.name, brand: nfood.brand, ingredients: ingredientList)
+        // Allergens the source declared outright, plus anything keyword matching
+        // spots. The declared set is what catches a French ingredient list —
+        // "Lait" never matches the English keyword table, but the record's
+        // `en:milk` tag does.
+        let detected = detectAllergens(from: nfood.name, brand: nfood.brand, ingredients: ingredientList)
+        let allergens = Array(Set(nfood.declaredAllergens + detected)).sorted()
         
         // Create main nutrition info for easy access
         let nutrition = NutritionInfo(
@@ -238,28 +242,15 @@ import Combine
     // MARK: - Ingredient Parsing
     
     private func parseIngredients(from ingredientsString: String?) -> [String] {
-        guard let ingredientsString = ingredientsString, !ingredientsString.isEmpty else {
-            return []
-        }
-        
-        // Clean up the ingredients string and split by common separators
-        let cleanedString = ingredientsString
-            .replacingOccurrences(of: ".", with: "") // Remove periods
-            .replacingOccurrences(of: ";", with: ",") // Normalize separators
-            .replacingOccurrences(of: " and ", with: ", ") // Handle "and" separators
-            .replacingOccurrences(of: " & ", with: ", ") // Handle "&" separators
-        
-        // Split by commas and clean up each ingredient
-        let ingredients = cleanedString
-            .components(separatedBy: ",")
-            .map { ingredient in
-                ingredient
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                    .lowercased()
-            }
-            .filter { !$0.isEmpty }
-        
-        return ingredients
+        guard let ingredientsString, !ingredientsString.isEmpty else { return [] }
+
+        // Normalise the word separators, then let the parser handle commas so
+        // brackets are respected rather than split through.
+        let normalized = ingredientsString
+            .replacingOccurrences(of: " and ", with: ", ")
+            .replacingOccurrences(of: " & ", with: ", ")
+
+        return IngredientTextParser.split(normalized).map { $0.lowercased() }
     }
     
     // MARK: - Recent Items Management

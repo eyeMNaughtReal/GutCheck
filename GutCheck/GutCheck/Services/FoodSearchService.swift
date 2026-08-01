@@ -137,16 +137,13 @@ import Foundation
     // MARK: - Ingredient Parsing
 
     private func parseIngredients(from ingredientsString: String) -> [String] {
-        let cleanedString = ingredientsString
-            .replacingOccurrences(of: ".", with: "")
-            .replacingOccurrences(of: ";", with: ",")
+        // Normalise the word separators, then let the parser handle commas so
+        // that brackets are respected rather than split through.
+        let normalized = ingredientsString
             .replacingOccurrences(of: " and ", with: ", ")
             .replacingOccurrences(of: " & ", with: ", ")
 
-        return cleanedString
-            .components(separatedBy: ",")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
-            .filter { !$0.isEmpty }
+        return IngredientTextParser.split(normalized).map { $0.lowercased() }
     }
 }
 

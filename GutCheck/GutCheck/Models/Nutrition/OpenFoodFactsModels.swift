@@ -18,10 +18,21 @@ struct OpenFoodFactsProduct: Codable, Identifiable {
     let nutriments: OpenFoodFactsNutriments?
     let ingredients: [OpenFoodFactsIngredient]?
     let ingredientsText: String?
+    /// English ingredient text where the contributor supplied one. The plain
+    /// `ingredients_text` field is in the product's own language, which for a
+    /// French-registered Big Mac means a French list.
+    let ingredientsTextEn: String?
     let servingSize: String?
     let allergens: String?
     let traces: String?
-    
+    /// Structured allergen identifiers, e.g. `["en:gluten", "en:milk"]`.
+    ///
+    /// Prefer these over the free-text `allergens` field: they carry an `en:`
+    /// prefix regardless of the product's language, so a French record still
+    /// reports `en:milk` rather than `Lait`.
+    let allergensTags: [String]?
+    let tracesTags: [String]?
+
     private enum CodingKeys: String, CodingKey {
         case id = "code"
         case productName = "product_name"
@@ -29,10 +40,62 @@ struct OpenFoodFactsProduct: Codable, Identifiable {
         case nutriments
         case ingredients
         case ingredientsText = "ingredients_text"
+        case ingredientsTextEn = "ingredients_text_en"
         case servingSize = "serving_size"
         case allergens
         case traces
+        case allergensTags = "allergens_tags"
+        case tracesTags = "traces_tags"
     }
+
+    /// Ingredient text in English when available, falling back to whatever
+    /// language the record is written in.
+    var bestIngredientsText: String? {
+        if let english = ingredientsTextEn, !english.trimmingCharacters(in: .whitespaces).isEmpty {
+            return english
+        }
+        return ingredientsText
+    }
+
+    /// Allergens and traces normalised to the app's vocabulary.
+    ///
+    /// OpenFoodFacts tags look like `en:milk` or, on records a contributor
+    /// entered in another language, `fr:lait`. Only the `en:` namespace is
+    /// mapped — a locale-prefixed tag is data we cannot reliably interpret, and
+    /// guessing would be worse than falling through to keyword detection.
+    var normalizedAllergens: [String] {
+        let tags = (allergensTags ?? []) + (tracesTags ?? [])
+        let mapped = tags.compactMap { Self.allergenNames[$0.lowercased()] }
+        return Array(Set(mapped)).sorted()
+    }
+
+    /// Maps OpenFoodFacts allergen tags onto the labels the app already uses
+    /// elsewhere, so tag-derived and keyword-derived allergens read the same.
+    private static let allergenNames: [String: String] = [
+        "en:milk": "Dairy",
+        "en:gluten": "Gluten",
+        "en:soybeans": "Soy",
+        "en:eggs": "Eggs",
+        "en:nuts": "Tree Nuts",
+        "en:tree-nuts": "Tree Nuts",
+        "en:almonds": "Tree Nuts",
+        "en:hazelnuts": "Tree Nuts",
+        "en:walnuts": "Tree Nuts",
+        "en:cashew-nuts": "Tree Nuts",
+        "en:pistachio-nuts": "Tree Nuts",
+        "en:macadamia-nuts": "Tree Nuts",
+        "en:pecan-nuts": "Tree Nuts",
+        "en:brazil-nuts": "Tree Nuts",
+        "en:peanuts": "Peanuts",
+        "en:fish": "Fish",
+        "en:crustaceans": "Shellfish",
+        "en:molluscs": "Shellfish",
+        "en:sesame-seeds": "Sesame",
+        "en:mustard": "Mustard",
+        "en:celery": "Celery",
+        "en:lupin": "Lupin",
+        "en:sulphur-dioxide-and-sulphites": "Sulphites"
+    ]
 }
 
 struct OpenFoodFactsNutriments: Codable {
