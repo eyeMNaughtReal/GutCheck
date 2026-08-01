@@ -30,9 +30,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The Swift leg rebuilds the entire app (Firebase, gRPC, abseil) so
-        # CodeQL can trace compilation, and has measured 48-107 minutes against
-        # about 5 for Build and Test. Dropping it from pull_request leaves PRs
+        # The Swift leg rebuilds the entire app so CodeQL can trace
+        # compilation, and measured 48-107 minutes against about 5 for Build
+        # and Test. That figure was taken while Firebase, gRPC and abseil were
+        # still being compiled; with the SPM dependencies gone it should be
+        # markedly lower, but it has not been re-measured, so the filtering
+        # below stays until it has. Dropping it from pull_request leaves PRs
         # completing in minutes; it still runs on every push to main and
         # development, plus the Monday schedule, so nothing reaches either
         # branch unanalysed.
