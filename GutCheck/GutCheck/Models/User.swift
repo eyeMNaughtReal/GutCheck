@@ -13,14 +13,23 @@ import Foundation
 import HealthKit
 
 struct User: Codable, Identifiable, Hashable, Equatable {
+    /// Identity and creation time are fixed for the life of the profile —
+    /// every record's `createdBy` resolves through `id`.
     let id: String
-    /// Optional contact address the user can set for healthcare exports. Empty
-    /// when they haven't given one — nothing signs in with it.
-    let email: String
-    let firstName: String
-    let lastName: String
     let createdAt: Date
     let updatedAt: Date
+
+    // Editable profile fields.
+    //
+    // These were `let` while they came from the auth provider and could only be
+    // set at account creation. The profile is now filled in and edited in-app,
+    // so they are `var` like the health fields below.
+
+    /// Optional contact address the user can set for healthcare exports. Empty
+    /// when they haven't given one — nothing signs in with it.
+    var email: String
+    var firstName: String
+    var lastName: String
 
     // Profile image
     var profileImageURL: String?
