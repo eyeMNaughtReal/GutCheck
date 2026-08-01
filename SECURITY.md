@@ -40,9 +40,9 @@ A good report includes:
 
 ## Scope
 
-This policy applies to the GutCheck iOS application source code, CI/CD workflows, and Firebase security rules contained in this repository.
+This policy applies to the GutCheck iOS application source code and CI/CD workflows contained in this repository.
 
-**Out of scope:** Third-party dependencies (Firebase, Swift packages). Please report those directly to their respective maintainers.
+**Out of scope:** Third-party dependencies. The app currently declares none — it uses only platform frameworks — but if that changes, please report issues in a dependency directly to its maintainers.
 
 ## Preferred Languages
 

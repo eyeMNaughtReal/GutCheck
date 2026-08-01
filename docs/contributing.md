@@ -58,9 +58,9 @@ cd GutCheck
 open GutCheck/GutCheck.xcodeproj
 ```
 
-3. Ensure you have the required dependencies installed via Swift Package Manager.
+3. The project has no external package dependencies — everything it needs ships with the platform.
 
-4. Add your `GoogleService-Info.plist` file (see setup instructions).
+4. Add your `Secrets.swift` file with a USDA FoodData Central API key (see setup instructions).
 
 5. Build and run the project.
 
@@ -72,7 +72,7 @@ open GutCheck/GutCheck.xcodeproj
 - Follow the MVVM architecture pattern
 - Use dependency injection for services
 - Keep views focused on UI, move business logic to ViewModels
-- Use Services for external integrations (Firebase, HealthKit, etc.)
+- Use Services for integrations and infrastructure (SwiftData, HealthKit, etc.)
 
 ### Testing
 - Write unit tests for ViewModels and Services

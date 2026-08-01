@@ -5,7 +5,7 @@ struct SymptomHistoryView: View {
     @State private var selectedFilter: SymptomFilter = .all
     @State private var showingDatePicker = false
     @Environment(AppRouter.self) var router
-    @Environment(AuthService.self) var authService
+    @Environment(LocalUserService.self) var userService
     
     private var symptomsList: some View {
         let sortedDates = viewModel.groupedSymptoms.keys.sorted(by: >)
@@ -63,7 +63,7 @@ struct SymptomHistoryView: View {
             }
             
             ToolbarItem(placement: .topBarTrailing) {
-                ProfileAvatarButton(user: authService.currentUser) {
+                ProfileAvatarButton(user: userService.currentUser) {
                     router.showProfile()
                 }
             }

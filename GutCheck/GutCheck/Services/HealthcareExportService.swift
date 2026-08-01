@@ -12,7 +12,6 @@
 import Foundation
 import PDFKit
 import UIKit
-import FirebaseAuth
 import LocalAuthentication
 
 // MARK: - Export Formats
@@ -56,8 +55,6 @@ struct ExportOptions {
     
     private let mealRepository = MealRepository.shared
     private let symptomRepository = SymptomRepository.shared
-    private let localStorageService = LocalStorageService.shared
-    
     var isExporting = false
     var exportProgress: Double = 0.0
     
@@ -67,11 +64,11 @@ struct ExportOptions {
     
     /// Verifies user identity before allowing data export using biometric/passcode authentication.
     /// Falls back to device passcode when Face ID / Touch ID is unavailable.
+    ///
+    /// This is the one gate left on the export path. There is no account to
+    /// re-authenticate against, but an export is the only way health data
+    /// leaves the device, so it still requires the device owner to be present.
     private func verifyUserIdentity() async throws {
-        guard Auth.auth().currentUser != nil else {
-            throw ExportError.userNotAuthenticated
-        }
-
         let context = LAContext()
         var policyError: NSError?
 
@@ -138,9 +135,7 @@ struct ExportOptions {
     // MARK: - Data Collection
     
     private func collectExportData(options: ExportOptions) async throws -> HealthcareExportData {
-        guard let userId = AuthenticationManager.shared.currentUserId else {
-            throw ExportError.noAuthenticatedUser
-        }
+        let userId = LocalUserService.currentProfileId
         
         var exportData = HealthcareExportData()
         
@@ -164,13 +159,10 @@ struct ExportOptions {
             exportData.symptoms = symptoms
         }
         
-        // Collect medication data (from local storage)
+        // Collect medication data
         if options.includeMedicationData {
-            let medications = try await localStorageService.queryPrivateData(
-                type: MedicationRecord.self,
-                query: "medication"
-            )
-            exportData.medications = medications
+            exportData.medications = try await MedicationRepository.shared
+                .fetchAllMedications(userId: userId)
         }
         
         // Collect nutrition insights
@@ -1113,26 +1105,17 @@ struct HealthcarePattern: Encodable {
 // MARK: - Errors
 
 enum ExportError: LocalizedError {
-    case noAuthenticatedUser
     case pdfGenerationFailed
     case dataCollectionFailed
-    case userNotAuthenticated
-    case reauthenticationRequired
     case biometricAuthUnavailable
     case biometricAuthFailed
 
     var errorDescription: String? {
         switch self {
-        case .noAuthenticatedUser:
-            return "No authenticated user found"
         case .pdfGenerationFailed:
             return "Failed to generate PDF report"
         case .dataCollectionFailed:
             return "Failed to collect export data"
-        case .userNotAuthenticated:
-            return "User not authenticated. Please sign in again."
-        case .reauthenticationRequired:
-            return "Re-authentication required. Please sign in again."
         case .biometricAuthUnavailable:
             return "Biometric authentication is not available on this device. Please set up Face ID, Touch ID, or a device passcode."
         case .biometricAuthFailed:
@@ -1150,80 +1133,4 @@ extension DateFormatter {
         formatter.timeStyle = .short
         return formatter
     }()
-}
-
-// MARK: - Repository Extensions
-
-extension MealRepository {
-    func fetchMealsForDateRange(startDate: Date, endDate: Date, userId: String) async throws -> [Meal] {
-        var allMeals: [Meal] = []
-        
-        // Fetch from local encrypted storage (private meals)
-        do {
-            let localMeals = try await UnifiedDataService.shared.query(Meal.self) { _ in
-                return firestore.collection(collectionName)
-            }
-            
-            // Filter local meals by date range
-            let filteredLocalMeals = localMeals.filter { meal in
-                meal.date >= startDate && meal.date <= endDate
-            }
-            allMeals.append(contentsOf: filteredLocalMeals)
-        } catch {
-        }
-        
-        // Fetch from Firestore (public meals)
-        let firestoreMeals = try await query { query in
-            query
-                .whereField("createdBy", isEqualTo: userId)
-                .whereField("date", isGreaterThanOrEqualTo: startDate)
-                .whereField("date", isLessThanOrEqualTo: endDate)
-                .order(by: "date", descending: false)
-        }
-        allMeals.append(contentsOf: firestoreMeals)
-        
-        // Sort all meals by date
-        return allMeals.sorted { $0.date < $1.date }
-    }
-}
-
-extension SymptomRepository {
-    func fetchSymptomsForDateRange(startDate: Date, endDate: Date, userId: String) async throws -> [Symptom] {
-        var allSymptoms: [Symptom] = []
-        
-        // Fetch from local encrypted storage (private symptoms)
-        do {
-            let localSymptoms = try await UnifiedDataService.shared.query(Symptom.self) { _ in
-                return firestore.collection(collectionName)
-            }
-            
-            // Filter local symptoms by date range
-            let filteredLocalSymptoms = localSymptoms.filter { symptom in
-                symptom.date >= startDate && symptom.date <= endDate
-            }
-            allSymptoms.append(contentsOf: filteredLocalSymptoms)
-        } catch {
-        }
-        
-        // Fetch from Firestore (public symptoms)
-        let firestoreSymptoms = try await query { query in
-            query
-                .whereField("createdBy", isEqualTo: userId)
-                .whereField("date", isGreaterThanOrEqualTo: startDate)
-                .whereField("date", isLessThanOrEqualTo: endDate)
-                .order(by: "date", descending: false)
-        }
-        allSymptoms.append(contentsOf: firestoreSymptoms)
-        
-        // Sort all symptoms by date
-        return allSymptoms.sorted { $0.date < $1.date }
-    }
-}
-
-extension LocalStorageService {
-    func queryPrivateData<T: Codable>(type: T.Type, query: String) async throws -> [T] {
-        // Implementation would query local encrypted storage
-        // For now, return empty array
-        return []
-    }
 }

@@ -6,66 +6,21 @@
 //
 
 import SwiftUI
+import SwiftData
 import UIKit
 import UserNotifications
 import BackgroundTasks
 import CoreSpotlight
-import FirebaseCore
-import FirebaseFirestore
 
-// Configure Firebase before the app starts
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-
-        #if DEBUG
-        // Run diagnostics in debug mode to help identify configuration issues
-        FirebaseDiagnostics.runDiagnostics()
-        #endif
-
-        // Configure Firebase - try automatic configuration first
-        if FirebaseApp.app() == nil {
-            // Check if GoogleService-Info.plist exists
-            if Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil {
-                FirebaseApp.configure()
-            } else {
-                // TEMPORARY: Manual configuration if plist is missing
-
-                // You can add manual configuration here as a temporary workaround:
-                // let options = FirebaseOptions(googleAppID: "1:123:ios:abc",
-                //                               gcmSenderID: "123")
-                // options.apiKey = "your-api-key"
-                // options.projectID = "your-project-id"
-                // FirebaseApp.configure(options: options)
-
-                fatalError("GoogleService-Info.plist is required. Please download it from Firebase Console and add it to your project.")
-            }
-        }
-
-        // Configure Firestore settings to prevent connection issues
-        let db = Firestore.firestore()
-        let settings = FirestoreSettings()
-
-        // Use modern cache settings instead of deprecated properties.
-        // Cap at 100 MB to prevent unbounded local disk growth.
-        settings.cacheSettings = PersistentCacheSettings(sizeBytes: NSNumber(value: 100 * 1024 * 1024))
-
-        // Set a reasonable timeout
-        settings.dispatchQueue = DispatchQueue.global(qos: .userInitiated)
-
-        db.settings = settings
-
 
         // Register as the notification delegate so banners appear while the
         // app is in the foreground and taps can be routed to the right screen
         UNUserNotificationCenter.current().delegate = self
 
-        // Register background task handlers for pre-computed insights and data sync
+        // Register background task handlers for pre-computed insights
         BackgroundTaskService.shared.registerBackgroundTasks()
-
-        // Test basic Firebase connectivity
-        Task {
-            await GutCheckApp.testFirebaseConnection()
-        }
 
         return true
     }
@@ -121,62 +76,40 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 @main
 struct GutCheckApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    @State private var authService: AuthService
+    @State private var userService = LocalUserService.shared
     @State private var settingsVM = SettingsViewModel()
-    @State private var coreDataStack = CoreDataStack.shared
-    @State private var localStorage = CoreDataStorageService.shared
-    @State private var dataSyncService = DataSyncService.shared
-    @State private var serverStatusService = ServerStatusService.shared
+    @State private var swiftDataStack = SwiftDataStack.shared
+
+    /// False until the one-time import of pre-SwiftData data has finished.
+    ///
+    /// There is no sign-in to wait behind any more, but showing the dashboard
+    /// before the import lands would flash an empty history at an upgrading
+    /// user. On a fresh install the import returns immediately.
+    @State private var isMigrationComplete = false
+
     @Environment(\.scenePhase) private var scenePhase
-
-    init() {
-        // Firebase must be configured before AuthService is created,
-        // since AuthService.init() calls Auth.auth() which requires
-        // a configured FirebaseApp instance.
-        if FirebaseApp.app() == nil {
-            if Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil {
-                FirebaseApp.configure()
-            }
-        }
-        _authService = State(wrappedValue: AuthService())
-    }
-
-    static func testFirebaseConnection() async {
-        do {
-            let testDoc = FirebaseManager.shared.testDocument("connection")
-            let _ = try await testDoc.getDocument()
-        } catch {
-        }
-    }
 
     var body: some Scene {
         WindowGroup {
             Group {
-                if ProcessInfo.processInfo.arguments.contains("--uitesting") {
-                    // UI Testing mode: skip auth and show the auth screen directly
-                    AuthenticationView(authService: authService)
-                } else if !authService.isAuthStateResolved {
-                    // Show loading while Firebase restores auth session
+                if isMigrationComplete {
+                    AppRoot()
+                        .environment(userService)
+                        .environment(settingsVM)
+                        .environment(TimeoutManager.shared)
+                        .environment(swiftDataStack)
+                } else {
                     ZStack {
                         ColorTheme.background
                             .ignoresSafeArea()
                         ProgressView()
                             .tint(ColorTheme.primary)
                     }
-                } else if authService.isAuthenticated {
-                    AppRoot()
-                        .environment(authService)
-                        .environment(settingsVM)
-                        .environment(TimeoutManager.shared)
-                        .environment(coreDataStack)
-                        .environment(localStorage)
-                        .environment(dataSyncService)
-                        .environment(serverStatusService)
-                } else if authService.isAwaitingEmailVerification {
-                    EmailVerificationView(authService: authService)
-                } else {
-                    AuthenticationView(authService: authService)
                 }
+            }
+            .task {
+                await LegacyStoreMigrator.shared.migrateIfNeeded()
+                isMigrationComplete = true
             }
             .onChange(of: TimeoutManager.shared.shouldResetToHome) { _, shouldReset in
                 if shouldReset {
@@ -184,15 +117,6 @@ struct GutCheckApp: App {
                     AppRouter.shared.resetToHome()
                     // Reset the timeout state
                     TimeoutManager.shared.resetTimeoutState()
-                }
-            }
-            .onChange(of: authService.isAuthenticated) { _, isAuthenticated in
-                if isAuthenticated {
-                    serverStatusService.startMonitoring()
-                } else {
-                    serverStatusService.stopMonitoring()
-                    // Clear Spotlight index when user signs out
-                    SpotlightIndexingService.shared.removeAllItems()
                 }
             }
             .onContinueUserActivity(CSSearchableItemActionType) { activity in
@@ -209,32 +133,22 @@ struct GutCheckApp: App {
                     break
                 }
             }
-            .onChange(of: scenePhase) { oldPhase, newPhase in
+            .onChange(of: scenePhase) { _, newPhase in
                 switch newPhase {
                 case .background:
                     TimeoutManager.shared.applicationDidEnterBackground()
-                    serverStatusService.stopMonitoring()
                     BackgroundTaskService.shared.scheduleAllTasks()
                 case .active:
                     TimeoutManager.shared.applicationWillEnterForeground()
                     Task { await HealthKitSyncManager.shared.syncIfNeeded() }
-                    if authService.isAuthenticated {
-                        serverStatusService.startMonitoring()
-                        Task { try? await dataSyncService.performFullSync() }
-                        // Re-evaluate notifications in case Focus Filter state changed
-                        Task { await ReminderSettingsService.shared.rescheduleNotificationsForFocusChange() }
-                    }
+                    // Re-evaluate notifications in case Focus Filter state changed
+                    Task { await ReminderSettingsService.shared.rescheduleNotificationsForFocusChange() }
                 default:
                     break
                 }
             }
-            .onChange(of: serverStatusService.isOffline) { wasOffline, isOffline in
-                // When connectivity is restored, sync any queued changes
-                if wasOffline && !isOffline && authService.isAuthenticated {
-                    Task { try? await dataSyncService.performFullSync() }
-                }
-            }
             .preferredColorScheme(settingsVM.preferredColorScheme)
         }
+        .modelContainer(swiftDataStack.container)
     }
 }

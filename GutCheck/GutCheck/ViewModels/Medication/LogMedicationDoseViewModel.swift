@@ -48,7 +48,7 @@ import SwiftUI
     // MARK: - Load Medications
 
     func loadActiveMedications() async {
-        guard let userId = AuthenticationManager.shared.currentUserId else { return }
+        let userId = LocalUserService.currentProfileId
         loadingState.startLoading()
         do {
             availableMedications = try await medicationRepository.fetchActiveMedications(userId: userId)
@@ -73,11 +73,7 @@ import SwiftUI
             showingErrorAlert = true
             return
         }
-        guard let userId = AuthenticationManager.shared.currentUserId else {
-            loadingState.setError("You must be signed in to log a dose.")
-            showingErrorAlert = true
-            return
-        }
+        let userId = LocalUserService.currentProfileId
 
         loadingState.startSaving()
 

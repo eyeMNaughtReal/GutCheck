@@ -2,181 +2,149 @@
 //  LocalStorageSettingsView.swift
 //  GutCheck
 //
-//  View for managing local storage settings and sync status
+//  View for inspecting the on-device store.
 //
 //  Created by Mark Conley on 8/18/25.
 //
 
 import SwiftUI
-import CoreData
+import SwiftData
 
 struct LocalStorageSettingsView: View {
-    @Environment(DataSyncService.self) private var dataSyncService
-    @Environment(CoreDataStorageService.self) private var localStorage
-    @Environment(CoreDataStack.self) private var coreDataStack
-    
-    @State private var showingSyncAlert = false
+    @Environment(SwiftDataStack.self) private var stack
+
     @State private var showingClearDataAlert = false
-    @State private var syncAlertMessage = ""
-    
+    @State private var storeSize: String = "Calculating…"
+    @State private var recordCounts: RecordCounts?
+
+    private struct RecordCounts {
+        var meals = 0
+        var symptoms = 0
+        var medications = 0
+        var doses = 0
+    }
+
     var body: some View {
         List {
-            Section("Local Storage Status") {
+            Section("Storage Status") {
                 HStack {
                     Image(systemName: "internaldrive")
                         .foregroundStyle(.blue)
-                    Text("Core Data Status")
+                    Text("SwiftData Store")
                     Spacer()
                     Text("Active")
                         .foregroundStyle(.green)
                         .typography(Typography.caption)
                 }
-                
+
                 HStack {
                     Image(systemName: "lock.shield")
                         .foregroundStyle(.green)
-                    Text("Encryption")
+                    Text("Data Protection")
                     Spacer()
                     Text("Enabled")
                         .foregroundStyle(.green)
                         .typography(Typography.caption)
                 }
-            }
-            
-            Section("Synchronization") {
+
                 HStack {
-                    Image(systemName: "arrow.triangle.2.circlepath")
-                        .foregroundStyle(.orange)
-                    Text("Sync Status")
+                    Image(systemName: "iphone")
+                        .foregroundStyle(.blue)
+                    Text("Location")
                     Spacer()
-                    Text(dataSyncService.getSyncStatus().description)
+                    Text("This device only")
                         .foregroundStyle(.secondary)
                         .typography(Typography.caption)
                 }
-                
-                Button(action: {
-                    Task {
-                        await performSync()
-                    }
-                }) {
-                    HStack {
-                        Image(systemName: "arrow.clockwise")
-                        Text("Sync Now")
-                    }
-                }
-                .disabled(dataSyncService.isSyncing)
-                
-                if dataSyncService.isSyncing {
-                    HStack {
-                        ProgressView(value: dataSyncService.syncProgress)
-                            .progressViewStyle(LinearProgressViewStyle())
-                        Text("\(Int(dataSyncService.syncProgress * 100))%")
-                            .typography(Typography.caption)
-                            .foregroundStyle(.secondary)
-                    }
+            }
+
+            if let counts = recordCounts {
+                Section("Stored Records") {
+                    LabeledContent("Meals", value: "\(counts.meals)")
+                    LabeledContent("Symptoms", value: "\(counts.symptoms)")
+                    LabeledContent("Medications", value: "\(counts.medications)")
+                    LabeledContent("Doses", value: "\(counts.doses)")
                 }
             }
-            
-            Section("Data Management") {
-                Button(action: {
-                    showingClearDataAlert = true
-                }) {
-                    HStack {
-                        Image(systemName: "trash")
-                            .foregroundStyle(.red)
-                        Text("Clear Local Data")
-                            .foregroundStyle(.red)
-                    }
-                }
-                
-                Button(action: {
-                    Task {
-                        await localStorage.cleanupOldData()
-                    }
-                }) {
-                    HStack {
-                        Image(systemName: "clock.arrow.circlepath")
-                            .foregroundStyle(.orange)
-                        Text("Clean Up Old Data")
-                    }
-                }
-            }
-            
+
             Section("Storage Information") {
                 HStack {
                     Image(systemName: "info.circle")
                         .foregroundStyle(.blue)
-                    Text("Local Database Size")
+                    Text("Database Size")
                     Spacer()
-                    Text("Calculating...")
+                    Text(storeSize)
                         .foregroundStyle(.secondary)
                         .typography(Typography.caption)
                 }
-                
-                HStack {
-                    Image(systemName: "clock")
-                        .foregroundStyle(.purple)
-                    Text("Last Cleanup")
-                    Spacer()
-                    Text("Never")
-                        .foregroundStyle(.secondary)
-                        .typography(Typography.caption)
+            }
+
+            Section("Data Management") {
+                Button(role: .destructive) {
+                    showingClearDataAlert = true
+                } label: {
+                    HStack {
+                        Image(systemName: "trash")
+                        Text("Erase All Data")
+                    }
                 }
             }
         }
         .navigationTitle("Local Storage")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Sync Result", isPresented: $showingSyncAlert) {
-            Button("OK") { }
-        } message: {
-            Text(syncAlertMessage)
+        .task {
+            await refreshStats()
         }
-        .alert("Clear Local Data", isPresented: $showingClearDataAlert) {
+        .alert("Erase All Data", isPresented: $showingClearDataAlert) {
             Button("Cancel", role: .cancel) { }
-            Button("Clear", role: .destructive) {
+            Button("Erase", role: .destructive) {
                 Task {
-                    await clearLocalData()
+                    try? await LocalUserService.shared.deleteAllLocalData()
+                    await refreshStats()
                 }
             }
         } message: {
-            Text("This will remove all locally stored data. Your data will still be available in the cloud, but you'll need to sync again to restore local access.")
+            // The old copy promised the data was still in the cloud. It isn't —
+            // this is the only copy, so the warning has to say so.
+            Text("This permanently removes every meal, symptom and medication "
+                 + "recorded on this device. There is no cloud backup, so this "
+                 + "cannot be undone. Export your data first if you want to keep it.")
         }
     }
-    
-    private func performSync() async {
-        do {
-            try await dataSyncService.performFullSync()
-            syncAlertMessage = "Synchronization completed successfully!"
-            showingSyncAlert = true
-        } catch {
-            syncAlertMessage = "Synchronization failed: \(error.localizedDescription)"
-            showingSyncAlert = true
-        }
+
+    private func refreshStats() async {
+        recordCounts = RecordCounts(
+            meals: (try? stack.context.fetchCount(FetchDescriptor<StoredMeal>())) ?? 0,
+            symptoms: (try? stack.context.fetchCount(FetchDescriptor<StoredSymptom>())) ?? 0,
+            medications: (try? stack.context.fetchCount(FetchDescriptor<StoredMedication>())) ?? 0,
+            doses: (try? stack.context.fetchCount(FetchDescriptor<StoredMedicationDose>())) ?? 0
+        )
+        storeSize = Self.formattedStoreSize()
     }
-    
-    private func clearLocalData() async {
-        do {
-            try await coreDataStack.performBackgroundTask { context in
-                // Clear all entities
-                try context.deleteAll(LocalMeal.self)
-                try context.deleteAll(LocalSymptom.self)
-                try context.deleteAll(LocalUser.self)
-                try context.deleteAll(LocalReminderSettings.self)
-                try context.deleteAll(LocalActivityEntry.self)
-                try context.deleteAll(LocalDataDeletionRequest.self)
-                
-                try context.save()
-            }
-        } catch {
+
+    /// Sums the store and its SQLite journal files — the write-ahead log can be
+    /// a meaningful share of the total, so reporting the store alone understates it.
+    private static func formattedStoreSize() -> String {
+        let storeURL = SwiftDataStack.storeURL
+        let urls = [
+            storeURL,
+            storeURL.appendingPathExtension("wal"),
+            storeURL.appendingPathExtension("shm")
+        ]
+
+        let bytes = urls.reduce(into: Int64(0)) { total, url in
+            let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
+            total += (attributes?[.size] as? Int64) ?? 0
         }
+
+        guard bytes > 0 else { return "Empty" }
+        return ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
     }
 }
 
 #Preview {
     NavigationStack {
         LocalStorageSettingsView()
-            .environment(DataSyncService.shared)
-            .environment(CoreDataStorageService.shared)
-            .environment(CoreDataStack.shared)
+            .environment(SwiftDataStack.shared)
     }
 }

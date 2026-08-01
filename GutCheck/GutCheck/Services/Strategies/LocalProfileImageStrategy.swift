@@ -6,10 +6,8 @@
 //
 
 import UIKit
-@preconcurrency import FirebaseFirestore
 
 class LocalProfileImageStrategy: ProfileImageStrategy {
-    private let firestore = Firestore.firestore()
     weak var delegate: ProfileImageStrategyDelegate?
     
     func uploadProfileImage(_ image: UIImage, for userId: String) async throws -> String {
@@ -119,22 +117,12 @@ class LocalProfileImageStrategy: ProfileImageStrategy {
         return image
     }
     
-    private func updateUserProfileImageURL(userId: String, imageURL: String) async throws {
-        let userRef = FirebaseManager.shared.userDocument(userId)
-        
-        
-        try await userRef.updateData([
-            "profileImageURL": imageURL,
-            "updatedAt": Timestamp(date: Date.now)
-        ])
-    }
-    
+    /// Clears the stored path on the local profile once the file is gone, so a
+    /// later read doesn't point at something that no longer exists.
+    @MainActor
     private func removeProfileImageURL(for userId: String) async throws {
-        let userRef = FirebaseManager.shared.userDocument(userId)
-        
-        try await userRef.updateData([
-            "profileImageURL": FieldValue.delete(),
-            "updatedAt": Timestamp(date: Date.now)
-        ])
+        guard var user = LocalUserService.shared.currentUser, user.id == userId else { return }
+        user.profileImageURL = nil
+        try await LocalUserService.shared.updateUserProfile(user)
     }
 }

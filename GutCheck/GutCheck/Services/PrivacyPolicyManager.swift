@@ -8,26 +8,27 @@
 //
 
 import Foundation
-import FirebaseFirestore
 
 @MainActor
 @Observable class PrivacyPolicyManager {
     static let shared = PrivacyPolicyManager()
-    
-    var currentVersion = "1.0"
-    var lastUpdated = "August 18, 2025"
+
+    /// Bumped to 2.0 because the policy text below changed materially: the app
+    /// no longer has accounts and no longer sends anything to a server, so the
+    /// previous version described handling that no longer happens.
+    var currentVersion = "2.0"
+    var lastUpdated = "August 1, 2026"
     var isPrivacyPolicyAccepted = false
     var privacyPolicyAcceptedDate: Date?
-    
-    private let firestore = Firestore.firestore()
+
     private let userDefaults = UserDefaults.standard
-    
+
     private init() {
         loadPrivacyPolicyStatus()
     }
-    
+
     // MARK: - Privacy Policy Status
-    
+
     /// Loads privacy policy acceptance status from UserDefaults
     private func loadPrivacyPolicyStatus() {
         isPrivacyPolicyAccepted = userDefaults.bool(forKey: "privacyPolicyAccepted")
@@ -35,7 +36,7 @@ import FirebaseFirestore
             privacyPolicyAcceptedDate = date
         }
     }
-    
+
     /// Saves privacy policy acceptance status to UserDefaults
     private func savePrivacyPolicyStatus() {
         userDefaults.set(isPrivacyPolicyAccepted, forKey: "privacyPolicyAccepted")
@@ -43,116 +44,115 @@ import FirebaseFirestore
             userDefaults.set(date, forKey: "privacyPolicyAcceptedDate")
         }
     }
-    
+
     // MARK: - Privacy Policy Acceptance
-    
-    /// Accepts the current privacy policy version
+
+    /// Records acceptance of the current policy version.
+    ///
+    /// Written to the local profile as well as `UserDefaults` so it travels
+    /// with the profile and shows up in the healthcare export.
     func acceptPrivacyPolicy() async throws {
-        guard let userId = getCurrentUserId() else {
-            throw PrivacyPolicyError.userNotAuthenticated
-        }
-        
-        // Update local status
         isPrivacyPolicyAccepted = true
         privacyPolicyAcceptedDate = Date.now
         savePrivacyPolicyStatus()
-        
-        // Update Firestore
-        try await updatePrivacyPolicyAcceptance(userId: userId)
+
+        do {
+            try await LocalUserService.shared.acceptPrivacyPolicy(version: currentVersion)
+        } catch {
+            throw PrivacyPolicyError.updateFailed
+        }
     }
-    
-    /// Updates privacy policy acceptance in Firestore
-    private func updatePrivacyPolicyAcceptance(userId: String) async throws {
-        let userRef = firestore.collection("users").document(userId)
-        
-        try await userRef.updateData([
-            "privacyPolicyAccepted": true,
-            "privacyPolicyAcceptedDate": FieldValue.serverTimestamp(),
-            "privacyPolicyVersion": currentVersion,
-            "updatedAt": FieldValue.serverTimestamp()
-        ])
-        
-    }
-    
-    /// Checks if user needs to accept updated privacy policy
+
+    /// Checks whether the user has accepted the version currently shipping.
     func needsPrivacyPolicyUpdate() -> Bool {
-        // For now, always return false since we're on version 1.0
-        // In the future, this would check against a server version
-        return false
+        guard let acceptedVersion = LocalUserService.shared.currentUser?.privacyPolicyVersion else {
+            return !isPrivacyPolicyAccepted
+        }
+        return !isPrivacyPolicyAccepted || acceptedVersion != currentVersion
     }
-    
+
     /// Forces user to re-accept privacy policy (for updates)
     func forcePrivacyPolicyUpdate() {
         isPrivacyPolicyAccepted = false
         privacyPolicyAcceptedDate = nil
         savePrivacyPolicyStatus()
     }
-    
+
     // MARK: - Privacy Policy Content
-    
+
     /// Gets the current privacy policy content
     func getPrivacyPolicyContent() -> String {
         return """
         GutCheck Privacy Policy
         Effective Date: \(lastUpdated)
-        
-        GutCheck ("we", "us", or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, store, and protect your data in accordance with U.S. privacy regulations and HIPAA principles.
-        
+
+        GutCheck ("we", "us", or "our") is committed to protecting your privacy. \
+        This Privacy Policy explains how your data is collected, used, and stored.
+
         1. Data We Collect
-        We collect personal health data that you log within the app, including:
+        GutCheck records only what you enter in the app:
         - Meals and ingredients (manually entered, scanned, or photographed)
         - Symptoms and bowel movements
-        - Timestamps and app usage behavior
-        - Authentication credentials via Apple, Google, or Email
-        
-        We also collect the following data from Apple HealthKit (with your permission):
+        - Medications and doses
+        - The dates and times you logged them
+
+        There are no accounts. GutCheck does not ask for an email address or \
+        password, and does not collect analytics, advertising identifiers, or \
+        usage telemetry.
+
+        We also read the following from Apple HealthKit, with your permission:
         - Age, Weight, Height
         - Additional relevant health metrics that may enhance analysis
-        
+
         2. How We Use Your Data
         Your data is used solely to:
         - Provide insights and pattern recognition between food and symptoms
         - Help you track digestive health over time
-        - Power AI-based suggestions and predictions tailored to your physiological profile
-        
+        - Power on-device suggestions and predictions tailored to your profile
+
         3. Data Storage and Security
-        All data is stored securely in Google Firebase and is encrypted in transit (TLS). HealthKit data is only used locally or securely synced if permitted, and is never shared with third parties.
-        
+        All of your data is stored on this device and nowhere else. There is no \
+        GutCheck server and no cloud account, so your health history is never \
+        transmitted to us or to any third party.
+
+        The on-device database is protected by iOS Data Protection, which keeps \
+        it encrypted at rest while your device is locked. Data leaves the device \
+        only when you explicitly export or share it — for example, when you \
+        generate a healthcare report and choose where to send it.
+
+        Food and nutrition lookups are the one exception: searching for a food \
+        sends only the search term you typed to third-party nutrition databases \
+        (Open Food Facts and the USDA FoodData Central API). No personal or \
+        health information is included in those requests.
+
         4. Your Rights and Choices
         You have the right to:
         - View, export, or delete your data
-        - Delete your account at any time from within the app
+        - Erase everything at any time from within the app, which takes effect \
+          immediately and permanently
         - Revoke HealthKit permissions at any time via iOS Settings
         - Contact us with privacy-related questions or requests
-        
+
+        Because your data lives only on this device, deleting the app also \
+        deletes your history. Export anything you want to keep first.
+
         5. Contact Us
         If you have any questions about this policy or your data, please contact us at:
         Email: gutcheckapp@protonmail.com
-        
-        This policy may be updated. The latest version will always be accessible from within the app's Settings.
+
+        This policy may be updated. The latest version will always be accessible \
+        from within the app's Settings.
         """
-    }
-    
-    // MARK: - Helper Methods
-    
-    /// Gets the current user ID from AuthService
-    private func getCurrentUserId() -> String? {
-        // This would typically get the user ID from AuthService
-        // For now, we'll use a placeholder
-        return nil
     }
 }
 
 // MARK: - Privacy Policy Errors
 
 enum PrivacyPolicyError: LocalizedError {
-    case userNotAuthenticated
     case updateFailed
-    
+
     var errorDescription: String? {
         switch self {
-        case .userNotAuthenticated:
-            return "User must be authenticated to accept privacy policy"
         case .updateFailed:
             return "Failed to update privacy policy acceptance"
         }

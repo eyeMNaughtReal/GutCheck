@@ -1,11 +1,9 @@
 import SwiftUI
-import FirebaseFirestore
-import FirebaseAuth
 
 struct RecentActivityListView: View {
     @State private var viewModel = RecentActivityViewModel()
     @Environment(AppRouter.self) var router
-    @Environment(AuthService.self) var authService
+    @Environment(LocalUserService.self) var userService
     let selectedDate: Date
     
     var body: some View {
@@ -46,10 +44,10 @@ struct RecentActivityListView: View {
         .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
         .onAppear {
-            viewModel.loadRecentActivity(for: selectedDate, authService: authService)
+            viewModel.loadRecentActivity(for: selectedDate, userService: userService)
         }
         .onChange(of: selectedDate) { _, newDate in
-            viewModel.loadRecentActivity(for: newDate, authService: authService)
+            viewModel.loadRecentActivity(for: newDate, userService: userService)
         }
     }
     

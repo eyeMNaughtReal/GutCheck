@@ -34,7 +34,7 @@ import Foundation
         defer { isLoading = false }
 
         do {
-            let userId = AuthenticationManager.shared.currentUserId ?? "default_user"
+            let userId = LocalUserService.currentProfileId
             let endDate = Date.now
             let startDate = Calendar.current.date(byAdding: .day, value: -30, to: endDate) ?? endDate
 

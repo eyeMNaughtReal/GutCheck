@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct GreetingHeaderView: View {
-    @Environment(AuthService.self) var authService
+    @Environment(LocalUserService.self) var userService
     @Environment(AppRouter.self) var router
 
     /// "Good morning/afternoon/evening!" based on the current hour.
@@ -14,7 +14,7 @@ struct GreetingHeaderView: View {
     }
 
     private var displayName: String {
-        guard let user = authService.currentUser else { return "" }
+        guard let user = userService.currentUser else { return "" }
         let name = user.fullName.trimmingCharacters(in: .whitespaces)
         return name.isEmpty ? user.firstName : name
     }
@@ -23,7 +23,7 @@ struct GreetingHeaderView: View {
         VStack(alignment: .leading, spacing: 24) {
             // Identity row: avatar left, greeting + name, settings right.
             HStack(spacing: 12) {
-                ProfileAvatarButton(user: authService.currentUser, size: 48) {
+                ProfileAvatarButton(user: userService.currentUser, size: 48) {
                     router.showProfile()
                 }
 

@@ -14,20 +14,18 @@
 //
 
 import SwiftUI
-import FirebaseAuth
 #if canImport(UIKit)
 import UIKit
 #endif
 
 #if DEBUG
-@_spi(Preview) import FirebaseAuth // For preview support
 #endif
 
 struct DashboardView: View {
     // MARK: - Environment Objects
     
     /// Authentication service for user management and data access
-    @Environment(AuthService.self) var authService
+    @Environment(LocalUserService.self) var userService
     
     /// Navigation router for programmatic navigation
     @Environment(AppRouter.self) var router
@@ -53,7 +51,7 @@ struct DashboardView: View {
                     WeekSelector(selectedDate: $dashboardStore.selectedDate) { selectedDate in
                         dashboardStore.selectedDate = selectedDate
                         dashboardStore.loadDataForSelectedDate()
-                        recentActivityViewModel.loadRecentActivity(for: selectedDate, authService: authService)
+                        recentActivityViewModel.loadRecentActivity(for: selectedDate, userService: userService)
                     }
                     .padding(.horizontal, -4)
                     
@@ -121,45 +119,35 @@ struct DashboardView: View {
         // toolbar is intentionally empty here — a second avatar would duplicate it.
         .toolbarBackground(.hidden, for: .navigationBar)
         .onAppear {
-            loadDataIfAuthenticated()
+            loadData()
         }
-        .onChange(of: authService.isAuthenticated) { _, isAuthenticated in
-            if isAuthenticated && authService.currentUser != nil {
-                loadDataIfAuthenticated()
-            }
-        }
-        .onChange(of: authService.currentUser) { _, _ in
-            loadDataIfAuthenticated()
+        .onChange(of: userService.currentUser) { _, _ in
+            loadData()
         }
         .onChange(of: dashboardStore.selectedDate) { _, _ in
             dashboardStore.loadDataForSelectedDate()
         }
         .onChange(of: refreshManager.refreshToken) { _, _ in
-            loadDataIfAuthenticated()
+            loadData()
         }
     }
     
     // MARK: - Private Methods
     
-    /// Loads dashboard data if the user is authenticated
-    /// This method ensures data is only loaded for authenticated users
-    private func loadDataIfAuthenticated() {
-        guard authService.isAuthenticated, authService.currentUser != nil else {
-            return
-        }
-
-        // Also refresh the insight store here. It was previously only reachable via
-        // onChange(of: selectedDate), so on a cold launch — where onAppear runs before
-        // Firebase restores the session and the date never changes — Today's Focus,
-        // Watch Out and AI Insights stayed empty until the user tapped a date.
+    /// Loads dashboard data for the currently selected date.
+    private func loadData() {
+        // Also refresh the insight store here. It was previously only reachable
+        // via onChange(of: selectedDate), so on a cold launch — where the date
+        // never changes — Today's Focus, Watch Out and AI Insights stayed empty
+        // until the user tapped a date.
         dashboardStore.loadDataForSelectedDate()
-        recentActivityViewModel.loadRecentActivity(for: dashboardStore.selectedDate, authService: authService)
+        recentActivityViewModel.loadRecentActivity(for: dashboardStore.selectedDate, userService: userService)
     }
 }
 
 #Preview {
     DashboardView()
-        .environment(PreviewAuthService())
+        .environment(LocalUserService.shared)
         .environment(AppRouter.shared)
         .environment(RefreshManager.shared)
 

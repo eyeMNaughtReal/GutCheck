@@ -33,7 +33,7 @@ import SwiftUI
         defer { isSaving = false }
         
         do {
-            // Save to Firebase via MealRepository
+            // Persist via MealRepository
             try await MealRepository.shared.save(meal)
             
             // Trigger dashboard refresh after successful save

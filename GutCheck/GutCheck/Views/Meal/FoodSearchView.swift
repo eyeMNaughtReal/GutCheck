@@ -10,7 +10,7 @@ import Combine
 
 struct FoodSearchView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(ServerStatusService.self) private var serverStatus
+    @State private var networkMonitor = NetworkMonitor.shared
     @State private var viewModel = FoodSearchViewModel()
     @State private var navigationPath = NavigationPath()
     @State private var selectedFoodItem: FoodItem?
@@ -30,7 +30,7 @@ struct FoodSearchView: View {
                             .textFieldStyle(RoundedBorderTextFieldStyle())
                             .typography(Typography.body)
                             .onSubmit {
-                                guard !serverStatus.isOffline else { return }
+                                guard networkMonitor.isConnected else { return }
                                 HapticManager.shared.light()
                                 viewModel.search()
                             }
@@ -54,7 +54,7 @@ struct FoodSearchView: View {
                             .background(ColorTheme.accent)
                             .clipShape(.rect(cornerRadius: 8))
                         }
-                        .disabled(viewModel.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || serverStatus.isOffline)
+                        .disabled(viewModel.searchQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !networkMonitor.isConnected)
                         .accessibleButton(
                             label: "Search",
                             hint: viewModel.searchQuery.isEmpty 
@@ -88,7 +88,7 @@ struct FoodSearchView: View {
                 .padding()
 
                 // Results or suggestions
-                if serverStatus.isOffline {
+                if !networkMonitor.isConnected {
                     offlineView
                 } else if viewModel.isSearching {
                     loadingView

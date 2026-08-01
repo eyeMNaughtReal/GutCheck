@@ -11,11 +11,9 @@
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>com.gutcheck.insights-refresh</string>
-		<string>com.gutcheck.data-sync</string>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>
-		<string>fetch</string>
 		<string>processing</string>
 	</array>
 </dict>

@@ -6,8 +6,6 @@
 //
 
 import Foundation
-import FirebaseFirestore
-import FirebaseAuth
 import UserNotifications
 
 @MainActor
@@ -86,11 +84,7 @@ import UserNotifications
             return
         }
         
-        guard let userId = AuthenticationManager.shared.currentUserId else {
-            loadingState.setError("You must be signed in to save symptoms.")
-            showingErrorAlert = true
-            return
-        }
+        let userId = LocalUserService.currentProfileId
         
         guard let stoolType = selectedStoolType else {
             loadingState.setError("Please select a stool type.")
@@ -126,7 +120,7 @@ import UserNotifications
         
         Task {
             do {
-                // Use repository instead of direct Firestore calls
+                // Persist via the repository
                 #if DEBUG
                 #endif
                 try await symptomRepository.save(symptom)

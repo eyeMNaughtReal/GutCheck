@@ -3,7 +3,7 @@ import SwiftUI
 struct CalendarDetailView: View {
     let date: Date
     @State private var viewModel = CalendarDetailViewModel()
-    @Environment(AuthService.self) private var authService
+    @Environment(LocalUserService.self) private var userService
     @Environment(AppRouter.self) private var router
     @Environment(\.dismiss) private var dismiss
     
@@ -11,7 +11,7 @@ struct CalendarDetailView: View {
         Group {
             content
                 .task {
-                    await viewModel.loadData(for: date, authService: authService)
+                    await viewModel.loadData(for: date, userService: userService)
                 }
         }
     }
@@ -91,6 +91,6 @@ struct CalendarDetailView: View {
     NavigationStack {
         CalendarDetailView(date: Date.now)
     }
-    .environment(AuthService())
+    .environment(LocalUserService.shared)
     .environment(AppRouter.shared)
 }

@@ -381,7 +381,7 @@ struct SymptomExplorerView: View {
 #Preview {
     NavigationStack {
         SymptomExplorerView()
-            .environment(AuthService())
+            .environment(LocalUserService.shared)
             .environment(AppRouter.shared)
     }
 }

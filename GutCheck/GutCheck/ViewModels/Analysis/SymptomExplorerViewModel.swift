@@ -16,7 +16,7 @@ import Foundation
 
     private let mealRepository: any MealRepositoryProtocol
     private let symptomRepository: any SymptomRepositoryProtocol
-    private let authService = AuthService()
+    private let userService = LocalUserService.shared
     private let compoundDatabase = FoodCompoundDatabase.shared
     
     init(mealRepository: any MealRepositoryProtocol = MealRepository.shared,
@@ -165,7 +165,7 @@ import Foundation
     // MARK: - Helpers
 
     private func getCurrentUserId() -> String {
-        authService.currentUser?.id ?? "default_user"
+        userService.currentUser?.id ?? "default_user"
     }
 
     private func hasSignificantSymptoms(_ symptom: Symptom) -> Bool {

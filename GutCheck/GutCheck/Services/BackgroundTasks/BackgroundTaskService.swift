@@ -3,21 +3,23 @@ import BackgroundTasks
 import os.log
 
 /// Manages background task scheduling and execution for pre-computing insights
-/// and performing lightweight data sync while the app is suspended.
+/// while the app is suspended.
+///
+/// A second task used to run a Firestore sync. There is no remote store to sync
+/// with any more — everything is written straight to the local SwiftData store
+/// on save — so only the insights refresh remains.
 final class BackgroundTaskService {
     static let shared = BackgroundTaskService()
 
     // MARK: - Task Identifiers
 
     static let insightsRefreshIdentifier = "com.gutcheck.insights-refresh"
-    static let dataSyncIdentifier = "com.gutcheck.data-sync"
 
     // MARK: - Cache Keys
 
     private enum CacheKey {
         static let cachedInsights = "backgroundTask.cachedInsights"
         static let lastInsightsRefresh = "backgroundTask.lastInsightsRefreshDate"
-        static let lastDataSync = "backgroundTask.lastDataSyncDate"
     }
 
     private let logger = Logger(
@@ -39,13 +41,6 @@ final class BackgroundTaskService {
             self.handleInsightsRefresh(task: task as! BGProcessingTask)
         }
 
-        BGTaskScheduler.shared.register(
-            forTaskWithIdentifier: Self.dataSyncIdentifier,
-            using: nil
-        ) { task in
-            self.handleDataSync(task: task as! BGAppRefreshTask)
-        }
-
         logger.info("Registered background task handlers")
     }
 
@@ -54,7 +49,6 @@ final class BackgroundTaskService {
     /// Schedule all background tasks. Call when the app enters the background.
     func scheduleAllTasks() {
         scheduleInsightsRefresh()
-        scheduleDataSync()
     }
 
     /// Schedule the insights refresh processing task.
@@ -70,20 +64,6 @@ final class BackgroundTaskService {
             logger.info("Scheduled insights refresh task")
         } catch {
             logger.error("Failed to schedule insights refresh: \(error.localizedDescription)")
-        }
-    }
-
-    /// Schedule a lightweight data sync refresh task.
-    /// Earliest begin date is 15 minutes from now.
-    func scheduleDataSync() {
-        let request = BGAppRefreshTaskRequest(identifier: Self.dataSyncIdentifier)
-        request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60)
-
-        do {
-            try BGTaskScheduler.shared.submit(request)
-            logger.info("Scheduled data sync task")
-        } catch {
-            logger.error("Failed to schedule data sync: \(error.localizedDescription)")
         }
     }
 
@@ -116,39 +96,6 @@ final class BackgroundTaskService {
         Task {
             _ = await computeTask.result
             task.setTaskCompleted(success: !computeTask.isCancelled)
-        }
-    }
-
-    private func handleDataSync(task: BGAppRefreshTask) {
-        logger.info("Starting data sync background task")
-
-        // Schedule the next occurrence immediately
-        scheduleDataSync()
-
-        let syncTask = Task { @MainActor in
-            try await DataSyncService.shared.performIncrementalSync()
-        }
-
-        // Handle expiration
-        task.expirationHandler = { [weak self] in
-            self?.logger.warning("Data sync task expired, cancelling")
-            syncTask.cancel()
-        }
-
-        // Notify system when complete
-        Task {
-            do {
-                try await syncTask.value
-                UserDefaults.standard.set(
-                    Date.now.timeIntervalSince1970,
-                    forKey: CacheKey.lastDataSync
-                )
-                task.setTaskCompleted(success: true)
-                logger.info("Data sync completed successfully")
-            } catch {
-                logger.error("Data sync failed: \(error.localizedDescription)")
-                task.setTaskCompleted(success: false)
-            }
         }
     }
 
@@ -192,7 +139,6 @@ final class BackgroundTaskService {
     func clearCache() {
         UserDefaults.standard.removeObject(forKey: CacheKey.cachedInsights)
         UserDefaults.standard.removeObject(forKey: CacheKey.lastInsightsRefresh)
-        UserDefaults.standard.removeObject(forKey: CacheKey.lastDataSync)
     }
 
     // MARK: - Helpers

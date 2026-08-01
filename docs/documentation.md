@@ -31,10 +31,10 @@ GutCheck is a comprehensive iOS application for tracking digestive health, meals
 - **🧠 AI-Powered Analysis**: Food recognition, nutrition estimation, pattern recognition
 
 ### **Target Platform**
-- **Platform**: iOS 15.0+ (SwiftUI)
+- **Platform**: iOS 18.2+ (SwiftUI)
 - **Architecture**: MVVM with Repository Pattern
-- **Backend**: Firebase (Firestore, Authentication, Storage)
-- **AI/ML**: Core ML, Google Vision API, Custom AI services
+- **Persistence**: SwiftData, on-device only — no backend, no accounts
+- **AI/ML**: Core ML and on-device analysis
 - **Health Integration**: HealthKit with real-time observers
 
 ---
@@ -43,14 +43,14 @@ GutCheck is a comprehensive iOS application for tracking digestive health, meals
 
 ### **Core Architecture**
 - **MVVM Pattern**: Clear separation of concerns between Views, ViewModels, and Models
-- **Repository Pattern**: Standardized data access layer with Firebase integration
+- **Repository Pattern**: Standardized data access layer over the SwiftData store
 - **Navigation System**: AppRouter with centralized navigation management
 - **State Management**: RefreshManager for coordinated data updates
 - **Error Handling**: Centralized error handling service
 
 ### **Data Flow**
 ```
-User Input → View → ViewModel → Service → Repository → Firebase/Local Storage
+User Input → View → ViewModel → Service → Repository → SwiftData store
                 ↓
             UI Updates ← State Management ← Data Processing
 ```
@@ -59,14 +59,16 @@ User Input → View → ViewModel → Service → Repository → Firebase/Local 
 - **AppRoot.swift**: Main container with TabView
 - **AppRouter.swift**: Navigation management
 - **RefreshManager.swift**: Data refresh coordination
-- **BaseFirebaseRepository**: Standardized data access
-- **UnifiedDataService**: Local encrypted storage
+- **SwiftDataStack**: Owns the app's single `ModelContainer`
+- **SwiftDataRepository**: Per-entity repositories mapping `@Model` rows to domain structs
+- **LocalUserService**: Owns the single device-local profile
+- **LegacyStoreMigrator**: One-time import of pre-SwiftData data
 
 ### **Privacy Architecture**
-- **Local Processing**: Sensitive data processed on-device
-- **Encrypted Storage**: Local data encrypted with CryptoKit
-- **Hybrid Storage**: Private data local, shared data in cloud
-- **User Control**: Complete data ownership and deletion
+- **On-Device Only**: Nothing is uploaded; there is no server to upload to
+- **Protected Storage**: Store file set to `.completeUnlessOpen` Data Protection
+- **Explicit Egress**: Data leaves only through a user-initiated export, gated behind biometrics
+- **User Control**: Complete data ownership, export, and immediate deletion
 
 ---
 
@@ -126,11 +128,11 @@ User Input → View → ViewModel → Service → Repository → Firebase/Local 
 ## 👨‍💻 **Development Guide**
 
 ### **Setup Requirements**
-- **Xcode**: 15.0+
-- **iOS Deployment Target**: 15.0+
-- **Firebase Project**: Configured with Firestore, Auth, Storage
-- **Google Cloud Vision API**: Key configured
+- **Xcode**: 16.0+
+- **iOS Deployment Target**: 18.2+
+- **USDA FoodData Central API key**: in `Secrets.swift` (gitignored)
 - **HealthKit**: Enabled in project capabilities
+- **Package dependencies**: none — the app uses only platform frameworks
 
 ### **Project Structure**
 ```
@@ -165,7 +167,7 @@ GutCheck/
 
 ### **Completed Features** ✅
 - **Core App Architecture**: MVVM, Repository Pattern, Navigation
-- **Authentication & User Management**: Firebase Auth, user profiles
+- **On-Device Storage**: SwiftData store with a single local profile
 - **Meal Tracking System**: Unified architecture, food search, barcode scanning
 - **Symptom Tracking**: Medical-grade scales, comprehensive logging
 - **Dashboard & Insights**: Health scoring, recommendations, pattern analysis
@@ -213,18 +215,18 @@ GutCheck/
 ## 🔌 **API Integration**
 
 ### **External Services**
-- **Firebase**: Authentication, Firestore database, Storage
-- **Google Vision API**: Food recognition from photos
-- **Nutritionix**: Food database and nutrition information
+- **USDA FoodData Central**: Food database and nutrition information
 - **OpenFoodFacts**: Open-source food database
 - **HealthKit**: iOS health data integration
 
+Food lookups are the only network requests the app makes, and they carry
+nothing but the search term.
+
 ### **Data Flow**
 1. **User Input**: Photos, barcodes, manual entry
-2. **API Processing**: External service analysis
-3. **Local Storage**: Encrypted local storage
-4. **Cloud Sync**: Firebase synchronization
-5. **HealthKit**: iOS health app integration
+2. **Lookup**: Nutrition databases resolve the food
+3. **Persistence**: Written to the on-device SwiftData store
+4. **HealthKit**: iOS health app integration
 
 ### **Error Handling**
 - **Graceful Degradation**: App continues working with limited functionality
@@ -365,7 +367,7 @@ GutCheck/GutCheck/
 
 ### **Useful Resources**
 - **SwiftUI Documentation**: Apple's official SwiftUI guide
-- **Firebase Documentation**: Google Firebase guides
+- **SwiftData Documentation**: Apple's SwiftData guide
 - **HealthKit Documentation**: Apple HealthKit reference
 - **iOS Human Interface Guidelines**: Apple's design guidelines
 

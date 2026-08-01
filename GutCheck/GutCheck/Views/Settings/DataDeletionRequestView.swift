@@ -11,7 +11,7 @@ import SwiftUI
 
 struct DataDeletionRequestView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(AuthService.self) var authService
+    @Environment(LocalUserService.self) var userService
     @State private var deletionService = DataDeletionService.shared
     
     @State private var reason = ""
@@ -142,8 +142,8 @@ struct DataDeletionRequestView: View {
     }
     
     private func submitDeletionRequest() async {
-        guard let currentUser = authService.currentUser else {
-            deletionService.errorMessage = "User not authenticated"
+        guard let currentUser = userService.currentUser else {
+            deletionService.errorMessage = ProfileError.profileUnavailable.localizedDescription
             return
         }
         
@@ -171,5 +171,5 @@ struct DataDeletionRequestView: View {
 
 #Preview {
     DataDeletionRequestView()
-        .environment(AuthService())
+        .environment(LocalUserService.shared)
 }

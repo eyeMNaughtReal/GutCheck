@@ -31,7 +31,7 @@ struct RankedItem: Identifiable {
     private let mealRepository: any MealRepositoryProtocol
     private let symptomRepository: any SymptomRepositoryProtocol
     private let healthKitManager: any HealthKitManagerProtocol
-    private let authService = AuthService()
+    private let userService = LocalUserService.shared
     
     init(mealRepository: any MealRepositoryProtocol = MealRepository.shared,
          symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared,
@@ -173,7 +173,7 @@ struct RankedItem: Identifiable {
     }
     
     private func getCurrentUserId() -> String {
-        if let currentUser = authService.currentUser {
+        if let currentUser = userService.currentUser {
             return currentUser.id
         } else {
             return "default_user"

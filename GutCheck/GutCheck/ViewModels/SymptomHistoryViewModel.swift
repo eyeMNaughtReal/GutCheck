@@ -1,5 +1,4 @@
 import SwiftUI
-import FirebaseFirestore
 
 @MainActor
 @Observable class SymptomHistoryViewModel {
@@ -11,111 +10,85 @@ import FirebaseFirestore
     var startDate = Date.distantPast
     var endDate = Date.now
     var selectedFilter: SymptomFilter = .all
-    
-    private let firebaseManager = FirebaseManager.shared
+
     private let symptomRepository: any SymptomRepositoryProtocol
-    private var lastDocument: DocumentSnapshot?
+
+    /// How many records have been read so far. Replaces the Firestore cursor
+    /// the previous implementation carried between pages.
+    private var loadedCount = 0
     private let pageSize = 20
-    
+
     init(symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
         self.symptomRepository = symptomRepository
     }
-    
+
     func loadSymptoms(filter: SymptomFilter = .all, refresh: Bool = false) async {
         if refresh {
             await refreshSymptoms(filter: filter)
             return
         }
-        
+
         guard !isLoading else { return }
-        
+
         isLoading = true
         selectedFilter = filter
         error = nil
-        
+
         do {
-            var additionalFilters: [String: Any] = [:]
-            if filter != .all {
-                additionalFilters["type"] = filter.rawValue
-            }
-            
-            let result: (items: [Symptom], lastDocument: DocumentSnapshot?, hasMore: Bool) = try await firebaseManager.getPaginatedDocuments(
-                from: "symptoms",
-                pageSize: pageSize,
-                lastDocument: nil,
-                sortField: "date",
-                sortDescending: true,
-                additionalFilters: additionalFilters
+            let page = try await SymptomRepository.shared.fetchSymptomsPage(
+                userId: LocalUserService.currentProfileId,
+                offset: 0,
+                limit: pageSize
             )
-            
-            self.lastDocument = result.lastDocument
-            self.hasMoreData = result.hasMore
-            
-            // Group by date
-            self.groupedSymptoms = Dictionary(grouping: result.items) { symptom in
-                Calendar.current.startOfDay(for: symptom.date)
-            }
-            
+
+            loadedCount = page.count
+            // A short page means the store is exhausted. This is measured
+            // against the raw page, not the filtered result, so a page where
+            // everything is filtered out still advances rather than stopping.
+            hasMoreData = page.count == pageSize
+            groupedSymptoms = Self.grouped(Self.applying(filter, to: page))
         } catch {
             self.error = error
         }
-        
-        self.isLoading = false
+
+        isLoading = false
     }
-    
+
     func loadMoreSymptoms() async {
         guard !isLoadingMore && hasMoreData && !isLoading else { return }
-        
+
         isLoadingMore = true
-        
+
         do {
-            var additionalFilters: [String: Any] = [:]
-            if selectedFilter != .all {
-                additionalFilters["type"] = selectedFilter.rawValue
-            }
-            
-            let result: (items: [Symptom], lastDocument: DocumentSnapshot?, hasMore: Bool) = try await firebaseManager.getPaginatedDocuments(
-                from: "symptoms",
-                pageSize: pageSize,
-                lastDocument: lastDocument,
-                sortField: "date",
-                sortDescending: true,
-                additionalFilters: additionalFilters
+            let page = try await SymptomRepository.shared.fetchSymptomsPage(
+                userId: LocalUserService.currentProfileId,
+                offset: loadedCount,
+                limit: pageSize
             )
-            
-            self.lastDocument = result.lastDocument
-            self.hasMoreData = result.hasMore
-            
-            // Merge new items with existing grouped symptoms
-            let newGroupedSymptoms = Dictionary(grouping: result.items) { symptom in
-                Calendar.current.startOfDay(for: symptom.date)
+
+            loadedCount += page.count
+            hasMoreData = page.count == pageSize
+
+            for (date, symptoms) in Self.grouped(Self.applying(selectedFilter, to: page)) {
+                groupedSymptoms[date, default: []].append(contentsOf: symptoms)
             }
-            
-            for (date, symptoms) in newGroupedSymptoms {
-                if groupedSymptoms[date] != nil {
-                    groupedSymptoms[date]?.append(contentsOf: symptoms)
-                } else {
-                    groupedSymptoms[date] = symptoms
-                }
-            }
-            
         } catch {
             self.error = error
         }
-        
-        self.isLoadingMore = false
+
+        isLoadingMore = false
     }
-    
+
     func refreshSymptoms(filter: SymptomFilter = .all) async {
-        lastDocument = nil
+        loadedCount = 0
         hasMoreData = true
         groupedSymptoms.removeAll()
         await loadSymptoms(filter: filter)
     }
-    
+
     func deleteSymptom(_ symptom: Symptom) async {
         do {
-            try await firebaseManager.deleteDocument(from: "symptoms", documentId: symptom.id)
+            try await symptomRepository.delete(id: symptom.id)
             SpotlightIndexingService.shared.removeSymptom(id: symptom.id)
 
             // Remove from grouped symptoms
@@ -132,7 +105,7 @@ import FirebaseFirestore
             self.error = error
         }
     }
-    
+
     func updateSymptom(_ updatedSymptom: Symptom) async {
         do {
             try await symptomRepository.save(updatedSymptom)
@@ -140,7 +113,7 @@ import FirebaseFirestore
 
             // Trigger dashboard refresh after successful update
             DataSyncManager.shared.triggerRefreshAfterSave(operation: "Symptom update", dataType: .symptoms)
-            
+
             // Update in grouped symptoms
             for (date, symptoms) in groupedSymptoms {
                 if let index = symptoms.firstIndex(where: { $0.id == updatedSymptom.id }) {
@@ -154,11 +127,7 @@ import FirebaseFirestore
                             groupedSymptoms.removeValue(forKey: date)
                         }
                         // Add to new date
-                        if groupedSymptoms[newDate] != nil {
-                            groupedSymptoms[newDate]?.append(updatedSymptom)
-                        } else {
-                            groupedSymptoms[newDate] = [updatedSymptom]
-                        }
+                        groupedSymptoms[newDate, default: []].append(updatedSymptom)
                     }
                     break
                 }
@@ -167,7 +136,7 @@ import FirebaseFirestore
             self.error = error
         }
     }
-    
+
     func exportSymptoms() async {
         // TODO: Implement CSV export functionality
         // This will be an async operation that:
@@ -176,5 +145,33 @@ import FirebaseFirestore
         // 3. Creates a temporary file
         // 4. Shows share sheet
     }
-}
 
+    // MARK: - Helpers
+
+    private static func grouped(_ symptoms: [Symptom]) -> [Date: [Symptom]] {
+        Dictionary(grouping: symptoms) { Calendar.current.startOfDay(for: $0.date) }
+    }
+
+    /// Applies the selected filter in memory.
+    ///
+    /// This used to be pushed down as a Firestore `where type == …` clause,
+    /// which silently matched nothing: `Symptom` has no `type` field, so every
+    /// filter but `.all` returned an empty history. The severity fields below
+    /// are what the filter names actually refer to.
+    private static func applying(_ filter: SymptomFilter, to symptoms: [Symptom]) -> [Symptom] {
+        switch filter {
+        case .all:
+            return symptoms
+        case .pain:
+            return symptoms.filter { $0.painLevel != .none }
+        case .urgency:
+            return symptoms.filter { $0.urgencyLevel != .none }
+        case .stool:
+            // Anything outside the two "normal" Bristol types.
+            return symptoms.filter { $0.stoolType != .type3 && $0.stoolType != .type4 }
+        case .bloating, .nausea:
+            // Not modelled as their own fields — surfaced through tags.
+            return symptoms.filter { $0.tags.contains(filter.rawValue) }
+        }
+    }
+}

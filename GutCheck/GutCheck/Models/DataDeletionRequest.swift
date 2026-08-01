@@ -8,7 +8,6 @@
 //
 
 import Foundation
-import FirebaseFirestore
 
 struct DataDeletionRequest: Codable, Identifiable, Hashable, Equatable {
     let id: String
@@ -17,10 +16,11 @@ struct DataDeletionRequest: Codable, Identifiable, Hashable, Equatable {
     let userName: String
     let requestDate: Date
     let reason: String?
-    let status: DeletionStatus
-    let adminNotes: String?
-    let processedDate: Date?
-    let processedBy: String?
+    /// Mutable so the request can be marked complete once the erase has run.
+    var status: DeletionStatus
+    var adminNotes: String?
+    var processedDate: Date?
+    var processedBy: String?
     
     // Data scope for deletion
     let deleteUserProfile: Bool
@@ -96,82 +96,6 @@ struct DataDeletionRequest: Codable, Identifiable, Hashable, Equatable {
         self.deleteHealthData = deleteHealthData
         self.deleteAnalytics = deleteAnalytics
         self.deleteReminders = deleteReminders
-    }
-    
-    // MARK: - Firestore Conversion
-    
-    init?(from firestoreData: [String: Any], id: String) {
-        guard let userId = firestoreData["userId"] as? String,
-              let userEmail = firestoreData["userEmail"] as? String,
-              let userName = firestoreData["userName"] as? String,
-              let requestDateTimestamp = firestoreData["requestDate"] as? Timestamp,
-              let statusString = firestoreData["status"] as? String,
-              let status = DeletionStatus(rawValue: statusString),
-              let deleteUserProfile = firestoreData["deleteUserProfile"] as? Bool,
-              let deleteMeals = firestoreData["deleteMeals"] as? Bool,
-              let deleteSymptoms = firestoreData["deleteSymptoms"] as? Bool,
-              let deleteHealthData = firestoreData["deleteHealthData"] as? Bool,
-              let deleteAnalytics = firestoreData["deleteAnalytics"] as? Bool,
-              let deleteReminders = firestoreData["deleteReminders"] as? Bool else {
-            return nil
-        }
-        
-        self.id = id
-        self.userId = userId
-        self.userEmail = userEmail
-        self.userName = userName
-        self.requestDate = requestDateTimestamp.dateValue()
-        self.reason = firestoreData["reason"] as? String
-        self.status = status
-        self.adminNotes = firestoreData["adminNotes"] as? String
-        
-        if let processedDateTimestamp = firestoreData["processedDate"] as? Timestamp {
-            self.processedDate = processedDateTimestamp.dateValue()
-        } else {
-            self.processedDate = nil
-        }
-        
-        self.processedBy = firestoreData["processedBy"] as? String
-        self.deleteUserProfile = deleteUserProfile
-        self.deleteMeals = deleteMeals
-        self.deleteSymptoms = deleteSymptoms
-        self.deleteHealthData = deleteHealthData
-        self.deleteAnalytics = deleteAnalytics
-        self.deleteReminders = deleteReminders
-    }
-    
-    func toFirestoreData() -> [String: Any] {
-        var data: [String: Any] = [
-            "userId": userId,
-            "userEmail": userEmail,
-            "userName": userName,
-            "requestDate": Timestamp(date: requestDate),
-            "status": status.rawValue,
-            "deleteUserProfile": deleteUserProfile,
-            "deleteMeals": deleteMeals,
-            "deleteSymptoms": deleteSymptoms,
-            "deleteHealthData": deleteHealthData,
-            "deleteAnalytics": deleteAnalytics,
-            "deleteReminders": deleteReminders
-        ]
-        
-        if let reason = reason {
-            data["reason"] = reason
-        }
-        
-        if let adminNotes = adminNotes {
-            data["adminNotes"] = adminNotes
-        }
-        
-        if let processedDate = processedDate {
-            data["processedDate"] = Timestamp(date: processedDate)
-        }
-        
-        if let processedBy = processedBy {
-            data["processedBy"] = processedBy
-        }
-        
-        return data
     }
 }
 

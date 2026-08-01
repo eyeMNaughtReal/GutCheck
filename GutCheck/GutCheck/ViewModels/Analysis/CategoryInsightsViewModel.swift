@@ -10,7 +10,7 @@ import Foundation
     private let insightsService = InsightsService.shared
     private let mealRepository: any MealRepositoryProtocol
     private let symptomRepository: any SymptomRepositoryProtocol
-    private let authService = AuthService()
+    private let userService = LocalUserService.shared
     
     init(mealRepository: any MealRepositoryProtocol = MealRepository.shared,
          symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
@@ -100,7 +100,7 @@ import Foundation
     
     private func getCurrentUserId() -> String {
         // Get the current user ID from the authentication service
-        if let currentUser = authService.currentUser {
+        if let currentUser = userService.currentUser {
             return currentUser.id
         } else {
             // Fallback to a default if no user is authenticated

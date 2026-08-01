@@ -1,10 +1,9 @@
 import Foundation
-import FirebaseFirestore
 import HealthKit
 
 // MARK: - Core Medication Models
 
-struct MedicationRecord: Identifiable, Codable, Hashable, FirestoreModel {
+struct MedicationRecord: Identifiable, Codable, Hashable, LocalRecord {
 
     // Identity-based equality and hashing — avoids requiring all nested
     // types to be Hashable.
@@ -24,18 +23,6 @@ struct MedicationRecord: Identifiable, Codable, Hashable, FirestoreModel {
     let healthKitUUID: UUID?
     let createdAt: Date
     let updatedAt: Date
-    
-    // MARK: - DataClassifiable Conformance
-    
-    /// Whether this medication record requires local encrypted storage
-    var requiresLocalStorage: Bool {
-        return privacyLevel == .private || privacyLevel == .confidential
-    }
-    
-    /// Whether this medication record can be synced to the cloud
-    var allowsCloudSync: Bool {
-        return privacyLevel == .public
-    }
     
     init(
         id: String = UUID().uuidString,
@@ -66,78 +53,6 @@ struct MedicationRecord: Identifiable, Codable, Hashable, FirestoreModel {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
-    
-    // MARK: - FirestoreModel Conformance
-    
-    static var collectionName: String { "medications" }
-    
-    init(from document: DocumentSnapshot) throws {
-        guard let data = document.data() else {
-            throw RepositoryError.invalidData("Document data is nil")
-        }
-        
-        let id = document.documentID
-        let createdBy = data["createdBy"] as? String ?? ""
-        let name = data["name"] as? String ?? ""
-        let dosageData = data["dosage"] as? [String: Any] ?? [:]
-        let dosage = MedicationDosage(from: dosageData)
-        let startDate = (data["startDate"] as? Timestamp)?.dateValue() ?? Date.now
-        let endDate = (data["endDate"] as? Timestamp)?.dateValue()
-        let isActive = data["isActive"] as? Bool ?? true
-        let notes = data["notes"] as? String
-        let sourceRaw = data["source"] as? String ?? "manual"
-        let source = MedicationSource(rawValue: sourceRaw) ?? .manual
-        let privacyRaw = data["privacyLevel"] as? String ?? "private"
-        let privacyLevel = DataPrivacyLevel(rawValue: privacyRaw) ?? .private
-        let healthKitUUIDString = data["healthKitUUID"] as? String
-        let healthKitUUID = healthKitUUIDString.flatMap { UUID(uuidString: $0) }
-        let createdAt = (data["createdAt"] as? Timestamp)?.dateValue() ?? Date.now
-        let updatedAt = (data["updatedAt"] as? Timestamp)?.dateValue() ?? Date.now
-        
-        self.init(
-            id: id,
-            createdBy: createdBy,
-            name: name,
-            dosage: dosage,
-            startDate: startDate,
-            endDate: endDate,
-            isActive: isActive,
-            notes: notes,
-            source: source,
-            privacyLevel: privacyLevel,
-            healthKitUUID: healthKitUUID,
-            createdAt: createdAt,
-            updatedAt: updatedAt
-        )
-    }
-    
-    func toFirestoreData() -> [String: Any] {
-        var data: [String: Any] = [
-            "createdBy": createdBy,
-            "name": name,
-            "dosage": dosage.toFirestore(),
-            "startDate": Timestamp(date: startDate),
-            "isActive": isActive,
-            "source": source.rawValue,
-            "privacyLevel": privacyLevel.rawValue,
-            "createdAt": Timestamp(date: createdAt),
-            "updatedAt": Timestamp(date: Date.now)
-        ]
-        
-        if let endDate = endDate {
-            data["endDate"] = Timestamp(date: endDate)
-        }
-        
-        if let notes = notes {
-            data["notes"] = notes
-        }
-        
-        if let healthKitUUID = healthKitUUID {
-            data["healthKitUUID"] = healthKitUUID.uuidString
-        }
-        
-        return data
-    }
 }
 
 struct MedicationDosage: Codable {
@@ -165,28 +80,6 @@ struct MedicationDosage: Codable {
         self.unit = unit
         self.frequency = frequency
         self.instructions = instructions
-    }
-    
-    init(from data: [String: Any]) {
-        self.amount = data["amount"] as? Double ?? 0.0
-        self.unit = data["unit"] as? String ?? "mg"
-        let frequencyRaw = data["frequency"] as? String ?? "asNeeded"
-        self.frequency = MedicationFrequency(rawValue: frequencyRaw) ?? .asNeeded
-        self.instructions = data["instructions"] as? String
-    }
-    
-    func toFirestore() -> [String: Any] {
-        var data: [String: Any] = [
-            "amount": amount,
-            "unit": unit,
-            "frequency": frequency.rawValue
-        ]
-        
-        if let instructions = instructions {
-            data["instructions"] = instructions
-        }
-        
-        return data
     }
 }
 
@@ -233,7 +126,7 @@ enum MedicationSource: String, CaseIterable, Codable {
 // MARK: - Medication Dose Log
 
 /// Records a single instance of a user taking a medication dose.
-struct MedicationDoseLog: Identifiable, Codable, FirestoreModel {
+struct MedicationDoseLog: Identifiable, Codable, LocalRecord {
     var id: String
     var createdBy: String
     /// The `MedicationRecord.id` this dose belongs to.
@@ -247,11 +140,6 @@ struct MedicationDoseLog: Identifiable, Codable, FirestoreModel {
     let notes: String?
     let privacyLevel: DataPrivacyLevel
     let createdAt: Date
-
-    // MARK: - DataClassifiable
-
-    var requiresLocalStorage: Bool { privacyLevel != .public }
-    var allowsCloudSync: Bool     { privacyLevel == .public }
 
     // MARK: - Init
 
@@ -277,42 +165,6 @@ struct MedicationDoseLog: Identifiable, Codable, FirestoreModel {
         self.notes          = notes
         self.privacyLevel   = privacyLevel
         self.createdAt      = createdAt
-    }
-
-    // MARK: - FirestoreModel
-
-    static var collectionName: String { "medicationDoses" }
-
-    init(from document: DocumentSnapshot) throws {
-        guard let data = document.data() else {
-            throw RepositoryError.invalidData("Document data is nil")
-        }
-        self.id             = document.documentID
-        self.createdBy      = data["createdBy"]      as? String ?? ""
-        self.medicationId   = data["medicationId"]   as? String ?? ""
-        self.medicationName = data["medicationName"] as? String ?? ""
-        self.dosageAmount   = data["dosageAmount"]   as? Double ?? 0.0
-        self.dosageUnit     = data["dosageUnit"]     as? String ?? "mg"
-        self.dateTaken      = (data["dateTaken"]  as? Timestamp)?.dateValue() ?? Date.now
-        self.notes          = data["notes"]          as? String
-        let privacyRaw      = data["privacyLevel"]   as? String ?? "private"
-        self.privacyLevel   = DataPrivacyLevel(rawValue: privacyRaw) ?? .private
-        self.createdAt      = (data["createdAt"] as? Timestamp)?.dateValue() ?? Date.now
-    }
-
-    func toFirestoreData() -> [String: Any] {
-        var data: [String: Any] = [
-            "createdBy":      createdBy,
-            "medicationId":   medicationId,
-            "medicationName": medicationName,
-            "dosageAmount":   dosageAmount,
-            "dosageUnit":     dosageUnit,
-            "dateTaken":      Timestamp(date: dateTaken),
-            "privacyLevel":   privacyLevel.rawValue,
-            "createdAt":      Timestamp(date: createdAt)
-        ]
-        if let notes = notes { data["notes"] = notes }
-        return data
     }
 }
 
@@ -495,6 +347,17 @@ enum SideEffectDuration: String, CaseIterable, Codable {
 
 // MARK: - Data Privacy
 
+/// Records that carry a sensitivity classification.
+///
+/// This used to decide which backend a record was written to. Everything now
+/// lives in one on-device SwiftData store, so the classification is purely
+/// descriptive: it marks which entries hold free-text or high-severity detail
+/// so features that move data off the device — the healthcare export above all
+/// — can treat them differently from bare structural data.
+protocol DataClassifiable {
+    var privacyLevel: DataPrivacyLevel { get }
+}
+
 enum DataPrivacyLevel: String, CaseIterable, Codable {
     case `public` = "public"
     case `private` = "private"
@@ -516,4 +379,10 @@ enum DataPrivacyLevel: String, CaseIterable, Codable {
         }
     }
 }
+
+extension Meal: DataClassifiable {}
+extension Symptom: DataClassifiable {}
+extension MedicationRecord: DataClassifiable {}
+extension MedicationDoseLog: DataClassifiable {}
+extension ReminderSettings: DataClassifiable {}
 
