@@ -164,7 +164,9 @@ class IngredientBreakdownService {
                 tags.insert(.shellfish)
             case "Ovalbumin":
                 tags.insert(.eggs)
-            case "Solanine", "α-Tomatine", "α-Chaconine":
+            case "Solanine", "α-Solanine", "α-Chaconine", "α-Tomatine", "Solasonine":
+                // The nightshade family shares this tag even though each plant
+                // carries a different glycoalkaloid.
                 tags.insert(.nightshade)
             case "Sodium":
                 tags.insert(.highSodium)

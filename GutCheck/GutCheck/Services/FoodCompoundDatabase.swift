@@ -59,6 +59,26 @@ struct IngredientMapping {
     let keywords: [String]
     let compounds: [FoodCompound]
     let ingredientName: String
+
+    /// Keywords that veto a match even when `keywords` hits.
+    ///
+    /// Matching is substring-based, so "sweet potato" contains "potato" and
+    /// would otherwise inherit the potato glycoalkaloids. Sweet potatoes are
+    /// Convolvulaceae, not nightshades, and carry no solanine.
+    let excludedKeywords: [String]
+
+    init(keywords: [String], compounds: [FoodCompound], ingredientName: String, excludedKeywords: [String] = []) {
+        self.keywords = keywords
+        self.compounds = compounds
+        self.ingredientName = ingredientName
+        self.excludedKeywords = excludedKeywords
+    }
+
+    /// True when `text` matches a keyword and is not vetoed by an exclusion.
+    func matches(_ text: String) -> Bool {
+        guard !excludedKeywords.contains(where: { text.contains($0.lowercased()) }) else { return false }
+        return keywords.contains(where: { text.contains($0.lowercased()) })
+    }
 }
 
 struct CompositeFood {
@@ -512,18 +532,51 @@ class FoodCompoundDatabase {
             ingredientName: "Nuts/Seeds"
         ),
         
-        // Nightshades
+        // Nightshades — one mapping per plant.
+        //
+        // These were previously a single mapping that attached all four
+        // compounds to every nightshade keyword, so potatoes reported
+        // capsaicin (a chilli compound) and α-tomatine (a tomato compound),
+        // and McDonald's fries picked up a "Spicy" tag. The family shares a
+        // dietary tag, not a compound profile.
         IngredientMapping(
-            keywords: ["tomato", "potato", "pepper", "eggplant", "paprika", "chili", "jalapeño", "cayenne", "bell pepper"],
+            keywords: ["potato", "potatoes"],
             compounds: [
-                FoodCompound(name: "Solanine", category: .toxicCompound, severity: .high, description: "Glycoalkaloid toxin found in nightshades. Can cause digestive issues, neurological symptoms, and cellular damage at high doses.", icon: "exclamationmark.triangle.fill", color: "red"),
+                FoodCompound(name: "α-Solanine", category: .toxicCompound, severity: .medium, description: "Glycoalkaloid concentrated in green or sprouted potatoes and in the skin. Trace amounts are normal in prepared potatoes; large quantities of green potato can cause digestive upset.", icon: "exclamationmark.triangle", color: "orange"),
+                FoodCompound(name: "α-Chaconine", category: .toxicCompound, severity: .medium, description: "The other glycoalkaloid potatoes carry alongside solanine, with the same sources and the same dose dependence.", icon: "exclamationmark.triangle", color: "orange"),
+                FoodCompound(name: "Salicylates", category: .inflammatoryCompound, severity: .medium, description: "Natural aspirin-like compounds that can trigger asthma, skin reactions, and digestive issues in sensitive individuals.", icon: "leaf.fill", color: "orange")
+            ],
+            ingredientName: "Potato",
+            excludedKeywords: ["sweet potato", "sweet potatoes"]
+        ),
+
+        IngredientMapping(
+            keywords: ["tomato", "tomatoes", "passata", "marinara"],
+            compounds: [
                 FoodCompound(name: "α-Tomatine", category: .toxicCompound, severity: .medium, description: "Glycoalkaloid found in tomatoes, particularly green tomatoes. Can cause digestive upset in sensitive individuals.", icon: "exclamationmark.triangle", color: "orange"),
+                FoodCompound(name: "Salicylates", category: .inflammatoryCompound, severity: .medium, description: "Natural aspirin-like compounds that can trigger asthma, skin reactions, and digestive issues in sensitive individuals.", icon: "leaf.fill", color: "orange")
+            ],
+            ingredientName: "Tomato"
+        ),
+
+        IngredientMapping(
+            keywords: ["pepper", "bell pepper", "paprika", "chili", "chilli", "jalapeño", "jalapeno", "cayenne", "habanero"],
+            compounds: [
                 FoodCompound(name: "Capsaicin", category: .inflammatoryCompound, severity: .medium, description: "Vanillamide compound that creates heat sensation. Can irritate digestive tract and mucous membranes.", icon: "flame.fill", color: "red"),
                 FoodCompound(name: "Salicylates", category: .inflammatoryCompound, severity: .medium, description: "Natural aspirin-like compounds that can trigger asthma, skin reactions, and digestive issues in sensitive individuals.", icon: "leaf.fill", color: "orange")
             ],
-            ingredientName: "Nightshades"
+            ingredientName: "Peppers"
         ),
-        
+
+        IngredientMapping(
+            keywords: ["eggplant", "aubergine"],
+            compounds: [
+                FoodCompound(name: "Solasonine", category: .toxicCompound, severity: .medium, description: "The glycoalkaloid aubergines carry, concentrated in the skin and seeds.", icon: "exclamationmark.triangle", color: "orange"),
+                FoodCompound(name: "Salicylates", category: .inflammatoryCompound, severity: .medium, description: "Natural aspirin-like compounds that can trigger asthma, skin reactions, and digestive issues in sensitive individuals.", icon: "leaf.fill", color: "orange")
+            ],
+            ingredientName: "Eggplant"
+        ),
+
         // Legumes
         IngredientMapping(
             keywords: ["beans", "lentils", "chickpeas", "peas", "soy", "tofu", "tempeh", "edamame", "peanut"],
@@ -732,11 +785,14 @@ class FoodCompoundDatabase {
         ),
         
         // Potatoes
+        //
+        // "sweet potato" is deliberately absent: it is Convolvulaceae, not a
+        // nightshade, and carries no glycoalkaloids.
         FoodCompoundMapping(
-            foodKeywords: ["potato", "potatoes", "sweet potato", "russet potato", "red potato"],
+            foodKeywords: ["potato", "potatoes", "russet potato", "red potato"],
             compounds: [
-                FoodCompound(name: "Solanine", category: .toxicCompound, severity: .high, description: "Glycoalkaloid toxin found in nightshades. Can cause digestive issues, neurological symptoms, and cellular damage at high doses.", icon: "exclamationmark.triangle.fill", color: "red"),
-                FoodCompound(name: "α-Chaconine", category: .toxicCompound, severity: .high, description: "Toxic glycoalkaloid that works synergistically with solanine. Found in potatoes and can cause gastrointestinal distress.", icon: "exclamationmark.triangle.fill", color: "red"),
+                FoodCompound(name: "α-Solanine", category: .toxicCompound, severity: .medium, description: "Glycoalkaloid concentrated in green or sprouted potatoes and in the skin. Trace amounts are normal in prepared potatoes; large quantities of green potato can cause digestive upset.", icon: "exclamationmark.triangle", color: "orange"),
+                FoodCompound(name: "α-Chaconine", category: .toxicCompound, severity: .medium, description: "The other glycoalkaloid potatoes carry alongside solanine, with the same sources and the same dose dependence.", icon: "exclamationmark.triangle", color: "orange"),
                 FoodCompound(name: "Lectins", category: .inflammatoryCompound, severity: .medium, description: "Carbohydrate-binding proteins that can cause digestive issues and inflammatory responses.", icon: "link", color: "orange")
             ]
         ),
@@ -885,13 +941,8 @@ class FoodCompoundDatabase {
             let ingredientLower = ingredient.lowercased()
             
             // Check each ingredient mapping
-            for mapping in ingredientMappings {
-                for keyword in mapping.keywords {
-                    if ingredientLower.contains(keyword.lowercased()) {
-                        detectedCompounds.append(contentsOf: mapping.compounds)
-                        break // Only add once per mapping
-                    }
-                }
+            for mapping in ingredientMappings where mapping.matches(ingredientLower) {
+                detectedCompounds.append(contentsOf: mapping.compounds)
             }
             
             // Check for processing-related compounds
