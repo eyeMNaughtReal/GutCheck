@@ -243,7 +243,8 @@ struct UnifiedFoodDetailView: View {
                     Divider().padding(.vertical, 8)
                     nutritionGroupLabel("Minerals")
                     ForEach(parsedMinerals, id: \.0) { key, value in
-                        NutritionDetailRow(label: key, value: value, unit: "mg", color: .teal)
+                        NutritionDetailRow(label: key, value: value,
+                                           unit: unitForMicronutrient(key), color: .teal)
                     }
                 }
 
@@ -251,7 +252,8 @@ struct UnifiedFoodDetailView: View {
                     Divider().padding(.vertical, 8)
                     nutritionGroupLabel("Vitamins")
                     ForEach(parsedVitamins, id: \.0) { key, value in
-                        NutritionDetailRow(label: key, value: value, unit: "mg", color: .purple)
+                        NutritionDetailRow(label: key, value: value,
+                                           unit: unitForMicronutrient(key), color: .purple)
                     }
                 }
             }
@@ -273,12 +275,30 @@ struct UnifiedFoodDetailView: View {
     }
 
     /// Parses a `nutritionDetails` string value (e.g. "15.0g", "100mg") into a Double.
+    ///
+    /// Writers use a fixed `en_US_POSIX` locale, so the separator should always
+    /// be `.`. A comma is still normalised rather than stripped, because values
+    /// persisted by an earlier build may have been written in the device
+    /// locale — dropping that comma would read `460,5` as `4605`.
     private func parsedDetails(keys: [String]) -> [(String, Double)] {
         keys.compactMap { key in
             guard let str = foodItem.nutritionDetails[key] else { return nil }
-            let numStr = str.filter { $0.isNumber || $0 == "." }
+            let numStr = str
+                .replacingOccurrences(of: ",", with: ".")
+                .filter { $0.isNumber || $0 == "." }
             guard let val = Double(numStr), val > 0 else { return nil }
             return (key, val)
+        }
+    }
+
+    /// Display unit for a parsed micronutrient. Vitamins A, D and K are stored
+    /// in micrograms; the rest of what reaches these sections is milligrams.
+    private func unitForMicronutrient(_ key: String) -> String {
+        switch key {
+        case "Vitamin A", "Vitamin D", "Vitamin K", "Folate", "Vitamin B12", "Biotin", "Selenium":
+            return "mcg"
+        default:
+            return "mg"
         }
     }
 

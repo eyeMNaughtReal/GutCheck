@@ -114,7 +114,7 @@ struct FoodItemTests {
     // MARK: - Codable round-trip
 
     @Test("FoodItem Codable round-trip preserves data")
-    func codableRoundTrip() throws {
+    func foodItemCodableRoundTrip() throws {
         let nutrition = NutritionInfo(calories: 150, protein: 5.0)
         let original = FoodItem(
             name: "Granola Bar",

@@ -92,48 +92,50 @@ import Combine
         
         // Add basic nutrition values
         if let calories = nfood.calories {
-            nutritionDict["calories"] = calories.formatted(.number.precision(.fractionLength(1)))
+            nutritionDict["calories"] = calories.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
         }
         if let protein = nfood.protein {
-            nutritionDict["protein"] = protein.formatted(.number.precision(.fractionLength(1)))
+            nutritionDict["protein"] = protein.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
         }
         if let carbs = nfood.carbs {
-            nutritionDict["total_carbohydrate"] = carbs.formatted(.number.precision(.fractionLength(1)))
+            nutritionDict["total_carbohydrate"] = carbs.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
         }
         if let fat = nfood.fat {
-            nutritionDict["total_fat"] = fat.formatted(.number.precision(.fractionLength(1)))
+            nutritionDict["total_fat"] = fat.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
         }
         if let fiber = nfood.fiber {
-            nutritionDict["dietary_fiber"] = fiber.formatted(.number.precision(.fractionLength(1)))
+            nutritionDict["dietary_fiber"] = fiber.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
         }
         if let sugar = nfood.sugar {
-            nutritionDict["sugars"] = sugar.formatted(.number.precision(.fractionLength(1)))
+            nutritionDict["sugars"] = sugar.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
         }
-        if let sodium = nfood.sodium {
-            nutritionDict["sodium"] = sodium.formatted(.number.precision(.fractionLength(1)))
+        // Minerals and vitamins arrive in grams (see the unit note on
+        // FoodSearchResult); this dictionary is displayed as mg/mcg.
+        if let sodium = nfood.sodiumMilligrams {
+            nutritionDict["sodium"] = sodium.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
         }
-        
+
         // Add detailed nutrition from the specific properties
         if let saturatedFat = nfood.saturatedFat {
-            nutritionDict["saturated_fat"] = saturatedFat.formatted(.number.precision(.fractionLength(1)))
+            nutritionDict["saturated_fat"] = saturatedFat.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
         }
-        if let cholesterol = nfood.cholesterol {
-            nutritionDict["cholesterol"] = cholesterol.formatted(.number.precision(.fractionLength(1)))
+        if let cholesterol = nfood.cholesterolMilligrams {
+            nutritionDict["cholesterol"] = cholesterol.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
         }
-        if let potassium = nfood.potassium {
-            nutritionDict["potassium"] = potassium.formatted(.number.precision(.fractionLength(1)))
+        if let potassium = nfood.potassiumMilligrams {
+            nutritionDict["potassium"] = potassium.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
         }
-        if let vitaminA = nfood.vitaminA {
-            nutritionDict["vitamin_a_dv"] = vitaminA.formatted(.number.precision(.fractionLength(0)))
+        if let vitaminA = nfood.vitaminAMicrograms {
+            nutritionDict["vitamin_a_dv"] = vitaminA.formatted(.number.precision(.fractionLength(0)).grouping(.never).locale(FoodSearchResult.storageLocale))
         }
-        if let vitaminC = nfood.vitaminC {
-            nutritionDict["vitamin_c_dv"] = vitaminC.formatted(.number.precision(.fractionLength(0)))
+        if let vitaminC = nfood.vitaminCMilligrams {
+            nutritionDict["vitamin_c_dv"] = vitaminC.formatted(.number.precision(.fractionLength(0)).grouping(.never).locale(FoodSearchResult.storageLocale))
         }
-        if let calcium = nfood.calcium {
-            nutritionDict["calcium_dv"] = calcium.formatted(.number.precision(.fractionLength(0)))
+        if let calcium = nfood.calciumMilligrams {
+            nutritionDict["calcium_dv"] = calcium.formatted(.number.precision(.fractionLength(0)).grouping(.never).locale(FoodSearchResult.storageLocale))
         }
-        if let iron = nfood.iron {
-            nutritionDict["iron_dv"] = iron.formatted(.number.precision(.fractionLength(0)))
+        if let iron = nfood.ironMilligrams {
+            nutritionDict["iron_dv"] = iron.formatted(.number.precision(.fractionLength(0)).grouping(.never).locale(FoodSearchResult.storageLocale))
         }
         
         // Extract allergens with enhanced detection
@@ -147,7 +149,7 @@ import Combine
             fat: nfood.fat,
             fiber: nfood.fiber,
             sugar: nfood.sugar,
-            sodium: nfood.sodium
+            sodium: nfood.sodiumMilligrams
         )
         
         let foodItem = FoodItem(

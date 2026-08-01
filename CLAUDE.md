@@ -60,9 +60,13 @@ Finishing "push dev to main" means both branches report the same commit, not mer
 
 ## Verification
 
-- **Build before every commit.** `xcodebuild build -project GutCheck.xcodeproj -scheme GutCheck -destination 'platform=iOS Simulator,name=iPhone 16 Pro'` from `GutCheck/`.
+- **Build before every commit.** `xcodebuild build -project GutCheck.xcodeproj -scheme GutCheck -destination 'platform=iOS Simulator,name=iPhone 16 Pro'` from `GutCheck/`. If that simulator is not installed, use whichever iPhone is — but say which one you used.
 - **CI runs no tests.** `Build and Test` only builds — the test files never execute. Do not describe something as "tested" when it has only compiled.
-- **Verify UI changes on the simulator**, in both light and dark. A compile proves nothing about layout, and dark mode has already caught bugs light mode hid.
+- **Run the change on the simulator before pushing.** Not "does it compile" — actually drive the app to the screen the change affects and confirm the new behaviour with your own eyes. A green build says nothing about whether the fix worked: the sodium unit bug compiled fine for months while displaying `0 mg`.
+  - Reproduce the original problem first where you can, so "fixed" means something.
+  - **Verify UI changes in both light and dark.** Dark mode has already caught bugs light mode hid.
+  - State the device and OS you verified on in the commit or PR body.
+  - If a change genuinely can't be exercised in the simulator, say so explicitly rather than letting a build stand in for verification.
 
 ## Project specifics
 
