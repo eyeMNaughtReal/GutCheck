@@ -30,9 +30,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The Swift leg rebuilds the entire app (Firebase, gRPC, abseil) so
-        # CodeQL can trace compilation, and has measured 48-107 minutes against
-        # about 5 for Build and Test. Dropping it from pull_request leaves PRs
+        # The Swift leg rebuilds the entire app so CodeQL can trace
+        # compilation, and measured 48-107 minutes against about 5 for Build
+        # and Test. That figure was taken while Firebase, gRPC and abseil were
+        # still being compiled; with the SPM dependencies gone it should be
+        # markedly lower, but it has not been re-measured, so the filtering
+        # below stays until it has. Dropping it from pull_request leaves PRs
         # completing in minutes; it still runs on every push to main and
         # development, plus the Monday schedule, so nothing reaches either
         # branch unanalysed.
@@ -54,47 +57,6 @@ jobs:
         uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: 'latest-stable'
-
-      - name: Create mock GoogleService-Info.plist
-        if: matrix.language == 'swift'
-        run: |
-          cat > GoogleService-Info.plist << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>CLIENT_ID</key>
-            <string>123456789012-abcdefghijklmnopqrstuvwxyz123456.apps.googleusercontent.com</string>
-            <key>REVERSED_CLIENT_ID</key>
-            <string>com.googleusercontent.apps.123456789012-abcdefghijklmnopqrstuvwxyz123456</string>
-            <key>API_KEY</key>
-            <string>MOCK-API-KEY-NOT-REAL-DO-NOT-USE</string>
-            <key>GCM_SENDER_ID</key>
-            <string>123456789012</string>
-            <key>PLIST_VERSION</key>
-            <string>1</string>
-            <key>BUNDLE_ID</key>
-            <string>com.MarkConley.GutCheck</string>
-            <key>PROJECT_ID</key>
-            <string>mock-gutcheck-ci</string>
-            <key>STORAGE_BUCKET</key>
-            <string>mock-gutcheck-ci.appspot.com</string>
-            <key>IS_ADS_ENABLED</key>
-            <false/>
-            <key>IS_ANALYTICS_ENABLED</key>
-            <false/>
-            <key>IS_APPINVITE_ENABLED</key>
-            <true/>
-            <key>IS_GCM_ENABLED</key>
-            <true/>
-            <key>IS_SIGNIN_ENABLED</key>
-            <true/>
-            <key>GOOGLE_APP_ID</key>
-            <string>1:123456789012:ios:abcdef1234567890abcdef</string>
-          </dict>
-          </plist>
-          EOF
-        working-directory: GutCheck/GutCheck
 
       - name: Create mock Secrets.swift
         if: matrix.language == 'swift'

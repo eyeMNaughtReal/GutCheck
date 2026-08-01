@@ -1,16 +1,13 @@
 import SwiftUI
 
 struct ProfileSheetView: View {
-    @Environment(AuthService.self) var authService
+    @Environment(LocalUserService.self) var userService
 
     var body: some View {
         Group {
-            if let currentUser = authService.currentUser {
+            if let currentUser = userService.currentUser {
                 UserProfileView(user: currentUser)
-                    .environment(authService)
-            } else if authService.isAuthenticated {
-                ProfileSetupView()
-                    .environment(authService)
+                    .environment(userService)
             } else {
                 VStack(spacing: 20) {
                     ProgressView()

@@ -3,7 +3,7 @@ import HealthKit
 
 struct HealthDataIntegrationView: View {
     @Environment(SettingsViewModel.self) var settingsVM
-    @Environment(AuthService.self) var authService
+    @Environment(LocalUserService.self) var userService
     @State private var healthKitVM = HealthKitViewModel()
     @Environment(\.dismiss) private var dismiss
     @State private var showPermissionsGuide = false
@@ -247,7 +247,7 @@ struct HealthDataIntegrationView: View {
                 Button("OK", role: .cancel) {}
             }
             .onAppear {
-                healthKitVM.updateDependencies(settingsViewModel: settingsVM, authService: authService)
+                healthKitVM.updateDependencies(settingsViewModel: settingsVM, userService: userService)
                 healthKitVM.refreshWriteStatuses()
             }
             .task {

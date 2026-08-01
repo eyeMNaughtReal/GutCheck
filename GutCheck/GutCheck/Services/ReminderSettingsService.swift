@@ -2,12 +2,10 @@
 //  ReminderSettingsService.swift
 //  GutCheck
 //
-//  Service for managing reminder settings with Firebase sync
+//  Service for managing reminder settings and the local notifications they drive.
 //
 
 import Foundation
-import FirebaseAuth
-import FirebaseFirestore
 import UserNotifications
 
 @MainActor
@@ -25,10 +23,7 @@ import UserNotifications
     // MARK: - Public Methods
     
     func loadReminderSettings() async {
-        guard let userId = AuthenticationManager.shared.currentUserId else {
-            errorMessage = "User not authenticated"
-            return
-        }
+        let userId = LocalUserService.currentProfileId
         
         isLoading = true
         errorMessage = nil
@@ -46,7 +41,7 @@ import UserNotifications
             errorMessage = error.localizedDescription
             
             // If no settings found, create default settings
-            if case RepositoryError.documentNotFound = error {
+            if case RepositoryError.recordNotFound = error {
                 await createDefaultSettings()
             }
         }
@@ -55,10 +50,7 @@ import UserNotifications
     }
     
     func saveReminderSettings(_ settings: ReminderSettings) async {
-        guard let userId = AuthenticationManager.shared.currentUserId else {
-            errorMessage = "User not authenticated"
-            return
-        }
+        let userId = LocalUserService.currentProfileId
         
         isLoading = true
         errorMessage = nil
@@ -117,7 +109,7 @@ import UserNotifications
     // MARK: - Private Methods
     
     private func createDefaultSettings() async {
-        guard let userId = AuthenticationManager.shared.currentUserId else { return }
+        let userId = LocalUserService.currentProfileId
         
         let defaultSettings = ReminderSettings(createdBy: userId)
         await saveReminderSettings(defaultSettings)
@@ -266,35 +258,5 @@ import UserNotifications
             dateComponents.weekday = weekday
         }
         return UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
-    }
-}
-
-// MARK: - Repository
-
-class ReminderSettingsRepository {
-    static let shared = ReminderSettingsRepository()
-    
-    private let db = Firestore.firestore()
-    private let collectionPath = "reminderSettings"
-    
-    private init() {}
-    
-    func fetch(forUser userId: String) async throws -> ReminderSettings {
-        let doc = try await db.collection(collectionPath).document(userId).getDocument()
-
-        guard doc.exists else {
-            throw RepositoryError.documentNotFound("No reminder settings found for user")
-        }
-
-        return try ReminderSettings(from: doc)
-    }
-
-    func save(_ settings: ReminderSettings) async throws {
-        let data = settings.toFirestoreData()
-        try await db.collection(collectionPath).document(settings.createdBy).setData(data)
-    }
-
-    func delete(_ settings: ReminderSettings) async throws {
-        try await db.collection(collectionPath).document(settings.createdBy).delete()
     }
 }

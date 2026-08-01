@@ -1,11 +1,9 @@
 import SwiftUI
-import FirebaseFirestore
-import FirebaseAuth
 
 struct TodaysActivitySummaryView: View {
     var viewModel: RecentActivityViewModel
     @Environment(AppRouter.self) var router
-    @Environment(AuthService.self) var authService
+    @Environment(LocalUserService.self) var userService
     let selectedDate: Date
     @State private var isExpanded = false
     
@@ -106,7 +104,7 @@ struct TodaysActivitySummaryView: View {
                     LoadingStateView()
                 } else if let errorMessage = viewModel.errorMessage {
                     RecentActivityErrorStateView(message: errorMessage) {
-                        viewModel.loadRecentActivity(for: selectedDate, authService: authService)
+                        viewModel.loadRecentActivity(for: selectedDate, userService: userService)
                     }
                 } else if viewModel.recentEntries.isEmpty {
                     RecentActivityEmptyStateView()
@@ -126,7 +124,7 @@ struct TodaysActivitySummaryView: View {
         .clipShape(.rect(cornerRadius: 12))
         .shadow(color: ColorTheme.shadowColor, radius: 4, x: 0, y: 2)
         .refreshable {
-            viewModel.loadRecentActivity(for: selectedDate, authService: authService)
+            viewModel.loadRecentActivity(for: selectedDate, userService: userService)
         }
     }
     
@@ -152,6 +150,6 @@ struct TodaysActivitySummaryView: View {
         selectedDate: Date.now
     )
     .environment(AppRouter.shared)
-    .environment(PreviewAuthService())
+    .environment(LocalUserService.shared)
     .padding()
 }

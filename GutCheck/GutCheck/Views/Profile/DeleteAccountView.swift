@@ -2,8 +2,10 @@
 //  DeleteAccountView.swift
 //  GutCheck
 //
-//  View for deleting user account with proper security measures
-//  and re-authentication requirements.
+//  View for erasing everything the app holds on this device.
+//
+//  There is no account and no server, so there is nothing to re-authenticate
+//  against — the confirmation alert is the last gate before the data goes.
 //
 //  Created by Mark Conley on 8/18/25.
 //
@@ -12,8 +14,7 @@ import SwiftUI
 
 struct DeleteAccountView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(AuthService.self) var authService
-    @State private var showingReauthentication = false
+    @Environment(LocalUserService.self) var userService
     @State private var showingFinalConfirmation = false
     @State private var showingAlert = false
     @State private var alertMessage = ""
@@ -29,7 +30,7 @@ struct DeleteAccountView: View {
                         .font(.system(size: 64))
                         .foregroundStyle(.red)
                     
-                    Text("Delete Your Account")
+                    Text("Delete All Your Data")
                         .font(.title.bold())
                         .foregroundStyle(.red)
                     
@@ -49,7 +50,7 @@ struct DeleteAccountView: View {
                         WarningRow(icon: "chart.bar", text: "All insights and patterns will be lost")
                         WarningRow(icon: "calendar", text: "Your meal and symptom history will be erased")
                         WarningRow(icon: "person.crop.circle", text: "Your profile and settings will be removed")
-                        WarningRow(icon: "icloud", text: "Data cannot be recovered from backups")
+                        WarningRow(icon: "iphone", text: "This is the only copy — nothing is stored anywhere else")
                     }
                 }
                 .padding()
@@ -75,10 +76,10 @@ struct DeleteAccountView: View {
                 
                 // Action Buttons
                 VStack(spacing: 16) {
-                    Button(action: { showingReauthentication = true }) {
+                    Button(action: { showingFinalConfirmation = true }) {
                         HStack {
                             Image(systemName: "trash")
-                            Text("Delete My Account")
+                            Text("Delete My Data")
                         }
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -101,26 +102,20 @@ struct DeleteAccountView: View {
         }
         .scrollContentBackground(.hidden)
         .background(ColorTheme.background)
-        .navigationTitle("Delete Account")
+        .navigationTitle("Delete All Data")
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showingReauthentication) {
-            ReauthenticationView(
-                operation: "deleting your account",
-                onSuccess: { showingFinalConfirmation = true },
-                onCancel: { showingReauthentication = false }
-            )
-        }
         .alert("Final Confirmation", isPresented: $showingFinalConfirmation) {
-            Button("Delete Account", role: .destructive) {
+            Button("Delete Everything", role: .destructive) {
                 deleteAccount()
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("Are you absolutely sure you want to delete your account? This action is permanent and cannot be undone.")
+            Text("Are you absolutely sure? This permanently erases everything "
+                 + "recorded on this device and cannot be undone.")
         }
         .alert(alertTitle, isPresented: $showingAlert) {
             Button("OK") {
-                if alertTitle == "Account Deleted" {
+                if alertTitle == "Data Deleted" {
                     dismiss()
                 }
             }
@@ -134,12 +129,11 @@ struct DeleteAccountView: View {
         
         Task {
             do {
-                // User was already re-authenticated via ReauthenticationView
-                try await authService.deleteAuthenticatedAccount()
+                try await userService.deleteAllLocalData()
                 
                 await MainActor.run {
-                    alertTitle = "Account Deleted"
-                    alertMessage = "Your account has been successfully deleted."
+                    alertTitle = "Data Deleted"
+                    alertMessage = "Everything recorded on this device has been erased."
                     showingAlert = true
                 }
             } catch {
@@ -195,6 +189,6 @@ struct DataRow: View {
 #Preview {
     NavigationStack {
         DeleteAccountView()
-            .environment(AuthService())
+            .environment(LocalUserService.shared)
     }
 }

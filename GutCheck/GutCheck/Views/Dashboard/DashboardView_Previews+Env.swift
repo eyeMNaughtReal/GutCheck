@@ -1,7 +1,7 @@
 import SwiftUI
 
-// This preview injects a dummy AuthService so @EnvironmentObject is satisfied
+// This preview injects a dummy LocalUserService so @EnvironmentObject is satisfied
 #Preview {
     DashboardView()
-        .environment(AuthService())
+        .environment(LocalUserService.shared)
 }

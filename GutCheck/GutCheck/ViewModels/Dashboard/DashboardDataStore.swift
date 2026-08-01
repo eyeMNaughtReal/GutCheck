@@ -80,7 +80,7 @@ enum AIInsightSeverity {
     private var cancellables = Set<AnyCancellable>()
     
     /// Authentication service for getting current user ID
-    private var authService: AuthService?
+    private var userService: LocalUserService?
     
     /// Repository dependencies
     private let mealRepository: any MealRepositoryProtocol
@@ -99,7 +99,7 @@ enum AIInsightSeverity {
             loadPreviewData()
         } else {
             Task { @MainActor in
-                authService = AuthService()
+                userService = LocalUserService.shared
                 load()
             }
         }
@@ -280,7 +280,7 @@ enum AIInsightSeverity {
                 let symptoms = try await symptomRepository.getSymptoms(for: selectedDate)
                 
                 // Load today's meals using the current user ID
-                if let currentUser = await authService?.currentUser {
+                if let currentUser = await userService?.currentUser {
                     let userMeals = try await mealRepository.fetchMealsForDate(
                         selectedDate,
                         userId: currentUser.id

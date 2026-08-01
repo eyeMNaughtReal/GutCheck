@@ -217,27 +217,11 @@ struct ProfileInfoSection: View {
 
 struct ProfileActionSection: View {
     @Binding var showSettings: Bool
-    let authService: AuthService
-    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(spacing: 12) {
             Button(action: { showSettings = true }) {
                 ProfileActionRow(icon: "gearshape", title: "Settings")
-            }
-
-            Button(action: signOut) {
-                ProfileActionRow(icon: "arrow.right.square", title: "Sign Out", textColor: ColorTheme.error)
-            }
-        }
-    }
-    
-    private func signOut() {
-        Task {
-            do {
-                try authService.signOut()
-                dismiss()
-            } catch {
             }
         }
     }
@@ -247,7 +231,7 @@ import PhotosUI
 
 struct UserProfileView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(AuthService.self) var authService
+    @Environment(LocalUserService.self) var userService
     let user: User
     
     @State private var profileImage: UIImage? = nil
@@ -264,10 +248,7 @@ struct UserProfileView: View {
                     ProfileInfoSection(user: user)
                         .environment(settingsVM)
                     
-                    ProfileActionSection(
-                        showSettings: $showSettings,
-                        authService: authService
-                    )
+                    ProfileActionSection(showSettings: $showSettings)
                     
                     Spacer()
                 }
@@ -287,7 +268,7 @@ struct UserProfileView: View {
                 NavigationStack {
                     SettingsView()
                         .environment(settingsVM)
-                        .environment(authService)
+                        .environment(userService)
                         .navigationDestination(for: SettingsRoute.self) { route in
                             SettingsRoute.destinationView(for: route)
                         }

@@ -11,7 +11,7 @@ import SwiftUI
 // MARK: - Main View
 
 struct MedicationCalendarView: View {
-    @Environment(AuthService.self) var authService
+    @Environment(LocalUserService.self) var userService
     @Environment(AppRouter.self) var router
     @Environment(RefreshManager.self) var refreshManager
     @State private var viewModel = MedicationCalendarViewModel()
@@ -103,7 +103,7 @@ struct MedicationCalendarView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                ProfileAvatarButton(user: authService.currentUser) {
+                ProfileAvatarButton(user: userService.currentUser) {
                     router.showProfile()
                 }
             }
@@ -329,9 +329,7 @@ struct DoseCalendarRow: View {
     }
 
     func loadDoses() async {
-        guard let userId = AuthenticationManager.shared.currentUserId else {
-            doses = []; return
-        }
+        let userId = LocalUserService.currentProfileId
         isLoading = true
         do {
             let loaded = try await doseRepo.fetchDosesForDate(selectedDate, userId: userId)
@@ -357,7 +355,7 @@ struct DoseCalendarRow: View {
 // MARK: - Preview
 #Preview {
     MedicationCalendarView()
-        .environment(AuthService())
+        .environment(LocalUserService.shared)
         .environment(AppRouter.shared)
         .environment(RefreshManager.shared)
 }

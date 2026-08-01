@@ -2,14 +2,8 @@
 //  Meal.swift
 //  GutCheck
 //
-//  Updated to include FirestoreModel conformance
-//
 
 import Foundation
-import FirebaseFirestore
-
-// Make sure we have access to RepositoryError and other Firebase types
-// These should be automatically available in the same target
 
 enum MealType: String, Codable, CaseIterable {
     case breakfast, lunch, dinner, snack, drink
@@ -51,7 +45,7 @@ extension Meal {
     }
 }
 
-struct Meal: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
+struct Meal: Identifiable, Codable, Hashable, Equatable, LocalRecord {
     var id: String = UUID().uuidString
     var name: String
     var date: Date
@@ -68,9 +62,11 @@ struct Meal: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
     var updatedAt: Date = Date.now
 
     // MARK: - Privacy Classification
-    
-    /// Determines the privacy level of this meal data
-    /// This affects where and how the data is stored
+
+    /// How sensitive this meal is. Everything is stored on-device, so this no
+    /// longer decides *where* the record goes — it marks which entries carry
+    /// free-text or personal detail, which the healthcare export uses to decide
+    /// what may leave the device.
     var privacyLevel: DataPrivacyLevel {
         // Personal notes and detailed observations are private
         if let notes = notes, !notes.isEmpty {
@@ -85,17 +81,7 @@ struct Meal: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
         // Basic meal structure and nutrition is non-private
         return .public
     }
-    
-    /// Whether this meal requires local encrypted storage
-    var requiresLocalStorage: Bool {
-        return privacyLevel == .private || privacyLevel == .confidential
-    }
-    
-    /// Whether this meal can be synced to the cloud
-    var allowsCloudSync: Bool {
-        return privacyLevel == .public
-    }
-    
+
     // MARK: - Initializers
     
     init(id: String = UUID().uuidString,
@@ -116,78 +102,6 @@ struct Meal: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
         self.notes = notes
         self.tags = tags
         self.createdBy = createdBy
-    }
-    
-    // MARK: - FirestoreModel Conformance
-    
-    init(from document: DocumentSnapshot) throws {
-        guard let data = document.data() else {
-            throw RepositoryError.invalidData("Document has no data")
-        }
-        
-        self.id = document.documentID
-        self.name = data["name"] as? String ?? ""
-        self.createdBy = data["createdBy"] as? String ?? ""
-        self.notes = data["notes"] as? String
-        self.tags = data["tags"] as? [String] ?? []
-        
-        // Handle date conversion
-        if let timestamp = data["date"] as? Timestamp {
-            self.date = timestamp.dateValue()
-        } else {
-            self.date = Date.now
-        }
-        
-        // Handle enum types
-        if let typeString = data["type"] as? String {
-            self.type = MealType(rawValue: typeString) ?? .lunch
-        } else {
-            self.type = .lunch
-        }
-        
-        if let sourceString = data["source"] as? String {
-            self.source = MealSource(rawValue: sourceString) ?? .manual
-        } else {
-            self.source = .manual
-        }
-        
-        // Handle food items array
-        if let foodItemsData = data["foodItems"] as? [[String: Any]] {
-            self.foodItems = foodItemsData.compactMap { itemData in
-                try? FoodItem.fromDictionary(itemData)
-            }
-        } else {
-            self.foodItems = []
-        }
-
-        // Records written before these fields existed fall back to `date`, so
-        // conflict resolution has a usable ordering rather than nil.
-        self.createdAt = (data["createdAt"] as? Timestamp)?.dateValue() ?? self.date
-        self.updatedAt = (data["updatedAt"] as? Timestamp)?.dateValue() ?? self.createdAt
-    }
-
-    func toFirestoreData() -> [String: Any] {
-        var data: [String: Any] = [
-            "name": name,
-            "date": Timestamp(date: date),
-            "type": type.rawValue,
-            "source": source.rawValue,
-            "createdBy": createdBy,
-            "tags": tags,
-            // `date` is when the meal was eaten; these are when the record was
-            // written. Sync conflict resolution needs the latter to pick a winner.
-            "createdAt": Timestamp(date: createdAt),
-            "updatedAt": Timestamp(date: Date.now)
-        ]
-
-        if let notes = notes {
-            data["notes"] = notes
-        }
-
-        // Convert food items to dictionaries
-        data["foodItems"] = foodItems.map { $0.toDictionary() }
-
-        return data
     }
 }
 

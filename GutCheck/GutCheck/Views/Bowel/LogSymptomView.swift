@@ -311,7 +311,7 @@ struct TagSelectionView: View {
 
 struct LogSymptomView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(AuthService.self) var authService
+    @Environment(LocalUserService.self) var userService
     @State private var coordinator = LogSymptomViewModel()
     @State private var showProfileSheet = false
     @State private var infoTypeToShow: SymptomInfoType? = nil
@@ -633,6 +633,6 @@ struct SectionHeader: View {
 #if DEBUG
 #Preview {
     LogSymptomView()
-        .environment(AuthService())
+        .environment(LocalUserService.shared)
 }
 #endif

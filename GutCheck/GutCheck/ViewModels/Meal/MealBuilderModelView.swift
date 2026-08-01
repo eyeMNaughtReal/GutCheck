@@ -6,8 +6,6 @@
 //
 
 import Foundation
-import FirebaseFirestore
-import FirebaseAuth
 
 @MainActor
 @Observable class MealBuilderViewModel {
@@ -141,13 +139,7 @@ import FirebaseAuth
         Task {
             do {
                 // Ensure user is authenticated
-                guard let userId = AuthenticationManager.shared.currentUserId else {
-                    await MainActor.run {
-                        self.errorMessage = "User not authenticated"
-                        self.isSaving = false
-                    }
-                    return  // <-- Exit the Task
-                }
+                let userId = LocalUserService.currentProfileId
                 
                 // Create the meal object
                 let meal = Meal(

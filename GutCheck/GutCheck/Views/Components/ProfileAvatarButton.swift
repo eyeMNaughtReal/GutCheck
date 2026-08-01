@@ -139,7 +139,6 @@ struct ProfileAvatarContent: View {
                 email: "test@example.com",
                 firstName: "John",
                 lastName: "Doe",
-                signInMethod: .email,
                 createdAt: Date.now,
                 updatedAt: Date.now
             ),

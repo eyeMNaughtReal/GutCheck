@@ -1,7 +1,7 @@
 import Foundation
 
 struct UserProfile: Identifiable, Codable {
-    var id: String  // Firebase UID
+    var id: String  // Local profile id
     var email: String
     var fullName: String?
     var age: Int?

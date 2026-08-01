@@ -2,22 +2,35 @@
 //  User.swift
 //  GutCheck
 //
-//  Fixed User model with proper Codable compliance
+//  The single device-local profile.
+//
+//  There are no accounts and no server: this describes the person using this
+//  install, and its `id` is what every meal, symptom and medication record
+//  points at through `createdBy`.
 //
 
 import Foundation
-import FirebaseFirestore
 import HealthKit
 
 struct User: Codable, Identifiable, Hashable, Equatable {
+    /// Identity and creation time are fixed for the life of the profile —
+    /// every record's `createdBy` resolves through `id`.
     let id: String
-    let email: String
-    let firstName: String
-    let lastName: String
-    let signInMethod: SignInMethod
     let createdAt: Date
     let updatedAt: Date
-    
+
+    // Editable profile fields.
+    //
+    // These were `let` while they came from the auth provider and could only be
+    // set at account creation. The profile is now filled in and edited in-app,
+    // so they are `var` like the health fields below.
+
+    /// Optional contact address the user can set for healthcare exports. Empty
+    /// when they haven't given one — nothing signs in with it.
+    var email: String
+    var firstName: String
+    var lastName: String
+
     // Profile image
     var profileImageURL: String?
     
@@ -111,98 +124,24 @@ struct User: Codable, Identifiable, Hashable, Equatable {
     }
     
     // MARK: - Initializers
-    
-    // Firebase timestamp conversion initializer
-    init(id: String, email: String, firstName: String, lastName: String, signInMethod: SignInMethod, createdAt: Timestamp, updatedAt: Timestamp, privacyPolicyAccepted: Bool = false, privacyPolicyAcceptedDate: Date? = nil, privacyPolicyVersion: String = "1.0") {
+
+    init(id: String,
+         email: String = "",
+         firstName: String,
+         lastName: String,
+         createdAt: Date = Date.now,
+         updatedAt: Date = Date.now,
+         privacyPolicyAccepted: Bool = false,
+         privacyPolicyAcceptedDate: Date? = nil,
+         privacyPolicyVersion: String = "1.0") {
         self.id = id
         self.email = email
         self.firstName = firstName
         self.lastName = lastName
-        self.signInMethod = signInMethod
-        self.createdAt = createdAt.dateValue()
-        self.updatedAt = updatedAt.dateValue()
-        self.privacyPolicyAccepted = privacyPolicyAccepted
-        self.privacyPolicyAcceptedDate = privacyPolicyAcceptedDate
-        self.privacyPolicyVersion = privacyPolicyVersion
-    }
-    
-    // Standard initializer
-    init(id: String, email: String, firstName: String, lastName: String, signInMethod: SignInMethod = .email, createdAt: Date = Date.now, updatedAt: Date = Date.now, privacyPolicyAccepted: Bool = false, privacyPolicyAcceptedDate: Date? = nil, privacyPolicyVersion: String = "1.0") {
-        self.id = id
-        self.email = email
-        self.firstName = firstName
-        self.lastName = lastName
-        self.signInMethod = signInMethod
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.privacyPolicyAccepted = privacyPolicyAccepted
         self.privacyPolicyAcceptedDate = privacyPolicyAcceptedDate
         self.privacyPolicyVersion = privacyPolicyVersion
-    }
-    
-    // MARK: - Firestore Conversion
-    
-    func toFirestoreData() -> [String: Any] {
-        var data: [String: Any] = [
-            "id": id,
-            "email": email,
-            "firstName": firstName,
-            "lastName": lastName,
-            "signInMethod": signInMethod.rawValue,
-            "privacyPolicyAccepted": privacyPolicyAccepted,
-            "privacyPolicyVersion": privacyPolicyVersion,
-            "updatedAt": FieldValue.serverTimestamp()
-        ]
-        
-        // Add privacy policy acceptance date if available
-        if let privacyPolicyAcceptedDate = privacyPolicyAcceptedDate {
-            data["privacyPolicyAcceptedDate"] = Timestamp(date: privacyPolicyAcceptedDate)
-        }
-        
-        // Add optional health data
-        if let dateOfBirth = dateOfBirth {
-            data["dateOfBirth"] = Timestamp(date: dateOfBirth)
-        }
-        if let weight = weight {
-            data["weight"] = weight
-        }
-        if let height = height {
-            data["height"] = height
-        }
-        if let biologicalSexRawValue = biologicalSexRawValue {
-            data["biologicalSexRawValue"] = biologicalSexRawValue
-        }
-        
-        return data
-    }
-    
-}
-
-// MARK: - Sign In Methods
-enum SignInMethod: String, CaseIterable, Codable {
-    case email = "email"
-    case apple = "apple"
-    case phone = "phone"
-    
-    var displayName: String {
-        switch self {
-        case .email:
-            return "Email"
-        case .apple:
-            return "Apple"
-        case .phone:
-            return "Phone"
-        }
-    }
-    
-    var icon: String {
-        switch self {
-        case .email:
-            return "envelope.fill"
-        case .apple:
-            return "applelogo"
-        case .phone:
-            return "phone.fill"
-        }
     }
 }

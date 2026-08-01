@@ -2,11 +2,8 @@
 //  Symptom.swift
 //  GutCheck
 //
-//  Updated to include FirestoreModel conformance
-//
 
 import Foundation
-import FirebaseFirestore
 
 // MARK: - Symptom Types
 enum SymptomType: String, Codable, CaseIterable {
@@ -66,7 +63,7 @@ extension StoolType {
 // `displayName` for PainLevel/UrgencyLevel already lives in
 // Views/Bowel/PaginatedSymptomHistoryView.swift — not redeclared here.
 
-struct Symptom: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
+struct Symptom: Identifiable, Codable, Hashable, Equatable, LocalRecord {
     var id: String = UUID().uuidString
     var date: Date
     var stoolType: StoolType
@@ -74,17 +71,20 @@ struct Symptom: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
     var urgencyLevel: UrgencyLevel
     var notes: String?
     var tags: [String] = []
-    var createdBy: String = ""  // Firebase UID - required for FirestoreModel
+    /// The local profile that logged this record.
+    var createdBy: String = ""
 
     /// When the record was written, as distinct from `date` (when the symptom
-    /// occurred). Deduplication orders on `updatedAt` to keep the newer copy.
+    /// occurred).
     var createdAt: Date = Date.now
     var updatedAt: Date = Date.now
-    
+
     // MARK: - Privacy Classification
-    
-    /// Determines the privacy level of this symptom data
-    /// This affects where and how the data is stored
+
+    /// How sensitive this symptom is. Everything is stored on-device, so this
+    /// no longer decides *where* the record goes — it marks which entries carry
+    /// free-text or high-severity detail, which the healthcare export uses to
+    /// decide what may leave the device.
     var privacyLevel: DataPrivacyLevel {
         // Detailed personal notes are private
         if let notes = notes, !notes.isEmpty {
@@ -104,17 +104,7 @@ struct Symptom: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
         // Basic symptom structure is non-private
         return .public
     }
-    
-    /// Whether this symptom requires local encrypted storage
-    var requiresLocalStorage: Bool {
-        return privacyLevel == .private || privacyLevel == .confidential
-    }
-    
-    /// Whether this symptom can be synced to the cloud
-    var allowsCloudSync: Bool {
-        return privacyLevel == .public
-    }
-    
+
     // MARK: - Initializers
     init(id: String = UUID().uuidString, 
          date: Date, 
@@ -133,80 +123,12 @@ struct Symptom: Identifiable, Codable, Hashable, Equatable, FirestoreModel {
         self.tags = tags
         self.createdBy = createdBy
     }
-    
-    // MARK: - FirestoreModel Implementation
-    init(from document: DocumentSnapshot) throws {
-        let data = document.data()
-        guard let data = data else {
-            throw RepositoryError.invalidData("Document data is nil")
-        }
-        
-        self.id = document.documentID
-        
-        guard let timestamp = data["date"] as? Timestamp else {
-            throw RepositoryError.invalidData("Missing or invalid date field")
-        }
-        self.date = timestamp.dateValue()
-        
-        guard let stoolTypeRaw = data["stoolType"] as? Int,
-              let stoolType = StoolType(rawValue: stoolTypeRaw) else {
-            throw RepositoryError.invalidData("Missing or invalid stoolType field")
-        }
-        self.stoolType = stoolType
-        
-        guard let painLevelRaw = data["painLevel"] as? Int,
-              let painLevel = PainLevel(rawValue: painLevelRaw) else {
-            throw RepositoryError.invalidData("Missing or invalid painLevel field")
-        }
-        self.painLevel = painLevel
-        
-        guard let urgencyLevelRaw = data["urgencyLevel"] as? Int,
-              let urgencyLevel = UrgencyLevel(rawValue: urgencyLevelRaw) else {
-            throw RepositoryError.invalidData("Missing or invalid urgencyLevel field")
-        }
-        self.urgencyLevel = urgencyLevel
-        
-        self.notes = data["notes"] as? String
-        self.tags = data["tags"] as? [String] ?? []
-        
-        guard let createdBy = data["createdBy"] as? String else {
-            throw RepositoryError.invalidData("Missing or invalid createdBy field")
-        }
-        self.createdBy = createdBy
-
-        // `createdAt` was already being written but never read back, so
-        // deduplication had no way to tell two copies of the same record apart.
-        // Records predating these fields fall back to `date` for a usable ordering.
-        self.createdAt = (data["createdAt"] as? Timestamp)?.dateValue() ?? self.date
-        self.updatedAt = (data["updatedAt"] as? Timestamp)?.dateValue() ?? self.createdAt
-    }
-
-    func toFirestoreData() -> [String: Any] {
-        var data: [String: Any] = [
-            "id": id,
-            "date": Timestamp(date: date),
-            "stoolType": stoolType.rawValue,
-            "painLevel": painLevel.rawValue,
-            "urgencyLevel": urgencyLevel.rawValue,
-            "tags": tags,
-            "createdBy": createdBy,
-            // `date` is when the symptom occurred; these track when the record
-            // was written, which is what conflict resolution needs.
-            "createdAt": Timestamp(date: createdAt),
-            "updatedAt": Timestamp(date: Date.now)
-        ]
-        
-        if let notes = notes {
-            data["notes"] = notes
-        }
-        
-        return data
-    }
 }
+
 // MARK: - Timestamped Record
 
-/// Records that carry a write timestamp, so duplicates arriving from local
-/// storage and Firestore can be collapsed by keeping the most recent copy.
+/// Records that carry a write timestamp, so copies sharing an id can be
+/// collapsed by keeping the most recent one.
 protocol TimestampedRecord: Identifiable {
     var id: String { get }
     var updatedAt: Date { get }
@@ -219,9 +141,10 @@ extension Array where Element: TimestampedRecord {
     /// Collapses records sharing an id, keeping whichever was written most
     /// recently. Ordering of the result is left to the caller.
     ///
-    /// The same record routinely arrives from both local storage and Firestore.
-    /// Resolving on `updatedAt` means a newer edit always wins, rather than
-    /// whichever copy happened to be appended first.
+    /// The store's unique index on `id` keeps duplicates out of SwiftData, but
+    /// results merged from more than one source — a query plus an import, say —
+    /// can still repeat an id. Resolving on `updatedAt` means a newer edit
+    /// always wins, rather than whichever copy happened to be appended first.
     func deduplicatedKeepingNewest() -> [Element] {
         var newestById: [String: Element] = [:]
         for record in self {

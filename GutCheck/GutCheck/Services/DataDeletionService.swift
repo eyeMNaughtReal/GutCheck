@@ -6,26 +6,30 @@
 //
 //  Created by Mark Conley on 8/18/25.
 //
+//  This used to file a request into a Firestore queue for a reviewer to
+//  approve. There is no queue and no reviewer any more: the data is on this
+//  device, so a request is carried out the moment it is made. The request
+//  record is still written, and still kept after processing, as the user's
+//  receipt of what was erased and when.
+//
 
 import Foundation
-import FirebaseFirestore
-import FirebaseAuth
 
 @MainActor
 @Observable class DataDeletionService {
     static let shared = DataDeletionService()
-    
+
     var isLoading = false
     var errorMessage: String?
-    
-    private let firestore = Firestore.firestore()
-    private let auth = Auth.auth()
-    
+
+    private let requestRepository = DataDeletionRequestRepository.shared
+
     private init() {}
-    
+
     // MARK: - Data Deletion Request Management
-    
-    /// Creates a new data deletion request
+
+    /// Records a deletion request and carries it out immediately.
+    @discardableResult
     func createDeletionRequest(
         userId: String,
         userEmail: String,
@@ -40,14 +44,15 @@ import FirebaseAuth
     ) async throws -> DataDeletionRequest {
         isLoading = true
         errorMessage = nil
-        
+
         defer { isLoading = false }
-        
+
         let request = DataDeletionRequest(
             userId: userId,
             userEmail: userEmail,
             userName: userName,
             reason: reason,
+            status: .processing,
             deleteUserProfile: deleteUserProfile,
             deleteMeals: deleteMeals,
             deleteSymptoms: deleteSymptoms,
@@ -55,243 +60,92 @@ import FirebaseAuth
             deleteAnalytics: deleteAnalytics,
             deleteReminders: deleteReminders
         )
-        
-        // Save to Firestore
-        try await firestore
-            .collection("dataDeletionRequests")
-            .document(request.id)
-            .setData(request.toFirestoreData())
-        
-        return request
+
+        try await requestRepository.save(request)
+
+        do {
+            try await processDataDeletion(request)
+        } catch {
+            errorMessage = error.localizedDescription
+            throw error
+        }
+
+        // Re-read so the caller gets the record with its final status.
+        return try await requestRepository.fetch(id: request.id) ?? request
     }
-    
-    /// Fetches all deletion requests (admin only)
+
+    /// All deletion requests recorded on this device, newest first.
     func fetchAllDeletionRequests() async throws -> [DataDeletionRequest] {
         isLoading = true
         errorMessage = nil
-        
         defer { isLoading = false }
-        
-        let snapshot = try await firestore
-            .collection("dataDeletionRequests")
-            .order(by: "requestDate", descending: true)
-            .getDocuments()
-        
-        return snapshot.documents.compactMap { document in
-            DataDeletionRequest(from: document.data(), id: document.documentID)
-        }
+
+        return try await requestRepository.fetchAll()
     }
-    
-    /// Fetches deletion requests for a specific user
+
+    /// Deletion requests recorded for a given profile.
     func fetchUserDeletionRequests(userId: String) async throws -> [DataDeletionRequest] {
         isLoading = true
         errorMessage = nil
-        
         defer { isLoading = false }
-        
-        let snapshot = try await firestore
-            .collection("dataDeletionRequests")
-            .whereField("userId", isEqualTo: userId)
-            .order(by: "requestDate", descending: true)
-            .getDocuments()
-        
-        return snapshot.documents.compactMap { document in
-            DataDeletionRequest(from: document.data(), id: document.documentID)
-        }
+
+        return try await requestRepository.fetchAll(userId: userId)
     }
-    
-    /// Updates the status of a deletion request
-    func updateDeletionRequestStatus(
-        requestId: String,
-        status: DeletionStatus,
-        adminNotes: String? = nil,
-        processedBy: String
-    ) async throws {
-        isLoading = true
-        errorMessage = nil
-        
-        defer { isLoading = false }
-        
-        var updateData: [String: Any] = [
-            "status": status.rawValue,
-            "processedBy": processedBy,
-            "processedDate": FieldValue.serverTimestamp()
-        ]
-        
-        if let adminNotes = adminNotes {
-            updateData["adminNotes"] = adminNotes
-        }
-        
-        try await firestore
-            .collection("dataDeletionRequests")
-            .document(requestId)
-            .updateData(updateData)
-        
-        // If approved, process the deletion
-        if status == .approved {
-            try await processDataDeletion(requestId: requestId)
-        }
-    }
-    
+
     // MARK: - Data Deletion Processing
-    
-    /// Processes an approved data deletion request
-    private func processDataDeletion(requestId: String) async throws {
-        guard let request = try await fetchDeletionRequest(requestId: requestId) else {
-            throw DataDeletionError.requestNotFound
-        }
-        
-        // Update status to processing
-        try await firestore
-            .collection("dataDeletionRequests")
-            .document(requestId)
-            .updateData([
-                "status": DeletionStatus.processing.rawValue
-            ])
-        
-        // Delete data based on request scope
+
+    /// Erases the data the request covers, then marks it complete.
+    private func processDataDeletion(_ request: DataDeletionRequest) async throws {
+        let userId = request.userId
+
         if request.deleteMeals {
-            try await deleteUserMeals(userId: request.userId)
+            try await MealRepository.shared.deleteAll(userId: userId)
         }
-        
+
         if request.deleteSymptoms {
-            try await deleteUserSymptoms(userId: request.userId)
+            try await SymptomRepository.shared.deleteAll(userId: userId)
         }
-        
+
         if request.deleteReminders {
-            try await deleteUserReminders(userId: request.userId)
-        }
-        
-        if request.deleteAnalytics {
-            try await deleteUserAnalytics(userId: request.userId)
-        }
-        
-        if request.deleteHealthData {
-            try await deleteUserHealthData(userId: request.userId)
-        }
-        
-        if request.deleteUserProfile {
-            try await deleteUserProfile(userId: request.userId)
-        }
-        
-        // Update status to completed
-        try await firestore
-            .collection("dataDeletionRequests")
-            .document(requestId)
-            .updateData([
-                "status": DeletionStatus.approved.rawValue,
-                "processedDate": FieldValue.serverTimestamp()
-            ])
-    }
-    
-    // MARK: - Individual Data Deletion Methods
-    
-    private func deleteUserMeals(userId: String) async throws {
-        let mealsSnapshot = try await firestore
-            .collection("meals")
-            .whereField("createdBy", isEqualTo: userId)
-            .getDocuments()
-        
-        let batch = firestore.batch()
-        
-        for document in mealsSnapshot.documents {
-            // Delete food items subcollection
-            let foodItemsSnapshot = try await document.reference
-                .collection("foodItems")
-                .getDocuments()
-            
-            for foodItem in foodItemsSnapshot.documents {
-                batch.deleteDocument(foodItem.reference)
+            if let settings = try? await ReminderSettingsRepository.shared.fetch(forUser: userId) {
+                try await ReminderSettingsRepository.shared.delete(settings)
             }
-            
-            // Delete the meal
-            batch.deleteDocument(document.reference)
         }
-        
-        try await batch.commit()
-    }
-    
-    private func deleteUserSymptoms(userId: String) async throws {
-        let symptomsSnapshot = try await firestore
-            .collection("symptoms")
-            .whereField("createdBy", isEqualTo: userId)
-            .getDocuments()
-        
-        let batch = firestore.batch()
-        
-        for document in symptomsSnapshot.documents {
-            batch.deleteDocument(document.reference)
+
+        // "Analytics" here means the medication history the insight engine
+        // reads. Nothing is reported off-device, so there is no separate
+        // analytics store to clear.
+        if request.deleteAnalytics {
+            try await MedicationDoseRepository.shared.deleteAll(userId: userId)
+            try await MedicationRepository.shared.deleteAll(userId: userId)
         }
-        
-        try await batch.commit()
-    }
-    
-    private func deleteUserReminders(userId: String) async throws {
-        let remindersSnapshot = try await firestore
-            .collection("reminders")
-            .whereField("userId", isEqualTo: userId)
-            .getDocuments()
-        
-        let batch = firestore.batch()
-        
-        for document in remindersSnapshot.documents {
-            batch.deleteDocument(document.reference)
+
+        if request.deleteHealthData {
+            try await clearHealthFields(userId: userId)
         }
-        
-        try await batch.commit()
-    }
-    
-    private func deleteUserAnalytics(userId: String) async throws {
-        let analyticsSnapshot = try await firestore
-            .collection("analytics")
-            .whereField("userId", isEqualTo: userId)
-            .getDocuments()
-        
-        let batch = firestore.batch()
-        
-        for document in analyticsSnapshot.documents {
-            batch.deleteDocument(document.reference)
+
+        if request.deleteUserProfile {
+            // Clears the encrypted loose files as well, then starts a fresh
+            // empty profile so the app still has an owner for new records.
+            try await LocalUserService.shared.deleteAllLocalData()
         }
-        
-        try await batch.commit()
+
+        var completed = request
+        completed.status = .approved
+        completed.processedDate = Date.now
+        completed.processedBy = "on-device"
+        try await requestRepository.save(completed)
     }
-    
-    private func deleteUserHealthData(userId: String) async throws {
-        // Delete user's health data from their profile
-        try await firestore
-            .collection("users")
-            .document(userId)
-            .updateData([
-                "dateOfBirth": FieldValue.delete(),
-                "biologicalSexRawValue": FieldValue.delete(),
-                "weight": FieldValue.delete(),
-                "height": FieldValue.delete()
-            ])
-    }
-    
-    private func deleteUserProfile(userId: String) async throws {
-        // Delete user profile
-        try await firestore
-            .collection("users")
-            .document(userId)
-            .delete()
-        
-        // Delete user's Firebase Auth account
-        if let currentUser = auth.currentUser, currentUser.uid == userId {
-            try await currentUser.delete()
-        }
-    }
-    
-    // MARK: - Helper Methods
-    
-    private func fetchDeletionRequest(requestId: String) async throws -> DataDeletionRequest? {
-        let document = try await firestore
-            .collection("dataDeletionRequests")
-            .document(requestId)
-            .getDocument()
-        
-        guard let data = document.data() else { return nil }
-        return DataDeletionRequest(from: data, id: document.documentID)
+
+    /// Removes the HealthKit-derived fields from the local profile, leaving the
+    /// profile itself in place.
+    private func clearHealthFields(userId: String) async throws {
+        guard var user = LocalUserService.shared.currentUser, user.id == userId else { return }
+        user.dateOfBirth = nil
+        user.biologicalSexRawValue = nil
+        user.weight = nil
+        user.height = nil
+        try await LocalUserService.shared.updateUserProfile(user)
     }
 }
 
@@ -299,15 +153,12 @@ import FirebaseAuth
 
 enum DataDeletionError: LocalizedError {
     case requestNotFound
-    case unauthorized
     case deletionFailed
-    
+
     var errorDescription: String? {
         switch self {
         case .requestNotFound:
             return "Deletion request not found"
-        case .unauthorized:
-            return "You are not authorized to perform this action"
         case .deletionFailed:
             return "Failed to delete data"
         }

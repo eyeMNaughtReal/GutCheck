@@ -9,7 +9,7 @@ import SwiftUI
 
 struct PaginatedSymptomHistoryView: View {
     @State private var viewModel = SymptomHistoryViewModel()
-    @Environment(AuthService.self) var authService
+    @Environment(LocalUserService.self) var userService
     @State private var optionalStartDate: Date? = nil
     @State private var optionalEndDate: Date? = nil
     
@@ -355,5 +355,5 @@ extension StoolType {
 
 #Preview {
     PaginatedSymptomHistoryView()
-        .environment(AuthService())
+        .environment(LocalUserService.shared)
 }

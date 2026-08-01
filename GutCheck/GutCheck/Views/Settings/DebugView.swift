@@ -1,12 +1,11 @@
 import SwiftUI
-import FirebaseAuth
 import Network
 
 struct DebugView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(AuthService.self) private var authService
+    @Environment(LocalUserService.self) private var userService
     @Environment(SettingsViewModel.self) private var settingsVM
-    @State private var networkMonitor = NetworkMonitor()
+    @State private var networkMonitor = NetworkMonitor.shared
     @State private var showingResetConfirmation = false
     @State private var isResetting = false
     @State private var resetError: Error?
@@ -26,21 +25,11 @@ struct DebugView: View {
             }
 
             // User Info
-            if let user = authService.currentUser {
+            if let user = userService.currentUser {
                 Section("User Information") {
                     LabeledContent("User ID", value: user.id)
                     LabeledContent("Email", value: user.email)
                     LabeledContent("Name", value: user.fullName)
-                }
-            }
-
-            // Firebase Auth Info
-            if let firebaseUser = authService.authUser {
-                Section("Firebase Auth") {
-                    LabeledContent("UID", value: firebaseUser.uid)
-                    if let lastSignIn = firebaseUser.metadata.lastSignInDate {
-                        LabeledContent("Last Sign In", value: lastSignIn.formattedDateTime)
-                    }
                 }
             }
 
@@ -107,14 +96,11 @@ struct DebugView: View {
                 UserDefaults.standard.removePersistentDomain(forName: bundleID)
             }
             
-            // Clear Core Data
-            try await LocalStorageService.shared.clearAllPrivateData()
+            // Clear the SwiftData store and the legacy encrypted files
+            try await LocalUserService.shared.deleteAllLocalData()
             
             // Clear document directory
             try FileManager.default.clearDocumentDirectory()
-            
-            // Sign out user
-            try Auth.auth().signOut()
             
             dismiss()
         } catch {

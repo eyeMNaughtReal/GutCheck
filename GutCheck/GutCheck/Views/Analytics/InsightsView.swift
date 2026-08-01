@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct InsightsView: View {
-    @Environment(AuthService.self) var authService
+    @Environment(LocalUserService.self) var userService
     @Environment(AppRouter.self) var router
     @State private var viewModel = InsightsViewModel()
     
@@ -92,7 +92,7 @@ struct InsightsView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                ProfileAvatarButton(user: authService.currentUser) {
+                ProfileAvatarButton(user: userService.currentUser) {
                     router.presentSheet(.profile)
                 }
             }
@@ -699,11 +699,11 @@ private struct RecommendationCard: View {
 
 #Preview {
     InsightsView()
-        .environment(AuthService())
+        .environment(LocalUserService.shared)
         .environment(AppRouter.shared)
 }
 
 #Preview {
     InsightsView()
-        .environment(AuthService())
+        .environment(LocalUserService.shared)
 }

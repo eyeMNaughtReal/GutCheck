@@ -1,17 +1,19 @@
 
 GutCheck Privacy Policy
-Effective Date: [Insert Effective Date]
+Effective Date: August 1, 2026
 
-GutCheck (“we”, “us”, or “our”) is committed to protecting your privacy. This Privacy Policy explains how we collect, use, store, and protect your data in accordance with U.S. privacy regulations and HIPAA principles.
+GutCheck (“we”, “us”, or “our”) is committed to protecting your privacy. This Privacy Policy explains how your data is collected, used, and stored, in accordance with U.S. privacy regulations and HIPAA principles.
 
 1. Data We Collect
-We collect personal health data that you log within the app, including:
+GutCheck records only what you enter in the app:
 - Meals and ingredients (manually entered, scanned, or photographed)
 - Symptoms and bowel movements
-- Timestamps and app usage behavior
-- Authentication credentials via Apple, Google, or Email
+- Medications and doses
+- The dates and times you logged them
 
-We also collect the following data from Apple HealthKit (with your permission):
+There are no accounts. GutCheck does not ask for an email address or password, and does not collect analytics, advertising identifiers, or usage telemetry.
+
+We also read the following from Apple HealthKit (with your permission):
 - Age
 - Weight
 - Height
@@ -21,23 +23,29 @@ We also collect the following data from Apple HealthKit (with your permission):
 Your data is used solely to:
 - Provide insights and pattern recognition between food and symptoms
 - Help you track digestive health over time
-- Power AI-based suggestions and predictions tailored to your physiological profile
+- Power on-device suggestions and predictions tailored to your physiological profile
 
 3. Data Storage and Security
-All data is stored securely in Google Firebase and is encrypted in transit (TLS). HealthKit data is only used locally or securely synced if permitted, and is never shared with third parties. Data is only accessible by authenticated users and is not sold or monetized.
+All of your data is stored on your device and nowhere else. There is no GutCheck server and no cloud account, so your health history is never transmitted to us or to any third party, and there is nothing for us to sell or monetize.
+
+The on-device database is protected by iOS Data Protection, which keeps it encrypted at rest while your device is locked. Data leaves your device only when you explicitly export or share it — for example, when you generate a healthcare report and choose where to send it. Exporting requires Face ID, Touch ID, or your device passcode.
 
 4. HIPAA Disclaimer
 GutCheck is not a covered entity or business associate under HIPAA and does not process insurance claims. However, we voluntarily implement practices aligned with HIPAA principles to protect your personal health information.
 
 5. Third-Party Services
-GutCheck integrates with Apple HealthKit and Google APIs. These services are used only with your explicit consent and are governed by their respective privacy policies. HealthKit data will never be used for marketing or analytics unrelated to your personal usage.
+GutCheck integrates with Apple HealthKit, used only with your explicit consent and governed by Apple's privacy policy. HealthKit data will never be used for marketing or analytics unrelated to your personal usage.
+
+Searching for a food sends only the search term you typed to third-party nutrition databases (Open Food Facts and the USDA FoodData Central API). No personal or health information is included in those requests. This is the only network request the app makes.
 
 6. Your Rights and Choices
 You have the right to:
 - View, export, or delete your data
-- Delete your account at any time from within the app
+- Erase everything at any time from within the app, which takes effect immediately and permanently
 - Revoke HealthKit permissions at any time via iOS Settings
 - Contact us with privacy-related questions or requests
+
+Because your data lives only on your device, deleting the app also deletes your history. Export anything you want to keep first.
 
 7. Contact Us
 If you have any questions about this policy or your data, please contact us at:

@@ -1,5 +1,4 @@
 import Foundation
-import FirebaseFirestore
 
 @MainActor
 @Observable class CalendarDetailViewModel {
@@ -25,18 +24,18 @@ import FirebaseFirestore
         meals.isEmpty && symptoms.isEmpty && !hasAnalysis
     }
     
-    func loadData(for date: Date, authService: AuthService) async {
+    func loadData(for date: Date, userService: LocalUserService) async {
         do {
             // Load meals for the day using MealRepository
             meals = try await mealRepository.fetchMealsForDate(
                 date, 
-                userId: authService.currentUser?.id ?? ""
+                userId: userService.currentUser?.id ?? ""
             )
             
             // Load symptoms for the day using SymptomRepository
             symptoms = try await symptomRepository.fetchSymptomsForDate(
                 date,
-                userId: authService.currentUser?.id ?? ""
+                userId: userService.currentUser?.id ?? ""
             )
             
             // Analyze the data for the day

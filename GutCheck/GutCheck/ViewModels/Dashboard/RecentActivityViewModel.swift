@@ -1,5 +1,4 @@
 import SwiftUI
-import FirebaseFirestore
 import HealthKit
 
 @MainActor
@@ -22,13 +21,13 @@ import HealthKit
         self.medicationDoseRepository = medicationDoseRepository
     }
     
-    func loadRecentActivity(for date: Date, authService: AuthService) {
+    func loadRecentActivity(for date: Date, userService: LocalUserService) {
         isLoading = true
         errorMessage = nil
         
         Task {
             do {
-                let entries = try await fetchActivityEntries(for: date, authService: authService)
+                let entries = try await fetchActivityEntries(for: date, userService: userService)
                 await MainActor.run {
                     self.recentEntries = entries
                     self.isLoading = false
@@ -44,9 +43,9 @@ import HealthKit
     
     // MARK: - Fetch Activity Entries
     
-    private func fetchActivityEntries(for date: Date, authService: AuthService) async throws -> [ActivityEntry] {
-        guard let currentUser = authService.currentUser else {
-            throw RepositoryError.noAuthenticatedUser
+    private func fetchActivityEntries(for date: Date, userService: LocalUserService) async throws -> [ActivityEntry] {
+        guard let currentUser = userService.currentUser else {
+            throw RepositoryError.noActiveProfile
         }
         
         var entries: [ActivityEntry] = []
