@@ -87,14 +87,31 @@ import SwiftData
 
     // MARK: - Store file protection
 
+    /// Creates the store directory, and sets its protection class on every
+    /// launch rather than only at creation.
+    ///
+    /// This is what actually protects the SQLite journal files. They are
+    /// created lazily by the first write — after `applyFileProtection()` below
+    /// has already run — so they can only be covered by inheriting the
+    /// directory's class, not by being stamped individually at startup.
     nonisolated private static func createStoreDirectoryIfNeeded() {
         let directory = storeDirectory
-        guard !FileManager.default.fileExists(atPath: directory.path) else { return }
-        try? FileManager.default.createDirectory(
-            at: directory,
-            withIntermediateDirectories: true,
-            attributes: [.protectionKey: FileProtectionType.completeUnlessOpen]
-        )
+        let attributes: [FileAttributeKey: Any] = [
+            .protectionKey: FileProtectionType.completeUnlessOpen
+        ]
+
+        guard FileManager.default.fileExists(atPath: directory.path) else {
+            try? FileManager.default.createDirectory(
+                at: directory,
+                withIntermediateDirectories: true,
+                attributes: attributes
+            )
+            return
+        }
+
+        // Directory already exists — from an earlier launch, or from a build
+        // that predates this protection being set. Re-stamp it either way.
+        try? FileManager.default.setAttributes(attributes, ofItemAtPath: directory.path)
     }
 
     /// Applies Data Protection to the store and its journal files.
@@ -115,16 +132,26 @@ import SwiftData
             .protectionKey: FileProtectionType.completeUnlessOpen
         ]
 
-        // SQLite keeps its write-ahead log and shared-memory file alongside the
-        // store. Protecting only the store would leave recent writes readable.
-        let paths = [
-            storeURL,
-            storeURL.appendingPathExtension("wal"),
-            storeURL.appendingPathExtension("shm")
-        ]
-
-        for url in paths where FileManager.default.fileExists(atPath: url.path) {
+        for url in storeFileURLs where FileManager.default.fileExists(atPath: url.path) {
             try? FileManager.default.setAttributes(attributes, ofItemAtPath: url.path)
         }
+    }
+
+    /// The store and its SQLite sidecar files.
+    ///
+    /// SQLite names the write-ahead log and shared-memory file by appending
+    /// `-wal` and `-shm` to the full store filename — `GutCheck.store-wal`, not
+    /// `GutCheck.store.wal`. `appendingPathExtension` produces the latter, so
+    /// using it here silently protected nothing: the paths never existed, the
+    /// existence check skipped them, and recent writes stayed readable in a WAL
+    /// file with the default protection class.
+    nonisolated static var storeFileURLs: [URL] {
+        let directory = storeURL.deletingLastPathComponent()
+        let name = storeURL.lastPathComponent
+        return [
+            storeURL,
+            directory.appendingPathComponent("\(name)-wal"),
+            directory.appendingPathComponent("\(name)-shm")
+        ]
     }
 }

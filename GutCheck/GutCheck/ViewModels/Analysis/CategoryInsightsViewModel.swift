@@ -10,7 +10,6 @@ import Foundation
     private let insightsService = InsightsService.shared
     private let mealRepository: any MealRepositoryProtocol
     private let symptomRepository: any SymptomRepositoryProtocol
-    private let userService = LocalUserService.shared
     
     init(mealRepository: any MealRepositoryProtocol = MealRepository.shared,
          symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
@@ -24,7 +23,7 @@ import Foundation
         
         do {
             // Get current user ID
-            let userId = getCurrentUserId()
+            let userId = LocalUserService.currentProfileId
             
             // Calculate time range for last 30 days
             let endDate = Date.now
@@ -98,15 +97,5 @@ import Foundation
         isLoading = false
     }
     
-    private func getCurrentUserId() -> String {
-        // Get the current user ID from the authentication service
-        if let currentUser = userService.currentUser {
-            return currentUser.id
-        } else {
-            // Fallback to a default if no user is authenticated
-            // This should rarely happen in a properly authenticated app
-            return "default_user"
-        }
-    }
 }
 

@@ -31,7 +31,6 @@ struct RankedItem: Identifiable {
     private let mealRepository: any MealRepositoryProtocol
     private let symptomRepository: any SymptomRepositoryProtocol
     private let healthKitManager: any HealthKitManagerProtocol
-    private let userService = LocalUserService.shared
     
     init(mealRepository: any MealRepositoryProtocol = MealRepository.shared,
          symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared,
@@ -55,7 +54,7 @@ struct RankedItem: Identifiable {
 
         do {
             // Get current user ID
-            let userId = getCurrentUserId()
+            let userId = LocalUserService.currentProfileId
             
             // Calculate time range for last 30 days
             let endDate = Date.now
@@ -172,14 +171,6 @@ struct RankedItem: Identifiable {
         }
     }
     
-    private func getCurrentUserId() -> String {
-        if let currentUser = userService.currentUser {
-            return currentUser.id
-        } else {
-            return "default_user"
-        }
-    }
-
     // MARK: - Weekly Summary Computation
 
     private func computeWeeklySummaries(meals: [Meal], symptoms: [Symptom]) {

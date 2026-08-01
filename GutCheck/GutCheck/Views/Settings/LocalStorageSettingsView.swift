@@ -125,14 +125,7 @@ struct LocalStorageSettingsView: View {
     /// Sums the store and its SQLite journal files — the write-ahead log can be
     /// a meaningful share of the total, so reporting the store alone understates it.
     private static func formattedStoreSize() -> String {
-        let storeURL = SwiftDataStack.storeURL
-        let urls = [
-            storeURL,
-            storeURL.appendingPathExtension("wal"),
-            storeURL.appendingPathExtension("shm")
-        ]
-
-        let bytes = urls.reduce(into: Int64(0)) { total, url in
+        let bytes = SwiftDataStack.storeFileURLs.reduce(into: Int64(0)) { total, url in
             let attributes = try? FileManager.default.attributesOfItem(atPath: url.path)
             total += (attributes?[.size] as? Int64) ?? 0
         }
