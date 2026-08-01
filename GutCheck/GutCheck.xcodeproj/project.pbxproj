@@ -635,7 +635,6 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
-
 	};
 	rootObject = 6DEADBE52E1F312300CAF395 /* Project object */;
 }
