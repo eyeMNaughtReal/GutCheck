@@ -7,6 +7,16 @@ import Foundation
 
 // MARK: - Food Search Result
 /// Represents a food item from search results with comprehensive nutrition data
+///
+/// - Important: **Every nutrient on this type is in grams**, including minerals
+///   and vitamins. Both sources normalize to that convention — OpenFoodFacts
+///   reports `*_100g` natively, and `USDAFoodService` divides its mg/mcg values
+///   down to match (see `fromMg`/`fromMcg` there).
+///
+///   `NutritionInfo` and the nutrition UI expect **milligrams**. Cross that
+///   boundary through the `…Milligrams`/`…Micrograms` accessors below rather
+///   than passing the stored value through — doing the latter is what made
+///   sodium read `0 mg` for a Big Mac.
 struct FoodSearchResult: Identifiable, Codable {
     let id: String
     let name: String
@@ -216,6 +226,33 @@ struct FoodSearchResult: Identifiable, Codable {
         self.theobromine = theobromine
     }
     
+    // MARK: - Unit conversion
+
+    /// Grams to milligrams, preserving nil.
+    private static func toMilligrams(_ grams: Double?) -> Double? {
+        grams.map { $0 * 1_000 }
+    }
+
+    /// Grams to micrograms, preserving nil.
+    private static func toMicrograms(_ grams: Double?) -> Double? {
+        grams.map { $0 * 1_000_000 }
+    }
+
+    var sodiumMilligrams: Double? { Self.toMilligrams(sodium) }
+    var cholesterolMilligrams: Double? { Self.toMilligrams(cholesterol) }
+    var potassiumMilligrams: Double? { Self.toMilligrams(potassium) }
+    var calciumMilligrams: Double? { Self.toMilligrams(calcium) }
+    var ironMilligrams: Double? { Self.toMilligrams(iron) }
+    var vitaminCMilligrams: Double? { Self.toMilligrams(vitaminC) }
+    var vitaminAMicrograms: Double? { Self.toMicrograms(vitaminA) }
+    var vitaminDMicrograms: Double? { Self.toMicrograms(vitaminD) }
+
+    /// Trims the float noise that `"\(someDouble)"` leaves behind — a converted
+    /// 0.4605 g becomes 460.49999999999994, which should read as `460.5`.
+    private static func amount(_ value: Double) -> String {
+        value.formatted(.number.precision(.fractionLength(0...1)).grouping(.never))
+    }
+
     /// Convert to FoodItem for logging meals
     func toFoodItem(quantity: String? = nil) -> FoodItem {
         let finalQuantity = quantity ?? {
@@ -228,29 +265,31 @@ struct FoodSearchResult: Identifiable, Codable {
         var nutritionDetails: [String: String] = [:]
         
         // Add detailed nutrition data
+        // Grams stay grams; anything labelled mg/mcg is converted first, so the
+        // number and its suffix agree.
         if let saturatedFat = saturatedFat {
-            nutritionDetails["Saturated Fat"] = "\(saturatedFat)g"
+            nutritionDetails["Saturated Fat"] = "\(Self.amount(saturatedFat))g"
         }
-        if let cholesterol = cholesterol {
-            nutritionDetails["Cholesterol"] = "\(cholesterol)mg"
+        if let cholesterol = cholesterolMilligrams {
+            nutritionDetails["Cholesterol"] = "\(Self.amount(cholesterol))mg"
         }
-        if let potassium = potassium {
-            nutritionDetails["Potassium"] = "\(potassium)mg"
+        if let potassium = potassiumMilligrams {
+            nutritionDetails["Potassium"] = "\(Self.amount(potassium))mg"
         }
-        if let calcium = calcium {
-            nutritionDetails["Calcium"] = "\(calcium)mg"
+        if let calcium = calciumMilligrams {
+            nutritionDetails["Calcium"] = "\(Self.amount(calcium))mg"
         }
-        if let iron = iron {
-            nutritionDetails["Iron"] = "\(iron)mg"
+        if let iron = ironMilligrams {
+            nutritionDetails["Iron"] = "\(Self.amount(iron))mg"
         }
-        if let vitaminA = vitaminA {
-            nutritionDetails["Vitamin A"] = "\(vitaminA)mcg"
+        if let vitaminA = vitaminAMicrograms {
+            nutritionDetails["Vitamin A"] = "\(Self.amount(vitaminA))mcg"
         }
-        if let vitaminC = vitaminC {
-            nutritionDetails["Vitamin C"] = "\(vitaminC)mg"
+        if let vitaminC = vitaminCMilligrams {
+            nutritionDetails["Vitamin C"] = "\(Self.amount(vitaminC))mg"
         }
-        if let vitaminD = vitaminD {
-            nutritionDetails["Vitamin D"] = "\(vitaminD)mcg"
+        if let vitaminD = vitaminDMicrograms {
+            nutritionDetails["Vitamin D"] = "\(Self.amount(vitaminD))mcg"
         }
         
         return FoodItem(
@@ -265,7 +304,7 @@ struct FoodSearchResult: Identifiable, Codable {
                 fat: fat,
                 fiber: fiber,
                 sugar: sugar,
-                sodium: sodium
+                sodium: sodiumMilligrams
             ),
             source: .manual,
             nutritionDetails: nutritionDetails

@@ -109,30 +109,32 @@ import Combine
         if let sugar = nfood.sugar {
             nutritionDict["sugars"] = sugar.formatted(.number.precision(.fractionLength(1)))
         }
-        if let sodium = nfood.sodium {
+        // Minerals and vitamins arrive in grams (see the unit note on
+        // FoodSearchResult); this dictionary is displayed as mg/mcg.
+        if let sodium = nfood.sodiumMilligrams {
             nutritionDict["sodium"] = sodium.formatted(.number.precision(.fractionLength(1)))
         }
-        
+
         // Add detailed nutrition from the specific properties
         if let saturatedFat = nfood.saturatedFat {
             nutritionDict["saturated_fat"] = saturatedFat.formatted(.number.precision(.fractionLength(1)))
         }
-        if let cholesterol = nfood.cholesterol {
+        if let cholesterol = nfood.cholesterolMilligrams {
             nutritionDict["cholesterol"] = cholesterol.formatted(.number.precision(.fractionLength(1)))
         }
-        if let potassium = nfood.potassium {
+        if let potassium = nfood.potassiumMilligrams {
             nutritionDict["potassium"] = potassium.formatted(.number.precision(.fractionLength(1)))
         }
-        if let vitaminA = nfood.vitaminA {
+        if let vitaminA = nfood.vitaminAMicrograms {
             nutritionDict["vitamin_a_dv"] = vitaminA.formatted(.number.precision(.fractionLength(0)))
         }
-        if let vitaminC = nfood.vitaminC {
+        if let vitaminC = nfood.vitaminCMilligrams {
             nutritionDict["vitamin_c_dv"] = vitaminC.formatted(.number.precision(.fractionLength(0)))
         }
-        if let calcium = nfood.calcium {
+        if let calcium = nfood.calciumMilligrams {
             nutritionDict["calcium_dv"] = calcium.formatted(.number.precision(.fractionLength(0)))
         }
-        if let iron = nfood.iron {
+        if let iron = nfood.ironMilligrams {
             nutritionDict["iron_dv"] = iron.formatted(.number.precision(.fractionLength(0)))
         }
         
@@ -147,7 +149,7 @@ import Combine
             fat: nfood.fat,
             fiber: nfood.fiber,
             sugar: nfood.sugar,
-            sodium: nfood.sodium
+            sodium: nfood.sodiumMilligrams
         )
         
         let foodItem = FoodItem(
