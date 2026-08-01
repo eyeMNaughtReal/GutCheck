@@ -249,9 +249,24 @@ struct FoodSearchResult: Identifiable, Codable {
 
     /// Trims the float noise that `"\(someDouble)"` leaves behind — a converted
     /// 0.4605 g becomes 460.49999999999994, which should read as `460.5`.
-    private static func amount(_ value: Double) -> String {
-        value.formatted(.number.precision(.fractionLength(0...1)).grouping(.never))
+    ///
+    /// - Important: Formats in `en_US_POSIX`, not the user's locale. These
+    ///   strings go into `nutritionDetails` and are parsed back out later by
+    ///   `UnifiedFoodDetailView.parsedDetails`, which keeps only digits and
+    ///   `.`. A locale that uses a comma decimal separator would render this
+    ///   as `460,5`, and stripping that comma silently turns it into `4605`.
+    static func amount(_ value: Double) -> String {
+        value.formatted(
+            .number
+                .precision(.fractionLength(0...1))
+                .grouping(.never)
+                .locale(Self.storageLocale)
+        )
     }
+
+    /// Fixed locale for numbers that are stored as strings and re-parsed later.
+    /// Display formatting should still use the user's locale.
+    static let storageLocale = Locale(identifier: "en_US_POSIX")
 
     /// Convert to FoodItem for logging meals
     func toFoodItem(quantity: String? = nil) -> FoodItem {
