@@ -284,7 +284,7 @@ struct UnifiedFoodDetailView: View {
         keys.compactMap { key in
             guard let str = foodItem.nutritionDetails[key],
                   let val = Self.normalizedNumber(from: str),
-                  val > 0
+                  val >= 0
             else { return nil }
             return (key, val)
         }
@@ -321,6 +321,10 @@ struct UnifiedFoodDetailView: View {
         switch key {
         case "Vitamin A", "Vitamin D", "Vitamin K", "Folate", "Vitamin B12", "Biotin", "Selenium":
             return "mcg"
+        case "Vitamin E", "Thiamin", "Riboflavin", "Niacin", "Vitamin B6", "Pantothenic Acid",
+             "Calcium", "Iron", "Magnesium", "Phosphorus", "Potassium", "Sodium", "Zinc",
+             "Copper", "Manganese":
+            return "mg"
         default:
             return "mg"
         }
@@ -739,75 +743,8 @@ struct NutritionDetailsView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    // Comprehensive nutrition display
-                    foodItem.nutrition.summaryCard(style: .detailed)
-                    
-                    // Comprehensive nutrition grid (like barcode scanner)
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Micronutrients & Additional Details")
-                            .typography(Typography.headline)
-                            .foregroundStyle(ColorTheme.primaryText)
-                        
-                        LazyVGrid(columns: [
-                            GridItem(.flexible()),
-                            GridItem(.flexible()),
-                            GridItem(.flexible())
-                        ], spacing: 12) {
-                            // Additional nutrition from nutritionDetails dictionary (micronutrients only)
-                            if let saturatedFat = foodItem.nutritionDetails["saturated_fat"],
-                               let saturatedFatValue = Double(saturatedFat), saturatedFatValue > 0 {
-                                nutritionGridItem("Sat Fat", value: saturatedFatValue, unit: "g")
-                            }
-                            if let cholesterol = foodItem.nutritionDetails["cholesterol"],
-                               let cholesterolValue = Double(cholesterol), cholesterolValue > 0 {
-                                nutritionGridItem("Cholesterol", value: cholesterolValue, unit: "mg")
-                            }
-                            if let potassium = foodItem.nutritionDetails["potassium"],
-                               let potassiumValue = Double(potassium), potassiumValue > 0 {
-                                nutritionGridItem("Potassium", value: potassiumValue, unit: "mg")
-                            }
-                            if let calcium = foodItem.nutritionDetails["calcium"],
-                               let calciumValue = Double(calcium), calciumValue > 0 {
-                                nutritionGridItem("Calcium", value: calciumValue, unit: "mg")
-                            }
-                            if let iron = foodItem.nutritionDetails["iron"],
-                               let ironValue = Double(iron), ironValue > 0 {
-                                nutritionGridItem("Iron", value: ironValue, unit: "mg")
-                            }
-                            if let vitaminA = foodItem.nutritionDetails["vitamin_a"],
-                               let vitaminAValue = Double(vitaminA), vitaminAValue > 0 {
-                                nutritionGridItem("Vitamin A", value: vitaminAValue, unit: "mcg")
-                            }
-                            if let vitaminC = foodItem.nutritionDetails["vitamin_c"],
-                               let vitaminCValue = Double(vitaminC), vitaminCValue > 0 {
-                                nutritionGridItem("Vitamin C", value: vitaminCValue, unit: "mg")
-                            }
-                        }
-                    }
-                    .padding()
-                    .background(ColorTheme.cardBackground)
-                    .clipShape(.rect(cornerRadius: 12))
-                    
-                    // Additional nutrition details (remaining items)
-                    if !remainingNutritionDetails.isEmpty {
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("Additional Nutrition Information")
-                                .typography(Typography.headline)
-                                .foregroundStyle(ColorTheme.primaryText)
-                            
-                            LazyVGrid(columns: [
-                                GridItem(.flexible()),
-                                GridItem(.flexible())
-                            ], spacing: 12) {
-                                ForEach(remainingNutritionDetails, id: \.0) { key, value in
-                                    NutritionDetailItem(label: key, value: value)
-                                }
-                            }
-                        }
-                        .padding()
-                        .background(ColorTheme.cardBackground)
-                        .clipShape(.rect(cornerRadius: 12))
-                    }
+                    nutritionFactsPanel
+                    micronutrientPanel
                 }
                 .padding()
             }
@@ -822,112 +759,179 @@ struct NutritionDetailsView: View {
             }
         }
     }
-    
-    private var remainingNutritionDetails: [(String, String)] {
-        // Keys that are already displayed in the main sections or are not nutrients
-        let usedKeys = [
-            "protein", "carbs", "fat", "calories", "brand", "source", "barcode",
-            "saturated_fat", "cholesterol", "potassium", "calcium", "iron", "vitamin_a", "vitamin_c"
-        ]
-        
-        // Keys that should be excluded (non-nutritional data)
-        let excludedKeys = [
-            "brand", "source", "barcode", "upc", "ndb_no", "item_id", "item_name",
-            "food_group", "measure", "common_name", "scientific_name", "commercial_name",
-            "alternate_names", "nutrients_per", "refuse_pct", "n_factor", "pro_factor",
-            "fat_factor", "cho_factor"
-        ]
-        
-        // Show most nutrition information, but avoid duplicates from main sections
-        return foodItem.nutritionDetails
-            .filter { key, value in
-                let lowerKey = key.lowercased()
-                
-                // Exclude already used keys and non-nutritional metadata
-                guard !usedKeys.contains(lowerKey) && !excludedKeys.contains(lowerKey) else { return false }
-                
-                // Exclude empty or zero values
-                guard value != "N/A" && value != "0" && value != "0.0" && !value.isEmpty else { return false }
-                
-                // Exclude percentage daily values (we'll show raw values)
-                guard !lowerKey.hasSuffix("_dv") && !lowerKey.hasSuffix("_pct") else { return false }
-                
-                return true
+
+    private var nutritionFactsPanel: some View {
+        nutritionPanel(
+            title: "Nutrition Facts",
+            rows: nutritionFactsRows,
+            emptyMessage: nil
+        )
+    }
+
+    private var micronutrientPanel: some View {
+        nutritionPanel(
+            title: "Vitamins & Minerals",
+            rows: micronutrientRows,
+            emptyMessage: "No vitamin or mineral data available"
+        )
+    }
+
+    private func nutritionPanel(
+        title: String,
+        rows: [NutritionFactRow],
+        emptyMessage: String?
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .typography(Typography.headline)
+                .foregroundStyle(ColorTheme.primaryText)
+
+            if let emptyMessage, rows.allSatisfy({ $0.value == nil }) {
+                EmptyStateView(message: emptyMessage, imageName: "leaf")
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(ColorTheme.cardBackground)
+                    .clipShape(.rect(cornerRadius: 12))
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
+                        NutritionFactRowView(row: row)
+
+                        if index < rows.count - 1 {
+                            Divider()
+                        }
+                    }
+                }
+                .padding()
+                .background(ColorTheme.cardBackground)
+                .clipShape(.rect(cornerRadius: 12))
             }
-            .sorted { first, second in
-                let firstKey = first.0.lowercased()
-                let secondKey = second.0.lowercased()
-                
-                // Define categories for better organization
-                let firstIsVitamin = firstKey.contains("vitamin") || firstKey.contains("thiamin") || 
-                                   firstKey.contains("riboflavin") || firstKey.contains("niacin") ||
-                                   firstKey.contains("folate") || firstKey.contains("biotin") ||
-                                   firstKey.contains("pantothenic")
-                let secondIsVitamin = secondKey.contains("vitamin") || secondKey.contains("thiamin") || 
-                                     secondKey.contains("riboflavin") || secondKey.contains("niacin") ||
-                                     secondKey.contains("folate") || secondKey.contains("biotin") ||
-                                     secondKey.contains("pantothenic")
-                
-                let firstIsMineral = ["calcium", "iron", "magnesium", "phosphorus", "potassium", "sodium", 
-                                     "zinc", "copper", "manganese", "selenium"].contains { firstKey.contains($0) }
-                let secondIsMineral = ["calcium", "iron", "magnesium", "phosphorus", "potassium", "sodium", 
-                                      "zinc", "copper", "manganese", "selenium"].contains { secondKey.contains($0) }
-                
-                let firstIsAminoAcid = ["histidine", "isoleucine", "leucine", "lysine", "methionine", 
-                                       "phenylalanine", "threonine", "tryptophan", "valine", "alanine",
-                                       "arginine", "aspartic", "cysteine", "glutamic", "glycine", 
-                                       "proline", "serine", "tyrosine"].contains { firstKey.contains($0) }
-                let secondIsAminoAcid = ["histidine", "isoleucine", "leucine", "lysine", "methionine", 
-                                        "phenylalanine", "threonine", "tryptophan", "valine", "alanine",
-                                        "arginine", "aspartic", "cysteine", "glutamic", "glycine", 
-                                        "proline", "serine", "tyrosine"].contains { secondKey.contains($0) }
-                
-                let firstIsFat = firstKey.contains("fat") || firstKey.contains("fatty")
-                let secondIsFat = secondKey.contains("fat") || secondKey.contains("fatty")
-                
-                // Sort order: Vitamins -> Minerals -> Fats -> Amino Acids -> Others
-                if firstIsVitamin && !secondIsVitamin {
-                    return true
-                } else if !firstIsVitamin && secondIsVitamin {
-                    return false
-                } else if firstIsMineral && !secondIsMineral && !secondIsVitamin {
-                    return true
-                } else if !firstIsMineral && secondIsMineral && !firstIsVitamin {
-                    return false
-                } else if firstIsFat && !secondIsFat && !secondIsVitamin && !secondIsMineral {
-                    return true
-                } else if !firstIsFat && secondIsFat && !firstIsVitamin && !firstIsMineral {
-                    return false
-                } else if firstIsAminoAcid && !secondIsAminoAcid && !secondIsVitamin && !secondIsMineral && !secondIsFat {
-                    return true
-                } else if !firstIsAminoAcid && secondIsAminoAcid && !firstIsVitamin && !firstIsMineral && !firstIsFat {
-                    return false
+        }
+    }
+
+    private var nutritionFactsRows: [NutritionFactRow] {
+        [
+            .init(label: "Calories", value: foodItem.nutrition.calories.map(Double.init), unit: "kcal", fractionDigits: 0, dailyValueReference: nil),
+            .init(label: "Total Fat", value: foodItem.nutrition.fat ?? detailValue("Total Fat"), unit: "g", fractionDigits: 1, dailyValueReference: 78),
+            .init(label: "Saturated Fat", value: detailValue("Saturated Fat"), unit: "g", fractionDigits: 1, dailyValueReference: 20),
+            .init(label: "Trans Fat", value: detailValue("Trans Fat"), unit: "g", fractionDigits: 1, dailyValueReference: nil),
+            .init(label: "Cholesterol", value: detailValue("Cholesterol"), unit: "mg", fractionDigits: 1, dailyValueReference: 300),
+            .init(label: "Sodium", value: foodItem.nutrition.sodium ?? detailValue("Sodium"), unit: "mg", fractionDigits: 0, dailyValueReference: 2300),
+            .init(label: "Total Carbohydrate", value: foodItem.nutrition.carbs ?? detailValue("Total Carbohydrate"), unit: "g", fractionDigits: 1, dailyValueReference: 275),
+            .init(label: "Dietary Fiber", value: foodItem.nutrition.fiber ?? detailValue("Dietary Fiber"), unit: "g", fractionDigits: 1, dailyValueReference: 28),
+            .init(label: "Total Sugars", value: foodItem.nutrition.sugar ?? detailValue("Total Sugars"), unit: "g", fractionDigits: 1, dailyValueReference: nil),
+            .init(label: "Added Sugars", value: detailValue("Added Sugars"), unit: "g", fractionDigits: 1, dailyValueReference: 50),
+            .init(label: "Protein", value: foodItem.nutrition.protein ?? detailValue("Protein"), unit: "g", fractionDigits: 1, dailyValueReference: nil)
+        ]
+    }
+
+    private var micronutrientRows: [NutritionFactRow] {
+        [
+            .init(label: "Vitamin D", value: detailValue("Vitamin D"), unit: "mcg", fractionDigits: 2, dailyValueReference: 20),
+            .init(label: "Calcium", value: detailValue("Calcium"), unit: "mg", fractionDigits: 2, dailyValueReference: 1300),
+            .init(label: "Iron", value: detailValue("Iron"), unit: "mg", fractionDigits: 2, dailyValueReference: 18),
+            .init(label: "Potassium", value: detailValue("Potassium"), unit: "mg", fractionDigits: 2, dailyValueReference: 4700),
+            .init(label: "Vitamin A", value: detailValue("Vitamin A"), unit: "mcg", fractionDigits: 2, dailyValueReference: 900),
+            .init(label: "Vitamin C", value: detailValue("Vitamin C"), unit: "mg", fractionDigits: 2, dailyValueReference: 90),
+            .init(label: "Vitamin E", value: detailValue("Vitamin E"), unit: "mg", fractionDigits: 2, dailyValueReference: 15),
+            .init(label: "Vitamin K", value: detailValue("Vitamin K"), unit: "mcg", fractionDigits: 2, dailyValueReference: 120),
+            .init(label: "Thiamin", value: detailValue("Thiamin"), unit: "mg", fractionDigits: 2, dailyValueReference: 1.2),
+            .init(label: "Riboflavin", value: detailValue("Riboflavin"), unit: "mg", fractionDigits: 2, dailyValueReference: 1.3),
+            .init(label: "Niacin", value: detailValue("Niacin"), unit: "mg", fractionDigits: 2, dailyValueReference: 16),
+            .init(label: "Vitamin B6", value: detailValue("Vitamin B6"), unit: "mg", fractionDigits: 2, dailyValueReference: 1.7),
+            .init(label: "Folate", value: detailValue("Folate"), unit: "mcg", fractionDigits: 2, dailyValueReference: 400),
+            .init(label: "Vitamin B12", value: detailValue("Vitamin B12"), unit: "mcg", fractionDigits: 2, dailyValueReference: 2.4),
+            .init(label: "Biotin", value: detailValue("Biotin"), unit: "mcg", fractionDigits: 2, dailyValueReference: 30),
+            .init(label: "Pantothenic Acid", value: detailValue("Pantothenic Acid"), unit: "mg", fractionDigits: 2, dailyValueReference: 5),
+            .init(label: "Magnesium", value: detailValue("Magnesium"), unit: "mg", fractionDigits: 2, dailyValueReference: 420),
+            .init(label: "Phosphorus", value: detailValue("Phosphorus"), unit: "mg", fractionDigits: 2, dailyValueReference: 1250),
+            .init(label: "Zinc", value: detailValue("Zinc"), unit: "mg", fractionDigits: 2, dailyValueReference: 11),
+            .init(label: "Copper", value: detailValue("Copper"), unit: "mg", fractionDigits: 2, dailyValueReference: 0.9),
+            .init(label: "Manganese", value: detailValue("Manganese"), unit: "mg", fractionDigits: 2, dailyValueReference: 2.3),
+            .init(label: "Selenium", value: detailValue("Selenium"), unit: "mcg", fractionDigits: 2, dailyValueReference: 55)
+        ]
+    }
+
+    private func detailValue(_ label: String) -> Double? {
+        nutritionDetailsValue(for: label)
+    }
+
+    private func nutritionDetailsValue(for label: String) -> Double? {
+        let lookupKeys = [
+            label,
+            label.replacingOccurrences(of: " ", with: "_").lowercased(),
+            label.lowercased()
+        ]
+
+        for key in lookupKeys {
+            if let value = foodItem.nutritionDetails[key] {
+                return Self.normalizedNumber(from: value)
+            }
+        }
+
+        if let fallback = foodItem.nutritionDetails.first(where: {
+            $0.key.lowercased() == label.lowercased() ||
+            $0.key.lowercased() == label.replacingOccurrences(of: " ", with: "_").lowercased()
+        })?.value {
+            return Self.normalizedNumber(from: fallback)
+        }
+
+        return nil
+    }
+
+    private struct NutritionFactRow: Identifiable {
+        let label: String
+        let value: Double?
+        let unit: String
+        let fractionDigits: Int
+        let dailyValueReference: Double?
+
+        var id: String { label }
+
+        var dailyValuePercent: Double? {
+            guard let value, let dailyValueReference, dailyValueReference > 0 else { return nil }
+            return value / dailyValueReference * 100
+        }
+    }
+
+    private struct NutritionFactRowView: View {
+        let row: NutritionFactRow
+
+        var body: some View {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(row.label)
+                        .typography(Typography.subheadline)
+                        .foregroundStyle(ColorTheme.primaryText)
+
+                    if let dailyValuePercent = row.dailyValuePercent {
+                        Text("\(dailyValuePercent.formatted(.number.precision(.fractionLength(0))))% DV")
+                            .typography(Typography.caption)
+                            .foregroundStyle(ColorTheme.secondaryText)
+                    }
+                }
+
+                Spacer()
+
+                if let value = row.value {
+                    HStack(spacing: 4) {
+                        Text(value.formatted(.number.precision(.fractionLength(row.fractionDigits...row.fractionDigits))))
+                            .typography(Typography.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(ColorTheme.primaryText)
+
+                        Text(row.unit)
+                            .typography(Typography.caption)
+                            .foregroundStyle(ColorTheme.secondaryText)
+                    }
                 } else {
-                    return first.0 < second.0
+                    Text("Not available")
+                        .typography(Typography.caption)
+                        .foregroundStyle(ColorTheme.secondaryText)
                 }
             }
-    }
-    
-    private func nutritionGridItem(_ label: String, value: Double, unit: String) -> some View {
-        VStack(spacing: 4) {
-            Text(label)
-                .typography(Typography.caption)
-                .foregroundStyle(ColorTheme.secondaryText)
-                .multilineTextAlignment(.center)
-            
-            Text(value.formatted(.number.precision(.fractionLength(1))))
-                .typography(Typography.subheadline)
-                .fontWeight(.semibold)
-                .foregroundStyle(ColorTheme.primaryText)
-            
-            Text(unit)
-                .typography(Typography.caption)
-                .foregroundStyle(ColorTheme.secondaryText)
+            .padding(.vertical, 8)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-        .background(ColorTheme.surface)
-        .clipShape(.rect(cornerRadius: 8))
     }
 }
 
