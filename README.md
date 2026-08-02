@@ -107,6 +107,7 @@ All documentation lives in the **[`docs/`](docs/)** folder:
 
 | Document | Description |
 |---|---|
+| [CHANGELOG.md](CHANGELOG.md) | Witty release notes for each main-branch update |
 | [documentation.md](docs/documentation.md) | Complete project guide — architecture, workflows, API integration |
 | [contributing.md](docs/contributing.md) | How to contribute, code style, PR process |
 | [compliance.md](docs/compliance.md) | GDPR/CCPA/HIPAA compliance, permissions guide |
