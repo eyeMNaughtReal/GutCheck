@@ -34,6 +34,15 @@ struct FoodSearchResult: Identifiable, Codable {
     
     // Ingredients
     let ingredients: String?
+
+    /// Allergens declared by the source, already normalised to the app's
+    /// vocabulary ("Dairy", "Gluten", …).
+    ///
+    /// A declared allergen is authoritative in a way keyword matching is not:
+    /// it survives the ingredient list being in another language. Empty means
+    /// "the source said nothing", not "no allergens" — callers should still run
+    /// keyword detection and take the union.
+    let declaredAllergens: [String]
     
     // Additional macronutrients
     let saturatedFat: Double?
@@ -111,6 +120,7 @@ struct FoodSearchResult: Identifiable, Codable {
         servingQty: Double? = nil,
         servingWeight: Double? = nil,
         ingredients: String? = nil,
+        declaredAllergens: [String] = [],
         saturatedFat: Double? = nil,
         transFat: Double? = nil,
         polyunsaturatedFat: Double? = nil,
@@ -175,6 +185,7 @@ struct FoodSearchResult: Identifiable, Codable {
         self.servingQty = servingQty
         self.servingWeight = servingWeight
         self.ingredients = ingredients
+        self.declaredAllergens = declaredAllergens
         self.saturatedFat = saturatedFat
         self.transFat = transFat
         self.polyunsaturatedFat = polyunsaturatedFat
@@ -311,7 +322,8 @@ struct FoodSearchResult: Identifiable, Codable {
             name: brand != nil ? "\(brand!) \(name)" : name,
             quantity: finalQuantity,
             estimatedWeightInGrams: servingWeight,
-            ingredients: ingredients?.components(separatedBy: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) } ?? [],
+            ingredients: IngredientTextParser.split(ingredients),
+            allergens: declaredAllergens,
             nutrition: NutritionInfo(
                 calories: calories.map { Int($0) },
                 protein: protein,

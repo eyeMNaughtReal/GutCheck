@@ -276,19 +276,43 @@ struct UnifiedFoodDetailView: View {
 
     /// Parses a `nutritionDetails` string value (e.g. "15.0g", "100mg") into a Double.
     ///
-    /// Writers use a fixed `en_US_POSIX` locale, so the separator should always
-    /// be `.`. A comma is still normalised rather than stripped, because values
-    /// persisted by an earlier build may have been written in the device
-    /// locale — dropping that comma would read `460,5` as `4605`.
+    /// Writers use a fixed `en_US_POSIX` locale with grouping disabled, so new
+    /// values always use `.` and never carry separators. Values persisted by an
+    /// earlier build were written in the device locale and may use either
+    /// convention, so both are handled — see `normalizedNumber`.
     private func parsedDetails(keys: [String]) -> [(String, Double)] {
         keys.compactMap { key in
-            guard let str = foodItem.nutritionDetails[key] else { return nil }
-            let numStr = str
-                .replacingOccurrences(of: ",", with: ".")
-                .filter { $0.isNumber || $0 == "." }
-            guard let val = Double(numStr), val > 0 else { return nil }
+            guard let str = foodItem.nutritionDetails[key],
+                  let val = Self.normalizedNumber(from: str),
+                  val > 0
+            else { return nil }
             return (key, val)
         }
+    }
+
+    /// Reads a number out of a label string, tolerating both comma conventions.
+    ///
+    /// A comma followed by exactly three trailing digits is thousands grouping
+    /// (`1,093` → 1093); anything else is a decimal separator (`460,5` → 460.5).
+    /// Getting this backwards is a factor-of-10 error in either direction.
+    static func normalizedNumber(from raw: String) -> Double? {
+        let digitsAndSeparators = raw.filter { $0.isNumber || $0 == "." || $0 == "," }
+
+        let normalized: String
+        if digitsAndSeparators.contains(","), !digitsAndSeparators.contains(".") {
+            let isGrouping = digitsAndSeparators.range(
+                of: #"^\d{1,3}(,\d{3})+$"#,
+                options: .regularExpression
+            ) != nil
+            normalized = isGrouping
+                ? digitsAndSeparators.replacingOccurrences(of: ",", with: "")
+                : digitsAndSeparators.replacingOccurrences(of: ",", with: ".")
+        } else {
+            // Mixed separators mean the comma is grouping: "1,093.5".
+            normalized = digitsAndSeparators.replacingOccurrences(of: ",", with: "")
+        }
+
+        return Double(normalized)
     }
 
     /// Display unit for a parsed micronutrient. Vitamins A, D and K are stored
