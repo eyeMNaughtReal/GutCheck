@@ -12,7 +12,11 @@ class OpenFoodFactsService {
         try rateLimiter.checkLimit(for: .foodSearchOpenFoodFacts)
 
         let encodedQuery = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? query
-        let urlString = "\(baseURL)/cgi/search.pl?search_terms=\(encodedQuery)&search_simple=1&action=process&page=\(page)&page_size=\(pageSize)&json=1"
+        // `lc=en` asks OpenFoodFacts for the English field variants where a
+        // record has them. Without it the API returns each product in its own
+        // language, which is how a Big Mac came back with a French ingredient
+        // list the allergen matcher could not read.
+        let urlString = "\(baseURL)/cgi/search.pl?search_terms=\(encodedQuery)&search_simple=1&action=process&page=\(page)&page_size=\(pageSize)&lc=en&json=1"
         
         guard let url = URL(string: urlString) else {
             throw OpenFoodFactsError.invalidURL
@@ -50,7 +54,7 @@ class OpenFoodFactsService {
     func getProduct(by barcode: String) async throws -> OpenFoodFactsProduct? {
         try rateLimiter.checkLimit(for: .foodSearchOpenFoodFacts)
 
-        let urlString = "\(baseURL)/api/v0/product/\(barcode).json"
+        let urlString = "\(baseURL)/api/v0/product/\(barcode).json?lc=en"
         
         guard let url = URL(string: urlString) else {
             throw OpenFoodFactsError.invalidURL
@@ -142,7 +146,8 @@ class OpenFoodFactsService {
             servingUnit: servingUnit,
             servingQty: servingQty,
             servingWeight: servingQty,
-            ingredients: product.ingredientsText,
+            ingredients: product.bestIngredientsText,
+            declaredAllergens: product.normalizedAllergens,
             saturatedFat: saturatedFat,
             potassium: potassium,
             calcium: calcium,
