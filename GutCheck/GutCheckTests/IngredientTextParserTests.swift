@@ -114,6 +114,43 @@ struct IngredientTextParserTests {
     }
 }
 
+@Suite("Nutrition detail number parsing")
+struct NutritionDetailNumberTests {
+
+    @Test("Period decimals parse as written")
+    func periodDecimal() {
+        #expect(UnifiedFoodDetailView.normalizedNumber(from: "460.5mg") == 460.5)
+        #expect(UnifiedFoodDetailView.normalizedNumber(from: "15.0g") == 15.0)
+    }
+
+    @Test("A comma decimal separator is honoured, not stripped")
+    func commaDecimal() {
+        // Values persisted by an earlier build in a comma-decimal locale.
+        // Stripping the comma would read this as 4605.
+        #expect(UnifiedFoodDetailView.normalizedNumber(from: "460,5mg") == 460.5)
+    }
+
+    @Test("Thousands grouping is removed rather than read as a decimal")
+    func thousandsGrouping() {
+        // Reading this as 1.093 would be a factor-of-1000 error in the other
+        // direction from the bug that started all this.
+        #expect(UnifiedFoodDetailView.normalizedNumber(from: "1,093mg") == 1093)
+        #expect(UnifiedFoodDetailView.normalizedNumber(from: "1,093,500mg") == 1_093_500)
+    }
+
+    @Test("Mixed separators treat the comma as grouping")
+    func mixedSeparators() {
+        #expect(UnifiedFoodDetailView.normalizedNumber(from: "1,093.5mg") == 1093.5)
+    }
+
+    @Test("Plain integers and unparseable strings")
+    func edgeCases() {
+        #expect(UnifiedFoodDetailView.normalizedNumber(from: "100mg") == 100)
+        #expect(UnifiedFoodDetailView.normalizedNumber(from: "mg") == nil)
+        #expect(UnifiedFoodDetailView.normalizedNumber(from: "") == nil)
+    }
+}
+
 @Suite("OpenFoodFacts allergen normalisation")
 struct OpenFoodFactsAllergenTests {
 
@@ -179,6 +216,15 @@ struct OpenFoodFactsAllergenTests {
         let item = try JSONDecoder().decode(OpenFoodFactsProduct.self, from: Data(json.utf8))
 
         #expect(item.bestIngredientsText == "Sesame seed bun, beef patty")
+    }
+
+    @Test("Trailer markers are matched case-insensitively without shifting the cut")
+    func trailerMarkerCasing() {
+        // Indexing into a lowercased copy by offset breaks when case folding
+        // changes length. These all cut in the same place.
+        #expect(IngredientTextParser.split("Oats, Sugar, CONTAINS: milk") == ["Oats", "Sugar"])
+        #expect(IngredientTextParser.split("Oats, Sugar, Contains: milk") == ["Oats", "Sugar"])
+        #expect(IngredientTextParser.split("İSTANBUL Oats, Sugar, Contains: milk").count == 2)
     }
 
     @Test("Falls back to the original language when no English text exists")

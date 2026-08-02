@@ -62,13 +62,14 @@ enum IngredientTextParser {
     /// ingredient text.
     private static func stripTrailer(_ text: String) -> String {
         var earliest: String.Index?
-        let lowered = text.lowercased()
 
+        // Search the original string case-insensitively rather than indexing
+        // into a lowercased copy by offset: case folding can change a string's
+        // length, which would put the cut in the wrong place.
         for marker in trailerMarkers {
-            if let range = lowered.range(of: marker) {
-                let index = text.index(text.startIndex, offsetBy: lowered.distance(from: lowered.startIndex, to: range.lowerBound))
-                if earliest == nil || index < earliest! {
-                    earliest = index
+            if let range = text.range(of: marker, options: [.caseInsensitive]) {
+                if earliest == nil || range.lowerBound < earliest! {
+                    earliest = range.lowerBound
                 }
             }
         }
