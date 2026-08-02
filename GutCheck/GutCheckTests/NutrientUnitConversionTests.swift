@@ -48,13 +48,23 @@ struct NutrientUnitConversionTests {
             sugar: 4.1,
             sodium: 0.4605,          // 460.5 mg
             saturatedFat: 5.0,
+            transFat: 0.25,
             cholesterol: 0.0388,     // 38.8 mg
             potassium: 0.1553,       // 155.3 mg
             calcium: 0.1096,         // 109.6 mg
             iron: 0.0023,            // 2.3 mg
+            magnesium: 0.02,         // 20 mg
             vitaminA: 0.000_058,     // 58 mcg
             vitaminC: 0.0009,        // 0.9 mg
-            vitaminD: 0.000_000_2    // 0.2 mcg
+            vitaminD: 0.000_000_2,   // 0.2 mcg
+            vitaminE: 0.0012,        // 1.2 mg
+            vitaminK: 0.00002,       // 20 mcg
+            thiamin: 0.00012,        // 0.12 mg
+            niacin: 0.0018,          // 1.8 mg
+            vitaminB12: 0.0000002,   // 0.2 mcg
+            biotin: 0.00000003,      // 0.03 mcg
+            pantothenicAcid: 0.0005, // 0.5 mg
+            selenium: 0.000004       // 4 mcg
         )
     }
 
@@ -121,6 +131,21 @@ struct NutrientUnitConversionTests {
         #expect(details["Iron"] == "2.3mg")
         #expect(details["Vitamin C"] == "0.9mg")
         #expect(details["Vitamin A"] == "58mcg")
+        #expect(details["Protein"] == "11.8g")
+        #expect(details["Total Carbohydrate"] == "20.1g")
+        #expect(details["Total Fat"] == "15g")
+        #expect(details["Dietary Fiber"] == "1.4g")
+        #expect(details["Total Sugars"] == "4.1g")
+        #expect(details["Sodium"] == "460.5mg")
+        #expect(details["Trans Fat"] == "0.25g")
+        #expect(details["Magnesium"] == "20mg")
+        #expect(details["Vitamin E"] == "1.2mg")
+        #expect(details["Vitamin K"] == "20mcg")
+        #expect(details["Thiamin"] == "0.12mg")
+        #expect(details["Vitamin B12"] == "0.2mcg")
+        #expect(details["Biotin"] == "0.03mcg")
+        #expect(details["Pantothenic Acid"] == "0.5mg")
+        #expect(details["Selenium"] == "4mcg")
 
         // Grams are not converted.
         #expect(details["Saturated Fat"] == "5g")
@@ -136,6 +161,7 @@ struct NutrientUnitConversionTests {
 
         #expect(formatted == "460.5")
         #expect(!formatted.contains(","))
+        #expect(FoodSearchResult.amount(0.03) == "0.03")
     }
 
     @Test("Large values carry no grouping separator")
