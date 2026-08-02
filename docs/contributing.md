@@ -83,6 +83,7 @@ open GutCheck/GutCheck.xcodeproj
 ### Documentation
 - Document complex business logic
 - Update README when adding major features
+- Update CHANGELOG.md after each merge to `main`
 - Keep architecture documentation current
 
 ---
