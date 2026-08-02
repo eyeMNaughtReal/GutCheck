@@ -883,7 +883,7 @@ struct NutritionDetailsView: View {
         let label: String
         let value: Double?
         let unit: String
-        let fractionDigits: ClosedRange<Int>
+        let fractionDigits: Int
         let dailyValueReference: Double?
 
         var id: String { label }
@@ -915,7 +915,7 @@ struct NutritionDetailsView: View {
 
                 if let value = row.value {
                     HStack(spacing: 4) {
-                        Text(value.formatted(.number.precision(.fractionLength(row.fractionDigits))))
+                        Text(value.formatted(.number.precision(.fractionLength(row.fractionDigits...row.fractionDigits))))
                             .typography(Typography.subheadline)
                             .fontWeight(.semibold)
                             .foregroundStyle(ColorTheme.primaryText)
