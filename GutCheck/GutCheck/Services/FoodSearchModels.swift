@@ -254,12 +254,29 @@ struct FoodSearchResult: Identifiable, Codable {
     var potassiumMilligrams: Double? { Self.toMilligrams(potassium) }
     var calciumMilligrams: Double? { Self.toMilligrams(calcium) }
     var ironMilligrams: Double? { Self.toMilligrams(iron) }
+    var magnesiumMilligrams: Double? { Self.toMilligrams(magnesium) }
+    var phosphorusMilligrams: Double? { Self.toMilligrams(phosphorus) }
+    var zincMilligrams: Double? { Self.toMilligrams(zinc) }
+    var copperMilligrams: Double? { Self.toMilligrams(copper) }
+    var manganeseMilligrams: Double? { Self.toMilligrams(manganese) }
+    var vitaminEMilligrams: Double? { Self.toMilligrams(vitaminE) }
+    var thiaminMilligrams: Double? { Self.toMilligrams(thiamin) }
+    var riboflavinMilligrams: Double? { Self.toMilligrams(riboflavin) }
+    var niacinMilligrams: Double? { Self.toMilligrams(niacin) }
+    var vitaminB6Milligrams: Double? { Self.toMilligrams(vitaminB6) }
+    var pantothenicAcidMilligrams: Double? { Self.toMilligrams(pantothenicAcid) }
     var vitaminCMilligrams: Double? { Self.toMilligrams(vitaminC) }
     var vitaminAMicrograms: Double? { Self.toMicrograms(vitaminA) }
     var vitaminDMicrograms: Double? { Self.toMicrograms(vitaminD) }
+    var vitaminKMicrograms: Double? { Self.toMicrograms(vitaminK) }
+    var folateMicrograms: Double? { Self.toMicrograms(folate) }
+    var vitaminB12Micrograms: Double? { Self.toMicrograms(vitaminB12) }
+    var biotinMicrograms: Double? { Self.toMicrograms(biotin) }
+    var seleniumMicrograms: Double? { Self.toMicrograms(selenium) }
 
-    /// Trims the float noise that `"\(someDouble)"` leaves behind — a converted
-    /// 0.4605 g becomes 460.49999999999994, which should read as `460.5`.
+    /// Trims the float noise that `"\(someDouble)"` leaves behind while keeping
+    /// enough precision for tiny micronutrients — a converted 0.4605 g becomes
+    /// 460.49999999999994, which should read as `460.5`.
     ///
     /// - Important: Formats in `en_US_POSIX`, not the user's locale. These
     ///   strings go into `nutritionDetails` and are parsed back out later by
@@ -269,7 +286,7 @@ struct FoodSearchResult: Identifiable, Codable {
     static func amount(_ value: Double) -> String {
         value.formatted(
             .number
-                .precision(.fractionLength(0...1))
+                .precision(.fractionLength(0...3))
                 .grouping(.never)
                 .locale(Self.storageLocale)
         )
@@ -290,33 +307,50 @@ struct FoodSearchResult: Identifiable, Codable {
         
         var nutritionDetails: [String: String] = [:]
         
-        // Add detailed nutrition data
-        // Grams stay grams; anything labelled mg/mcg is converted first, so the
-        // number and its suffix agree.
-        if let saturatedFat = saturatedFat {
-            nutritionDetails["Saturated Fat"] = "\(Self.amount(saturatedFat))g"
+        // Add detailed nutrition data. Grams stay grams; anything labelled
+        // mg/mcg is converted first so the number and suffix agree.
+        func addDetail(_ label: String, _ value: Double?, unit: String, formatter: (Double) -> String = Self.amount) {
+            guard let value else { return }
+            nutritionDetails[label] = "\(formatter(value))\(unit)"
         }
-        if let cholesterol = cholesterolMilligrams {
-            nutritionDetails["Cholesterol"] = "\(Self.amount(cholesterol))mg"
-        }
-        if let potassium = potassiumMilligrams {
-            nutritionDetails["Potassium"] = "\(Self.amount(potassium))mg"
-        }
-        if let calcium = calciumMilligrams {
-            nutritionDetails["Calcium"] = "\(Self.amount(calcium))mg"
-        }
-        if let iron = ironMilligrams {
-            nutritionDetails["Iron"] = "\(Self.amount(iron))mg"
-        }
-        if let vitaminA = vitaminAMicrograms {
-            nutritionDetails["Vitamin A"] = "\(Self.amount(vitaminA))mcg"
-        }
-        if let vitaminC = vitaminCMilligrams {
-            nutritionDetails["Vitamin C"] = "\(Self.amount(vitaminC))mg"
-        }
-        if let vitaminD = vitaminDMicrograms {
-            nutritionDetails["Vitamin D"] = "\(Self.amount(vitaminD))mcg"
-        }
+
+        addDetail("Calories", calories, unit: "kcal")
+        addDetail("Protein", protein, unit: "g")
+        addDetail("Total Carbohydrate", carbs, unit: "g")
+        addDetail("Total Fat", fat, unit: "g")
+        addDetail("Dietary Fiber", fiber, unit: "g")
+        addDetail("Total Sugars", sugar, unit: "g")
+        addDetail("Sodium", sodiumMilligrams, unit: "mg")
+
+        addDetail("Saturated Fat", saturatedFat, unit: "g")
+        addDetail("Trans Fat", transFat, unit: "g")
+        addDetail("Polyunsaturated Fat", polyunsaturatedFat, unit: "g")
+        addDetail("Monounsaturated Fat", monounsaturatedFat, unit: "g")
+        addDetail("Cholesterol", cholesterolMilligrams, unit: "mg")
+
+        addDetail("Potassium", potassiumMilligrams, unit: "mg")
+        addDetail("Calcium", calciumMilligrams, unit: "mg")
+        addDetail("Iron", ironMilligrams, unit: "mg")
+        addDetail("Magnesium", magnesiumMilligrams, unit: "mg")
+        addDetail("Phosphorus", phosphorusMilligrams, unit: "mg")
+        addDetail("Zinc", zincMilligrams, unit: "mg")
+        addDetail("Copper", copperMilligrams, unit: "mg")
+        addDetail("Manganese", manganeseMilligrams, unit: "mg")
+        addDetail("Selenium", seleniumMicrograms, unit: "mcg")
+
+        addDetail("Vitamin A", vitaminAMicrograms, unit: "mcg")
+        addDetail("Vitamin C", vitaminCMilligrams, unit: "mg")
+        addDetail("Vitamin D", vitaminDMicrograms, unit: "mcg")
+        addDetail("Vitamin E", vitaminEMilligrams, unit: "mg")
+        addDetail("Vitamin K", vitaminKMicrograms, unit: "mcg")
+        addDetail("Thiamin", thiaminMilligrams, unit: "mg")
+        addDetail("Riboflavin", riboflavinMilligrams, unit: "mg")
+        addDetail("Niacin", niacinMilligrams, unit: "mg")
+        addDetail("Vitamin B6", vitaminB6Milligrams, unit: "mg")
+        addDetail("Folate", folateMicrograms, unit: "mcg")
+        addDetail("Vitamin B12", vitaminB12Micrograms, unit: "mcg")
+        addDetail("Biotin", biotinMicrograms, unit: "mcg")
+        addDetail("Pantothenic Acid", pantothenicAcidMilligrams, unit: "mg")
         
         return FoodItem(
             name: brand != nil ? "\(brand!) \(name)" : name,
@@ -341,4 +375,3 @@ struct FoodSearchResult: Identifiable, Codable {
 // MARK: - Backward Compatibility
 // Type alias for existing code that references NutritionixFood
 typealias NutritionixFood = FoodSearchResult
-
