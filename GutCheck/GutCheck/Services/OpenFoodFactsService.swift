@@ -110,6 +110,8 @@ class OpenFoodFactsService {
         let sugar = nutriments?.sugars100g.map { $0 * multiplier }
         let sodium = nutriments?.sodium100g.map { $0 * multiplier }
         let saturatedFat = nutriments?.saturatedFat100g.map { $0 * multiplier }
+        let transFat = nutriments?.transFat100g.map { $0 * multiplier }
+        let cholesterol = nutriments?.cholesterol100g.map { $0 * multiplier }
         
         // Minerals
         let potassium = nutriments?.potassium100g.map { $0 * multiplier }
@@ -118,6 +120,9 @@ class OpenFoodFactsService {
         let magnesium = nutriments?.magnesium100g.map { $0 * multiplier }
         let phosphorus = nutriments?.phosphorus100g.map { $0 * multiplier }
         let zinc = nutriments?.zinc100g.map { $0 * multiplier }
+        let copper = nutriments?.copper100g.map { $0 * multiplier }
+        let manganese = nutriments?.manganese100g.map { $0 * multiplier }
+        let selenium = nutriments?.selenium100g.map { $0 * multiplier }
         
         // Vitamins
         let vitaminA = nutriments?.vitaminA100g.map { $0 * multiplier }
@@ -131,6 +136,8 @@ class OpenFoodFactsService {
         let vitaminB6 = nutriments?.vitaminB6100g.map { $0 * multiplier }
         let vitaminB12 = nutriments?.vitaminB12100g.map { $0 * multiplier }
         let folate = nutriments?.folates100g.map { $0 * multiplier }
+        let biotin = nutriments?.biotin100g.map { $0 * multiplier }
+        let pantothenicAcid = nutriments?.pantothenicAcid100g.map { $0 * multiplier }
         
         return FoodSearchResult(
             id: product.id,
@@ -149,12 +156,17 @@ class OpenFoodFactsService {
             ingredients: product.bestIngredientsText,
             declaredAllergens: product.normalizedAllergens,
             saturatedFat: saturatedFat,
+            transFat: transFat,
+            cholesterol: cholesterol,
             potassium: potassium,
             calcium: calcium,
             iron: iron,
             magnesium: magnesium,
             phosphorus: phosphorus,
             zinc: zinc,
+            copper: copper,
+            manganese: manganese,
+            selenium: selenium,
             vitaminA: vitaminA,
             vitaminC: vitaminC,
             vitaminD: vitaminD,
@@ -165,7 +177,9 @@ class OpenFoodFactsService {
             niacin: niacin,
             vitaminB6: vitaminB6,
             folate: folate,
-            vitaminB12: vitaminB12
+            vitaminB12: vitaminB12,
+            biotin: biotin,
+            pantothenicAcid: pantothenicAcid
         )
     }
     
