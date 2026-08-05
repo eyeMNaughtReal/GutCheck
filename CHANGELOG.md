@@ -1,6 +1,12 @@
 # Changelog
 
-<!-- changelog:last_sha=b0eb6173bb8567a50223120654c6579cff32b2c6 -->
+<!-- changelog:last_sha=3d555b7b16af2d6a6574f9cb3ea20f30f79f380c -->
+
+## 2026-08-05
+
+- ci: write the changelog to development, since main rejects direct pushes (#395) (3ff680b)
+
+
 
 All notable changes to GutCheck, newest first. Each section is dated by the day
 the work reached `main`.
