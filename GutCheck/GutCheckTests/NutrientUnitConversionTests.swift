@@ -54,6 +54,7 @@ struct NutrientUnitConversionTests {
             calcium: 0.1096,         // 109.6 mg
             iron: 0.0023,            // 2.3 mg
             magnesium: 0.02,         // 20 mg
+            selenium: 0.000004,      // 4 mcg
             vitaminA: 0.000_058,     // 58 mcg
             vitaminC: 0.0009,        // 0.9 mg
             vitaminD: 0.000_000_2,   // 0.2 mcg
@@ -63,8 +64,7 @@ struct NutrientUnitConversionTests {
             niacin: 0.0018,          // 1.8 mg
             vitaminB12: 0.0000002,   // 0.2 mcg
             biotin: 0.00000003,      // 0.03 mcg
-            pantothenicAcid: 0.0005, // 0.5 mg
-            selenium: 0.000004       // 4 mcg
+            pantothenicAcid: 0.0005  // 0.5 mg
         )
     }
 

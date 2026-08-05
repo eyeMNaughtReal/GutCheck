@@ -314,7 +314,7 @@ struct FoodSearchResult: Identifiable, Codable {
             nutritionDetails[label] = "\(formatter(value))\(unit)"
         }
 
-        addDetail("Calories", calories.map(Double.init), unit: "kcal")
+        addDetail("Calories", calories, unit: "kcal")
         addDetail("Protein", protein, unit: "g")
         addDetail("Total Carbohydrate", carbs, unit: "g")
         addDetail("Total Fat", fat, unit: "g")

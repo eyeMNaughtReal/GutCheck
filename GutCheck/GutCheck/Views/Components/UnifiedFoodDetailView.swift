@@ -275,44 +275,15 @@ struct UnifiedFoodDetailView: View {
     }
 
     /// Parses a `nutritionDetails` string value (e.g. "15.0g", "100mg") into a Double.
-    ///
-    /// Writers use a fixed `en_US_POSIX` locale with grouping disabled, so new
-    /// values always use `.` and never carry separators. Values persisted by an
-    /// earlier build were written in the device locale and may use either
-    /// convention, so both are handled — see `normalizedNumber`.
+    /// See `NutrientValueParser` for how the comma conventions are handled.
     private func parsedDetails(keys: [String]) -> [(String, Double)] {
         keys.compactMap { key in
             guard let str = foodItem.nutritionDetails[key],
-                  let val = Self.normalizedNumber(from: str),
+                  let val = NutrientValueParser.number(from: str),
                   val >= 0
             else { return nil }
             return (key, val)
         }
-    }
-
-    /// Reads a number out of a label string, tolerating both comma conventions.
-    ///
-    /// A comma followed by exactly three trailing digits is thousands grouping
-    /// (`1,093` → 1093); anything else is a decimal separator (`460,5` → 460.5).
-    /// Getting this backwards is a factor-of-10 error in either direction.
-    static func normalizedNumber(from raw: String) -> Double? {
-        let digitsAndSeparators = raw.filter { $0.isNumber || $0 == "." || $0 == "," }
-
-        let normalized: String
-        if digitsAndSeparators.contains(","), !digitsAndSeparators.contains(".") {
-            let isGrouping = digitsAndSeparators.range(
-                of: #"^\d{1,3}(,\d{3})+$"#,
-                options: .regularExpression
-            ) != nil
-            normalized = isGrouping
-                ? digitsAndSeparators.replacingOccurrences(of: ",", with: "")
-                : digitsAndSeparators.replacingOccurrences(of: ",", with: ".")
-        } else {
-            // Mixed separators mean the comma is grouping: "1,093.5".
-            normalized = digitsAndSeparators.replacingOccurrences(of: ",", with: "")
-        }
-
-        return Double(normalized)
     }
 
     /// Display unit for a parsed micronutrient. Vitamins A, D and K are stored
@@ -865,7 +836,7 @@ struct NutritionDetailsView: View {
 
         for key in lookupKeys {
             if let value = foodItem.nutritionDetails[key] {
-                return Self.normalizedNumber(from: value)
+                return NutrientValueParser.number(from: value)
             }
         }
 
@@ -873,7 +844,7 @@ struct NutritionDetailsView: View {
             $0.key.lowercased() == label.lowercased() ||
             $0.key.lowercased() == label.replacingOccurrences(of: " ", with: "_").lowercased()
         })?.value {
-            return Self.normalizedNumber(from: fallback)
+            return NutrientValueParser.number(from: fallback)
         }
 
         return nil
