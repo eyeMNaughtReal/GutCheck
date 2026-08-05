@@ -1,6 +1,6 @@
 # Changelog
 
-<!-- changelog:last_sha=18b6187fb775a99ce269ca64cbf7a30cd15cd725 -->
+<!-- changelog:last_sha=b0eb6173bb8567a50223120654c6579cff32b2c6 -->
 
 All notable changes to GutCheck, newest first. Each section is dated by the day
 the work reached `main`.
@@ -8,6 +8,20 @@ the work reached `main`.
 New sections are prepended automatically after every successful CI run on
 `main`; the marker above records where the bot last read from. See CLAUDE.md
 before editing this file by hand.
+
+## 2026-08-05
+
+### Fixed
+- The app did not compile on either branch. `NutritionDetailsView` called `Self.normalizedNumber`, which lives on the sibling `UnifiedFoodDetailView`; extracted to `NutrientValueParser` so both can reach it (#392)
+- Full nutrition details reworked to show complete, non-duplicated nutrient data (#386)
+
+### Changed
+- `main` and `development` reconciled after diverging in both directions (#392)
+- `CHANGELOG.md` is now a real changelog — newest first, dated by when work reached `main` — and the convention is documented in CLAUDE.md (#391, #394)
+- Bumped `github/codeql-action` 4.37.3 → 4.37.4 (#390)
+
+### Security
+- Changelog automation no longer triggers itself. `ios.yml` runs on every push to `main`, so the bot's own commit started a build whose success re-ran the bot, indefinitely. Guarded with `[skip ci]` and a commit-message check (#393)
 
 ## 2026-08-02
 

@@ -80,14 +80,18 @@ Group entries under **Added**, **Changed**, **Fixed**, **Removed**, **Deprecated
 
 ### The CI writes it
 
-`.github/workflows/update-changelog-after-ci.yml` prepends a dated section after every successful `iOS Build & Test` run on `main`, and pushes straight to `main`. So:
+`.github/workflows/update-changelog-after-ci.yml` prepends a dated section after every successful `iOS Build & Test` run on `main`, and commits it to **`development`**.
+
+It describes what reached `main`, but it cannot write there: `main`'s ruleset requires changes to arrive by pull request, so a direct push is rejected with `GH013: Changes must be made through a pull request`. `development` is unprotected, and the entry reaches `main` with the next release — so `main`'s changelog is current as of its previous release, not the one that just shipped. That is the trade-off for keeping the automation without a ruleset bypass.
+
+So:
 
 - **Don't hand-edit `CHANGELOG.md` in a feature branch** expecting it to survive — you will conflict with the bot on the next green build.
 - **The bot's entries are raw commit subjects.** Tidying them into proper Added/Changed/Fixed groupings afterwards is fine and expected; that is editing history *prose*, not history.
 - `<!-- changelog:last_sha=… -->` near the top is the bot's bookmark for where it last read. **Do not delete it** — without it the next run walks the entire history from the first commit and dumps it into one section.
 - The bot matches the title `# Changelog` exactly. Changing the title case breaks its de-duplication and leaves two headings in the file.
 
-Because the bot pushes to `main` directly, `development` falls behind by one commit after each release. That is the same reconciliation the "push dev to main" step already ends with — fast-forward `development` and confirm both branches report the same SHA.
+Because the bot commits to `development`, a release will usually carry a changelog entry describing the *previous* release. That is expected. What is not expected is the bot pushing to `main` — if you find yourself adding that, check the ruleset first.
 
 ## Verification
 
