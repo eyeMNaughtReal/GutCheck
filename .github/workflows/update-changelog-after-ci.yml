@@ -28,10 +28,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout main
+      # The entry describes what reached main, but it is written to
+      # development: main's ruleset requires changes to arrive by pull request,
+      # so a direct push from this job is rejected outright
+      # ("GH013: Changes must be made through a pull request"). development is
+      # unprotected, and the entry reaches main with the next release.
+      - name: Checkout development
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: development
           fetch-depth: 0
 
       - name: Ensure CHANGELOG.md exists
@@ -62,10 +67,14 @@ jobs:
           LAST_SHA="$(grep -m1 -E '^<!-- changelog:last_sha=[0-9a-f]{40} -->$' CHANGELOG.md \
             | sed -E 's/^<!-- changelog:last_sha=([0-9a-f]{40}) -->$/\1/' || true)"
 
+          # The commits being described live on main, and the checkout is
+          # development, so make sure main's history is present.
+          git fetch --no-tags origin main
+
           if [ -n "${LAST_SHA:-}" ]; then
             RANGE="${LAST_SHA}..${SHA}"
           else
-            FIRST_COMMIT="$(git rev-list --max-parents=0 main | tail -n1)"
+            FIRST_COMMIT="$(git rev-list --max-parents=0 origin/main | tail -n1)"
             RANGE="${FIRST_COMMIT}..${SHA}"
           fi
 
@@ -114,4 +123,8 @@ jobs:
           # [skip ci] keeps this push from starting another iOS Build & Test,
           # which would re-trigger this workflow. See the guard on the job.
           git commit -m "docs(changelog): update after successful CI on main [skip ci]"
-          git push origin main
+
+          # development is unprotected but can move while this job runs, so
+          # rebase rather than failing the run on a race.
+          git pull --rebase origin development
+          git push origin development
