@@ -286,8 +286,10 @@ struct UnifiedFoodDetailView: View {
         }
     }
 
-    /// Display unit for a parsed micronutrient. Vitamins A, D and K are stored
-    /// in micrograms; the rest of what reaches these sections is milligrams.
+    /// Display unit for a parsed micronutrient.
+    ///
+    /// Micrograms: vitamins A, D and K, plus folate, B12, biotin and selenium.
+    /// Everything else that reaches these sections is milligrams.
     private func unitForMicronutrient(_ key: String) -> String {
         switch key {
         case "Vitamin A", "Vitamin D", "Vitamin K", "Folate", "Vitamin B12", "Biotin", "Selenium":

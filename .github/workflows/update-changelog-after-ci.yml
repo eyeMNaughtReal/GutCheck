@@ -51,7 +51,6 @@ jobs:
 
           DATE="$(date -u +'%Y-%m-%d')"
           SHA="${{ github.event.workflow_run.head_sha }}"
-          SHORT_SHA="${SHA:0:7}"
 
           # Prevent duplicate entries
           if grep -q "^<!-- changelog:last_sha=${SHA} -->$" CHANGELOG.md; then
@@ -83,7 +82,7 @@ jobs:
             echo
             echo "<!-- changelog:last_sha=${SHA} -->"
             echo
-            echo "## ${DATE} (${SHORT_SHA})"
+            echo "## ${DATE}"
             echo
             echo "${NEW_ENTRIES}"
             echo
