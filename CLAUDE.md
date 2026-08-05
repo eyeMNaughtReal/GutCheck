@@ -58,6 +58,37 @@ Sync `main` with `development`. **Check for divergence first — this is the poi
 
 Finishing "push dev to main" means both branches report the same commit, not merely that the PR merged.
 
+## CHANGELOG.md
+
+`CHANGELOG.md` is a real changelog and follows the [Keep a Changelog](https://keepachangelog.com) conventions. Two rules matter above all:
+
+- **Newest first.** The most recent release sits at the top of the file, directly under the title. Never append to the bottom.
+- **Date every section, and date it by when it reached `main`.** Not when the branch was cut, not when the PR opened — the day it shipped. Use ISO `YYYY-MM-DD`.
+
+Section shape:
+
+```markdown
+# Changelog
+
+## 2026-08-01
+
+### Fixed
+- Sodium displayed as `0 mg` because minerals were stored in grams and labelled mg (#355)
+```
+
+Group entries under **Added**, **Changed**, **Fixed**, **Removed**, **Deprecated**, **Security** — only the headings you actually need. One line per change, written for someone who did not read the diff, with the issue or PR number.
+
+### The CI writes it
+
+`.github/workflows/update-changelog-after-ci.yml` prepends a dated section after every successful `iOS Build & Test` run on `main`, and pushes straight to `main`. So:
+
+- **Don't hand-edit `CHANGELOG.md` in a feature branch** expecting it to survive — you will conflict with the bot on the next green build.
+- **The bot's entries are raw commit subjects.** Tidying them into proper Added/Changed/Fixed groupings afterwards is fine and expected; that is editing history *prose*, not history.
+- `<!-- changelog:last_sha=… -->` near the top is the bot's bookmark for where it last read. **Do not delete it** — without it the next run walks the entire history from the first commit and dumps it into one section.
+- The bot matches the title `# Changelog` exactly. Changing the title case breaks its de-duplication and leaves two headings in the file.
+
+Because the bot pushes to `main` directly, `development` falls behind by one commit after each release. That is the same reconciliation the "push dev to main" step already ends with — fast-forward `development` and confirm both branches report the same SHA.
+
 ## Verification
 
 - **Build before every commit.** `xcodebuild build -project GutCheck.xcodeproj -scheme GutCheck -destination 'platform=iOS Simulator,name=iPhone 16 Pro'` from `GutCheck/`. If that simulator is not installed, use whichever iPhone is — but say which one you used.
