@@ -119,35 +119,36 @@ struct NutritionDetailNumberTests {
 
     @Test("Period decimals parse as written")
     func periodDecimal() {
-        #expect(UnifiedFoodDetailView.normalizedNumber(from: "460.5mg") == 460.5)
-        #expect(UnifiedFoodDetailView.normalizedNumber(from: "15.0g") == 15.0)
+        #expect(NutrientValueParser.number(from: "460.5mg") == 460.5)
+        #expect(NutrientValueParser.number(from: "15.0g") == 15.0)
     }
 
     @Test("A comma decimal separator is honoured, not stripped")
     func commaDecimal() {
-        // Values persisted by an earlier build in a comma-decimal locale.
-        // Stripping the comma would read this as 4605.
-        #expect(UnifiedFoodDetailView.normalizedNumber(from: "460,5mg") == 460.5)
+        // Values persisted by an earlier build in a comma-decimal locale. The
+        // parser distinguishes this from thousands grouping; an earlier version
+        // stripped the comma outright and read it as 4605.
+        #expect(NutrientValueParser.number(from: "460,5mg") == 460.5)
     }
 
     @Test("Thousands grouping is removed rather than read as a decimal")
     func thousandsGrouping() {
         // Reading this as 1.093 would be a factor-of-1000 error in the other
         // direction from the bug that started all this.
-        #expect(UnifiedFoodDetailView.normalizedNumber(from: "1,093mg") == 1093)
-        #expect(UnifiedFoodDetailView.normalizedNumber(from: "1,093,500mg") == 1_093_500)
+        #expect(NutrientValueParser.number(from: "1,093mg") == 1093)
+        #expect(NutrientValueParser.number(from: "1,093,500mg") == 1_093_500)
     }
 
     @Test("Mixed separators treat the comma as grouping")
     func mixedSeparators() {
-        #expect(UnifiedFoodDetailView.normalizedNumber(from: "1,093.5mg") == 1093.5)
+        #expect(NutrientValueParser.number(from: "1,093.5mg") == 1093.5)
     }
 
     @Test("Plain integers and unparseable strings")
     func edgeCases() {
-        #expect(UnifiedFoodDetailView.normalizedNumber(from: "100mg") == 100)
-        #expect(UnifiedFoodDetailView.normalizedNumber(from: "mg") == nil)
-        #expect(UnifiedFoodDetailView.normalizedNumber(from: "") == nil)
+        #expect(NutrientValueParser.number(from: "100mg") == 100)
+        #expect(NutrientValueParser.number(from: "mg") == nil)
+        #expect(NutrientValueParser.number(from: "") == nil)
     }
 }
 
