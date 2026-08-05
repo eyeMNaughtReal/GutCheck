@@ -11,9 +11,20 @@ permissions:
 
 jobs:
   update-changelog:
+    # The last condition is what stops this workflow feeding itself.
+    #
+    # ios.yml runs on every push to main. This job pushes a commit to main, so
+    # without a guard that push starts another build, which succeeds, which
+    # starts this job again — each run adding an entry about the previous run's
+    # commit, indefinitely. The last_sha marker does not help: it records the
+    # triggering commit, which is new every time round.
+    #
+    # The bot's commit also carries [skip ci], so in practice the build is never
+    # started at all. This check is the backstop for when someone removes that.
     if: >
       github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_branch == 'main'
+      github.event.workflow_run.head_branch == 'main' &&
+      !startsWith(github.event.workflow_run.head_commit.message, 'docs(changelog):')
     runs-on: ubuntu-latest
 
     steps:
@@ -101,5 +112,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md
-          git commit -m "docs(changelog): update after successful CI on main"
+          # [skip ci] keeps this push from starting another iOS Build & Test,
+          # which would re-trigger this workflow. See the guard on the job.
+          git commit -m "docs(changelog): update after successful CI on main [skip ci]"
           git push origin main
