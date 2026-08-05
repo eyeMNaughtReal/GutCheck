@@ -1,0 +1,105 @@
+
+name: Update CHANGELOG after successful CI on main
+
+on:
+  workflow_run:
+    workflows: ["iOS Build & Test"]
+    types: [completed]
+
+permissions:
+  contents: write
+
+jobs:
+  update-changelog:
+    if: >
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Ensure CHANGELOG.md exists
+        run: |
+          if [ ! -f CHANGELOG.md ]; then
+            cat > CHANGELOG.md <<'EOF'
+          # Changelog
+
+          All notable changes to this project will be documented in this file.
+          EOF
+          fi
+
+      - name: Update changelog with latest successful main commit
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DATE="$(date -u +'%Y-%m-%d')"
+          SHA="${{ github.event.workflow_run.head_sha }}"
+          SHORT_SHA="${SHA:0:7}"
+
+          # Prevent duplicate entries
+          if grep -q "^<!-- changelog:last_sha=${SHA} -->$" CHANGELOG.md; then
+            echo "Changelog already includes this SHA."
+            exit 0
+          fi
+
+          # Last processed SHA from top marker
+          LAST_SHA="$(grep -m1 -E '^<!-- changelog:last_sha=[0-9a-f]{40} -->$' CHANGELOG.md \
+            | sed -E 's/^<!-- changelog:last_sha=([0-9a-f]{40}) -->$/\1/' || true)"
+
+          if [ -n "${LAST_SHA:-}" ]; then
+            RANGE="${LAST_SHA}..${SHA}"
+          else
+            FIRST_COMMIT="$(git rev-list --max-parents=0 main | tail -n1)"
+            RANGE="${FIRST_COMMIT}..${SHA}"
+          fi
+
+          NEW_ENTRIES="$(git log "${RANGE}" --pretty=format:'- %s (%h)' --no-merges || true)"
+
+          if [ -z "${NEW_ENTRIES}" ]; then
+            echo "No new entries to add."
+            exit 0
+          fi
+
+          TMP="$(mktemp)"
+          {
+            echo "# Changelog"
+            echo
+            echo "<!-- changelog:last_sha=${SHA} -->"
+            echo
+            echo "## ${DATE} (${SHORT_SHA})"
+            echo
+            echo "${NEW_ENTRIES}"
+            echo
+            awk '
+              BEGIN { skipped_title=0; skipped_marker=0 }
+              {
+                if (!skipped_title && $0 == "# Changelog") { skipped_title=1; next }
+                if (!skipped_marker && $0 ~ /^<!-- changelog:last_sha=[0-9a-f]{40} -->$/) { skipped_marker=1; next }
+                print
+              }
+            ' CHANGELOG.md
+          } > "$TMP"
+
+          mv "$TMP" CHANGELOG.md
+
+      - name: Commit and push if changed
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet CHANGELOG.md; then
+            echo "No CHANGELOG changes."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "docs(changelog): update after successful CI on main"
+          git push origin main
