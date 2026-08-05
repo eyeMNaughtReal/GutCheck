@@ -34,4 +34,4 @@ before editing this file by hand.
 - CodeQL action pinned to 4.37.3 (#354)
 
 ### Security
-- Founder details, including personal medical history, removed from `docs/VISION.md`, and the commits containing them purged from branch history
+- Personal information removed from `docs/VISION.md`, and the commits containing it purged from branch history

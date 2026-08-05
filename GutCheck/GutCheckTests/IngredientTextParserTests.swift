@@ -125,8 +125,9 @@ struct NutritionDetailNumberTests {
 
     @Test("A comma decimal separator is honoured, not stripped")
     func commaDecimal() {
-        // Values persisted by an earlier build in a comma-decimal locale.
-        // Stripping the comma would read this as 4605.
+        // Values persisted by an earlier build in a comma-decimal locale. The
+        // parser distinguishes this from thousands grouping; an earlier version
+        // stripped the comma outright and read it as 4605.
         #expect(NutrientValueParser.number(from: "460,5mg") == 460.5)
     }
 
