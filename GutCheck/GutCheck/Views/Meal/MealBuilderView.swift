@@ -340,6 +340,9 @@ struct MealBuilderView: View {
         }
         .alert("Meal Saved", isPresented: $showingConfirmation) {
             Button("OK") {
+                // Clear here rather than in saveMeal(), so the form stays
+                // intact behind this alert instead of appearing to be lost.
+                mealService.clearMeal()
                 dismiss()
             }
         } message: {

@@ -140,10 +140,11 @@ import Combine
         
         // Trigger dashboard refresh after successful save
         DataSyncManager.shared.triggerRefreshAfterSave(operation: "Meal builder save", dataType: .meals)
-        
-        // Clear after successful save
-        clearMeal()
-        
+
+        // Deliberately does not clear the builder. Clearing here emptied the
+        // form while the sheet was still on screen, so the "Meal Saved" alert
+        // appeared over a blank meal — which reads as a failure and invites the
+        // user to enter everything again. The caller clears on dismissal.
         return meal
     }
     

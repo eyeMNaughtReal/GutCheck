@@ -5,7 +5,9 @@ struct MealSummaryCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(meal.type.rawValue)
+            // The name is what distinguishes two lunches on the same day.
+            // Fall back to the meal type when there isn't one.
+            Text(meal.name.isEmpty ? meal.type.rawValue.capitalized : meal.name)
                 .typography(Typography.headline)
                 .foregroundStyle(.primary)
             
