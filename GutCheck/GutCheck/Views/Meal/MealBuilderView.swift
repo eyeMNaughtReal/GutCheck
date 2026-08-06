@@ -339,14 +339,18 @@ struct MealBuilderView: View {
             Text("Are you sure you want to discard this meal? All food items will be lost.")
         }
         .alert("Meal Saved", isPresented: $showingConfirmation) {
-            Button("OK") {
-                // Clear here rather than in saveMeal(), so the form stays
-                // intact behind this alert instead of appearing to be lost.
-                mealService.clearMeal()
-                dismiss()
-            }
+            Button("OK") { dismiss() }
         } message: {
             Text("Your meal has been successfully saved.")
+        }
+        // Clearing happens here rather than in saveMeal() or in the OK handler.
+        // saveMeal() emptied the form while the sheet was still on screen, so
+        // the confirmation appeared over a blank meal and read as a failure;
+        // clearing on OK still let that blank frame show before the sheet
+        // finished closing. By onDisappear the sheet is gone, so the emptied
+        // form is never visible either way.
+        .onDisappear {
+            mealService.clearMeal()
         }
     }
     
