@@ -82,7 +82,7 @@ import Combine
         // Parse ingredients from Nutritionix ingredients string  
         let ingredientList: [String] = parseIngredients(from: nfood.ingredients)
         
-        // Nutrition details come from FoodSearchResult.toFoodItem(), which is
+        // Nutrition details come from FoodSearchResult.nutritionDetailStrings(),
         // the single place that knows the label names, units and conversions.
         //
         // This used to hand-build a parallel dictionary with its own keys, and
@@ -91,7 +91,7 @@ import Combine
         // "Calcium"/"calcium". Nothing matched, so Vitamins & Minerals was
         // always empty for searched foods — and magnesium, zinc, selenium and
         // the B vitamins were never written at all.
-        var nutritionDict = nfood.toFoodItem().nutritionDetails
+        var nutritionDict = nfood.nutritionDetailStrings()
 
         if let brand = nfood.brand {
             nutritionDict["brand"] = brand
