@@ -736,7 +736,11 @@ struct MealCalendarRow: View {
                 // Content
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(alignment: .firstTextBaseline) {
-                        Text(meal.type.rawValue.capitalized)
+                        // The name is what distinguishes two lunches on the same
+                        // day. Fall back to the meal type when there isn't one.
+                        Text(meal.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                             ? meal.type.rawValue.capitalized
+                             : meal.name.trimmingCharacters(in: .whitespacesAndNewlines))
                             .typography(Typography.headline)
                             .foregroundStyle(ColorTheme.primaryText)
 
