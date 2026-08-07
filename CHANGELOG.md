@@ -1,12 +1,6 @@
 # Changelog
 
-<!-- changelog:last_sha=3d555b7b16af2d6a6574f9cb3ea20f30f79f380c -->
-
-## 2026-08-05
-
-- ci: write the changelog to development, since main rejects direct pushes (#395) (3ff680b)
-
-
+<!-- changelog:last_sha=ff0a7ef16e2cf8b38fbf607f057bc20d2ab288b2 -->
 
 All notable changes to GutCheck, newest first. Each section is dated by the day
 the work reached `main`.
@@ -14,6 +8,15 @@ the work reached `main`.
 New sections are prepended automatically after every successful CI run on
 `main`; the marker above records where the bot last read from. See CLAUDE.md
 before editing this file by hand.
+
+## 2026-08-07
+
+### Fixed
+- Meal lists showed the meal type ("Lunch") instead of the saved name, so two lunches on the same day were indistinguishable. The save confirmation also appeared over a form the app had already cleared, which read as a failure (#363)
+- Vitamins & Minerals always showed no data for searched foods. The search path wrote nutrition detail keys (`calcium_dv`, `iron_dv`, …) that the detail view never read (#362)
+
+### Changed
+- Corrected stale comments describing changelog-workflow loop prevention, left inaccurate by the retarget onto `development` (#397)
 
 ## 2026-08-05
 
@@ -25,6 +28,7 @@ before editing this file by hand.
 - `main` and `development` reconciled after diverging in both directions (#392)
 - `CHANGELOG.md` is now a real changelog — newest first, dated by when work reached `main` — and the convention is documented in CLAUDE.md (#391, #394)
 - Bumped `github/codeql-action` 4.37.3 → 4.37.4 (#390)
+- Changelog automation retargeted to commit on `development` instead of `main`, whose ruleset rejects direct pushes (#395)
 
 ### Security
 - Changelog automation no longer triggers itself. `ios.yml` runs on every push to `main`, so the bot's own commit started a build whose success re-ran the bot, indefinitely. Guarded with `[skip ci]` and a commit-message check (#393)
