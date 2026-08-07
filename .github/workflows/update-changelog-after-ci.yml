@@ -1,4 +1,3 @@
-
 name: Update CHANGELOG after successful CI on main
 
 on:
@@ -87,27 +86,73 @@ jobs:
             exit 0
           fi
 
-          TMP="$(mktemp)"
-          {
-            echo "# Changelog"
-            echo
-            echo "<!-- changelog:last_sha=${SHA} -->"
-            echo
-            echo "## ${DATE}"
-            echo
-            echo "${NEW_ENTRIES}"
-            echo
-            awk '
-              BEGIN { skipped_title=0; skipped_marker=0 }
-              {
-                if (!skipped_title && $0 == "# Changelog") { skipped_title=1; next }
-                if (!skipped_marker && $0 ~ /^<!-- changelog:last_sha=[0-9a-f]{40} -->$/) { skipped_marker=1; next }
-                print
-              }
-            ' CHANGELOG.md
-          } > "$TMP"
+          # Rewritten in Python rather than awk/sed: the previous version always
+          # spliced a brand-new "## DATE" header above whatever was left of the
+          # old file, verbatim. Two releases landing the same day produced two
+          # adjacent headers for that date, and the preamble paragraph — which
+          # lived below the marker in the original hand-written file — got
+          # pushed one section further down on every single run, eventually
+          # ending up sandwiched between unrelated dates.
+          #
+          # This version treats the title, marker and preamble as fixed,
+          # regenerated fresh each run rather than carried over from the old
+          # file, and merges into the top dated section when it already matches
+          # today's date instead of adding a second header for the same day.
+          DATE="$DATE" SHA="$SHA" NEW_ENTRIES="$NEW_ENTRIES" python3 <<'PYEOF'
+          import os
 
-          mv "$TMP" CHANGELOG.md
+          date = os.environ["DATE"]
+          sha = os.environ["SHA"]
+          new_entries = os.environ["NEW_ENTRIES"]
+
+          PREAMBLE = (
+              "All notable changes to GutCheck, newest first. Each section is dated by the day\n"
+              "the work reached `main`.\n"
+              "\n"
+              "New sections are prepended automatically after every successful CI run on\n"
+              "`main`; the marker above records where the bot last read from. See CLAUDE.md\n"
+              "before editing this file by hand."
+          )
+
+          with open("CHANGELOG.md") as f:
+              old = f.read()
+
+          # Strip the title, marker, and preamble block, so they don't
+          # accumulate copy after copy. What is left starts at the first
+          # dated ("## ") header, i.e. the actual changelog content.
+          lines = old.splitlines()
+          i = 0
+          if i < len(lines) and lines[i].strip() == "# Changelog":
+              i += 1
+          while i < len(lines) and lines[i].strip() == "":
+              i += 1
+          if i < len(lines) and lines[i].startswith("<!-- changelog:last_sha="):
+              i += 1
+          while i < len(lines) and not lines[i].startswith("## "):
+              i += 1
+
+          rest_lines = lines[i:]
+          top_header = rest_lines[0] if rest_lines else ""
+
+          if top_header == f"## {date}":
+              # Same-day release: fold into the existing section for today
+              # rather than adding a second header for the same date.
+              body = "\n".join(rest_lines[1:]).lstrip("\n")
+              new_rest = f"## {date}\n\n{new_entries}\n\n{body}"
+          else:
+              rest = "\n".join(rest_lines)
+              new_rest = f"## {date}\n\n{new_entries}\n\n{rest}"
+
+          out = (
+              "# Changelog\n\n"
+              f"<!-- changelog:last_sha={sha} -->\n\n"
+              f"{PREAMBLE}\n\n"
+              f"{new_rest.rstrip()}\n"
+          )
+
+          with open("CHANGELOG.md", "w") as f:
+              f.write(out)
+          PYEOF
 
       - name: Commit and push if changed
         shell: bash
