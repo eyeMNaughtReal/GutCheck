@@ -11,16 +11,18 @@ permissions:
 
 jobs:
   update-changelog:
-    # The last condition is what stops this workflow feeding itself.
+    # Two of these conditions keep the workflow from feeding itself.
     #
-    # ios.yml runs on every push to main. This job pushes a commit to main, so
-    # without a guard that push starts another build, which succeeds, which
-    # starts this job again — each run adding an entry about the previous run's
-    # commit, indefinitely. The last_sha marker does not help: it records the
-    # triggering commit, which is new every time round.
+    # The head_branch check is the load-bearing one. ios.yml runs on pushes to
+    # main *and* development, so the bot's own commit can still start a build —
+    # but that build is on development, and this job only reacts to main. The
+    # loop is broken there.
     #
-    # The bot's commit also carries [skip ci], so in practice the build is never
-    # started at all. This check is the backstop for when someone removes that.
+    # The commit-message check is the backstop for the day someone points this
+    # job back at main. Then the bot's push would trigger a main build whose
+    # success re-runs this job, each round adding an entry about the previous
+    # round's commit. The last_sha marker does not help: it records the
+    # triggering commit, which is new every time.
     if: >
       github.event.workflow_run.conclusion == 'success' &&
       github.event.workflow_run.head_branch == 'main' &&
@@ -120,8 +122,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md
-          # [skip ci] keeps this push from starting another iOS Build & Test,
-          # which would re-trigger this workflow. See the guard on the job.
+          # [skip ci] keeps a changelog-only commit from spending a full
+          # iOS Build & Test run on development. It is not what prevents the
+          # loop — the head_branch guard on the job does that. See the comment
+          # there before removing either.
           git commit -m "docs(changelog): update after successful CI on main [skip ci]"
 
           # development is unprotected but can move while this job runs, so
