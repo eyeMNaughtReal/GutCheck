@@ -297,18 +297,21 @@ struct FoodSearchResult: Identifiable, Codable {
     static let storageLocale = Locale(identifier: "en_US_POSIX")
 
     /// Convert to FoodItem for logging meals
-    func toFoodItem(quantity: String? = nil) -> FoodItem {
-        let finalQuantity = quantity ?? {
-            if let servingQty = servingQty, let servingUnit = servingUnit {
-                return "\(servingQty) \(servingUnit)"
-            }
-            return "1 serving"
-        }()
-        
+    /// The canonical `nutritionDetails` dictionary for this result.
+    ///
+    /// Split out of `toFoodItem()` so callers that only want the nutrition
+    /// strings — the search list builds one per result — do not have to
+    /// construct and discard a whole `FoodItem`, ingredient parsing included.
+    ///
+    /// This is the one place that knows the label names, units and gram
+    /// conversions. `NutritionDetailsView` looks these labels up directly, so
+    /// a second hand-rolled dictionary drifts out of sync and silently drops
+    /// nutrients — which is exactly what #362 turned out to be.
+    func nutritionDetailStrings() -> [String: String] {
         var nutritionDetails: [String: String] = [:]
-        
-        // Add detailed nutrition data. Grams stay grams; anything labelled
-        // mg/mcg is converted first so the number and suffix agree.
+
+        // Grams stay grams; anything labelled mg/mcg is converted first so the
+        // number and suffix agree.
         func addDetail(_ label: String, _ value: Double?, unit: String, formatter: (Double) -> String = Self.amount) {
             guard let value else { return }
             nutritionDetails[label] = "\(formatter(value))\(unit)"
@@ -352,6 +355,18 @@ struct FoodSearchResult: Identifiable, Codable {
         addDetail("Biotin", biotinMicrograms, unit: "mcg")
         addDetail("Pantothenic Acid", pantothenicAcidMilligrams, unit: "mg")
         
+        return nutritionDetails
+    }
+
+    /// Convert to FoodItem for logging meals
+    func toFoodItem(quantity: String? = nil) -> FoodItem {
+        let finalQuantity = quantity ?? {
+            if let servingQty = servingQty, let servingUnit = servingUnit {
+                return "\(servingQty) \(servingUnit)"
+            }
+            return "1 serving"
+        }()
+
         return FoodItem(
             name: brand != nil ? "\(brand!) \(name)" : name,
             quantity: finalQuantity,
@@ -368,7 +383,7 @@ struct FoodSearchResult: Identifiable, Codable {
                 sodium: sodiumMilligrams
             ),
             source: .manual,
-            nutritionDetails: nutritionDetails
+            nutritionDetails: nutritionDetailStrings()
         )
     }
 }

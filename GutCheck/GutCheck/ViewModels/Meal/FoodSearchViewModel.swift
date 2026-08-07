@@ -82,62 +82,21 @@ import Combine
         // Parse ingredients from Nutritionix ingredients string  
         let ingredientList: [String] = parseIngredients(from: nfood.ingredients)
         
-        // Build comprehensive nutrition dictionary from enhanced data
-        var nutritionDict: [String: String] = [:]
-        
-        // Add brand information
+        // Nutrition details come from FoodSearchResult.nutritionDetailStrings(),
+        // the single place that knows the label names, units and conversions.
+        //
+        // This used to hand-build a parallel dictionary with its own keys, and
+        // they had drifted apart: it wrote "calcium_dv"/"iron_dv"/
+        // "vitamin_a_dv"/"vitamin_c_dv", while NutritionDetailsView looks up
+        // "Calcium"/"calcium". Nothing matched, so Vitamins & Minerals was
+        // always empty for searched foods — and magnesium, zinc, selenium and
+        // the B vitamins were never written at all.
+        var nutritionDict = nfood.nutritionDetailStrings()
+
         if let brand = nfood.brand {
             nutritionDict["brand"] = brand
         }
-        
-        // Add basic nutrition values
-        if let calories = nfood.calories {
-            nutritionDict["calories"] = calories.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
-        }
-        if let protein = nfood.protein {
-            nutritionDict["protein"] = protein.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
-        }
-        if let carbs = nfood.carbs {
-            nutritionDict["total_carbohydrate"] = carbs.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
-        }
-        if let fat = nfood.fat {
-            nutritionDict["total_fat"] = fat.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
-        }
-        if let fiber = nfood.fiber {
-            nutritionDict["dietary_fiber"] = fiber.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
-        }
-        if let sugar = nfood.sugar {
-            nutritionDict["sugars"] = sugar.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
-        }
-        // Minerals and vitamins arrive in grams (see the unit note on
-        // FoodSearchResult); this dictionary is displayed as mg/mcg.
-        if let sodium = nfood.sodiumMilligrams {
-            nutritionDict["sodium"] = sodium.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
-        }
 
-        // Add detailed nutrition from the specific properties
-        if let saturatedFat = nfood.saturatedFat {
-            nutritionDict["saturated_fat"] = saturatedFat.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
-        }
-        if let cholesterol = nfood.cholesterolMilligrams {
-            nutritionDict["cholesterol"] = cholesterol.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
-        }
-        if let potassium = nfood.potassiumMilligrams {
-            nutritionDict["potassium"] = potassium.formatted(.number.precision(.fractionLength(1)).grouping(.never).locale(FoodSearchResult.storageLocale))
-        }
-        if let vitaminA = nfood.vitaminAMicrograms {
-            nutritionDict["vitamin_a_dv"] = vitaminA.formatted(.number.precision(.fractionLength(0)).grouping(.never).locale(FoodSearchResult.storageLocale))
-        }
-        if let vitaminC = nfood.vitaminCMilligrams {
-            nutritionDict["vitamin_c_dv"] = vitaminC.formatted(.number.precision(.fractionLength(0)).grouping(.never).locale(FoodSearchResult.storageLocale))
-        }
-        if let calcium = nfood.calciumMilligrams {
-            nutritionDict["calcium_dv"] = calcium.formatted(.number.precision(.fractionLength(0)).grouping(.never).locale(FoodSearchResult.storageLocale))
-        }
-        if let iron = nfood.ironMilligrams {
-            nutritionDict["iron_dv"] = iron.formatted(.number.precision(.fractionLength(0)).grouping(.never).locale(FoodSearchResult.storageLocale))
-        }
-        
         // Allergens the source declared outright, plus anything keyword matching
         // spots. The declared set is what catches a French ingredient list —
         // "Lait" never matches the English keyword table, but the record's
