@@ -1,6 +1,6 @@
 # Changelog
 
-<!-- changelog:last_sha=ff0a7ef16e2cf8b38fbf607f057bc20d2ab288b2 -->
+<!-- changelog:last_sha=f53fe0141b95ee900d566cf36ae9740aa677cdcd -->
 
 All notable changes to GutCheck, newest first. Each section is dated by the day
 the work reached `main`.
@@ -10,6 +10,9 @@ New sections are prepended automatically after every successful CI run on
 before editing this file by hand.
 
 ## 2026-08-07
+
+- fix: address Copilot review on #400 and repair CHANGELOG.md structure (#401) (3156286)
+- docs(changelog): update after successful CI on main [skip ci] (dd3931e)
 
 ### Fixed
 - Meal lists showed the meal type ("Lunch") instead of the saved name, so two lunches on the same day were indistinguishable. The save confirmation also appeared over a form the app had already cleared, which read as a failure (#363)
