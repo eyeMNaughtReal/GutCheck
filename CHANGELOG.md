@@ -1,6 +1,15 @@
 # Changelog
 
-<!-- changelog:last_sha=3d555b7b16af2d6a6574f9cb3ea20f30f79f380c -->
+<!-- changelog:last_sha=ff0a7ef16e2cf8b38fbf607f057bc20d2ab288b2 -->
+
+## 2026-08-07
+
+- docs: correct the loop-prevention comments after the retarget (#397) (4601518)
+- fix(meals): show the meal name in lists, and stop the save form emptying (#363) (#398) (28e728d)
+- fix(nutrition): route searched foods through the canonical detail builder (#362) (#399) (ce36763)
+- docs(changelog): update after successful CI on main [skip ci] (ee06a79)
+
+
 
 ## 2026-08-05
 
