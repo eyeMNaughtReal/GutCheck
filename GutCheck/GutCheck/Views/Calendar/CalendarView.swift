@@ -736,11 +736,7 @@ struct MealCalendarRow: View {
                 // Content
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(alignment: .firstTextBaseline) {
-                        // The name is what distinguishes two lunches on the same
-                        // day. Fall back to the meal type when there isn't one.
-                        Text(meal.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                             ? meal.type.rawValue.capitalized
-                             : meal.name.trimmingCharacters(in: .whitespacesAndNewlines))
+                        Text(displayTitle)
                             .typography(Typography.headline)
                             .foregroundStyle(ColorTheme.primaryText)
 
@@ -788,6 +784,13 @@ struct MealCalendarRow: View {
         .disabled(isNavigating)
     }
     
+    // The name is what distinguishes two lunches on the same day. Fall back
+    // to the meal type when there isn't one, or it's only whitespace.
+    private var displayTitle: String {
+        let trimmed = meal.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? meal.type.rawValue.capitalized : trimmed
+    }
+
     private var mealIcon: String {
         switch meal.type {
         case .breakfast:

@@ -296,7 +296,6 @@ struct FoodSearchResult: Identifiable, Codable {
     /// Display formatting should still use the user's locale.
     static let storageLocale = Locale(identifier: "en_US_POSIX")
 
-    /// Convert to FoodItem for logging meals
     /// The canonical `nutritionDetails` dictionary for this result.
     ///
     /// Split out of `toFoodItem()` so callers that only want the nutrition
