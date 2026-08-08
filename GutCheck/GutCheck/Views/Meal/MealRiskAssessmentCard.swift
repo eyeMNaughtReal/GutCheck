@@ -44,7 +44,9 @@ struct MealRiskAssessmentCard: View {
         .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
         .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.riskAssessmentCard)
         .accessibleGroup(
-            label: "Risk Assessment: \(assessment.overallRiskLevel.displayName) risk, score \(assessment.overallRiskScore). \(assessment.overallExplanation)",
+            label: assessment.overallRiskLevel == .unknown
+                ? "Risk Assessment: unknown. \(assessment.overallExplanation)"
+                : "Risk Assessment: \(assessment.overallRiskLevel.displayName) risk, score \(assessment.overallRiskScore). \(assessment.overallExplanation)",
             hint: "Tap to \(isExpanded ? "collapse" : "expand") risk details"
         )
     }
@@ -79,7 +81,9 @@ struct MealRiskAssessmentCard: View {
     }
 
     private var riskScoreBadge: some View {
-        Text("\(assessment.overallRiskScore)")
+        // "?" rather than a number when nothing could be assessed — printing 0
+        // would assert a measurement the app never made.
+        Text(assessment.overallRiskLevel == .unknown ? "?" : "\(assessment.overallRiskScore)")
             .typography(Typography.headline)
             .foregroundStyle(.white)
             .frame(width: 40, height: 40)
@@ -136,7 +140,7 @@ struct MealRiskAssessmentCard: View {
                             .foregroundStyle(ColorTheme.primary)
                     }
 
-                    Text("\(itemRisk.riskScore)")
+                    Text(itemRisk.riskLevel == .unknown ? "?" : "\(itemRisk.riskScore)")
                         .typography(Typography.caption)
                         .foregroundStyle(itemRisk.riskLevel.color)
                         .bold()
@@ -150,13 +154,18 @@ struct MealRiskAssessmentCard: View {
         }
         .padding(.vertical, 4)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(itemRisk.foodName): \(itemRisk.riskLevel.displayName) risk, score \(itemRisk.riskScore). \(itemRisk.explanation)")
+        .accessibilityLabel(
+            itemRisk.riskLevel == .unknown
+            ? "\(itemRisk.foodName): risk unknown. \(itemRisk.explanation)"
+            : "\(itemRisk.foodName): \(itemRisk.riskLevel.displayName) risk, score \(itemRisk.riskScore). \(itemRisk.explanation)"
+        )
     }
 
     // MARK: - Styling
 
     private var cardBackgroundColor: Color {
         switch assessment.overallRiskLevel {
+        case .unknown: return ColorTheme.surface
         case .low: return ColorTheme.surface
         case .moderate: return ColorTheme.warning.opacity(0.05)
         case .high: return ColorTheme.error.opacity(0.05)
@@ -165,6 +174,7 @@ struct MealRiskAssessmentCard: View {
 
     private var borderColor: Color {
         switch assessment.overallRiskLevel {
+        case .unknown: return ColorTheme.border
         case .low: return ColorTheme.border
         case .moderate: return ColorTheme.warning.opacity(0.3)
         case .high: return ColorTheme.error.opacity(0.3)
