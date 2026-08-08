@@ -78,8 +78,16 @@ import Foundation
             itemRisks.append(detail)
         }
 
-        let overallScore = computeOverallScore(from: itemRisks)
-        let overallLevel = riskLevel(for: overallScore)
+        // Unknown items carry no score, so they are excluded from the maths
+        // rather than counted as zeros — averaging them in would drag a risky
+        // meal's score down purely because one item couldn't be assessed.
+        let assessable = itemRisks.filter { $0.riskLevel != .unknown }
+        let overallScore = computeOverallScore(from: assessable)
+
+        let overallLevel: MealRiskLevel = assessable.isEmpty && !itemRisks.isEmpty
+            ? .unknown
+            : riskLevel(for: overallScore)
+
         let explanation = generateOverallExplanation(itemRisks: itemRisks, overallLevel: overallLevel)
 
         return MealRiskAssessment(
@@ -139,7 +147,16 @@ import Foundation
                 medCount: medCompounds.count,
                 compounds: compounds
             )
+        } else if item.ingredients.isEmpty {
+            // Nothing was analysed: no history, no compounds, and no ingredient
+            // list to derive compounds from. Reporting 0 here is what let a Big
+            // Mac read as "No known risk factors" — the app simply had no idea
+            // what was in it. Say so instead.
+            score = 0
+            dataSource = .compoundAnalysis
+            explanation = "No ingredient data for \(item.name), so its risk can't be assessed"
         } else {
+            // Genuinely analysed and came back clean.
             score = 0
             dataSource = .compoundAnalysis
             explanation = "No known risk factors for \(item.name)"
@@ -147,11 +164,13 @@ import Foundation
 
         score = min(100, max(0, score))
 
+        let isUnknown = matchedPattern == nil && compounds.isEmpty && item.ingredients.isEmpty
+
         return FoodItemRiskDetail(
             id: UUID(),
             foodName: item.name,
             riskScore: score,
-            riskLevel: riskLevel(for: score),
+            riskLevel: isUnknown ? .unknown : riskLevel(for: score),
             explanation: explanation,
             matchedTriggerPattern: matchedPattern,
             flaggedCompounds: compounds,
@@ -212,17 +231,27 @@ import Foundation
     private func generateOverallExplanation(itemRisks: [FoodItemRiskDetail], overallLevel: MealRiskLevel) -> String {
         let highCount = itemRisks.filter { $0.riskLevel == .high }.count
         let modCount = itemRisks.filter { $0.riskLevel == .moderate }.count
+        let unknownCount = itemRisks.filter { $0.riskLevel == .unknown }.count
+
+        // Any unassessable item is worth saying out loud, whatever the rest of
+        // the meal scored — otherwise a confident-looking score quietly rests
+        // on incomplete data.
+        let caveat = unknownCount > 0
+            ? " \(unknownCount) item(s) couldn't be assessed."
+            : ""
 
         switch overallLevel {
+        case .unknown:
+            return "No ingredient data for this meal, so its risk can't be assessed."
         case .high:
-            return "\(highCount) high-risk item(s) detected. Consider alternatives."
+            return "\(highCount) high-risk item(s) detected. Consider alternatives." + caveat
         case .moderate:
             if highCount > 0 {
-                return "\(highCount) high-risk and \(modCount) moderate-risk item(s) in this meal."
+                return "\(highCount) high-risk and \(modCount) moderate-risk item(s) in this meal." + caveat
             }
-            return "\(modCount) item(s) with moderate risk based on your history."
+            return "\(modCount) item(s) with moderate risk based on your history." + caveat
         case .low:
-            return "This meal looks safe based on your history."
+            return "This meal looks safe based on your history." + caveat
         }
     }
 }
