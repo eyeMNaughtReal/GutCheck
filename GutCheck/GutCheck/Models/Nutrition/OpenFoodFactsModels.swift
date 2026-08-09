@@ -33,6 +33,14 @@ struct OpenFoodFactsProduct: Codable, Identifiable {
     let allergensTags: [String]?
     let tracesTags: [String]?
 
+    /// Net weight of the whole product, e.g. 220 for a Big Mac.
+    ///
+    /// For a single-serve item this *is* the portion, and it is often the only
+    /// weight a record carries — plenty of fast-food entries declare no
+    /// `serving_size` at all.
+    let productQuantity: LenientDouble?
+    let productQuantityUnit: String?
+
     private enum CodingKeys: String, CodingKey {
         case id = "code"
         case productName = "product_name"
@@ -46,6 +54,18 @@ struct OpenFoodFactsProduct: Codable, Identifiable {
         case traces
         case allergensTags = "allergens_tags"
         case tracesTags = "traces_tags"
+        case productQuantity = "product_quantity"
+        case productQuantityUnit = "product_quantity_unit"
+    }
+
+    /// Whole-product weight in grams, or `nil` when the record gives none or
+    /// measures it in something other than grams.
+    var productWeightInGrams: Double? {
+        guard let grams = productQuantity?.value, grams > 0 else { return nil }
+        // `product_quantity_unit` is absent on older records, which by
+        // OpenFoodFacts convention means grams.
+        let unit = (productQuantityUnit ?? "g").lowercased()
+        return unit == "g" ? grams : nil
     }
 
     /// Ingredient text in English when available, falling back to whatever
@@ -198,5 +218,32 @@ struct OpenFoodFactsSearchResponse: Codable {
         case products, count, page
         case pageCount = "page_count"
         case pageSize = "page_size"
+    }
+}
+// MARK: - Lenient Numbers
+
+/// A number OpenFoodFacts may have written as either a JSON number or a string.
+///
+/// Contributors enter these fields by hand through several different clients,
+/// so `"product_quantity": 220` and `"product_quantity": "220"` both occur in
+/// the same search response. Decoding as `Double?` throws on the second form
+/// and takes the whole product down with it.
+struct LenientDouble: Codable, Hashable {
+    let value: Double?
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        if let number = try? container.decode(Double.self) {
+            value = number
+        } else if let text = try? container.decode(String.self) {
+            value = Double(text.trimmingCharacters(in: .whitespaces))
+        } else {
+            value = nil
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(value)
     }
 }

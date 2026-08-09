@@ -71,15 +71,22 @@ import Combine
     }
     
     private func createEnhancedFoodItem(from nfood: FoodSearchResult) -> FoodItem {
+        // The portion to log, and how far the source's figures have to move to
+        // describe it. `defaultServing` is the source's own idea of one
+        // portion; when it has none the figures stay as reported.
+        let serving = nfood.defaultServing
+        let servingFactor = nfood.scaleFactor(for: serving)
+
         // Extract serving information
         let servingQty = nfood.servingQty ?? 1.0
         let servingUnit = nfood.servingUnit ?? "serving"
-        let servingWeightGrams = nfood.servingWeight
-        
+        let servingWeightGrams = serving?.gramWeight ?? nfood.servingWeight
+
         // Create quantity string
-        let quantityString = "\(servingQty.formatted(.number)) \(servingUnit)"
-        
-        // Parse ingredients from Nutritionix ingredients string  
+        let quantityString = serving?.quantityDescription(count: 1)
+            ?? "\(servingQty.formatted(.number)) \(servingUnit)"
+
+        // Parse ingredients from Nutritionix ingredients string
         let ingredientList: [String] = parseIngredients(from: nfood.ingredients)
         
         // Nutrition details come from FoodSearchResult.nutritionDetailStrings(),
@@ -91,7 +98,7 @@ import Combine
         // "Calcium"/"calcium". Nothing matched, so Vitamins & Minerals was
         // always empty for searched foods — and magnesium, zinc, selenium and
         // the B vitamins were never written at all.
-        var nutritionDict = nfood.nutritionDetailStrings()
+        var nutritionDict = nfood.nutritionDetailStrings(scaledBy: servingFactor)
 
         if let brand = nfood.brand {
             nutritionDict["brand"] = brand
@@ -104,17 +111,11 @@ import Combine
         let detected = detectAllergens(from: nfood.name, brand: nfood.brand, ingredients: ingredientList)
         let allergens = Array(Set(nfood.declaredAllergens + detected)).sorted()
         
-        // Create main nutrition info for easy access
-        let nutrition = NutritionInfo(
-            calories: nfood.calories.map { Int($0) },
-            protein: nfood.protein,
-            carbs: nfood.carbs,
-            fat: nfood.fat,
-            fiber: nfood.fiber,
-            sugar: nfood.sugar,
-            sodium: nfood.sodiumMilligrams
-        )
-        
+        // Main nutrition info, scaled the same way the detail dictionary above
+        // was. Built by the result itself so the two cannot disagree about
+        // units — sodium in particular crosses grams to milligrams here.
+        let nutrition = nfood.nutritionInfo(scaledBy: servingFactor)
+
         let foodItem = FoodItem(
             id: nfood.id,
             name: nfood.name,
@@ -125,7 +126,10 @@ import Combine
             nutrition: nutrition,
             source: .manual,
             isUserEdited: false,
-            nutritionDetails: nutritionDict
+            nutritionDetails: nutritionDict,
+            servingOptions: nfood.servingOptions.isEmpty ? nil : nfood.servingOptions,
+            selectedServing: serving,
+            servingCount: serving.map { _ in 1 }
         )
         
         // Enrich with ingredient breakdown analysis

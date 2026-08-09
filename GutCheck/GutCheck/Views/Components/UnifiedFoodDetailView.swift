@@ -13,22 +13,44 @@ struct UnifiedFoodDetailView: View {
     @State private var customQuantity: String = ""
     @State private var detailService = FoodDetailService.shared
     
+    /// The portion the view is currently showing. `nil` for foods whose source
+    /// named no portions — a hand-entered custom food — where the stepper falls
+    /// back to being a bare multiplier of whatever was passed in.
+    @State private var selectedServing: ServingOption?
+
     private let config: FoodDetailConfig
     private let baseNutrition: NutritionInfo
+    private let baseDetails: [String: String]
     private let baseQuantity: String
+    private let servingOptions: [ServingOption]
+
+    /// The weight `baseNutrition` describes. Everything is rescaled from this
+    /// rather than from the previous selection, so switching back and forth
+    /// between two servings returns the original numbers instead of drifting.
+    private let baseGrams: Double?
+
     private let onUpdate: ((FoodItem) -> Void)?
-    
+
     init(foodItem: FoodItem, style: FoodDetailStyle = .standard, onUpdate: ((FoodItem) -> Void)? = nil) {
         self._foodItem = State(initialValue: foodItem)
         self.config = FoodDetailConfig.config(for: style)
         self.baseNutrition = foodItem.nutrition
+        self.baseDetails = foodItem.nutritionDetails
         self.baseQuantity = foodItem.quantity
         self._customQuantity = State(initialValue: foodItem.quantity)
         self.onUpdate = onUpdate
-        
-        // Try to detect if this is already an adjusted serving size
-        // Look for the "× " pattern in the quantity string
-        if foodItem.quantity.contains("×") {
+
+        let options = foodItem.servingOptions ?? []
+        self.servingOptions = options
+        self._selectedServing = State(initialValue: foodItem.selectedServing)
+        self.baseGrams = foodItem.servingGrams
+
+        if let count = foodItem.servingCount {
+            self._servingMultiplier = State(initialValue: count)
+        } else if foodItem.quantity.contains("×") {
+            // Items logged before `servingCount` existed encoded the multiplier
+            // into the quantity string as "2.0 × …". Read it back so reopening
+            // one does not silently reset it to a single serving.
             let components = foodItem.quantity.components(separatedBy: "×")
             if let multiplierString = components.first?.trimmingCharacters(in: .whitespaces),
                let detectedMultiplier = Double(multiplierString) {
@@ -124,8 +146,11 @@ struct UnifiedFoodDetailView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
-        .onChange(of: servingMultiplier) { _, newValue in
-            updateNutritionForServing(multiplier: newValue)
+        .onChange(of: servingMultiplier) { _, _ in
+            applyServingSelection()
+        }
+        .onChange(of: selectedServing) { _, _ in
+            applyServingSelection()
         }
     }
     
@@ -192,24 +217,56 @@ struct UnifiedFoodDetailView: View {
             Text("Serving Size")
                 .typography(Typography.headline)
                 .foregroundStyle(ColorTheme.primaryText)
-            
-            HStack {
-                Text("Amount:")
-                    .typography(Typography.subheadline)
-                
-                Stepper(value: $servingMultiplier, in: 0.1...10.0, step: 0.1) {
-                    Text(servingMultiplier.formatted(.number.precision(.fractionLength(1))))
-                        .typography(Typography.headline)
-                        .foregroundStyle(ColorTheme.primary)
+
+            VStack(spacing: 0) {
+                // Only offered when the source described real portions. A
+                // custom food has nothing to choose between, and an empty
+                // picker reads as broken.
+                if !servingOptions.isEmpty {
+                    HStack {
+                        Text("Serving:")
+                            .typography(Typography.subheadline)
+                            .foregroundStyle(ColorTheme.primaryText)
+
+                        Spacer()
+
+                        Picker("Serving", selection: $selectedServing) {
+                            ForEach(servingOptions) { option in
+                                Text(option.displayName).tag(Optional(option))
+                            }
+                        }
+                        .pickerStyle(.menu)
+                        .tint(ColorTheme.primary)
+                        .accessibilityIdentifier(AccessibilityIdentifiers.FoodDetail.servingPicker)
+                    }
+                    .padding()
+
+                    Divider().padding(.horizontal)
                 }
+
+                HStack {
+                    Text("Amount:")
+                        .typography(Typography.subheadline)
+                        .foregroundStyle(ColorTheme.primaryText)
+
+                    Stepper(value: $servingMultiplier, in: 0.1...10.0, step: 0.1) {
+                        Text(servingMultiplier.formatted(.number.precision(.fractionLength(1))))
+                            .typography(Typography.headline)
+                            .foregroundStyle(ColorTheme.primary)
+                    }
+                    .accessibilityIdentifier(AccessibilityIdentifiers.FoodDetail.servingStepper)
+                }
+                .padding()
             }
-            .padding()
             .background(ColorTheme.surface)
             .clipShape(.rect(cornerRadius: 12))
-            
-            Text("Per \(customQuantity)")
+
+            // The resolved portion, spelled out. "1 McDonald's Big Mac · 205 g"
+            // is auditable in a way that a bare multiplier never was.
+            Text(customQuantity)
                 .typography(Typography.subheadline)
                 .foregroundStyle(ColorTheme.secondaryText)
+                .accessibilityIdentifier(AccessibilityIdentifiers.FoodDetail.servingSummary)
         }
     }
     
@@ -487,23 +544,43 @@ struct UnifiedFoodDetailView: View {
     
     // MARK: - Helper Methods
     
-    private func updateNutritionForServing(multiplier: Double) {
-        // Update all nutrition values based on serving multiplier
-        foodItem.nutrition.calories = baseNutrition.calories.map { Int(Double($0) * multiplier) }
-        foodItem.nutrition.protein = baseNutrition.protein.map { $0 * multiplier }
-        foodItem.nutrition.carbs = baseNutrition.carbs.map { $0 * multiplier }
-        foodItem.nutrition.fat = baseNutrition.fat.map { $0 * multiplier }
-        foodItem.nutrition.fiber = baseNutrition.fiber.map { $0 * multiplier }
-        foodItem.nutrition.sugar = baseNutrition.sugar.map { $0 * multiplier }
-        foodItem.nutrition.sodium = baseNutrition.sodium.map { $0 * multiplier }
-        
-        // Update quantity description
-        if multiplier == 1.0 {
+    /// Rescales the item to the chosen serving and count.
+    ///
+    /// Always computed against the item the view opened with, never against
+    /// the last state — repeatedly multiplying a running total accumulates
+    /// error, and `Int` calories lose a little precision on every hop.
+    private func applyServingSelection() {
+        let factor = scaleFactor
+
+        foodItem.nutrition = NutritionScaling.scaled(baseNutrition, by: factor)
+
+        // The micronutrients live in `nutritionDetails` as strings and have to
+        // move with the macros. Before this they did not, so a doubled serving
+        // reported double the calories next to unchanged saturated fat.
+        foodItem.nutritionDetails = NutritionScaling.scaled(baseDetails, by: factor)
+
+        if let selectedServing {
+            customQuantity = selectedServing.quantityDescription(count: servingMultiplier)
+            foodItem.estimatedWeightInGrams = selectedServing.gramWeight * servingMultiplier
+        } else if servingMultiplier == 1.0 {
             customQuantity = baseQuantity
         } else {
-            customQuantity = "\(multiplier.formatted(.number.precision(.fractionLength(1)))) × \(baseQuantity)"
+            customQuantity = "\(servingMultiplier.formatted(.number.precision(.fractionLength(1)))) × \(baseQuantity)"
         }
+
         foodItem.quantity = customQuantity
+        foodItem.selectedServing = selectedServing
+        foodItem.servingCount = selectedServing.map { _ in servingMultiplier }
+    }
+
+    /// How far the opened item's figures have to move to describe the current
+    /// selection.
+    private var scaleFactor: Double {
+        guard let selectedServing, let baseGrams, baseGrams > 0 else {
+            // No portion data: the stepper is a plain multiplier, as before.
+            return servingMultiplier
+        }
+        return (selectedServing.gramWeight * servingMultiplier) / baseGrams
     }
     
     // MARK: - Health Analysis Functions

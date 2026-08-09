@@ -32,7 +32,26 @@ struct FoodItem: Identifiable, Codable, Hashable, Equatable {
     var source: FoodInputSource = .manual
     var barcodeValue: String? = nil      // If scanned via barcode
     var isUserEdited: Bool = false       // Indicates manual override
-    
+
+    // MARK: - Serving size
+    //
+    // All three are optional so that meals written before serving selection
+    // existed still decode: the synthesised decoder skips a missing optional
+    // but throws on a missing non-optional, and `foodItems` is stored as a
+    // JSON blob inside `StoredMeal`.
+
+    /// Portions this food can be logged as, as offered by the search source.
+    var servingOptions: [ServingOption]? = nil
+
+    /// The portion `nutrition` and `nutritionDetails` currently describe.
+    /// `nil` for items that predate serving selection or come from a source
+    /// that named no portion at all.
+    var selectedServing: ServingOption? = nil
+
+    /// How many of `selectedServing` this item is. Kept as its own field
+    /// rather than being read back out of `quantity`, which is display text.
+    var servingCount: Double? = nil
+
     init(
         id: String = UUID().uuidString,
         name: String,
@@ -44,7 +63,10 @@ struct FoodItem: Identifiable, Codable, Hashable, Equatable {
         source: FoodInputSource = .manual,
         barcodeValue: String? = nil,
         isUserEdited: Bool = false,
-        nutritionDetails: [String: String] = [:]
+        nutritionDetails: [String: String] = [:],
+        servingOptions: [ServingOption]? = nil,
+        selectedServing: ServingOption? = nil,
+        servingCount: Double? = nil
     ) {
         self.id = id
         self.name = name
@@ -57,5 +79,14 @@ struct FoodItem: Identifiable, Codable, Hashable, Equatable {
         self.barcodeValue = barcodeValue
         self.isUserEdited = isUserEdited
         self.nutritionDetails = nutritionDetails
+        self.servingOptions = servingOptions
+        self.selectedServing = selectedServing
+        self.servingCount = servingCount
+    }
+
+    /// The weight `nutrition` currently describes, when it is known.
+    var servingGrams: Double? {
+        guard let selectedServing else { return estimatedWeightInGrams }
+        return selectedServing.gramWeight * (servingCount ?? 1)
     }
 }
