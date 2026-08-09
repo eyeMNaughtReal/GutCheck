@@ -34,28 +34,51 @@ struct UnifiedFoodDetailView: View {
     init(foodItem: FoodItem, style: FoodDetailStyle = .standard, onUpdate: ((FoodItem) -> Void)? = nil) {
         self._foodItem = State(initialValue: foodItem)
         self.config = FoodDetailConfig.config(for: style)
-        self.baseNutrition = foodItem.nutrition
-        self.baseDetails = foodItem.nutritionDetails
-        self.baseQuantity = foodItem.quantity
         self._customQuantity = State(initialValue: foodItem.quantity)
         self.onUpdate = onUpdate
 
         let options = foodItem.servingOptions ?? []
         self.servingOptions = options
         self._selectedServing = State(initialValue: foodItem.selectedServing)
-        self.baseGrams = foodItem.servingGrams
+
+        // Everything below rescales from `baseNutrition`/`baseQuantity`, so both
+        // must describe *one* unit. An item logged before `servingCount` existed
+        // encoded its multiplier into the quantity string ("2.0 × 100 g") and
+        // saved the already-multiplied nutrition alongside it. Reading the
+        // multiplier back without also dividing the figures out would rescale an
+        // already-scaled item — a 2× item nudged to 2.1 became 4.2× — and rebuild
+        // the string as "2.1 × 2.0 × 100 g".
+        var legacyMultiplier: Double?
+        if foodItem.servingCount == nil,
+           foodItem.quantity.contains("×"),
+           let head = foodItem.quantity.components(separatedBy: "×").first?
+               .trimmingCharacters(in: .whitespaces),
+           let parsed = Double(head), parsed > 0 {
+            legacyMultiplier = parsed
+        }
 
         if let count = foodItem.servingCount {
             self._servingMultiplier = State(initialValue: count)
-        } else if foodItem.quantity.contains("×") {
-            // Items logged before `servingCount` existed encoded the multiplier
-            // into the quantity string as "2.0 × …". Read it back so reopening
-            // one does not silently reset it to a single serving.
-            let components = foodItem.quantity.components(separatedBy: "×")
-            if let multiplierString = components.first?.trimmingCharacters(in: .whitespaces),
-               let detectedMultiplier = Double(multiplierString) {
-                self._servingMultiplier = State(initialValue: detectedMultiplier)
-            }
+        } else if let legacyMultiplier {
+            self._servingMultiplier = State(initialValue: legacyMultiplier)
+        }
+
+        if let legacyMultiplier {
+            // Divide back out to per-unit, and strip the multiplier from the
+            // quantity so the rebuilt string doesn't nest.
+            self.baseNutrition = NutritionScaling.scaled(foodItem.nutrition, by: 1 / legacyMultiplier)
+            self.baseDetails = NutritionScaling.scaled(foodItem.nutritionDetails, by: 1 / legacyMultiplier)
+            self.baseQuantity = foodItem.quantity
+                .components(separatedBy: "×")
+                .dropFirst()
+                .joined(separator: "×")
+                .trimmingCharacters(in: .whitespaces)
+            self.baseGrams = foodItem.servingGrams.map { $0 / legacyMultiplier }
+        } else {
+            self.baseNutrition = foodItem.nutrition
+            self.baseDetails = foodItem.nutritionDetails
+            self.baseQuantity = foodItem.quantity
+            self.baseGrams = foodItem.servingGrams
         }
     }
     

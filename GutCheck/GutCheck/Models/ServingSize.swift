@@ -68,11 +68,21 @@ struct ServingOption: Codable, Hashable, Identifiable {
     /// The count is folded into the printed weight so the row always states the
     /// total actually being logged, not the weight of one unit.
     func quantityDescription(count: Double) -> String {
+        // Volume labels never get a gram suffix, at any count. "2 × 25 ml · 50 g"
+        // asserts a density the source never gave — the same reason
+        // `displayName` omits it. This guard used to apply only when count was
+        // 1, so the claim reappeared the moment the stepper moved.
+        guard !labelIsAQuantity else {
+            guard count != 1 else { return label }
+            let countText = count.formatted(.number.precision(.fractionLength(0...2)))
+            return "\(countText) × \(label)"
+        }
+
         let total = gramWeight * count
         let weight = "\(Self.formattedWeight(total)) g"
 
         guard count != 1 else {
-            return labelIsAQuantity ? label : "\(label) · \(weight)"
+            return "\(label) · \(weight)"
         }
 
         let countText = count.formatted(.number.precision(.fractionLength(0...2)))

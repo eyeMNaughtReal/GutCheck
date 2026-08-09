@@ -243,3 +243,29 @@ struct ServingSizeTests {
         #expect(OpenFoodFactsService.weightInGrams(from: "") == nil)
     }
 }
+
+// MARK: - Review regressions (#407)
+
+@Suite("Serving description does not invent grams for volumes")
+struct VolumeServingDescriptionTests {
+
+    @Test("A volume label gets no gram suffix at any count")
+    func volumeNeverGetsGrams() throws {
+        // Printing "2 × 25 ml · 50 g" asserts a density the source never gave.
+        // The guard originally applied only when count == 1, so the claim came
+        // back the moment the stepper moved.
+        let option = try #require(ServingOption(label: "25 ml", gramWeight: 25))
+
+        #expect(option.quantityDescription(count: 1) == "25 ml")
+        #expect(!option.quantityDescription(count: 2).contains(" g"))
+        #expect(option.quantityDescription(count: 2) == "2 × 25 ml")
+    }
+
+    @Test("A named portion still states its total weight")
+    func namedPortionKeepsWeight() throws {
+        let option = try #require(ServingOption(label: "1 medium fast food order", gramWeight: 145))
+
+        #expect(option.quantityDescription(count: 1) == "1 medium fast food order · 145 g")
+        #expect(option.quantityDescription(count: 2) == "2 × 1 medium fast food order · 290 g")
+    }
+}
