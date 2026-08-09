@@ -36,6 +36,16 @@ final class StoredMeal {
     /// ingredient breakdown can run to several kilobytes.
     @Attribute(.externalStorage) var foodItemsData: Data
 
+    /// JSON-encoded `MealRiskSnapshot`, or nil when the meal carries no
+    /// assessment.
+    ///
+    /// Optional on purpose. Every row written before this property existed has
+    /// no value for it, and SwiftData's lightweight migration can only add a new
+    /// attribute without a rewrite if it is optional — a non-optional `Data`
+    /// would need a default that then reads back as "an assessment happened and
+    /// found nothing", which is the confusion this whole feature is fixing.
+    var riskSnapshotData: Data?
+
     init(
         id: String,
         name: String,
@@ -47,7 +57,8 @@ final class StoredMeal {
         createdBy: String,
         createdAt: Date,
         updatedAt: Date,
-        foodItemsData: Data
+        foodItemsData: Data,
+        riskSnapshotData: Data? = nil
     ) {
         self.id = id
         self.name = name
@@ -60,6 +71,7 @@ final class StoredMeal {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.foodItemsData = foodItemsData
+        self.riskSnapshotData = riskSnapshotData
     }
 }
 
@@ -78,7 +90,8 @@ extension StoredMeal {
             createdBy: meal.createdBy,
             createdAt: meal.createdAt,
             updatedAt: meal.updatedAt,
-            foodItemsData: PersistenceCoding.encode(meal.foodItems)
+            foodItemsData: PersistenceCoding.encode(meal.foodItems),
+            riskSnapshotData: meal.riskSnapshot.map(PersistenceCoding.encode)
         )
     }
 
@@ -96,6 +109,11 @@ extension StoredMeal {
         createdBy = meal.createdBy
         updatedAt = Date.now
         foodItemsData = PersistenceCoding.encode(meal.foodItems)
+        // Overwritten rather than merged: the snapshot describes a specific set
+        // of food items, and an edit that changed them would leave a retained
+        // old snapshot explaining food the meal no longer contains. Callers that
+        // edit a meal recompute; callers that round-trip one carry it through.
+        riskSnapshotData = meal.riskSnapshot.map(PersistenceCoding.encode)
     }
 
     var domainModel: Meal {
@@ -108,7 +126,13 @@ extension StoredMeal {
             foodItems: PersistenceCoding.decode([FoodItem].self, from: foodItemsData) ?? [],
             notes: notes,
             tags: tags,
-            createdBy: createdBy
+            createdBy: createdBy,
+            // Stays nil for meals logged before risk was recorded, and for a
+            // snapshot that no longer decodes — both mean "no assessment on
+            // file", which the UI shows as such rather than as a clean bill.
+            riskSnapshot: riskSnapshotData.flatMap {
+                PersistenceCoding.decode(MealRiskSnapshot.self, from: $0)
+            }
         )
         meal.createdAt = createdAt
         meal.updatedAt = updatedAt
