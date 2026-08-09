@@ -100,6 +100,15 @@ import Foundation
         )
     }
 
+    /// The assessment for these items in the form stored with a saved meal.
+    ///
+    /// Callers save this alongside the meal so history shows what the user was
+    /// actually told, rather than re-scoring against a compound database and a
+    /// symptom history that will both have moved on by the time they look back.
+    func riskSnapshot(for foodItems: [FoodItem]) -> MealRiskSnapshot? {
+        predictRisk(for: foodItems).map(MealRiskSnapshot.init)
+    }
+
     // MARK: - Per-Food Assessment
 
     private func assessFoodItem(_ item: FoodItem) -> FoodItemRiskDetail {
@@ -185,11 +194,28 @@ import Foundation
         return min(75, raw)
     }
 
+    /// Worst item, plus a bump for each *additional* risky one.
+    ///
+    /// This replaces `0.6 × max + 0.4 × average`. Averaging made the score fall
+    /// when a harmless item was added — fries alone scored 54, fries next to a
+    /// plain glass of water scored less — which is backwards for a trigger
+    /// warning. Eating something safe alongside a trigger does not dilute the
+    /// trigger. #356 stopped *unassessable* items diluting; genuinely low-scoring
+    /// ones still did.
+    ///
+    /// The bump is capped so a plate of several mild items cannot creep past a
+    /// single genuinely severe one.
     private func computeOverallScore(from itemRisks: [FoodItemRiskDetail]) -> Int {
         guard !itemRisks.isEmpty else { return 0 }
-        let maxScore = itemRisks.map(\.riskScore).max() ?? 0
-        let avgScore = itemRisks.map(\.riskScore).reduce(0, +) / itemRisks.count
-        return min(100, Int(Double(maxScore) * 0.6 + Double(avgScore) * 0.4))
+        let scores = itemRisks.map(\.riskScore)
+        let maxScore = scores.max() ?? 0
+
+        // Only items that actually scored count towards compounding, so adding
+        // a zero-risk item leaves the meal's score untouched — never lower.
+        let additionalRiskyItems = max(0, scores.filter { $0 > 0 }.count - 1)
+        let compoundingBump = min(20, additionalRiskyItems * 5)
+
+        return min(100, maxScore + compoundingBump)
     }
 
     private func riskLevel(for score: Int) -> MealRiskLevel {

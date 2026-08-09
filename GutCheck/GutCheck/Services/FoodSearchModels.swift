@@ -31,7 +31,20 @@ struct FoodSearchResult: Identifiable, Codable {
     let servingUnit: String?
     let servingQty: Double?
     let servingWeight: Double?
-    
+
+    /// Real portions this food can be logged as, smallest first.
+    ///
+    /// Sources describe these separately from the nutrition they report, and
+    /// the app used to throw them away — which is how a Big Mac came to be
+    /// logged as 100 g (#359). Empty means the source offered nothing beyond
+    /// its own baseline.
+    let servingOptions: [ServingOption]
+
+    /// Which of `servingOptions` to start on, already resolved by the source
+    /// service — it is the only place that knows how to read that source's
+    /// idea of a default portion.
+    let defaultServing: ServingOption?
+
     // Ingredients
     let ingredients: String?
 
@@ -119,6 +132,8 @@ struct FoodSearchResult: Identifiable, Codable {
         servingUnit: String? = nil,
         servingQty: Double? = nil,
         servingWeight: Double? = nil,
+        servingOptions: [ServingOption] = [],
+        defaultServing: ServingOption? = nil,
         ingredients: String? = nil,
         declaredAllergens: [String] = [],
         saturatedFat: Double? = nil,
@@ -184,6 +199,8 @@ struct FoodSearchResult: Identifiable, Codable {
         self.servingUnit = servingUnit
         self.servingQty = servingQty
         self.servingWeight = servingWeight
+        self.servingOptions = servingOptions
+        self.defaultServing = defaultServing
         self.ingredients = ingredients
         self.declaredAllergens = declaredAllergens
         self.saturatedFat = saturatedFat
@@ -306,14 +323,18 @@ struct FoodSearchResult: Identifiable, Codable {
     /// conversions. `NutritionDetailsView` looks these labels up directly, so
     /// a second hand-rolled dictionary drifts out of sync and silently drops
     /// nutrients — which is exactly what #362 turned out to be.
-    func nutritionDetailStrings() -> [String: String] {
+    /// - Parameter factor: multiplies every nutrient on the way out, for
+    ///   callers logging a portion other than the one the source reported.
+    ///   Applied here rather than to the finished strings so the conversion
+    ///   still happens once, on the typed value.
+    func nutritionDetailStrings(scaledBy factor: Double = 1) -> [String: String] {
         var nutritionDetails: [String: String] = [:]
 
         // Grams stay grams; anything labelled mg/mcg is converted first so the
         // number and suffix agree.
         func addDetail(_ label: String, _ value: Double?, unit: String, formatter: (Double) -> String = Self.amount) {
             guard let value else { return }
-            nutritionDetails[label] = "\(formatter(value))\(unit)"
+            nutritionDetails[label] = "\(formatter(value * factor))\(unit)"
         }
 
         addDetail("Calories", calories, unit: "kcal")
@@ -357,22 +378,33 @@ struct FoodSearchResult: Identifiable, Codable {
         return nutritionDetails
     }
 
-    /// Convert to FoodItem for logging meals
-    func toFoodItem(quantity: String? = nil) -> FoodItem {
-        let finalQuantity = quantity ?? {
-            if let servingQty = servingQty, let servingUnit = servingUnit {
-                return "\(servingQty) \(servingUnit)"
-            }
-            return "1 serving"
-        }()
+    // MARK: - Serving size
 
-        return FoodItem(
-            name: brand != nil ? "\(brand!) \(name)" : name,
-            quantity: finalQuantity,
-            estimatedWeightInGrams: servingWeight,
-            ingredients: IngredientTextParser.split(ingredients),
-            allergens: declaredAllergens,
-            nutrition: NutritionInfo(
+    /// The weight the stored nutrition figures describe.
+    ///
+    /// Both services normalise their per-100 g source data to a per-serving
+    /// figure before building a result, so this is `servingWeight` when the
+    /// source declared one and the 100 g the APIs report against otherwise.
+    var baseServingGrams: Double {
+        guard let servingWeight, servingWeight > 0 else { return 100 }
+        return servingWeight
+    }
+
+    /// What to multiply the stored figures by to log `serving` of this food.
+    /// `nil` means "leave them as the source reported them".
+    func scaleFactor(for serving: ServingOption?, count: Double = 1) -> Double {
+        guard let serving else { return count }
+        return (serving.gramWeight * count) / baseServingGrams
+    }
+
+    /// The macro summary, scaled the same way `nutritionDetailStrings` is.
+    ///
+    /// Shares the unit decisions with the detail dictionary — in particular
+    /// sodium crossing from grams to milligrams — so a caller that builds both
+    /// cannot get one right and the other wrong.
+    func nutritionInfo(scaledBy factor: Double = 1) -> NutritionInfo {
+        NutritionScaling.scaled(
+            NutritionInfo(
                 calories: calories.map { Int($0) },
                 protein: protein,
                 carbs: carbs,
@@ -381,8 +413,40 @@ struct FoodSearchResult: Identifiable, Codable {
                 sugar: sugar,
                 sodium: sodiumMilligrams
             ),
+            by: factor
+        )
+    }
+
+    /// Convert to FoodItem for logging meals.
+    ///
+    /// Defaults to `defaultServing` — the source's own idea of one portion —
+    /// rather than the 100 g it happens to report nutrition against.
+    func toFoodItem(quantity: String? = nil) -> FoodItem {
+        let serving = defaultServing
+        let factor = scaleFactor(for: serving)
+
+        let finalQuantity = quantity ?? {
+            if let serving {
+                return serving.quantityDescription(count: 1)
+            }
+            if let servingQty, let servingUnit {
+                return "\(servingQty) \(servingUnit)"
+            }
+            return "1 serving"
+        }()
+
+        return FoodItem(
+            name: brand != nil ? "\(brand!) \(name)" : name,
+            quantity: finalQuantity,
+            estimatedWeightInGrams: serving?.gramWeight ?? servingWeight,
+            ingredients: IngredientTextParser.split(ingredients),
+            allergens: declaredAllergens,
+            nutrition: nutritionInfo(scaledBy: factor),
             source: .manual,
-            nutritionDetails: nutritionDetailStrings()
+            nutritionDetails: nutritionDetailStrings(scaledBy: factor),
+            servingOptions: servingOptions,
+            selectedServing: serving,
+            servingCount: serving.map { _ in 1 }
         )
     }
 }

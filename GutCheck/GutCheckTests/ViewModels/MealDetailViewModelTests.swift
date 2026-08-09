@@ -72,9 +72,31 @@ struct MealDetailViewModelTests {
         let repo = MockMealRepository()
         let vm = MealDetailViewModel(meal: meal, mealRepository: repo)
 
+        // Both initialisers set a non-nil mealId, so the guard in loadMeal()
+        // can only be reached by clearing it. The original version of this test
+        // asserted no fetch straight after init(meal:) — which fetches — and so
+        // failed deterministically while appearing to cover the nil branch.
+        vm.mealId = nil
+
         await vm.loadMeal()
 
         #expect(repo.fetchCallCount == 0)
+    }
+
+    @Test("Init with Meal still loads, refreshing possibly-stale data")
+    func initWithMealRefetches() async {
+        let meal = makeMeal()
+        let repo = MockMealRepository()
+        let vm = MealDetailViewModel(meal: meal, mealRepository: repo)
+
+        await vm.loadMeal()
+
+        // Pinning current behaviour rather than asserting it is ideal. The meal
+        // is already in hand, so this round-trip is redundant on the face of it
+        // — but it also picks up edits made since the list was rendered, and
+        // MealDetailView.task calls it on this path today. Changing that is a
+        // product decision, not a test fix.
+        #expect(repo.fetchCallCount == 1)
     }
 
     @Test("loadMeal not found sets error")

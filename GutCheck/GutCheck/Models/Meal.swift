@@ -61,6 +61,14 @@ struct Meal: Identifiable, Codable, Hashable, Equatable, LocalRecord {
     var createdAt: Date = Date.now
     var updatedAt: Date = Date.now
 
+    /// The risk assessment the user was shown when this meal was saved.
+    ///
+    /// Optional, and nil for every meal logged before this was recorded — those
+    /// records genuinely have no assessment, and inventing one now by scoring
+    /// them against today's compound database would put words in the app's
+    /// mouth. The UI treats nil as "not recorded" rather than "no risk".
+    var riskSnapshot: MealRiskSnapshot?
+
     // MARK: - Privacy Classification
 
     /// How sensitive this meal is. Everything is stored on-device, so this no
@@ -92,7 +100,8 @@ struct Meal: Identifiable, Codable, Hashable, Equatable, LocalRecord {
          foodItems: [FoodItem],
          notes: String? = nil,
          tags: [String] = [],
-         createdBy: String = "") {
+         createdBy: String = "",
+         riskSnapshot: MealRiskSnapshot? = nil) {
         self.id = id
         self.name = name
         self.date = date
@@ -102,6 +111,7 @@ struct Meal: Identifiable, Codable, Hashable, Equatable, LocalRecord {
         self.notes = notes
         self.tags = tags
         self.createdBy = createdBy
+        self.riskSnapshot = riskSnapshot
     }
 }
 

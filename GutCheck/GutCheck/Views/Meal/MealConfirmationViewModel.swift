@@ -32,6 +32,14 @@ import SwiftUI
         isSaving = true
         defer { isSaving = false }
         
+        // The meal arrives already built, so fill in the risk snapshot only when
+        // the caller didn't. Overwriting one that's already there would replace
+        // what the user was shown with a fresh score computed after the fact.
+        var meal = meal
+        if meal.riskSnapshot == nil {
+            meal.riskSnapshot = MealRiskPredictionService.shared.riskSnapshot(for: meal.foodItems)
+        }
+
         do {
             // Persist via MealRepository
             try await MealRepository.shared.save(meal)

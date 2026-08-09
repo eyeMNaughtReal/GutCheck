@@ -761,6 +761,14 @@ struct MealCalendarRow: View {
                             .multilineTextAlignment(.leading)
                     }
 
+                    // Risk level as it stood when the meal was logged, so the
+                    // history is scannable without opening each entry. Absent —
+                    // not shown as "low" — for meals with no assessment on
+                    // file, which is not the same as one that found nothing.
+                    if let riskLevel = meal.riskSnapshot?.overallRiskLevel {
+                        riskBadge(riskLevel)
+                    }
+
                     // Per-meal macro breakdown, shown only when there's data.
                     if meal.nutrition.protein != nil || meal.nutrition.carbs != nil || meal.nutrition.fat != nil {
                         HStack(spacing: 14) {
@@ -784,6 +792,26 @@ struct MealCalendarRow: View {
         .disabled(isNavigating)
     }
     
+    private func riskBadge(_ level: MealRiskLevel) -> some View {
+        HStack(spacing: 5) {
+            // Same typography as the text beside it, so Dynamic Type scales
+            // the pair together instead of growing the label around a frozen
+            // 11 pt icon.
+            Image(systemName: level.icon)
+                .typography(Typography.caption)
+                .fontWeight(.semibold)
+            Text("\(level.displayName) risk")
+                .typography(Typography.caption)
+        }
+        .foregroundStyle(level.color)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(level.color.opacity(0.12), in: Capsule())
+        .padding(.top, 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(level.displayName) risk")
+    }
+
     // The name is what distinguishes two lunches on the same day. Fall back
     // to the meal type when there isn't one, or it's only whitespace.
     private var displayTitle: String {
