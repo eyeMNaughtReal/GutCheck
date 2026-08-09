@@ -150,7 +150,10 @@ import Foundation
                     foodItems: foodItems,
                     notes: notes.isEmpty ? nil : notes,
                     tags: extractTags(),
-                    createdBy: userId
+                    createdBy: userId,
+                    // Snapshot the assessment the user was shown, rather than
+                    // re-scoring later against a database that will have moved.
+                    riskSnapshot: MealRiskPredictionService.shared.riskSnapshot(for: foodItems)
                 )
                 
                 // Save to repository (using the new repository pattern)

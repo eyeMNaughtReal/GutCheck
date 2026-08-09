@@ -123,6 +123,13 @@ import Combine
         // Generate meal name if empty
         let finalMealName = mealName.isEmpty ? generateDefaultMealName() : mealName
         
+        // Captured at save time, not on read. The user has just been shown this
+        // assessment in the builder; the saved meal should say the same thing
+        // when they come back to it, however the compound database and their
+        // symptom history have moved on since. An edit recomputes, because the
+        // food items it describes have changed.
+        let riskSnapshot = MealRiskPredictionService.shared.riskSnapshot(for: currentMeal)
+
         let meal = Meal(
             id: editingMealId ?? UUID().uuidString,
             name: finalMealName,
@@ -132,9 +139,10 @@ import Combine
             foodItems: currentMeal,
             notes: notes.isEmpty ? nil : notes,
             tags: extractTags(),
-            createdBy: userId
+            createdBy: userId,
+            riskSnapshot: riskSnapshot
         )
-        
+
         
         try await mealRepository.save(meal)
         

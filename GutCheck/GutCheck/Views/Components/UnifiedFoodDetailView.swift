@@ -41,7 +41,7 @@ struct UnifiedFoodDetailView: View {
         switch config.style {
         case .compact:
             compactView
-        case .standard, .full, .nutrition:
+        case .standard, .full, .nutrition, .readOnly:
             fullDetailView
         }
     }
