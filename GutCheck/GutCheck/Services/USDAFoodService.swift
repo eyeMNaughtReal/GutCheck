@@ -102,6 +102,8 @@ class USDAFoodService {
             .capitalized
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
+        let servings = servingOptions(for: food, name: name, servingQty: servingQty, servingUnit: servingUnit)
+
         return FoodSearchResult(
             id: String(food.fdcId),
             name: name,
@@ -118,6 +120,8 @@ class USDAFoodService {
             servingUnit: servingUnit,
             servingQty: servingQty,
             servingWeight: servingQty,
+            servingOptions: servings.options,
+            defaultServing: servings.defaultOption,
             ingredients: food.ingredients,
             // Additional fats (g/100g)
             saturatedFat: grams(1258),
@@ -178,6 +182,72 @@ class USDAFoodService {
             theobromine: fromMg(1058)
         )
     }
+
+    // MARK: - Serving sizes
+
+    /// The text FNDDS uses for the measure that carries its default portion
+    /// weight without naming a portion. Useless as a label, but its weight is
+    /// the best hint available for which named measure to start on.
+    private static let unnamedMeasureText = "quantity not specified"
+
+    /// Reads the portions a USDA record offers.
+    ///
+    /// `foodMeasures` is where the useful portions live and it is the same
+    /// search response the app already fetches — no extra request. Survey
+    /// (FNDDS) foods, which is what a restaurant item resolves to, carry
+    /// entries like "1 McDonald's Big Mac" at 205 g while reporting nutrition
+    /// per 100 g. Branded foods instead declare `servingSize` plus a household
+    /// description, so both are folded in.
+    private func servingOptions(
+        for food: USDAFood,
+        name: String,
+        servingQty: Double,
+        servingUnit: String
+    ) -> (options: [ServingOption], defaultOption: ServingOption?) {
+
+        let measures = food.foodMeasures ?? []
+
+        // The weight the source itself treats as one portion, when it says so.
+        let unnamedGrams = measures.first {
+            $0.disseminationText?.lowercased().trimmingCharacters(in: .whitespaces) == Self.unnamedMeasureText
+        }?.gramWeight
+
+        var options: [ServingOption] = measures.compactMap { measure in
+            guard let text = measure.disseminationText,
+                  text.lowercased().trimmingCharacters(in: .whitespaces) != Self.unnamedMeasureText,
+                  let grams = measure.gramWeight
+            else { return nil }
+            return ServingOption(label: text, gramWeight: grams)
+        }
+
+        // A branded record's own serving: "1 ONZ" or "3 pieces" at a declared
+        // weight. Only trustworthy when the unit is grams — `servingSize` can
+        // be millilitres, and the nutrition scaling already assumes water
+        // density there without this making a second claim about it.
+        if servingUnit == "g", servingQty > 0, servingQty != 100,
+           let household = food.householdServingFullText,
+           let option = ServingOption(label: household, gramWeight: servingQty) {
+            options.append(option)
+        }
+
+        // Grams is always available as an escape hatch, and doubles as the
+        // baseline that used to be the only choice.
+        let baseline = ServingOption.grams(servingQty > 0 ? servingQty : 100)
+        if let baseline { options.append(baseline) }
+
+        let normalized = ServingSizeResolver.normalize(options)
+
+        // Falling back to the baseline rather than to nothing keeps the picker
+        // and the logged figures in agreement: an unselected picker next to a
+        // portion the app chose anyway is the confusing state.
+        let defaultOption = ServingSizeResolver.defaultOption(
+            forFoodNamed: name,
+            from: normalized,
+            preferredGrams: unnamedGrams
+        ) ?? baseline
+
+        return (normalized, defaultOption)
+    }
 }
 
 // MARK: - Errors
@@ -224,7 +294,18 @@ struct USDAFood: Codable {
     let servingSize: Double?
     let servingSizeUnit: String?
     let householdServingFullText: String?
+
+    /// Household portions with their gram weights — "1 McDonald's Big Mac",
+    /// 205 g. Present on Survey (FNDDS) records and empty on most others.
+    let foodMeasures: [USDAFoodMeasure]?
+
     let foodNutrients: [USDAFoodNutrient]
+}
+
+struct USDAFoodMeasure: Codable {
+    /// How the portion reads, e.g. "1 medium fast food order".
+    let disseminationText: String?
+    let gramWeight: Double?
 }
 
 struct USDAFoodNutrient: Codable {

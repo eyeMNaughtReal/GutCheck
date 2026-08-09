@@ -101,7 +101,14 @@ enum AccessibilityIdentifiers {
             "foodSearch.result.\(index)"
         }
     }
-    
+
+    // MARK: - Food Detail
+    enum FoodDetail {
+        static let servingPicker = "foodDetail.serving.picker"
+        static let servingStepper = "foodDetail.serving.stepper"
+        static let servingSummary = "foodDetail.serving.summary"
+    }
+
     // MARK: - Symptom Logging
     enum SymptomLogger {
         static let view = "symptomLogger.view"

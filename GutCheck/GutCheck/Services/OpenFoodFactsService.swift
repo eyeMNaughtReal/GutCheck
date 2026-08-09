@@ -100,6 +100,12 @@ class OpenFoodFactsService {
         // Pre-calculate nutrition values to help compiler
         let brandName = product.brands?.components(separatedBy: ",").first?.trimmingCharacters(in: .whitespacesAndNewlines)
         let productNameSafe = product.productName ?? "Unknown Product"
+
+        let servings = servingOptions(
+            for: product,
+            baseGrams: servingQty,
+            baseUnit: servingUnit
+        )
         
         // Basic macronutrients
         let calories = nutriments?.energyKcal100g.map { $0 * multiplier }
@@ -153,6 +159,8 @@ class OpenFoodFactsService {
             servingUnit: servingUnit,
             servingQty: servingQty,
             servingWeight: servingQty,
+            servingOptions: servings.options,
+            defaultServing: servings.defaultOption,
             ingredients: product.bestIngredientsText,
             declaredAllergens: product.normalizedAllergens,
             saturatedFat: saturatedFat,
@@ -183,6 +191,97 @@ class OpenFoodFactsService {
         )
     }
     
+    // MARK: - Serving sizes
+
+    /// Heaviest whole product still treated as one portion when the record
+    /// declares no serving size.
+    ///
+    /// A judgement call, and the reason it exists: fast-food records routinely
+    /// carry only `product_quantity` (a Big Mac is 220 g with no serving size),
+    /// and defaulting those to 100 g is the bug in #359. Above this a package
+    /// is far more likely to be a jar or a bag that nobody eats in one sitting,
+    /// where guessing "the whole thing" would be the larger error. The picker
+    /// still offers the whole package either way.
+    private static let maxSingleServingPackageGrams: Double = 500
+
+    /// Reads the portions an OpenFoodFacts record offers.
+    ///
+    /// - Parameter baseGrams: the weight the caller has already scaled this
+    ///   product's nutrition to, offered as the fallback choice.
+    private func servingOptions(
+        for product: OpenFoodFactsProduct,
+        baseGrams: Double,
+        baseUnit: String
+    ) -> (options: [ServingOption], defaultOption: ServingOption?) {
+
+        var options: [ServingOption] = []
+
+        // The record's declared serving, kept as written ("30 g", "1 biscuit
+        // (25 g)") so the user sees the source's own words.
+        let declaredServing = product.servingSize
+            .flatMap { text -> ServingOption? in
+                guard let grams = Self.weightInGrams(from: text) else { return nil }
+                let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                // A record that writes its serving size as a bare "219" gets a
+                // unit added; keeping it verbatim renders as "219 · 219 g".
+                return trimmed.contains(where: \.isLetter)
+                    ? ServingOption(label: trimmed, gramWeight: grams)
+                    : ServingOption.grams(grams)
+            }
+        if let declaredServing { options.append(declaredServing) }
+
+        let wholePackage = product.productWeightInGrams
+            .flatMap { ServingOption(label: "Whole package", gramWeight: $0) }
+        if let wholePackage { options.append(wholePackage) }
+
+        // The baseline the nutrition was scaled to — usually 100 g, and always
+        // available as an escape hatch. Labelled in the source's own unit so a
+        // drink measured in millilitres is not silently relabelled as grams.
+        let baselineWeight = baseGrams > 0 ? baseGrams : 100
+        let baseline = ServingOption(
+            label: "\(ServingOption.formattedWeight(baselineWeight)) \(baseUnit)",
+            gramWeight: baselineWeight
+        )
+        if let baseline { options.append(baseline) }
+
+        let normalized = ServingSizeResolver.normalize(options)
+
+        // Declared serving first — it is the source stating what one portion
+        // is. Otherwise the whole package, but only when it is small enough to
+        // plausibly be one. Failing both, the baseline, so the picker always
+        // shows the portion the figures actually describe.
+        let defaultOption: ServingOption? = declaredServing
+            ?? wholePackage.flatMap { $0.gramWeight <= Self.maxSingleServingPackageGrams ? $0 : nil }
+            ?? baseline
+
+        return (normalized, defaultOption)
+    }
+
+    /// Grams from a free-text weight, or `nil` when the text names a unit that
+    /// is not a weight.
+    ///
+    /// A bare number is read as grams: OpenFoodFacts records a serving size of
+    /// `"219"` for the European Big Mac, and that is what the contributor meant.
+    /// Volumes are rejected rather than assumed to weigh the same — a serving
+    /// option prints its gram weight, and printing one for millilitres would
+    /// assert a density the record never gave.
+    static func weightInGrams(from text: String) -> Double? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let pattern = #"^(\d+(?:[.,]\d+)?)\s*([a-zA-Z]*)"#
+
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive),
+              let match = regex.firstMatch(in: trimmed, range: NSRange(trimmed.startIndex..., in: trimmed)),
+              let numberRange = Range(match.range(at: 1), in: trimmed),
+              let unitRange = Range(match.range(at: 2), in: trimmed),
+              let value = Double(String(trimmed[numberRange]).replacingOccurrences(of: ",", with: ".")),
+              value > 0
+        else { return nil }
+
+        let unit = String(trimmed[unitRange]).lowercased()
+        let gramUnits: Set<String> = ["", "g", "gr", "gram", "grams", "gramme", "grammes"]
+        return gramUnits.contains(unit) ? value : nil
+    }
+
     // Helper method to parse serving size strings like "100g", "1 cup", "30 ml"
     private func parseServingSize(_ servingSize: String) -> (quantity: Double, unit: String) {
         let trimmed = servingSize.trimmingCharacters(in: .whitespacesAndNewlines)
