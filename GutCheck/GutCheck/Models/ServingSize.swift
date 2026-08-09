@@ -90,9 +90,16 @@ struct ServingOption: Codable, Hashable, Identifiable {
     }
 
     /// True when the label is nothing but a number and a unit ("100 g", "25 ml").
+    ///
+    /// Accepts either decimal separator. Labels built locally go through
+    /// `formattedWeight`, which formats in the user's locale — so in a
+    /// comma-decimal locale a label reads "2,5 g", and a period-only pattern
+    /// stopped recognising it as a quantity. That put the gram suffix back on
+    /// volume labels for those users: the invented-density bug, but only in
+    /// locales the tests weren't running in.
     private var labelIsAQuantity: Bool {
         label.range(
-            of: #"^\d+(\.\d+)?\s*(g|kg|mg|ml|cl|l|oz|fl oz|lb)$"#,
+            of: #"^\d+([.,]\d+)?\s*(g|kg|mg|ml|cl|l|oz|fl oz|lb)$"#,
             options: [.regularExpression, .caseInsensitive]
         ) != nil
     }
