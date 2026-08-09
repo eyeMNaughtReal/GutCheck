@@ -153,7 +153,7 @@ import Foundation
             // Mac read as "No known risk factors" — the app simply had no idea
             // what was in it. Say so instead.
             score = 0
-            dataSource = .compoundAnalysis
+            dataSource = .insufficientData
             explanation = "No ingredient data for \(item.name), so its risk can't be assessed"
         } else {
             // Genuinely analysed and came back clean.

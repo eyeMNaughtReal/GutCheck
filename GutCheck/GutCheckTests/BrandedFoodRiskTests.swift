@@ -7,7 +7,6 @@
 //  analysed and the app reported that absence as safety.
 //
 
-import Foundation
 import Testing
 @testable import GutCheck
 

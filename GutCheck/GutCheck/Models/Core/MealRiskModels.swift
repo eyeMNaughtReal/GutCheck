@@ -55,6 +55,10 @@ enum RiskDataSource: String, Hashable {
     case historicalCorrelation
     case compoundAnalysis
     case combined
+    /// Nothing was available to assess — no history, no compounds, no
+    /// ingredients. Distinct from `.compoundAnalysis`, which claims a compound
+    /// analysis actually ran and found nothing.
+    case insufficientData
 }
 
 // MARK: - Food Item Risk Detail
