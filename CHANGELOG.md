@@ -1,6 +1,6 @@
 # Changelog
 
-<!-- changelog:last_sha=f53fe0141b95ee900d566cf36ae9740aa677cdcd -->
+<!-- changelog:last_sha=8c1cb6a86c37976e25791ee54c9647de3c00651e -->
 
 All notable changes to GutCheck, newest first. Each section is dated by the day
 the work reached `main`.
@@ -8,6 +8,11 @@ the work reached `main`.
 New sections are prepended automatically after every successful CI run on
 `main`; the marker above records where the bot last read from. See CLAUDE.md
 before editing this file by hand.
+
+## 2026-08-09
+
+- fix(risk): stop reporting 'no data' as 'no risk' (#356) (#403) (e2d15ca)
+- docs(changelog): update after successful CI on main [skip ci] (b557f17)
 
 ## 2026-08-07
 
