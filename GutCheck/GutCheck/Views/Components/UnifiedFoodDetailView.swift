@@ -421,31 +421,43 @@ struct UnifiedFoodDetailView: View {
             }
             
             // Ingredients
-            if !foodItem.ingredients.isEmpty {
-                Button(action: {
-                    detailService.showingIngredients = true
-                }) {
-                    DetailSectionRow(
-                        icon: "list.bullet",
-                        title: "Ingredients",
-                        subtitle: "\(foodItem.ingredients.count) ingredients"
-                    )
-                }
+            //
+            // Always shown, even when empty. Hiding the row made "we have no
+            // data" indistinguishable from "this food has no ingredients" —
+            // and IngredientsView already carries a written empty state that
+            // was unreachable because the row was removed before you could
+            // tap it.
+            Button(action: {
+                detailService.showingIngredients = true
+            }) {
+                DetailSectionRow(
+                    icon: "list.bullet",
+                    title: "Ingredients",
+                    subtitle: foodItem.ingredients.isEmpty
+                        ? "No ingredient data available"
+                        : "\(foodItem.ingredients.count) ingredients"
+                )
             }
-            
+
             // Allergens & Health Indicators
+            //
+            // Also always shown. An absent warnings section reads as "nothing
+            // to worry about", which is exactly the wrong message when the
+            // truth is that nothing could be checked.
             let totalWarnings = foodItem.allergens.count + healthIndicators.count
-            if totalWarnings > 0 {
-                Button(action: {
-                    detailService.showingAllergens = true
-                }) {
-                    DetailSectionRow(
-                        icon: "exclamationmark.triangle.fill",
-                        title: "Allergens & Warnings", 
-                        subtitle: getAllergensAndHealthSummary(),
-                        iconColor: ColorTheme.error
-                    )
-                }
+            Button(action: {
+                detailService.showingAllergens = true
+            }) {
+                DetailSectionRow(
+                    icon: totalWarnings > 0 ? "exclamationmark.triangle.fill" : "questionmark.circle",
+                    title: "Allergens & Warnings",
+                    subtitle: totalWarnings > 0
+                        ? getAllergensAndHealthSummary()
+                        : (foodItem.ingredients.isEmpty
+                            ? "Can't be checked without ingredient data"
+                            : "No warnings detected"),
+                    iconColor: totalWarnings > 0 ? ColorTheme.error : ColorTheme.secondaryText
+                )
             }
         }
     }
