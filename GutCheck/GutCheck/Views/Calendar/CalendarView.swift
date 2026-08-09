@@ -794,8 +794,12 @@ struct MealCalendarRow: View {
     
     private func riskBadge(_ level: MealRiskLevel) -> some View {
         HStack(spacing: 5) {
+            // Same typography as the text beside it, so Dynamic Type scales
+            // the pair together instead of growing the label around a frozen
+            // 11 pt icon.
             Image(systemName: level.icon)
-                .font(.system(size: 11, weight: .semibold))
+                .typography(Typography.caption)
+                .fontWeight(.semibold)
             Text("\(level.displayName) risk")
                 .typography(Typography.caption)
         }

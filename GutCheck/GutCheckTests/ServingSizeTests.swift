@@ -269,3 +269,27 @@ struct VolumeServingDescriptionTests {
         #expect(option.quantityDescription(count: 2) == "2 × 1 medium fast food order · 290 g")
     }
 }
+
+@Suite("Quantity labels in comma-decimal locales")
+struct CommaDecimalLabelTests {
+
+    @Test("A comma-decimal volume label is still recognised as a quantity")
+    func commaVolumeLabel() throws {
+        // formattedWeight builds labels in the user's locale, so a French
+        // device produces "2,5 ml". A period-only pattern stopped treating it
+        // as a quantity and put the gram suffix back — the invented-density
+        // bug, but only in locales the tests weren't running in.
+        let option = try #require(ServingOption(label: "2,5 ml", gramWeight: 2.5))
+
+        #expect(!option.displayName.contains(" g"))
+        #expect(!option.quantityDescription(count: 2).contains(" g"))
+    }
+
+    @Test("A comma-decimal weight label gets no doubled suffix")
+    func commaWeightLabel() throws {
+        let option = try #require(ServingOption(label: "2,5 g", gramWeight: 2.5))
+
+        // Already a quantity; appending "· 2.5 g" would print the weight twice.
+        #expect(option.displayName == "2,5 g")
+    }
+}
