@@ -5,7 +5,10 @@ struct MealDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(AppRouter.self) var router
     @Environment(RefreshManager.self) var refreshManager
-    
+
+    /// Non-nil while a food item's read-only detail sheet is up.
+    @State private var inspectingFoodItem: FoodItem?
+
     // New initializer that takes a meal ID
     init(mealId: String) {
         self._viewModel = State(wrappedValue: MealDetailViewModel(mealId: mealId))
@@ -69,11 +72,19 @@ struct MealDetailView: View {
         ScrollView {
             VStack(spacing: 24) {
                 mealHeaderSection
+                riskAssessmentSection
                 foodItemsSection
                 nutritionSummarySection
                 notesSection
             }
             .padding(.bottom, 80)
+        }
+        .sheet(item: $inspectingFoodItem) { foodItem in
+            // Read-only: this meal is already in history, so the sheet is for
+            // looking up what was in the item, not for editing it here.
+            UnifiedFoodDetailView(foodItem: foodItem, style: .readOnly)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
         }
         .navigationTitle("Meal Details")
         .navigationBarTitleDisplayMode(.inline)
@@ -124,6 +135,49 @@ struct MealDetailView: View {
         .padding(.horizontal)
     }
     
+    @ViewBuilder
+    private var riskAssessmentSection: some View {
+        if let snapshot = viewModel.meal.riskSnapshot {
+            // Replayed from what the user was shown when they logged the meal,
+            // not re-scored now — see `MealRiskSnapshot`.
+            MealRiskAssessmentCard(assessment: snapshot.assessment)
+                .padding(.horizontal)
+        } else if !viewModel.meal.foodItems.isEmpty {
+            // Logged before assessments were kept. Saying so beats either
+            // showing nothing or quietly scoring it against today's data.
+            noRiskRecordCard
+        }
+    }
+
+    private var noRiskRecordCard: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "questionmark.circle.fill")
+                .typography(Typography.title2)
+                .foregroundStyle(ColorTheme.secondaryText)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Risk Assessment")
+                    .typography(Typography.headline)
+                    .foregroundStyle(ColorTheme.primaryText)
+
+                Text("This meal was logged before risk assessments were saved, so none was recorded.")
+                    .typography(Typography.caption)
+                    .foregroundStyle(ColorTheme.secondaryText)
+            }
+
+            Spacer()
+        }
+        .padding()
+        .background(ColorTheme.surface)
+        .clipShape(.rect(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(ColorTheme.border, lineWidth: 1.5)
+        )
+        .padding(.horizontal)
+        .accessibilityElement(children: .combine)
+    }
+
     @ViewBuilder
     private var foodItemsSection: some View {
         if !viewModel.meal.foodItems.isEmpty {
@@ -197,29 +251,46 @@ struct MealDetailView: View {
     // MARK: - UI Components
 
     private func foodItemRow(_ foodItem: FoodItem) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(foodItem.name)
-                    .typography(Typography.subheadline)
-                    .foregroundStyle(ColorTheme.primaryText)
-                
-                Text(foodItem.quantity)
+        Button {
+            HapticManager.shared.light()
+            inspectingFoodItem = foodItem
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(foodItem.name)
+                        .typography(Typography.subheadline)
+                        .foregroundStyle(ColorTheme.primaryText)
+
+                    Text(foodItem.quantity)
+                        .typography(Typography.caption)
+                        .foregroundStyle(ColorTheme.secondaryText)
+                }
+
+                Spacer()
+
+                if let calories = foodItem.nutrition.calories {
+                    Text("\(calories) calories")
+                        .typography(Typography.caption)
+                        .foregroundStyle(ColorTheme.secondaryText)
+                }
+
+                // The rows used to look identical to static text, so nobody
+                // knew there was anything behind them.
+                Image(systemName: "chevron.right")
                     .typography(Typography.caption)
-                    .foregroundStyle(ColorTheme.secondaryText)
+                    .foregroundStyle(ColorTheme.secondaryText.opacity(0.5))
             }
-            
-            Spacer()
-            
-            if let calories = foodItem.nutrition.calories {
-                Text("\(calories) calories")
-                    .typography(Typography.caption)
-                    .foregroundStyle(ColorTheme.secondaryText)
-            }
+            .padding()
+            .background(ColorTheme.surface)
+            .clipShape(.rect(cornerRadius: 12))
+            .contentShape(Rectangle())
         }
-        .padding()
-        .background(ColorTheme.surface)
-        .clipShape(.rect(cornerRadius: 12))
+        .buttonStyle(.plain)
         .padding(.horizontal)
+        .accessibleButton(
+            label: "\(foodItem.name), \(foodItem.quantity)",
+            hint: "Shows ingredients, allergens and nutrition for this item"
+        )
     }
     
     private func nutritionSummaryCard(nutrition: NutritionInfo) -> some View {

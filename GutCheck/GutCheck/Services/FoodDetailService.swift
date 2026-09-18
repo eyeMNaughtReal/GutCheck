@@ -44,6 +44,7 @@ enum FoodDetailStyle {
     case standard       // Standard detail view
     case full          // Full detail with editing capabilities
     case nutrition     // Focus on nutrition information
+    case readOnly      // Full detail for an already-logged item: look, don't touch
 }
 
 /// Configuration for food detail presentation
@@ -92,6 +93,19 @@ struct FoodDetailConfig {
                 showServingControls: false,
                 showDetailedSections: false,
                 showCancelButton: false  // Nutrition views typically in navigation
+            )
+        case .readOnly:
+            // Viewing an item on a meal already in history. Ingredients and
+            // allergens are the point of opening it, so the detail sections
+            // stay; adding it to the meal being built, or re-scaling a serving
+            // that was already eaten, are not offered.
+            return FoodDetailConfig(
+                style: .readOnly,
+                showAddToMeal: false,
+                allowEditing: false,
+                showServingControls: false,
+                showDetailedSections: true,
+                showCancelButton: true  // Presented as a sheet from meal details
             )
         }
     }

@@ -87,6 +87,62 @@ struct CompositeFood {
     let description: String
 }
 
+extension FoodCompoundDatabase {
+
+    /// Well-known menu items mapped to the generic food words the composite
+    /// table actually matches on.
+    ///
+    /// Composite matching is substring-based on words like "burger" and
+    /// "sandwich". Branded names contain none of them, so a Big Mac matched
+    /// nothing, inferred no ingredients, and came out the far end with an
+    /// empty profile and a reassuring zero risk score.
+    ///
+    /// This is a maintenance treadmill by nature — it only ever covers what is
+    /// listed. It is a floor, not a solution: the real fix is using the
+    /// ingredient text the search APIs already return, tracked separately.
+    ///
+    /// Every value here must be a keyword an actual `CompositeFood` matches.
+    /// Aliasing to a composite that does not exist (a "breakfast sandwich"
+    /// entry, say) looks like coverage while doing nothing — the same species
+    /// of silent gap this table exists to close. Anything without a real
+    /// target is deliberately left out: unmapped branded items now fall
+    /// through to an honest "unknown" rather than a false zero, so an
+    /// incomplete table is merely incomplete, not misleading.
+    static let brandedNameAliases: [String: String] = [
+        // → "burger"
+        "big mac": "burger",
+        "quarter pounder": "burger",
+        "whopper": "burger",
+        "baconator": "burger",
+        "mcdouble": "burger",
+        "dave's single": "burger",
+        // → "taco"
+        "crunchwrap": "taco",
+        "chalupa": "taco",
+        "gordita": "taco",
+        // → "ice cream"
+        "frosty": "ice cream",
+        "blizzard": "ice cream",
+        "mcflurry": "ice cream",
+        // → "fries"
+        "world famous fries": "fries",
+        "curly fries": "fries",
+        // → "hot dog"
+        "chili dog": "hot dog",
+        "coney": "hot dog"
+    ]
+
+    /// Appends the generic equivalent of any branded menu name found in `text`,
+    /// leaving the original intact so both can match.
+    static func expandBrandedName(_ text: String) -> String {
+        var expanded = text
+        for (brandedName, generic) in brandedNameAliases where text.contains(brandedName) {
+            expanded += " \(generic)"
+        }
+        return expanded
+    }
+}
+
 // MARK: - Food Compound Database
 
 class FoodCompoundDatabase {
@@ -913,8 +969,12 @@ class FoodCompoundDatabase {
     /// Get likely ingredients for a food item (including breaking down composite foods)
     func getIngredientsForFood(name: String, providedIngredients: [String]) -> [String] {
         var allIngredients = providedIngredients
-        let searchText = name.lowercased()
-        
+        // Menu names are matched first and folded into the search text, so a
+        // "Big Mac" can reach the burger composite that "big mac (mcdonalds)"
+        // otherwise misses entirely — composite matching is substring-based on
+        // generic food words, which branded names simply don't contain.
+        let searchText = Self.expandBrandedName(name.lowercased())
+
         // Check if this is a composite food we know about
         for compositeFood in compositeFoods {
             for keyword in compositeFood.keywords {

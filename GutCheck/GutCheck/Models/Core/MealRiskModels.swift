@@ -11,16 +11,26 @@ import SwiftUI
 // MARK: - Risk Level
 
 enum MealRiskLevel: String, Hashable, CaseIterable {
+    /// Nothing to analyse — no ingredients, no compounds, no history.
+    ///
+    /// Distinct from `.low`, which means the food *was* analysed and came back
+    /// clean. Collapsing the two is how a Big Mac scored a green 0 and read as
+    /// "No known risk factors": the app had no idea what was in it.
+    case unknown
     case low
     case moderate
     case high
 
     var displayName: String {
-        rawValue.capitalized
+        switch self {
+        case .unknown: return "Unknown"
+        default: return rawValue.capitalized
+        }
     }
 
     var icon: String {
         switch self {
+        case .unknown: return "questionmark.circle.fill"
         case .low: return "checkmark.shield.fill"
         case .moderate: return "exclamationmark.triangle.fill"
         case .high: return "xmark.shield.fill"
@@ -29,11 +39,14 @@ enum MealRiskLevel: String, Hashable, CaseIterable {
 
     var color: Color {
         switch self {
+        // Deliberately not green. Unknown is not reassurance.
+        case .unknown: return ColorTheme.secondaryText
         case .low: return ColorTheme.success
         case .moderate: return ColorTheme.warning
         case .high: return ColorTheme.error
         }
     }
+
 }
 
 // MARK: - Risk Data Source
@@ -42,6 +55,10 @@ enum RiskDataSource: String, Hashable {
     case historicalCorrelation
     case compoundAnalysis
     case combined
+    /// Nothing was available to assess — no history, no compounds, no
+    /// ingredients. Distinct from `.compoundAnalysis`, which claims a compound
+    /// analysis actually ran and found nothing.
+    case insufficientData
 }
 
 // MARK: - Food Item Risk Detail

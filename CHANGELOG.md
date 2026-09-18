@@ -1,6 +1,6 @@
 # Changelog
 
-<!-- changelog:last_sha=ff0a7ef16e2cf8b38fbf607f057bc20d2ab288b2 -->
+<!-- changelog:last_sha=cde91048c41055a668128feca6b2895b0b49a2c9 -->
 
 All notable changes to GutCheck, newest first. Each section is dated by the day
 the work reached `main`.
@@ -9,7 +9,21 @@ New sections are prepended automatically after every successful CI run on
 `main`; the marker above records where the bot last read from. See CLAUDE.md
 before editing this file by hand.
 
+## 2026-08-09
+
+- fix(serving): recognise comma-decimal labels, scale risk badge icon with type (#409) (d771c31)
+- Log foods at a real serving size instead of per 100 g (#359) (#407) (1a1c92f)
+- feat(risk): persist the meal risk assessment and surface it in history (#360) (#405) (b97462d)
+- test: make the nil-mealId test actually exercise the nil branch (#406) (675667c)
+- docs(changelog): update after successful CI on main [skip ci] (68e5016)
+
+- fix(risk): stop reporting 'no data' as 'no risk' (#356) (#403) (e2d15ca)
+- docs(changelog): update after successful CI on main [skip ci] (b557f17)
+
 ## 2026-08-07
+
+- fix: address Copilot review on #400 and repair CHANGELOG.md structure (#401) (3156286)
+- docs(changelog): update after successful CI on main [skip ci] (dd3931e)
 
 ### Fixed
 - Meal lists showed the meal type ("Lunch") instead of the saved name, so two lunches on the same day were indistinguishable. The save confirmation also appeared over a form the app had already cleared, which read as a failure (#363)
