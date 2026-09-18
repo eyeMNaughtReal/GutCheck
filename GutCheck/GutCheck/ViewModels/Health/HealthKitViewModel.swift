@@ -55,13 +55,12 @@ import HealthKit
     }
 
     func requestHealthKitAccess() async {
-        let granted = await HealthKitAsyncWrapper.shared.requestAuthorizationWithLogging()
-
-        if granted {
+        do {
+            try await healthKitManager.requestAuthorization()
             await fetchHealthData()
             isAuthorized = true
             HealthKitSyncManager.shared.markAuthorized()
-        } else {
+        } catch {
             showPermissionError = true
         }
         // Always refresh write statuses after any authorization attempt
@@ -69,7 +68,7 @@ import HealthKit
     }
 
     func fetchHealthData() async {
-        healthData = await HealthKitAsyncWrapper.shared.fetchUserHealthDataWithLogging()
+        healthData = await healthKitManager.fetchUserHealthData()
         if healthData != nil {
             lastSyncTimestamp = Date.now.timeIntervalSince1970
         }

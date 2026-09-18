@@ -70,7 +70,7 @@ import CryptoKit
             return
         }
 
-        guard let data = await HealthKitAsyncWrapper.shared.fetchUserHealthData() else {
+        guard let data = await HealthKitManager.shared.fetchUserHealthData() else {
             return
         }
 
