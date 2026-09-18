@@ -19,8 +19,8 @@ jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
     # Swift requires macOS; all other languages run on ubuntu for speed.
-    # macOS 26 or newer for the same reason as the build workflow: the project
-    # targets iOS 27, which the macos-15 images cannot compile.
+    # macOS 26 or newer for the same reason as the build workflow:
+    # FoundationModels needs the iOS 26 SDK, which macos-15 does not carry.
     runs-on: ${{ matrix.language == 'swift' && 'macos-26' || 'ubuntu-latest' }}
 
     permissions:

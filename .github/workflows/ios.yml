@@ -13,10 +13,14 @@ on:
 jobs:
   build-and-test:
     name: Build and Test
-    # macOS 26 or newer: the project targets iOS 27 and imports
-    # FoundationModels, so it needs an image carrying an Xcode that ships the
-    # iOS 27 SDK. The macos-15 images top out at Xcode 16 / iOS 18, where the
-    # deployment target alone fails the build.
+    # macOS 26 or newer. FoundationModels ships in the iOS 26 SDK, which the
+    # macos-15 images do not have — they top out at Xcode 16 / iOS 18, where
+    # `import FoundationModels` fails outright.
+    #
+    # Note the image currently provides Xcode 26.6 / iOS 26.5 while the project
+    # declares a 27.0 deployment target, so CI compiles against an older SDK
+    # than the app targets. That builds today but is worth revisiting once an
+    # Xcode 27 image is available.
     runs-on: macos-26
 
     steps:
