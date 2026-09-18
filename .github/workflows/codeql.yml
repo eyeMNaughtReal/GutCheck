@@ -18,8 +18,10 @@ on:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
-    # Swift requires macOS; all other languages run on ubuntu for speed
-    runs-on: ${{ matrix.language == 'swift' && 'macos-15' || 'ubuntu-latest' }}
+    # Swift requires macOS; all other languages run on ubuntu for speed.
+    # macOS 26 or newer for the same reason as the build workflow: the project
+    # targets iOS 27, which the macos-15 images cannot compile.
+    runs-on: ${{ matrix.language == 'swift' && 'macos-26' || 'ubuntu-latest' }}
 
     permissions:
       security-events: write

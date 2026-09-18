@@ -13,7 +13,11 @@ on:
 jobs:
   build-and-test:
     name: Build and Test
-    runs-on: macos-15
+    # macOS 26 or newer: the project targets iOS 27 and imports
+    # FoundationModels, so it needs an image carrying an Xcode that ships the
+    # iOS 27 SDK. The macos-15 images top out at Xcode 16 / iOS 18, where the
+    # deployment target alone fails the build.
+    runs-on: macos-26
 
     steps:
     - name: Checkout Code
@@ -23,6 +27,14 @@ jobs:
       uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: 'latest-stable'
+
+    # Records which Xcode and SDKs the runner actually provides. The project
+    # needs the iOS 27 SDK; if a future image regresses, this is the first
+    # place to look rather than reading it out of a compiler error.
+    - name: Report toolchain
+      run: |
+        xcodebuild -version
+        xcodebuild -showsdks | grep -i iphonesimulator || true
 
     - name: Cache Swift Package Manager
       uses: actions/cache@v6
