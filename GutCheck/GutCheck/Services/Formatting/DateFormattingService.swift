@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 /// Centralized date formatting service to ensure consistent date/time presentation
 enum DateFormat {
@@ -58,28 +59,36 @@ enum DateFormat {
 }
 
 final class DateFormattingService {
-    private static let shared = DateFormattingService()
-    
-    private var formatters: [String: DateFormatter] = [:]
-    
-    private func formatter(for format: DateFormat) -> DateFormatter {
+
+    /// Cache of configured formatters, keyed by format.
+    ///
+    /// Behind a `Mutex` for the same reason as `NumberFormattingService`: these
+    /// statics are nonisolated and callable from any thread, and racing on the
+    /// dictionary corrupts its storage rather than merely losing an entry.
+    ///
+    /// Only the dictionary needs guarding — each `DateFormatter` is configured
+    /// once here and afterwards only read.
+    private static let formatters = Mutex<[String: DateFormatter]>([:])
+
+    private static func formatter(for format: DateFormat) -> DateFormatter {
         let key = String(describing: format)
-        if let existingFormatter = formatters[key] {
-            return existingFormatter
+        return formatters.withLock { cache in
+            if let existingFormatter = cache[key] {
+                return existingFormatter
+            }
+            let formatter = DateFormatter()
+            format.apply(to: formatter)
+            cache[key] = formatter
+            return formatter
         }
-        
-        let formatter = DateFormatter()
-        format.apply(to: formatter)
-        formatters[key] = formatter
-        return formatter
     }
-    
+
     static func string(from date: Date, format: DateFormat) -> String {
-        shared.formatter(for: format).string(from: date)
+        formatter(for: format).string(from: date)
     }
-    
+
     static func date(from string: String, format: DateFormat) -> Date? {
-        shared.formatter(for: format).date(from: string)
+        formatter(for: format).date(from: string)
     }
 }
 

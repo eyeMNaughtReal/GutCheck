@@ -5,7 +5,6 @@
 //  Updated to properly populate comprehensive nutrition data
 
 import Foundation
-import Combine
 
 @MainActor
 @Observable class FoodSearchViewModel {
@@ -23,7 +22,6 @@ import Combine
         "Grains", "Beverages", "Snacks", "Fast Food"
     ]
     
-    private var cancellables = Set<AnyCancellable>()
     private let foodSearchService = FoodSearchService()
 
     init() {

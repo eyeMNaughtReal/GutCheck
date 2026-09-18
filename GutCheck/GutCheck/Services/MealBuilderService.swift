@@ -8,7 +8,6 @@
 
 import Foundation
 import SwiftUI
-import Combine
 
 @MainActor
 @Observable class MealBuilderService {
