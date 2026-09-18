@@ -9,12 +9,12 @@ import Foundation
 import HealthKit
 
 protocol HealthKitManagerProtocol {
-    func requestAuthorization(completion: @escaping (Bool, Error?) -> Void)
-    func fetchUserHealthData(completion: @escaping (UserHealthData?) -> Void)
-    func writeMealToHealthKit(_ meal: Meal, completion: @escaping (Bool, Error?) -> Void)
-    func writeSymptomToHealthKit(_ symptom: Symptom, completion: @escaping (Bool, Error?) -> Void)
-    func writeWaterIntakeToHealthKit(amount: Double, date: Date, completion: @escaping (Bool, Error?) -> Void)
-    func fetchGutHealthData(from startDate: Date, to endDate: Date, completion: @escaping (GutHealthData) -> Void)
+    func requestAuthorization() async throws
+    func fetchUserHealthData() async -> UserHealthData?
+    func writeMealToHealthKit(_ meal: Meal) async throws
+    func writeSymptomToHealthKit(_ symptom: Symptom) async throws
+    func writeWaterIntakeToHealthKit(amount: Double, date: Date) async throws
+    func fetchGutHealthData(from startDate: Date, to endDate: Date) async -> GutHealthData
     func writeAuthorizationStatus(for quantityTypeID: HKQuantityTypeIdentifier) -> HKAuthorizationStatus
     func writeAuthorizationStatus(for categoryTypeID: HKCategoryTypeIdentifier) -> HKAuthorizationStatus
 }

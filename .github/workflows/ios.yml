@@ -13,7 +13,15 @@ on:
 jobs:
   build-and-test:
     name: Build and Test
-    runs-on: macos-15
+    # macOS 26 or newer. FoundationModels ships in the iOS 26 SDK, which the
+    # macos-15 images do not have — they top out at Xcode 16 / iOS 18, where
+    # `import FoundationModels` fails outright.
+    #
+    # Note the image currently provides Xcode 26.6 / iOS 26.5 while the project
+    # declares a 27.0 deployment target, so CI compiles against an older SDK
+    # than the app targets. That builds today but is worth revisiting once an
+    # Xcode 27 image is available.
+    runs-on: macos-26
 
     steps:
     - name: Checkout Code
@@ -23,6 +31,14 @@ jobs:
       uses: maxim-lobanov/setup-xcode@v1
       with:
         xcode-version: 'latest-stable'
+
+    # Records which Xcode and SDKs the runner actually provides. The project
+    # needs the iOS 27 SDK; if a future image regresses, this is the first
+    # place to look rather than reading it out of a compiler error.
+    - name: Report toolchain
+      run: |
+        xcodebuild -version
+        xcodebuild -showsdks | grep -i iphonesimulator || true
 
     - name: Cache Swift Package Manager
       uses: actions/cache@v6

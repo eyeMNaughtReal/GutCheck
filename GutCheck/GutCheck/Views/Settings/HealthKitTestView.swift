@@ -80,17 +80,16 @@ struct HealthKitTestView: View {
         isLoading = true
         statusMessage = "Requesting HealthKit authorization..."
         
-        HealthKitManager.shared.requestAuthorization { success, error in
-            Task { @MainActor in
-                isLoading = false
-                if success {
-                    isAuthorized = true
-                    statusMessage = "✅ HealthKit authorized successfully!"
-                    testResults.append("✅ Authorization granted at \(Date.now.formatted())")
-                } else {
-                    statusMessage = "❌ HealthKit authorization failed: \(error?.localizedDescription ?? "Unknown error")"
-                    testResults.append("❌ Authorization failed: \(error?.localizedDescription ?? "Unknown")")
-                }
+        Task { @MainActor in
+            defer { isLoading = false }
+            do {
+                try await HealthKitManager.shared.requestAuthorization()
+                isAuthorized = true
+                statusMessage = "✅ HealthKit authorized successfully!"
+                testResults.append("✅ Authorization granted at \(Date.now.formatted())")
+            } catch {
+                statusMessage = "❌ HealthKit authorization failed: \(error.localizedDescription)"
+                testResults.append("❌ Authorization failed: \(error.localizedDescription)")
             }
         }
     }
@@ -126,16 +125,15 @@ struct HealthKitTestView: View {
             createdBy: "test-user"
         )
         
-        HealthKitManager.shared.writeMealToHealthKit(testMeal) { success, error in
-            Task { @MainActor in
-                isLoading = false
-                if success {
-                    statusMessage = "✅ Test meal written to HealthKit successfully!"
-                    testResults.append("✅ Meal data written: 350 cal, 25g protein, 45g carbs, 12g fat")
-                } else {
-                    statusMessage = "❌ Failed to write meal data: \(error?.localizedDescription ?? "Unknown error")"
-                    testResults.append("❌ Meal write failed: \(error?.localizedDescription ?? "Unknown")")
-                }
+        Task { @MainActor in
+            defer { isLoading = false }
+            do {
+                try await HealthKitManager.shared.writeMealToHealthKit(testMeal)
+                statusMessage = "✅ Test meal written to HealthKit successfully!"
+                testResults.append("✅ Meal data written: 350 cal, 25g protein, 45g carbs, 12g fat")
+            } catch {
+                statusMessage = "❌ Failed to write meal data: \(error.localizedDescription)"
+                testResults.append("❌ Meal write failed: \(error.localizedDescription)")
             }
         }
     }
@@ -155,16 +153,15 @@ struct HealthKitTestView: View {
             createdBy: "test-user"
         )
         
-        HealthKitManager.shared.writeSymptomToHealthKit(testSymptom) { success, error in
-            Task { @MainActor in
-                isLoading = false
-                if success {
-                    statusMessage = "✅ Test symptom written to HealthKit successfully!"
-                    testResults.append("✅ Symptom data written: Type 4, Mild pain, Mild urgency")
-                } else {
-                    statusMessage = "❌ Failed to write symptom data: \(error?.localizedDescription ?? "Unknown error")"
-                    testResults.append("❌ Symptom write failed: \(error?.localizedDescription ?? "Unknown")")
-                }
+        Task { @MainActor in
+            defer { isLoading = false }
+            do {
+                try await HealthKitManager.shared.writeSymptomToHealthKit(testSymptom)
+                statusMessage = "✅ Test symptom written to HealthKit successfully!"
+                testResults.append("✅ Symptom data written: Type 4, Mild pain, Mild urgency")
+            } catch {
+                statusMessage = "❌ Failed to write symptom data: \(error.localizedDescription)"
+                testResults.append("❌ Symptom write failed: \(error.localizedDescription)")
             }
         }
     }
@@ -175,16 +172,15 @@ struct HealthKitTestView: View {
         
         let waterAmount = 500.0 // 500ml
         
-        HealthKitManager.shared.writeWaterIntakeToHealthKit(amount: waterAmount) { success, error in
-            Task { @MainActor in
-                isLoading = false
-                if success {
-                    statusMessage = "✅ Test water intake written to HealthKit successfully!"
-                    testResults.append("✅ Water intake written: \(waterAmount)ml")
-                } else {
-                    statusMessage = "❌ Failed to write water intake: \(error?.localizedDescription ?? "Unknown error")"
-                    testResults.append("❌ Water write failed: \(error?.localizedDescription ?? "Unknown")")
-                }
+        Task { @MainActor in
+            defer { isLoading = false }
+            do {
+                try await HealthKitManager.shared.writeWaterIntakeToHealthKit(amount: waterAmount)
+                statusMessage = "✅ Test water intake written to HealthKit successfully!"
+                testResults.append("✅ Water intake written: \(waterAmount)ml")
+            } catch {
+                statusMessage = "❌ Failed to write water intake: \(error.localizedDescription)"
+                testResults.append("❌ Water write failed: \(error.localizedDescription)")
             }
         }
     }

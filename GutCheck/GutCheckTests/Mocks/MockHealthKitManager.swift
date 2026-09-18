@@ -4,29 +4,33 @@ import HealthKit
 
 final class MockHealthKitManager: HealthKitManagerProtocol {
     var gutHealthDataToReturn = GutHealthData()
+    var userHealthDataToReturn: UserHealthData?
 
-    func requestAuthorization(completion: @escaping (Bool, Error?) -> Void) {
-        completion(true, nil)
+    /// When set, every throwing method throws this instead of succeeding.
+    var errorToThrow: Error?
+
+    func requestAuthorization() async throws {
+        if let errorToThrow { throw errorToThrow }
     }
 
-    func fetchUserHealthData(completion: @escaping (UserHealthData?) -> Void) {
-        completion(nil)
+    func fetchUserHealthData() async -> UserHealthData? {
+        userHealthDataToReturn
     }
 
-    func writeMealToHealthKit(_ meal: Meal, completion: @escaping (Bool, Error?) -> Void) {
-        completion(true, nil)
+    func writeMealToHealthKit(_ meal: Meal) async throws {
+        if let errorToThrow { throw errorToThrow }
     }
 
-    func writeSymptomToHealthKit(_ symptom: Symptom, completion: @escaping (Bool, Error?) -> Void) {
-        completion(true, nil)
+    func writeSymptomToHealthKit(_ symptom: Symptom) async throws {
+        if let errorToThrow { throw errorToThrow }
     }
 
-    func writeWaterIntakeToHealthKit(amount: Double, date: Date, completion: @escaping (Bool, Error?) -> Void) {
-        completion(true, nil)
+    func writeWaterIntakeToHealthKit(amount: Double, date: Date) async throws {
+        if let errorToThrow { throw errorToThrow }
     }
 
-    func fetchGutHealthData(from startDate: Date, to endDate: Date, completion: @escaping (GutHealthData) -> Void) {
-        completion(gutHealthDataToReturn)
+    func fetchGutHealthData(from startDate: Date, to endDate: Date) async -> GutHealthData {
+        gutHealthDataToReturn
     }
 
     func writeAuthorizationStatus(for quantityTypeID: HKQuantityTypeIdentifier) -> HKAuthorizationStatus {

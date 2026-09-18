@@ -1,4 +1,5 @@
 import Foundation
+import Synchronization
 
 enum NumberFormat {
     case decimal(places: Int)
@@ -33,23 +34,34 @@ enum NumberFormat {
 }
 
 final class NumberFormattingService {
-    private static let shared = NumberFormattingService()
-    
-    private var formatters: [String: NumberFormatter] = [:]
-    
-    private func formatter(for format: NumberFormat) -> NumberFormatter {
+
+    /// Cache of configured formatters, keyed by format.
+    ///
+    /// Behind a `Mutex` because `string(from:format:)` is a nonisolated static
+    /// callable from any thread, and an unsynchronised dictionary mutation here
+    /// corrupts the cache's storage rather than merely losing an entry. That
+    /// surfaced as an abort inside `Dictionary.setValue(_:forKey:)` when the
+    /// parallel test suite formatted numbers from two tests at once.
+    ///
+    /// Only the dictionary needs guarding. Each `NumberFormatter` is configured
+    /// once and afterwards only read, and reading one from multiple threads is
+    /// supported.
+    private static let formatters = Mutex<[String: NumberFormatter]>([:])
+
+    private static func formatter(for format: NumberFormat) -> NumberFormatter {
         let key = String(describing: format)
-        if let existingFormatter = formatters[key] {
-            return existingFormatter
+        return formatters.withLock { cache in
+            if let existingFormatter = cache[key] {
+                return existingFormatter
+            }
+            let formatter = format.formatter
+            cache[key] = formatter
+            return formatter
         }
-        
-        let formatter = format.formatter
-        formatters[key] = formatter
-        return formatter
     }
-    
+
     static func string(from number: NSNumber, format: NumberFormat) -> String {
-        shared.formatter(for: format).string(from: number) ?? "\(number)"
+        formatter(for: format).string(from: number) ?? "\(number)"
     }
     
     static func string(from double: Double, format: NumberFormat) -> String {

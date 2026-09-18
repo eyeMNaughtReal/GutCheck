@@ -1,5 +1,4 @@
 import Foundation
-import Combine
 
 /// Service for generating and managing health insights
 @Observable class InsightsService {
@@ -10,8 +9,7 @@ import Combine
     var error: String?
     
     private let patternService = PatternRecognitionService.shared
-    private var cancellables = Set<AnyCancellable>()
-    
+
     private init() {}
     
     // MARK: - Main Methods
@@ -114,11 +112,7 @@ import Combine
     }
     
     private func fetchHealthData(for timeRange: DateInterval) async -> GutHealthData? {
-        return await withCheckedContinuation { continuation in
-            HealthKitManager.shared.fetchGutHealthData(from: timeRange.start, to: timeRange.end) { healthData in
-                continuation.resume(returning: healthData)
-            }
-        }
+        await HealthKitManager.shared.fetchGutHealthData(from: timeRange.start, to: timeRange.end)
     }
     
     // MARK: - Pattern Conversion

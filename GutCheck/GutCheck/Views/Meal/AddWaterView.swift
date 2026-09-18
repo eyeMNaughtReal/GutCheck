@@ -87,7 +87,8 @@ struct AddWaterView: View {
         
         // Write water intake to HealthKit
         let millilitersAmount = cups * 236.6
-        HealthKitManager.shared.writeWaterIntakeToHealthKit(amount: millilitersAmount) { _, _ in
+        Task {
+            try? await HealthKitManager.shared.writeWaterIntakeToHealthKit(amount: millilitersAmount)
         }
         
         // Provide haptic feedback

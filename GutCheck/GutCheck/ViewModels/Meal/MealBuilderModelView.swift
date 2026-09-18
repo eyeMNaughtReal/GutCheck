@@ -164,7 +164,7 @@ import Foundation
 
                 // Write nutrition data to HealthKit (respects user preference)
                 if UserDefaults.standard.bool(forKey: "healthKitWriteMeals") {
-                    await HealthKitAsyncWrapper.shared.writeMealWithLogging(meal)
+                    try? await HealthKitManager.shared.writeMealToHealthKit(meal)
                 }
 
                 // Update UI
