@@ -2,6 +2,15 @@ import Testing
 import Foundation
 @testable import GutCheck
 
+/// Tests for the dashboard's derived state: health score, focus message,
+/// avoidance tip, trigger alerts and the AI insight summary.
+///
+/// These previously drove the store through `loadDataForSelectedDate()`, which
+/// clears `todaysMeals`/`todaysSymptoms` and starts an async reload before it
+/// computes anything. Every test that populated data and called it was really
+/// asserting against an empty store, so nine of them could never pass. They now
+/// set the data and call `recomputeDerivedState()`, which is the derivation step
+/// on its own.
 @MainActor
 struct DashboardDataStoreTests {
 
@@ -27,6 +36,21 @@ struct DashboardDataStoreTests {
         Symptom(id: id, date: date, stoolType: stoolType, painLevel: painLevel, urgencyLevel: urgencyLevel, createdBy: "test-user")
     }
 
+    /// A store with no repository access, seeded with the given data.
+    ///
+    /// `preview: true` keeps the initializer from hitting the real repositories
+    /// and suppresses on-device narration, so `aiInsightSummary` stays at the
+    /// deterministic value under test.
+    private func makeStore(
+        meals: [Meal] = [],
+        symptoms: [Symptom] = []
+    ) -> DashboardDataStore {
+        let store = DashboardDataStore(preview: true)
+        store.todaysMeals = meals
+        store.todaysSymptoms = symptoms
+        return store
+    }
+
     // MARK: - Preview Initialization
 
     @Test("Preview init loads mock data")
@@ -41,80 +65,54 @@ struct DashboardDataStoreTests {
     }
 
     // MARK: - Health Score Calculation
-    // These tests verify the score by setting properties on a preview store
-    // then calling loadDataForSelectedDate() which recalculates.
-    // Since the private calculateHealthScore() reads todaysMeals/todaysSymptoms,
-    // and loadDataForSelectedDate clears + reloads, we test via the mock repo path.
+    //
+    // Score = base 7, +2 if no symptoms (else a penalty by average severity),
+    // +1 for 2 or more meals, clamped to 1...10. Severity per symptom is
+    // painLevel.rawValue + urgencyLevel.rawValue, each 0...3.
 
     @Test("Health score is 9 with no symptoms and fewer than 2 meals")
-    func healthScoreNoSymptomsFewMeals() async throws {
-        let symptomRepo = MockSymptomRepository()
-        symptomRepo.symptomsToReturn = []
-        let mealRepo = MockMealRepository()
-        mealRepo.mealsToReturn = []
+    func healthScoreNoSymptomsFewMeals() {
+        let store = makeStore(meals: [], symptoms: [])
 
-        let store = DashboardDataStore(preview: true, mealRepository: mealRepo, symptomRepository: symptomRepo)
+        store.recomputeDerivedState()
 
-        // Override preview data to test calculation
-        store.todaysMeals = []
-        store.todaysSymptoms = []
-
-        // Trigger recalculation via loadDataForSelectedDate
-        // Note: This clears data then calls load() + calculateHealthScore()
-        // Since load() is async and starts a Task, the immediate calculation
-        // will use the empty arrays (which is what we want to test)
-        store.loadDataForSelectedDate()
-
-        // Health score after recalculation: base 7 + 2 (no symptoms) = 9
+        // 7 base + 2 (no symptoms) = 9
         #expect(store.todaysHealthScore == 9)
     }
 
     @Test("Health score is 10 with no symptoms and 2+ meals")
     func healthScoreNoSymptomsWithMeals() {
-        let store = DashboardDataStore(preview: true)
+        let store = makeStore(meals: [makeMeal(), makeMeal()], symptoms: [])
 
-        // Preview data has 2 meals and 0 symptoms
-        // Score: base 7 + 2 (no symptoms) + 1 (2+ meals) = 10
-        // But preview sets it to 8, so let's manually recalculate
-        store.todaysMeals = [makeMeal(), makeMeal()]
-        store.todaysSymptoms = []
+        store.recomputeDerivedState()
 
-        store.loadDataForSelectedDate()
-
+        // 7 base + 2 (no symptoms) + 1 (2+ meals) = 10
         #expect(store.todaysHealthScore == 10)
     }
 
     @Test("Health score decreases with symptoms")
     func healthScoreWithSymptoms() {
-        let store = DashboardDataStore(preview: true)
+        let store = makeStore(
+            meals: [],
+            symptoms: [makeSymptom(painLevel: .severe, urgencyLevel: .urgent)]
+        )
 
-        // Severe pain (rawValue 3) + urgent (rawValue 3) = 6 total severity
-        // Average severity = 6 / 1 = 6 → score -= 3
-        // Base 7 - 3 = 4
-        store.todaysMeals = []
-        store.todaysSymptoms = [
-            makeSymptom(painLevel: .severe, urgencyLevel: .urgent)
-        ]
+        store.recomputeDerivedState()
 
-        store.loadDataForSelectedDate()
-
+        // severity 3 + 3 = 6, average 6 → -3. 7 base - 3 = 4
         #expect(store.todaysHealthScore == 4)
     }
 
     @Test("Health score with mild symptoms")
     func healthScoreMildSymptoms() {
-        let store = DashboardDataStore(preview: true)
+        let store = makeStore(
+            meals: [makeMeal(), makeMeal()],
+            symptoms: [makeSymptom(painLevel: .mild, urgencyLevel: .none)]
+        )
 
-        // Mild pain (1) + none urgency (0) = 1 total, avg = 1
-        // avg < 4 → score -= 1
-        // Base 7 - 1 = 6, + 1 (2 meals) = 7
-        store.todaysMeals = [makeMeal(), makeMeal()]
-        store.todaysSymptoms = [
-            makeSymptom(painLevel: .mild, urgencyLevel: .none)
-        ]
+        store.recomputeDerivedState()
 
-        store.loadDataForSelectedDate()
-
+        // severity 1 + 0 = 1, average 1 → -1. 7 base - 1 + 1 (2+ meals) = 7
         #expect(store.todaysHealthScore == 7)
     }
 
@@ -122,36 +120,27 @@ struct DashboardDataStoreTests {
 
     @Test("Generates positive focus with no symptoms and meals")
     func positiveInsightsNoSymptoms() {
-        let store = DashboardDataStore(preview: true)
+        let store = makeStore(meals: [makeMeal(), makeMeal()], symptoms: [])
 
-        store.todaysMeals = [makeMeal(), makeMeal()]
-        store.todaysSymptoms = []
-
-        store.loadDataForSelectedDate()
+        store.recomputeDerivedState()
 
         #expect(store.todaysFocus.contains("Great day"))
     }
 
     @Test("Generates gentle focus message with symptoms")
     func warningInsightsWithSymptoms() {
-        let store = DashboardDataStore(preview: true)
+        let store = makeStore(meals: [makeMeal()], symptoms: [makeSymptom(painLevel: .moderate)])
 
-        store.todaysMeals = [makeMeal()]
-        store.todaysSymptoms = [makeSymptom(painLevel: .moderate)]
-
-        store.loadDataForSelectedDate()
+        store.recomputeDerivedState()
 
         #expect(store.todaysFocus.contains("gentle foods"))
     }
 
     @Test("Generates no-meals focus when no symptoms and no meals")
     func noMealsFocus() {
-        let store = DashboardDataStore(preview: true)
+        let store = makeStore(meals: [], symptoms: [])
 
-        store.todaysMeals = []
-        store.todaysSymptoms = []
-
-        store.loadDataForSelectedDate()
+        store.recomputeDerivedState()
 
         #expect(store.todaysFocus.contains("feeling good"))
     }
@@ -160,44 +149,43 @@ struct DashboardDataStoreTests {
 
     @Test("AI insight is positive when no symptoms and meals present")
     func aiInsightPositive() {
-        let store = DashboardDataStore(preview: true)
+        let store = makeStore(meals: [makeMeal(), makeMeal()], symptoms: [])
 
-        store.todaysMeals = [makeMeal(), makeMeal()]
-        store.todaysSymptoms = []
-
-        store.loadDataForSelectedDate()
+        store.recomputeDerivedState()
 
         #expect(store.aiInsightSeverity == .positive)
         #expect(store.aiInsightSummary.contains("No triggers"))
     }
 
-    @Test("AI insight is warning with high pain symptoms")
+    @Test("AI insight flags elevated symptoms at moderate pain or worse")
     func aiInsightWarningHighPain() {
-        let store = DashboardDataStore(preview: true)
+        let store = makeStore(meals: [makeMeal()], symptoms: [makeSymptom(painLevel: .severe)])
 
-        // PainLevel.severe has rawValue 3, urgencyLevel.urgent has rawValue 3
-        // The check is painLevel.rawValue >= 7 but PainLevel max is 3
-        // Let's check what the actual threshold is...
-        // The code checks: todaysSymptoms.contains(where: { $0.painLevel.rawValue >= 7 })
-        // But PainLevel max rawValue is 3, so this condition is never true
-        // Instead it falls through to the generic warning case
-        store.todaysMeals = [makeMeal()]
-        store.todaysSymptoms = [makeSymptom(painLevel: .severe)]
+        store.recomputeDerivedState()
 
-        store.loadDataForSelectedDate()
-
-        // With symptoms + meals → "Possible trigger" warning
+        // The elevated-symptom branch compares against PainLevel cases. It used
+        // to test `painLevel.rawValue >= 7` against a 0...3 enum, so it was
+        // unreachable and severe pain fell through to the generic
+        // "possible trigger" message instead.
         #expect(store.aiInsightSeverity == .warning)
+        #expect(store.aiInsightSummary.contains("Elevated symptoms"))
+    }
+
+    @Test("Mild pain does not reach the elevated-symptom branch")
+    func aiInsightMildPainIsNotElevated() {
+        let store = makeStore(meals: [makeMeal()], symptoms: [makeSymptom(painLevel: .mild)])
+
+        store.recomputeDerivedState()
+
+        #expect(store.aiInsightSeverity == .warning)
+        #expect(store.aiInsightSummary.contains("Possible trigger"))
     }
 
     @Test("AI insight is neutral when no data")
     func aiInsightNeutralNoData() {
-        let store = DashboardDataStore(preview: true)
+        let store = makeStore(meals: [], symptoms: [])
 
-        store.todaysMeals = []
-        store.todaysSymptoms = []
-
-        store.loadDataForSelectedDate()
+        store.recomputeDerivedState()
 
         #expect(store.aiInsightSeverity == .neutral)
     }
@@ -206,41 +194,62 @@ struct DashboardDataStoreTests {
 
     @Test("Trigger alert for 3+ symptoms")
     func triggerAlertMultipleSymptoms() {
-        let store = DashboardDataStore(preview: true)
+        let store = makeStore(
+            meals: [],
+            symptoms: [
+                makeSymptom(painLevel: .mild),
+                makeSymptom(painLevel: .moderate),
+                makeSymptom(painLevel: .severe)
+            ]
+        )
 
-        store.todaysMeals = []
-        store.todaysSymptoms = [
-            makeSymptom(painLevel: .mild),
-            makeSymptom(painLevel: .moderate),
-            makeSymptom(painLevel: .severe)
-        ]
-
-        store.loadDataForSelectedDate()
+        store.recomputeDerivedState()
 
         #expect(store.triggerAlerts.contains(where: { $0.contains("Multiple symptoms") }))
     }
 
+    @Test("Severe pain raises the healthcare provider alert")
+    func triggerAlertSeverePain() {
+        let store = makeStore(meals: [], symptoms: [makeSymptom(painLevel: .severe)])
+
+        store.recomputeDerivedState()
+
+        #expect(store.triggerAlerts.contains(where: { $0.contains("High pain level") }))
+    }
+
+    @Test("Moderate pain does not raise the healthcare provider alert")
+    func noSevereAlertForModeratePain() {
+        let store = makeStore(meals: [], symptoms: [makeSymptom(painLevel: .moderate)])
+
+        store.recomputeDerivedState()
+
+        #expect(!store.triggerAlerts.contains(where: { $0.contains("High pain level") }))
+    }
+
     @Test("Avoidance tip set when symptoms present")
     func avoidanceTipWithSymptoms() {
-        let store = DashboardDataStore(preview: true)
+        let store = makeStore(meals: [], symptoms: [makeSymptom(painLevel: .mild)])
 
-        store.todaysMeals = []
-        store.todaysSymptoms = [makeSymptom(painLevel: .mild)]
-
-        store.loadDataForSelectedDate()
+        store.recomputeDerivedState()
 
         #expect(!store.avoidanceTip.isEmpty)
         #expect(store.avoidanceTip.contains("Monitor"))
     }
 
+    @Test("Moderate pain or worse gets the high-pain avoidance tip")
+    func avoidanceTipHighPain() {
+        let store = makeStore(meals: [], symptoms: [makeSymptom(painLevel: .moderate)])
+
+        store.recomputeDerivedState()
+
+        #expect(store.avoidanceTip.contains("high pain levels"))
+    }
+
     @Test("No trigger alerts when few symptoms")
     func noTriggerAlertsWithFewSymptoms() {
-        let store = DashboardDataStore(preview: true)
+        let store = makeStore(meals: [], symptoms: [makeSymptom(painLevel: .mild)])
 
-        store.todaysMeals = []
-        store.todaysSymptoms = [makeSymptom(painLevel: .mild)]
-
-        store.loadDataForSelectedDate()
+        store.recomputeDerivedState()
 
         #expect(!store.triggerAlerts.contains(where: { $0.contains("Multiple symptoms") }))
     }

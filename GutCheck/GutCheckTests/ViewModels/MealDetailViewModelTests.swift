@@ -72,6 +72,11 @@ struct MealDetailViewModelTests {
         let repo = MockMealRepository()
         let vm = MealDetailViewModel(meal: meal, mealRepository: repo)
 
+        // `init(meal:)` copies `meal.id` into `mealId`, so it is never nil and
+        // the guard in `loadMeal()` is never taken. Clear it to reach the path
+        // this test is named for.
+        vm.mealId = nil
+
         await vm.loadMeal()
 
         #expect(repo.fetchCallCount == 0)

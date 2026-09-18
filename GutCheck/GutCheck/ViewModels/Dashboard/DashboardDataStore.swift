@@ -13,7 +13,6 @@
 
 import Foundation
 import SwiftUI
-import Combine
 
 /// Severity level for AI-generated insight messages
 enum AIInsightSeverity {
@@ -76,18 +75,26 @@ enum AIInsightSeverity {
     
     // MARK: - Private Properties
     
-    /// Combine cancellables for proper memory management
-    private var cancellables = Set<AnyCancellable>()
-    
+    /// In-flight on-device narration of `aiInsightSummary`, cancelled when the
+    /// selected date changes so a stale reply can't land on the new day's data.
+    private var narrationTask: Task<Void, Never>?
+
     /// Authentication service for getting current user ID
     private var userService: LocalUserService?
     
     /// Repository dependencies
     private let mealRepository: any MealRepositoryProtocol
     private let symptomRepository: any SymptomRepositoryProtocol
-    
+
+    /// Suppresses on-device narration for preview and test stores.
+    ///
+    /// SwiftUI previews and unit tests shouldn't reach for the language model:
+    /// previews would stall on it, and tests need `aiInsightSummary` to stay at
+    /// the deterministic value they assert against.
+    private let isPreview: Bool
+
     // MARK: - Initialization
-    
+
     /// Initialize the dashboard data store
     /// - Parameter preview: If true, loads mock data for SwiftUI previews
     init(preview: Bool = false,
@@ -95,6 +102,7 @@ enum AIInsightSeverity {
          symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
         self.mealRepository = mealRepository
         self.symptomRepository = symptomRepository
+        self.isPreview = preview
         if preview {
             loadPreviewData()
         } else {
@@ -121,8 +129,20 @@ enum AIInsightSeverity {
         
         // Load data for the selected date
         load()
-        
+
         // Recalculate health score and insights for the new date
+        recomputeDerivedState()
+    }
+
+    /// Recomputes health score, focus, tips and alerts from whatever is
+    /// currently in `todaysMeals` and `todaysSymptoms`.
+    ///
+    /// Separated from `loadDataForSelectedDate()` so the derivation can be
+    /// exercised against known data. That method clears both arrays and kicks
+    /// off an async reload before computing, so anything set on the store
+    /// beforehand is gone by the time the score is calculated — which is why
+    /// the dashboard tests were all asserting against an empty store.
+    func recomputeDerivedState() {
         todaysHealthScore = calculateHealthScore()
         generateInsights()
     }
@@ -182,7 +202,7 @@ enum AIInsightSeverity {
         
         // Generate avoidance tip based on symptoms
         if !todaysSymptoms.isEmpty {
-            let highPainSymptoms = todaysSymptoms.filter { $0.painLevel.rawValue >= 7 }
+            let highPainSymptoms = todaysSymptoms.filter { $0.painLevel >= .moderate }
             if !highPainSymptoms.isEmpty {
                 avoidanceTip = "You're experiencing high pain levels. Avoid spicy, fatty, or hard-to-digest foods today."
             } else {
@@ -197,7 +217,7 @@ enum AIInsightSeverity {
         if todaysSymptoms.count >= 3 {
             triggerAlerts.append("Multiple symptoms today - consider reviewing recent meals")
         }
-        if todaysSymptoms.contains(where: { $0.painLevel.rawValue >= 8 }) {
+        if todaysSymptoms.contains(where: { $0.painLevel == .severe }) {
             triggerAlerts.append("High pain level detected - consider consulting healthcare provider")
         }
         
@@ -217,7 +237,7 @@ enum AIInsightSeverity {
         } else if todaysSymptoms.isEmpty {
             aiInsightSummary = "Looking good so far. Keep logging meals for better insights."
             aiInsightSeverity = .neutral
-        } else if todaysSymptoms.contains(where: { $0.painLevel.rawValue >= 7 }) {
+        } else if todaysSymptoms.contains(where: { $0.painLevel >= .moderate }) {
             aiInsightSummary = "Elevated symptoms detected. Consider gentle, easy-to-digest foods."
             aiInsightSeverity = .warning
         } else if !todaysSymptoms.isEmpty && !todaysMeals.isEmpty {
@@ -227,6 +247,57 @@ enum AIInsightSeverity {
         } else {
             aiInsightSummary = "Keep logging to help identify patterns."
             aiInsightSeverity = .neutral
+        }
+
+        // The deterministic summary above is now set and displayable. Narration
+        // only rewrites its wording, so severity stays as computed here.
+        narrateAIInsight(fallback: aiInsightSummary)
+    }
+
+    /// Rewrites `aiInsightSummary` in natural prose using the on-device model.
+    ///
+    /// Fire-and-forget: the deterministic string is already on screen, and this
+    /// replaces it a beat later if the model produces something. Nothing waits
+    /// on it and nothing breaks when it fails.
+    private func narrateAIInsight(fallback: String) {
+        // Cancel any in-flight narration first. The user can page through dates
+        // faster than the model responds, and a late reply from a previous date
+        // would otherwise overwrite the current one.
+        narrationTask?.cancel()
+
+        // Previews and tests keep the deterministic wording.
+        guard !isPreview else { return }
+
+        let painLevels = todaysSymptoms.map { $0.painLevel.rawValue }
+        let peakPain = painLevels.max().flatMap { PainLevel(rawValue: $0) }
+        // Unwrapped inside the closure so `.none` reads as PainLevel.none
+        // rather than Optional.none.
+        let peakPainDescription: String? = peakPain.flatMap { level -> String? in
+            switch level {
+            case .none: nil
+            case .mild: "mild"
+            case .moderate: "moderate"
+            case .severe: "severe"
+            }
+        }
+
+        let facts = InsightFacts(
+            mealCount: todaysMeals.count,
+            symptomCount: todaysSymptoms.count,
+            peakPainDescription: peakPainDescription,
+            // Left empty on purpose. A food only belongs here once
+            // PatternRecognitionService has actually correlated it; the
+            // "last meal eaten" heuristic this view model uses elsewhere is not
+            // a measured association and must not be narrated as one.
+            flaggedFoods: [],
+            averageOnsetHours: nil
+        )
+
+        narrationTask = Task { @MainActor [weak self] in
+            guard InsightNarrationService.shared.isAvailable else { return }
+            let narrated = await InsightNarrationService.shared.narrate(facts, fallback: fallback)
+            guard !Task.isCancelled else { return }
+            self?.aiInsightSummary = narrated
         }
     }
     
@@ -294,15 +365,15 @@ enum AIInsightSeverity {
                 await MainActor.run { [weak self] in
                     guard let self = self else { return }
                     self.todaysSymptoms = symptoms
-                    
-                    // Calculate health score based on actual data
-                    self.todaysHealthScore = self.calculateHealthScore()
-                    
-                    // Generate focus and avoidance tips based on data
-                    self.generateInsights()
-                    
-                    // Clear other mock data for now
-                    self.triggerAlerts = []
+
+                    // Score and insights from the data that just arrived
+                    self.recomputeDerivedState()
+
+                    // Discard the preview placeholder. `triggerAlerts` is not
+                    // cleared here: `recomputeDerivedState()` has just populated
+                    // it from the real data, and this line used to wipe that —
+                    // which is why the "High pain level" and "Multiple symptoms"
+                    // alerts never appeared in the app.
                     self.insightMessage = nil
                 }
             } catch {
