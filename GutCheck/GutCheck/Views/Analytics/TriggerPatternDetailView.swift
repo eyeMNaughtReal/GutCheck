@@ -217,7 +217,7 @@ struct TriggerPatternDetailView: View {
 
     private func timingStat(label: String, value: Double) -> some View {
         VStack(spacing: 4) {
-            Text(String(format: "%.1f", value))
+            Text(value.formatted(.number.precision(.fractionLength(1))))
                 .font(.title3.bold().monospacedDigit())
                 .foregroundStyle(ColorTheme.primaryText)
             Text(label)

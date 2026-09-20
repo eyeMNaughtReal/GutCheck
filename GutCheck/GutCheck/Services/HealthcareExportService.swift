@@ -232,7 +232,7 @@ struct ExportOptions {
         // Add meals
         if options.includeMealData {
             for meal in data.meals {
-                let date = DateFormatter.exportDateFormatter.string(from: meal.date)
+                let date = meal.date.formatted(.export)
                 let details = meal.foodItems.map { $0.name }.joined(separator: "; ")
                 let notes = meal.notes ?? ""
                 csvContent += "\(csvEscape(date)),Meal,\(csvEscape(details)),\(csvEscape(notes))\n"
@@ -242,7 +242,7 @@ struct ExportOptions {
         // Add symptoms
         if options.includeSymptomData {
             for symptom in data.symptoms {
-                let date = DateFormatter.exportDateFormatter.string(from: symptom.date)
+                let date = symptom.date.formatted(.export)
                 let details = "\(symptom.stoolType.rawValue) - Pain: \(symptom.painLevel.rawValue)"
                 let notes = symptom.notes ?? ""
                 csvContent += "\(csvEscape(date)),Symptom,\(csvEscape(details)),\(csvEscape(notes))\n"
@@ -252,7 +252,7 @@ struct ExportOptions {
         // Add medications
         if options.includeMedicationData {
             for medication in data.medications {
-                let date = DateFormatter.exportDateFormatter.string(from: medication.startDate)
+                let date = medication.startDate.formatted(.export)
                 let details = "\(medication.name) - \(medication.dosage)"
                 let notes = medication.notes ?? ""
                 csvContent += "\(csvEscape(date)),Medication,\(csvEscape(details)),\(csvEscape(notes))\n"
@@ -475,10 +475,9 @@ struct ExportOptions {
         context.strokePath()
         
         // Date range in a styled box
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .long
-        let startDate = dateFormatter.string(from: options.dateRange.lowerBound)
-        let endDate = dateFormatter.string(from: options.dateRange.upperBound)
+        let longDate = Date.FormatStyle(date: .long, time: .omitted)
+        let startDate = options.dateRange.lowerBound.formatted(longDate)
+        let endDate = options.dateRange.upperBound.formatted(longDate)
         
         let dateBoxY = lineY + 40
         let dateBoxRect = CGRect(x: 100, y: dateBoxY, width: pageRect.width - 200, height: 60)
@@ -507,7 +506,9 @@ struct ExportOptions {
         
         // Generated timestamp
         let generatedY = dateBoxY + 80
-        let generatedString = "Generated: \(DateFormatter().string(from: Date.now))"
+        // An unconfigured DateFormatter returns "", so this printed
+        // "Generated: " with no date on every exported report.
+        let generatedString = "Generated: \(Date.now.formatted(date: .long, time: .shortened))"
         let generatedSize = generatedString.size(withAttributes: dateAttributes)
         generatedString.draw(at: CGPoint(x: (pageRect.width - generatedSize.width) / 2, y: generatedY), withAttributes: dateAttributes)
         
@@ -550,7 +551,7 @@ struct ExportOptions {
             ("Total Meals", "\(data.meals.count)", "🍽️"),
             ("Total Symptoms", "\(data.symptoms.count)", "🏥"),
             ("Total Medications", "\(data.medications.count)", "💊"),
-            ("Report Period", "\(DateFormatter.exportDateFormatter.string(from: options.dateRange.lowerBound)) - \(DateFormatter.exportDateFormatter.string(from: options.dateRange.upperBound))", "📅")
+            ("Report Period", "\(options.dateRange.lowerBound.formatted(.export)) - \(options.dateRange.upperBound.formatted(.export))", "📅")
         ]
         
         let boxWidth: CGFloat = (pageRect.width - 120) / 2
@@ -721,7 +722,7 @@ struct ExportOptions {
         ]
         
         for meal in data.meals.prefix(20) { // Limit to first 20 meals to fit on page
-            let dateString = DateFormatter.exportDateFormatter.string(from: meal.date)
+            let dateString = meal.date.formatted(.export)
             
             // Meal card background
             let cardHeight: CGFloat = 40 + CGFloat(min(meal.foodItems.count, 3)) * 30
@@ -820,7 +821,7 @@ struct ExportOptions {
         ]
         
         for symptom in data.symptoms.prefix(25) { // Limit to first 25 symptoms
-            let dateString = DateFormatter.exportDateFormatter.string(from: symptom.date)
+            let dateString = symptom.date.formatted(.export)
             
             // Calculate card height based on content
             var cardHeight: CGFloat = 40 // Base height for symptom header
@@ -870,9 +871,8 @@ struct ExportOptions {
     private func createMedicationDataPageContent(context: UIGraphicsPDFRendererContext, data: HealthcareExportData, options: ExportOptions) {
         let pageRect = context.pdfContextBounds
         let context = context.cgContext
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .medium
-        
+        let mediumDate = Date.FormatStyle(date: .abbreviated, time: .omitted)
+
         // Page header with accent color
         let headerRect = CGRect(x: 0, y: 0, width: pageRect.width, height: 60)
         context.setFillColor(UIColor(red: 0.2, green: 0.6, blue: 0.9, alpha: 1.0).cgColor)
@@ -924,7 +924,7 @@ struct ExportOptions {
         ]
         
         for medication in data.medications.prefix(30) { // Limit to first 30 medications
-            let startDateString = dateFormatter.string(from: medication.startDate)
+            let startDateString = medication.startDate.formatted(mediumDate)
             
             // Calculate card height based on content
             var cardHeight: CGFloat = 40 // Base height for medication header
@@ -1126,11 +1126,17 @@ enum ExportError: LocalizedError {
 
 // MARK: - Extensions
 
-extension DateFormatter {
-    static let exportDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        return formatter
-    }()
+extension FormatStyle where Self == Date.FormatStyle {
+    /// Medium date with a short time, used throughout the exported report.
+    ///
+    /// A value type rather than the shared `DateFormatter` this replaced:
+    /// export runs off the main actor, and a mutable formatter reachable from
+    /// several places is the pattern that already bit the formatting services.
+    ///
+    /// Declared on the protocol rather than on `Date.FormatStyle` so that
+    /// `date.formatted(.export)` resolves — the leading-dot shorthand looks
+    /// the static up through `FormatStyle`, not through the concrete type.
+    static var export: Date.FormatStyle {
+        Date.FormatStyle(date: .abbreviated, time: .shortened)
+    }
 }
