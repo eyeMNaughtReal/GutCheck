@@ -19,6 +19,7 @@ struct MealBuilderView: View {
     @State private var showingConfirmation = false
     @State private var showingDiscard = false
     @State private var showingFoodOptions = false
+    @State private var showingPhotoIdentification = false
     @State private var editingFoodItem: FoodItem?
 @State private var loadError: String? = nil
     @State private var riskService = MealRiskPredictionService.shared
@@ -212,7 +213,30 @@ struct MealBuilderView: View {
                     hint: "Tap to search for and add food items to your meal"
                 )
                 .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.addFoodButton)
-                
+
+                // Photo identification, alongside search rather than behind it:
+                // searching stays a single tap for the common case.
+                Button(action: {
+                    HapticManager.shared.medium()
+                    showingPhotoIdentification = true
+                }) {
+                    HStack {
+                        Image(systemName: "camera.viewfinder")
+                        Text("Identify from Photo")
+                            .typography(Typography.button)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(ColorTheme.surface)
+                    .foregroundStyle(ColorTheme.primaryText)
+                    .clipShape(.rect(cornerRadius: 12))
+                }
+                .accessibleButton(
+                    label: "Identify from Photo",
+                    hint: "Tap to photograph your plate and identify the foods on it"
+                )
+                .accessibilityIdentifier("mealBuilder.photoIdentify.button")
+
                 HStack(spacing: 12) {
                     // Cancel button
                     Button(action: {
@@ -317,6 +341,13 @@ struct MealBuilderView: View {
             }
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showingPhotoIdentification) {
+            // Declining or failing identification opens search, so the flow
+            // always ends somewhere the person can finish logging.
+            PhotoFoodLoggingView {
+                showingFoodOptions = true
+            }
         }
         .sheet(item: $editingFoodItem) { foodItem in
             UnifiedFoodDetailView(

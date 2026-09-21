@@ -35,6 +35,11 @@ jobs:
       with:
         xcode-version: 'latest'
 
+    # Lists every Xcode the image carries. If the build fails on a missing
+    # SDK, this says whether a newer toolchain was even available to pick.
+    - name: List available Xcode versions
+      run: ls -1 /Applications | grep -i '^Xcode' || true
+
     # Records which Xcode and SDKs the runner actually provides. The project
     # needs the iOS 27 SDK; if a future image regresses, this is the first
     # place to look rather than reading it out of a compiler error.
