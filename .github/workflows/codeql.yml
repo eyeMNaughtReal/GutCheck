@@ -58,7 +58,26 @@ jobs:
         if: matrix.language == 'swift'
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: 'latest-stable'
+          xcode-version: 'latest'
+
+      # The same gate as the build workflow — see .github/workflows/ios.yml.
+      # CodeQL's Swift analysis compiles the whole app, so it hits the missing
+      # iOS 27 SDK exactly as the build does, and this workflow was left failing
+      # when ios.yml was guarded.
+      #
+      # Skipping matters more here than there: a failing Swift analysis produces
+      # no results at all, so the Swift code silently stops being scanned. A
+      # skipped job that says so is at least honest about the gap.
+      - name: Check for the iOS 27 SDK
+        id: sdk
+        if: matrix.language == 'swift'
+        run: |
+          if xcodebuild -showsdks | grep -qi 'iphonesimulator2[7-9]'; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Swift security analysis skipped::This runner has no iOS 27 SDK ($(xcodebuild -version | head -1)), which the project needs to compile. CodeQL cannot trace a build that did not happen, so the Swift code was NOT scanned for vulnerabilities in this run."
+          fi
 
       - name: Create mock Secrets.swift
         if: matrix.language == 'swift'
@@ -81,7 +100,7 @@ jobs:
           build-mode: ${{ matrix.build-mode }}
 
       - name: Build Swift project for CodeQL
-        if: matrix.language == 'swift'
+        if: matrix.language == 'swift' && steps.sdk.outputs.available == 'true'
         working-directory: GutCheck
         run: |
           xcodebuild build \
@@ -91,7 +110,11 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             ONLY_ACTIVE_ARCH=NO
 
+      # Skipped alongside the build. In `manual` build-mode CodeQL fails with
+      # "no source code was seen" when nothing compiled, which would turn a
+      # deliberate skip back into a red check.
       - name: Perform CodeQL Analysis
+        if: matrix.language != 'swift' || steps.sdk.outputs.available == 'true'
         uses: github/codeql-action/analyze@v4.38.1
         with:
           category: "/language:${{ matrix.language }}"
