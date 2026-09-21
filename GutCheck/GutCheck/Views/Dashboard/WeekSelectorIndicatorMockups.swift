@@ -2,35 +2,35 @@
 //  WeekSelectorIndicatorMockups.swift
 //  GutCheck
 //
-//  THROWAWAY MOCKUP — not wired into the app, not intended to ship.
-//  Delete once a direction is locked.
+//  THROWAWAY MOCKUP — not wired into the app. Delete once locked.
 //
-//  Iteration 2. Direction chosen: dots beneath the day number. These variants
-//  explore the three questions the first pass raised:
+//  Iteration 3. Locked so far: dots beneath the day number, fixed slots,
+//  track on past days only, future days blank (variant A4).
 //
-//  1. Fixed slots or collapsed? Collapsed dots shift position, so a lone dot
-//     tells you nothing without distinguishing its colour. Fixed slots mean
-//     left/middle/right always mean meal/medication/symptom, which is the
-//     cheap route to colour-blind safety — no 7pt glyphs needed.
+//  This pass settles colour and the "today" rule.
 //
-//  2. Past vs future. A blank past day means "you missed it". A blank future
-//     day means "hasn't happened". Rendering both as empty space turns half
-//     the strip into noise, and the whole point of the feature is spotting
-//     the gap.
+//  Colour — reusing the category tokens the app already defines rather than
+//  inventing a palette:
 //
-//  3. Legibility on the selected day, where dots sit on an accent-tinted
-//     capsule rather than the grey one.
+//      meal        ColorTheme.mealLogging     (= primary, teal)
+//      medication  ColorTheme.secondary       (purple)
+//      symptom     ColorTheme.symptomTracking (pink)
+//
+//  Two constraints drove that. Orange is the app accent — it is the selection
+//  ring, the week arrows and the Today pill — so medication cannot be orange
+//  or a logged dot reads as chrome. And green already means "no pain":
+//  ColorTheme.severity(0) is `success`, and Insights prints "Symptom-free" in
+//  green. A green dot meaning "a symptom was logged" would invert that.
+//
+//  Today — a filled dot when done, an open slot when not, because the day has
+//  not ended. The two options below differ in what "open" looks like.
 //
 
 import SwiftUI
 
 // MARK: - Mock data
 
-private enum DayPosition {
-    case past
-    case today
-    case future
-}
+private enum DayPosition { case past, today, future }
 
 private struct DayLog {
     let weekday: String
@@ -42,13 +42,11 @@ private struct DayLog {
     var isSelected = false
 
     var count: Int { [meal, medication, symptom].filter(\.self).count }
-
-    /// A past day with nothing logged. The case the feature exists to surface.
-    var isMissed: Bool { position == .past && count == 0 }
 }
 
-/// Today is Tue 22. Sun 20 is the missed day; Wed/Thu are simply in the
-/// future. Those two cases must not look the same.
+/// Today is Tue 22, with a meal and a medication logged but no symptom — the
+/// case that exercises the "open" state. Sun 20 is a missed past day.
+/// Wed/Thu are future and must stay blank.
 private let week: [DayLog] = [
     DayLog(weekday: "Fri", day: 18, position: .past, meal: true, medication: true, symptom: true),
     DayLog(weekday: "Sat", day: 19, position: .past, meal: true, medication: true),
@@ -59,149 +57,123 @@ private let week: [DayLog] = [
     DayLog(weekday: "Thu", day: 24, position: .future)
 ]
 
-private enum P {
-    static let meal = Color.blue
-    static let medication = Color.orange
-    static let symptom = Color.green
-    static let accent = Color(red: 0.95, green: 0.45, blue: 0.10)
-    static let card = Color(white: 0.96)
-    static let track = Color(white: 0.80)
-    static let missed = Color(white: 0.62)
-}
+private enum Category: CaseIterable {
+    case meal, medication, symptom
 
-// MARK: - A1 · Collapsed dots (iteration 1 baseline)
-
-private struct A1: View {
-    let day: DayLog
-    var body: some View {
-        Cell(day: day) {
-            HStack(spacing: 3) {
-                if day.meal { dot(P.meal) }
-                if day.medication { dot(P.medication) }
-                if day.symptom { dot(P.symptom) }
-            }
-            .frame(height: 6)
+    var color: Color {
+        switch self {
+        case .meal: ColorTheme.mealLogging
+        case .medication: ColorTheme.secondary
+        case .symptom: ColorTheme.symptomTracking
         }
     }
-    private func dot(_ c: Color) -> some View { Circle().fill(c).frame(width: 6, height: 6) }
-}
 
-// MARK: - A2 · Fixed slots, empties invisible
-
-private struct A2: View {
-    let day: DayLog
-    var body: some View {
-        Cell(day: day) {
-            HStack(spacing: 3) {
-                slot(day.meal, P.meal)
-                slot(day.medication, P.medication)
-                slot(day.symptom, P.symptom)
-            }
-            .frame(height: 6)
+    func isLogged(in day: DayLog) -> Bool {
+        switch self {
+        case .meal: day.meal
+        case .medication: day.medication
+        case .symptom: day.symptom
         }
     }
-    private func slot(_ on: Bool, _ c: Color) -> some View {
-        Circle().fill(on ? c : .clear).frame(width: 6, height: 6)
-    }
 }
 
-// MARK: - A3 · Fixed slots with a visible empty track
+// MARK: - F1 · Open = hollow ring
 
-private struct A3: View {
+private struct F1: View {
     let day: DayLog
-    var body: some View {
-        Cell(day: day) {
-            HStack(spacing: 3) {
-                slot(day.meal, P.meal)
-                slot(day.medication, P.medication)
-                slot(day.symptom, P.symptom)
-            }
-            .frame(height: 6)
-        }
-    }
-    private func slot(_ on: Bool, _ c: Color) -> some View {
-        Circle()
-            .fill(on ? c : P.track.opacity(0.45))
-            .frame(width: 6, height: 6)
-    }
-}
+    private let size: CGFloat = 8
 
-// MARK: - A4 · Track on past days only
-
-private struct A4: View {
-    let day: DayLog
-    var body: some View {
-        Cell(day: day) {
-            HStack(spacing: 3) {
-                slot(day.meal, P.meal)
-                slot(day.medication, P.medication)
-                slot(day.symptom, P.symptom)
-            }
-            .frame(height: 6)
-            // Future days carry no track at all — there is nothing to have
-            // missed yet, so an empty track there would be noise.
-            .opacity(day.position == .future ? 0 : 1)
-        }
-    }
-    private func slot(_ on: Bool, _ c: Color) -> some View {
-        Circle()
-            .fill(on ? c : P.track.opacity(0.45))
-            .frame(width: 6, height: 6)
-    }
-}
-
-// MARK: - A5 · A4 plus an explicit "missed" mark
-
-private struct A5: View {
-    let day: DayLog
-    var body: some View {
-        Cell(day: day) {
-            Group {
-                if day.isMissed {
-                    // A past day with nothing at all reads as a dash rather
-                    // than three empty slots — it states the gap instead of
-                    // leaving the reader to notice an absence.
-                    Text("—")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundStyle(P.missed)
-                } else {
-                    HStack(spacing: 3) {
-                        slot(day.meal, P.meal)
-                        slot(day.medication, P.medication)
-                        slot(day.symptom, P.symptom)
-                    }
-                    .opacity(day.position == .future ? 0 : 1)
-                }
-            }
-            .frame(height: 6)
-        }
-    }
-    private func slot(_ on: Bool, _ c: Color) -> some View {
-        Circle()
-            .fill(on ? c : P.track.opacity(0.45))
-            .frame(width: 6, height: 6)
-    }
-}
-
-// MARK: - A6 · A4 at larger dots
-
-private struct A6: View {
-    let day: DayLog
     var body: some View {
         Cell(day: day) {
             HStack(spacing: 3.5) {
-                slot(day.meal, P.meal)
-                slot(day.medication, P.medication)
-                slot(day.symptom, P.symptom)
+                ForEach(Category.allCases, id: \.self) { category in
+                    slot(category)
+                }
             }
-            .frame(height: 8)
+            .frame(height: size)
             .opacity(day.position == .future ? 0 : 1)
         }
     }
-    private func slot(_ on: Bool, _ c: Color) -> some View {
-        Circle()
-            .fill(on ? c : P.track.opacity(0.45))
-            .frame(width: 8, height: 8)
+
+    @ViewBuilder
+    private func slot(_ category: Category) -> some View {
+        if category.isLogged(in: day) {
+            Circle().fill(category.color).frame(width: size, height: size)
+        } else if day.position == .today {
+            // Still possible today, so the slot reads as open rather than spent.
+            Circle()
+                .strokeBorder(ColorTheme.secondaryText.opacity(0.55), lineWidth: 1.2)
+                .frame(width: size, height: size)
+        } else {
+            Circle().fill(ColorTheme.secondaryText.opacity(0.28)).frame(width: size, height: size)
+        }
+    }
+}
+
+// MARK: - F2 · Open = faint category tint
+
+private struct F2: View {
+    let day: DayLog
+    private let size: CGFloat = 8
+
+    var body: some View {
+        Cell(day: day) {
+            HStack(spacing: 3.5) {
+                ForEach(Category.allCases, id: \.self) { category in
+                    slot(category)
+                }
+            }
+            .frame(height: size)
+            .opacity(day.position == .future ? 0 : 1)
+        }
+    }
+
+    @ViewBuilder
+    private func slot(_ category: Category) -> some View {
+        if category.isLogged(in: day) {
+            Circle().fill(category.color).frame(width: size, height: size)
+        } else if day.position == .today {
+            // Tinting the open slot says *which* category is still pending,
+            // not merely that something is.
+            Circle().fill(category.color.opacity(0.22)).frame(width: size, height: size)
+        } else {
+            Circle().fill(ColorTheme.secondaryText.opacity(0.28)).frame(width: size, height: size)
+        }
+    }
+}
+
+
+// MARK: - F3 · Open = hollow ring in the category colour
+
+private struct F3: View {
+    let day: DayLog
+    private let size: CGFloat = 8
+
+    var body: some View {
+        Cell(day: day) {
+            HStack(spacing: 3.5) {
+                ForEach(Category.allCases, id: \.self) { category in
+                    slot(category)
+                }
+            }
+            .frame(height: size)
+            .opacity(day.position == .future ? 0 : 1)
+        }
+    }
+
+    @ViewBuilder
+    private func slot(_ category: Category) -> some View {
+        if category.isLogged(in: day) {
+            Circle().fill(category.color).frame(width: size, height: size)
+        } else if day.position == .today {
+            // F1's robustness with F2's information: an outline survives dark
+            // mode, and keeping the category hue says which one is pending.
+            Circle()
+                .strokeBorder(category.color, lineWidth: 1.5)
+                .frame(width: size, height: size)
+        } else {
+            Circle().fill(ColorTheme.secondaryText.opacity(0.28)).frame(width: size, height: size)
+        }
     }
 }
 
@@ -214,14 +186,15 @@ private struct Cell<Indicator: View>: View {
     var body: some View {
         VStack(spacing: 5) {
             Text(day.weekday)
-                .font(.caption)
-                .foregroundStyle(day.isSelected ? P.accent : .secondary)
+                .typography(Typography.caption)
+                .foregroundStyle(day.isSelected ? ColorTheme.accent : ColorTheme.secondaryText)
 
             Text("\(day.day)")
-                .font(.headline)
-                // Future days recede, so the eye lands on the days that
-                // could actually have been logged.
-                .foregroundStyle(day.position == .future ? .secondary : .primary)
+                .typography(Typography.headline)
+                .foregroundStyle(
+                    day.isSelected ? ColorTheme.onFixedLightSurface
+                        : (day.position == .future ? ColorTheme.secondaryText : ColorTheme.primaryText)
+                )
                 .frame(width: 34, height: 34)
                 .background { if day.isSelected { Circle().fill(.white) } }
 
@@ -230,10 +203,10 @@ private struct Cell<Indicator: View>: View {
         .frame(maxWidth: .infinity)
         .frame(height: 78)
         .background {
-            Capsule().fill(day.isSelected ? P.accent.opacity(0.22) : P.card)
+            Capsule().fill(day.isSelected ? ColorTheme.accent.opacity(0.22) : ColorTheme.cardBackground)
         }
         .overlay {
-            Capsule().strokeBorder(day.isSelected ? P.accent : .clear, lineWidth: 2)
+            Capsule().strokeBorder(day.isSelected ? ColorTheme.accent : .clear, lineWidth: 2)
         }
     }
 }
@@ -247,8 +220,11 @@ private struct Row<C: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(title).font(.subheadline.bold())
-            Text(note).font(.caption2).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            Text(title).typography(Typography.subheadline).fontWeight(.bold)
+            Text(note)
+                .typography(Typography.caption)
+                .foregroundStyle(ColorTheme.secondaryText)
+                .fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 6) {
                 ForEach(Array(week.enumerated()), id: \.offset) { _, d in cell(d) }
             }
@@ -260,37 +236,44 @@ private struct Row<C: View>: View {
 struct WeekSelectorIndicatorMockups: View {
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 20) {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("Dots — iteration 2").font(.title3.bold())
-                    Text("Today is Tue 22. Sun 20 is a MISSED day. Wed/Thu are future — they should not look missed.")
-                        .font(.caption).foregroundStyle(.secondary)
+                    Text("Dots — iteration 3: colour + today")
+                        .typography(Typography.title3).fontWeight(.bold)
+                        .foregroundStyle(ColorTheme.primaryText)
+                    Text("Today is Tue 22 (meal + med logged, symptom still open). Sun 20 was missed. Wed/Thu are future.")
+                        .typography(Typography.caption)
+                        .foregroundStyle(ColorTheme.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
-                    HStack(spacing: 10) {
-                        Chip(P.meal, "Meal"); Chip(P.medication, "Med"); Chip(P.symptom, "Symptom")
+                    HStack(spacing: 12) {
+                        Chip(ColorTheme.mealLogging, "Meal")
+                        Chip(ColorTheme.secondary, "Medication")
+                        Chip(ColorTheme.symptomTracking, "Symptom")
                     }
                 }
 
-                Row(title: "A1 · Collapsed (iteration 1)",
-                    note: "Dots shift position. Wed's lone dot could be any category — colour is the only cue.") { A1(day: $0) }
+                Row(title: "F1 · Open slot = hollow ring",
+                    note: "Today's missing symptom is an outline. Clearly different from Sun 20's solid grey 'spent' slots.") { F1(day: $0) }
 
-                Row(title: "A2 · Fixed slots, empties invisible",
-                    note: "Position now encodes category. But past-blank and future-blank still look identical.") { A2(day: $0) }
+                Row(title: "F2 · Open slot = faint category tint",
+                    note: "Same, but the open slot keeps its category colour at 22%, so it says *which* one is pending.") { F2(day: $0) }
 
-                Row(title: "A3 · Fixed slots + empty track",
-                    note: "Gaps become visible. Downside: future days show three empty slots for nothing.") { A3(day: $0) }
+                Row(title: "F3 · Open = hollow ring in the category colour",
+                    note: "Synthesis: an outline survives dark mode, and the hue says which category is still pending.") { F3(day: $0) }
 
-                Row(title: "A4 · Track on past days only",
-                    note: "Future days drop the track entirely and their numbers recede. Sun 20 now stands out.") { A4(day: $0) }
-
-                Row(title: "A5 · A4 plus an explicit missed mark",
-                    note: "A fully blank past day shows a dash — states the gap rather than relying on absence.") { A5(day: $0) }
-
-                Row(title: "A6 · A4 at 8pt dots",
-                    note: "Same logic as A4, larger dots. Check legibility on the tinted selected capsule.") { A6(day: $0) }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Reference")
+                        .typography(Typography.subheadline).fontWeight(.bold)
+                        .foregroundStyle(ColorTheme.primaryText)
+                    Text("Teal / purple / pink are the app's existing category tokens. Orange is deliberately unused here — it is the accent, so an orange dot would read as chrome. Green is deliberately unused — severity(0) is green and means 'no pain', so green for 'symptom logged' would invert it.")
+                        .typography(Typography.caption)
+                        .foregroundStyle(ColorTheme.secondaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .padding(16)
         }
+        .background(ColorTheme.background)
     }
 }
 
@@ -300,12 +283,16 @@ private struct Chip: View {
     init(_ c: Color, _ label: String) { self.c = c; self.label = label }
     var body: some View {
         HStack(spacing: 4) {
-            Circle().fill(c).frame(width: 7, height: 7)
-            Text(label).font(.caption2).foregroundStyle(.secondary)
+            Circle().fill(c).frame(width: 8, height: 8)
+            Text(label).typography(Typography.caption).foregroundStyle(ColorTheme.secondaryText)
         }
     }
 }
 
-#Preview("Dots iteration") {
+#Preview("Light") {
     WeekSelectorIndicatorMockups()
+}
+
+#Preview("Dark") {
+    WeekSelectorIndicatorMockups().preferredColorScheme(.dark)
 }
