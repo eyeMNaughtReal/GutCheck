@@ -2,318 +2,415 @@
 //  HealthKitMedicationService.swift
 //  GutCheck
 //
-//  Service for real-time medication tracking via HealthKit integration.
-//  Features include:
-//  - Real-time medication detection using HKObserverQuery
-//  - Background delivery for continuous monitoring
-//  - Privacy-compliant local data processing
-//  - Automatic medication-symptom correlation tracking
+//  Reads the medications a person tracks in the Health app, and the doses they
+//  have logged against them.
 //
-//  Created by Mark Conley on 12/15/25.
+//  Read-only, by design and by API. The Health app owns this data: you add a
+//  medication there and tap Taken there, and GutCheck reflects it. Nothing here
+//  writes back — the medication types HealthKit exposes are not shareable, so
+//  there is no write path to accidentally take.
+//
+//  This replaces an implementation built on HKClinicalRecord, which was the
+//  wrong source entirely. Clinical records are FHIR documents downloaded from a
+//  linked healthcare provider: they only appear if you have connected a
+//  supported health system, they describe prescriptions rather than doses, and
+//  nothing typed into the Health app's own Medications screen ever lands there.
+//  It also requested write authorization on a clinical type, which HealthKit
+//  refuses outright, so authorization threw and every fetch returned empty.
+//
+//  The data model has three layers, and the join between them is not the
+//  obvious one:
+//
+//    HKMedicationConcept          the drug itself, carrying RxNorm codings
+//    HKUserAnnotatedMedication    the person's tracking of it: nickname,
+//                                 archived, whether it has a schedule
+//    HKMedicationDoseEvent        one sample per logged dose
+//
+//  Dose events reference the *concept* identifier, not the annotation, so
+//  resolving a person's history means reading the annotated medications first
+//  and keying doses by `medication.identifier`.
 //
 
 import Foundation
 import HealthKit
 import UIKit
 
-/// Main service for HealthKit medication integration
-/// Provides real-time medication tracking without requiring daily polling.
-/// All medication data is processed locally for privacy compliance.
+// MARK: - Dose Event
+
+/// One dose event as the Health app recorded it.
+///
+/// Deliberately not `MedicationDoseLog`. That type is persisted and assumes a
+/// dose was taken, whereas a dose event carries a status, a schedule context,
+/// and both the expected and actual quantity. Flattening those away here would
+/// throw out the parts most worth analysing, so the fidelity is kept and
+/// `asDoseLog()` narrows it only where existing UI needs the older shape.
+struct MedicationDoseEventRecord: Identifiable, Sendable, Hashable {
+
+    let id: UUID
+
+    /// The `HKMedicationConcept` identifier this dose belongs to. The link back
+    /// to a medication — dose events do not reference the user's annotation.
+    let conceptIdentifier: String
+
+    /// Resolved from the annotated medication, falling back to the concept's
+    /// own display text.
+    let medicationName: String
+
+    /// What the person reported taking. Nil is possible: a dose event exists
+    /// for statuses where nothing was taken at all.
+    let doseQuantity: Double?
+
+    /// What the schedule expected. Non-nil only for scheduled doses, which is
+    /// what makes a partial dose detectable — took 1 of 2.
+    let scheduledDoseQuantity: Double?
+
+    let unit: String
+
+    /// When the dose was logged.
+    let dateTaken: Date
+
+    /// When it was due. Non-nil only for scheduled doses.
+    let scheduledDate: Date?
+
+    let status: HKMedicationDoseEvent.LogStatus
+
+    let scheduleType: HKMedicationDoseEvent.ScheduleType
+
+    /// Whether the person actually took this dose.
+    ///
+    /// Worth stating explicitly because most statuses are not user actions at
+    /// all — see `HealthKitMedicationService.takenStatuses`.
+    var wasTaken: Bool { status == .taken }
+
+    /// True when less was taken than the schedule called for.
+    var wasPartial: Bool {
+        guard let doseQuantity, let scheduledDoseQuantity else { return false }
+        return doseQuantity < scheduledDoseQuantity
+    }
+
+    /// Narrows to the older persisted shape for existing UI.
+    ///
+    /// Lossy on purpose: status and schedule context have nowhere to go in
+    /// `MedicationDoseLog`. Only call this for doses that were actually taken.
+    func asDoseLog() -> MedicationDoseLog {
+        MedicationDoseLog(
+            id: id.uuidString,
+            medicationId: conceptIdentifier,
+            medicationName: medicationName,
+            dosageAmount: doseQuantity ?? 0,
+            dosageUnit: unit,
+            dateTaken: dateTaken
+        )
+    }
+}
+
+// MARK: - Service
+
+/// Reads tracked medications and logged doses from the Health app.
 @MainActor
-@Observable class HealthKitMedicationService {
-    // MARK: - Private Properties
-    
-    /// HealthKit store for accessing health data
+@Observable final class HealthKitMedicationService {
+
+    // MARK: Stored
+
     @ObservationIgnored private let healthStore = HKHealthStore()
-    
-    /// Active medication observers for real-time updates
-    @ObservationIgnored private var medicationObservers: [HKObserverQuery] = []
-    
-    /// Background delivery observers for continuous monitoring
-    @ObservationIgnored private var backgroundDeliveryObservers: [HKObserverQuery] = []
-    
-    // MARK: - Published Properties
-    
-    /// Currently active medications from HealthKit
+
+    /// Observers on dose events, so a dose logged in Health shows up here
+    /// without polling.
+    @ObservationIgnored private var observers: [HKObserverQuery] = []
+
+    @ObservationIgnored private var activationObserver: NSObjectProtocol?
+
+    // MARK: Observable state
+
+    /// Medications the person is currently tracking, archived ones excluded.
     var currentMedications: [MedicationRecord] = []
-    
-    /// Complete medication history for analysis
+
+    /// Everything tracked, including archived, for historical lookups. A dose
+    /// logged months ago may belong to a medication since archived, and
+    /// dropping it would silently orphan that dose.
     var medicationHistory: [MedicationRecord] = []
-    
-    /// Whether HealthKit medication access is authorized
+
+    /// Logged doses, most recent first.
+    var doseEvents: [MedicationDoseEventRecord] = []
+
     var isAuthorized = false
-    
-    /// Timestamp of last medication data update
+
     var lastUpdateTime: Date?
-    
+
+    // MARK: Types
+    //
+    // Read-only. The previous implementation passed these to `toShare:` as
+    // well, which HealthKit rejects for medication types.
+
+    @ObservationIgnored
+    private let readTypes: Set<HKObjectType> = [
+        HKObjectType.userAnnotatedMedicationType(),
+        HKObjectType.medicationDoseEventType()
+    ]
+
+    /// Statuses that mean the person took the medication.
+    ///
+    /// Only `.taken` qualifies, and the set exists to make the exclusions
+    /// deliberate rather than accidental. HealthKit *generates* dose events
+    /// for reminder slots nobody touched — `.notInteracted` when a reminder
+    /// was ignored, `.notificationNotSent` when the system failed to deliver
+    /// it, `.snoozed`, and `.notLogged` when a person undoes an earlier entry.
+    /// Treating those as doses would invent a medication history that never
+    /// happened, which for correlation against symptoms is worse than having
+    /// no data at all.
+    static let takenStatuses: Set<HKMedicationDoseEvent.LogStatus> = [.taken]
+
     // MARK: - Authorization
-    
-    /// Request permission to access medication data from HealthKit
-    /// Uses clinical types for medication records as per HealthKit guidelines
-    /// - Returns: True if authorization granted, false otherwise
+
+    @ObservationIgnored private var hasRequestedAuthorization = false
+
+    /// Requests read access to tracked medications and dose events.
     func requestMedicationAuthorization() async -> Bool {
+        let granted = await ensureAuthorization()
+        guard granted else { return false }
+
+        await refresh()
+        await startObserving()
+        return true
+    }
+
+    /// Makes sure authorization has been asked for, at most once per launch.
+    ///
+    /// Every fetch routes through here rather than checking a stored flag.
+    /// HealthKit deliberately will not tell you whether *read* access was
+    /// granted — that would leak the absence of data — so a boolean set by one
+    /// call site is not something other call sites can rely on. Authorization
+    /// is also now requested centrally by `HealthKitManager`, which would
+    /// leave such a flag false here even though access had been granted, and
+    /// every fetch would refuse to run.
+    ///
+    /// `requestAuthorization` is idempotent and does not re-prompt once a
+    /// person has answered, so calling it is cheap and does not nag.
+    @discardableResult
+    private func ensureAuthorization() async -> Bool {
         guard HKHealthStore.isHealthDataAvailable() else {
+            isAuthorized = false
             return false
         }
-        
-        // Use clinical types for medication data - this is the correct approach
-        // for medication records in HealthKit
-        let medicationType = HKObjectType.clinicalType(forIdentifier: .medicationRecord)!
-        let medicationTypes: Set<HKSampleType> = [medicationType]
-        
+
+        if hasRequestedAuthorization { return isAuthorized }
+
         do {
-            try await healthStore.requestAuthorization(toShare: medicationTypes, read: medicationTypes)
+            try await healthStore.requestAuthorization(toShare: [], read: readTypes)
+            hasRequestedAuthorization = true
             isAuthorized = true
-            await startObservingMedications()
             return true
         } catch {
+            hasRequestedAuthorization = true
+            isAuthorized = false
             return false
         }
     }
-    
-    // MARK: - Real-time Observation
-    
-    /// Start real-time observation of medication changes
-    /// This method sets up observers that automatically detect when medications
-    /// are added, modified, or removed in HealthKit without requiring polling.
-    func startObservingMedications() async {
-        guard isAuthorized else { return }
-        
-        // Stop existing observers to prevent duplicates
-        stopObservingMedications()
-        
-        // Start real-time observation for medication changes
-        await observeMedicationChanges()
-        
-        // Enable background delivery for medication updates
-        await enableBackgroundDelivery()
-    }
-    
-    /// Set up real-time medication change detection
-    /// Uses HKObserverQuery to monitor medication record changes and automatically
-    /// fetches updated data when changes are detected.
-    private func observeMedicationChanges() async {
-        let medicationType = HKObjectType.clinicalType(forIdentifier: .medicationRecord)!
-        
-        // Create observer query that triggers on any medication record change
-        let query = HKObserverQuery(sampleType: medicationType, predicate: nil) { [weak self] _, completion, error in
-            if error != nil {
+
+    // MARK: - Observation
+
+    /// Starts watching for newly logged doses.
+    ///
+    /// Only dose events are observable. `HKUserAnnotatedMedicationType` is an
+    /// `HKObjectType` rather than an `HKSampleType`, so it cannot back an
+    /// observer query — the medication list is instead refreshed when the app
+    /// becomes active, which is when a person returning from the Health app
+    /// would expect to see a change.
+    func startObserving() async {
+        guard await ensureAuthorization() else { return }
+
+        stopObserving()
+
+        let doseType = HKObjectType.medicationDoseEventType()
+
+        let query = HKObserverQuery(sampleType: doseType, predicate: nil) { [weak self] _, completion, error in
+            guard error == nil else {
                 completion()
                 return
             }
-            
-            // When medication changes are detected, fetch the latest data
             Task { @MainActor in
-                await self?.fetchLatestMedications()
+                await self?.refresh()
                 completion()
             }
         }
-        
-        medicationObservers.append(query)
+
+        observers.append(query)
         healthStore.execute(query)
-        
-        // Also observe when the app becomes active to catch any missed updates
-        // This ensures we don't miss medication changes that occurred while the app was backgrounded
-        NotificationCenter.default.addObserver(
+
+        do {
+            try await healthStore.enableBackgroundDelivery(for: doseType, frequency: .immediate)
+        } catch {
+            // Background delivery is an optimisation. Without it the app still
+            // refreshes on activation, so this is not worth surfacing.
+        }
+
+        activationObserver = NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
             object: nil,
             queue: .main
         ) { [weak self] _ in
             Task { @MainActor in
-                await self?.fetchLatestMedications()
+                await self?.refresh()
             }
         }
     }
-    
-    /// Enable background delivery for medication updates
-    /// This allows the app to receive medication change notifications even when
-    /// it's not actively running, ensuring continuous monitoring.
-    private func enableBackgroundDelivery() async {
-        let medicationType = HKObjectType.clinicalType(forIdentifier: .medicationRecord)!
-        
-        do {
-            try await healthStore.enableBackgroundDelivery(for: medicationType, frequency: .immediate)
-        } catch {
-        }
-    }
-    
-    /// Stop all medication observers and clean up resources
-    /// This method is called when the service is deallocated or when stopping observation
-    func stopObservingMedications() {
-        medicationObservers.forEach { healthStore.stop($0) }
-        medicationObservers.removeAll()
-        
-        backgroundDeliveryObservers.forEach { healthStore.stop($0) }
-        backgroundDeliveryObservers.removeAll()
-        
-        NotificationCenter.default.removeObserver(self)
-    }
-    
-    // MARK: - Data Fetching
-    
-    func fetchLatestMedications() async {
-        guard isAuthorized else { return }
-        
-        do {
-            let medications = try await fetchMedicationsFromHealthKit()
-            await MainActor.run {
-                self.currentMedications = medications.filter { $0.isActive }
-                self.medicationHistory = medications
-                self.lastUpdateTime = Date.now
-            }
-        } catch {
-        }
-    }
-    
-    func fetchMedicationsFromHealthKit() async throws -> [MedicationRecord] {
-        // Skip the query entirely if authorization has not been granted.
-        // This avoids a noisy "Authorization not determined" HKError in the console
-        // when the user has not yet connected HealthKit medication access.
-        guard isAuthorized else { return [] }
 
-        let medicationType = HKObjectType.clinicalType(forIdentifier: .medicationRecord)!
-        
-        let predicate = HKQuery.predicateForSamples(
-            withStart: Calendar.current.date(byAdding: .month, value: -3, to: Date.now),
-            end: nil,
-            options: .strictStartDate
-        )
-        
-        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
-        
-        return try await withCheckedThrowingContinuation { continuation in
-            let query = HKSampleQuery(
-                sampleType: medicationType,
-                predicate: predicate,
-                limit: HKObjectQueryNoLimit,
-                sortDescriptors: [sortDescriptor]
-            ) { [weak self] _, samples, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-                
-                guard let samples = samples as? [HKClinicalRecord] else {
-                    continuation.resume(returning: [])
-                    return
-                }
-                
-                let medications = samples.compactMap { sample -> MedicationRecord? in
-                    return self?.convertHealthKitSampleToMedicationRecord(sample)
-                }
-                
-                continuation.resume(returning: medications)
-            }
-            
-            healthStore.execute(query)
+    func stopObserving() {
+        observers.forEach { healthStore.stop($0) }
+        observers.removeAll()
+
+        if let activationObserver {
+            NotificationCenter.default.removeObserver(activationObserver)
+            self.activationObserver = nil
         }
     }
-    
-    private nonisolated func convertHealthKitSampleToMedicationRecord(_ sample: HKClinicalRecord) -> MedicationRecord? {
-        // Extract medication information from clinical record
-        guard let medicationName = extractMedicationName(from: sample) else { return nil }
-        
-        // In HealthKit, endDate might be a distant future date to represent "no end date"
-        let isActive: Bool
-        let endDate: Date?
-        
-        // Check if endDate is a reasonable date (not distant future)
-        let distantFuture = Calendar.current.date(byAdding: .year, value: 100, to: Date.now) ?? Date.distantFuture
-        if sample.endDate > distantFuture {
-            // This represents "no end date" in HealthKit
-            endDate = nil
-            isActive = true
-        } else {
-            endDate = sample.endDate
-            if let endDate = endDate {
-                isActive = endDate > Date.now
-            } else {
-                isActive = true
-            }
+
+    // MARK: - Fetching
+
+    /// Reloads medications and recent doses together.
+    ///
+    /// Medications are loaded first because dose events carry only a concept
+    /// identifier; without the medication list a dose has no name to display.
+    func refresh(since startDate: Date? = nil) async {
+        guard await ensureAuthorization() else { return }
+
+        do {
+            let annotated = try await fetchAnnotatedMedications()
+
+            medicationHistory = annotated.map(Self.medicationRecord(from:))
+            currentMedications = annotated
+                .filter { !$0.isArchived }
+                .map(Self.medicationRecord(from:))
+
+            let names = Dictionary(
+                annotated.map { ($0.medication.identifier.description, Self.displayName(for: $0)) },
+                uniquingKeysWith: { first, _ in first }
+            )
+
+            doseEvents = try await fetchDoseEvents(since: startDate, names: names)
+            lastUpdateTime = Date.now
+        } catch {
+            // Leave the last good data in place rather than blanking the UI on
+            // a transient query failure.
         }
-        
+    }
+
+    /// The medications the person tracks in the Health app.
+    func fetchAnnotatedMedications() async throws -> [HKUserAnnotatedMedication] {
+        guard await ensureAuthorization() else { return [] }
+
+        let descriptor = HKUserAnnotatedMedicationQueryDescriptor()
+        return try await descriptor.result(for: healthStore)
+    }
+
+    /// Logged dose events, newest first.
+    ///
+    /// `names` maps concept identifiers to display names. A dose whose
+    /// medication is not in the map still comes through, named from nothing
+    /// better than the concept identifier, because dropping it would hide a
+    /// dose the person definitely logged.
+    func fetchDoseEvents(
+        since startDate: Date? = nil,
+        names: [String: String] = [:]
+    ) async throws -> [MedicationDoseEventRecord] {
+        guard await ensureAuthorization() else { return [] }
+
+        let predicate: NSPredicate? = startDate.map {
+            HKQuery.predicateForSamples(withStart: $0, end: nil, options: .strictStartDate)
+        }
+
+        let descriptor = HKSampleQueryDescriptor(
+            predicates: [.sample(type: HKObjectType.medicationDoseEventType(), predicate: predicate)],
+            sortDescriptors: [SortDescriptor(\.startDate, order: .reverse)]
+        )
+
+        let samples = try await descriptor.result(for: healthStore)
+
+        return samples
+            .compactMap { $0 as? HKMedicationDoseEvent }
+            .map { event in
+                let identifier = event.medicationConceptIdentifier.description
+
+                return MedicationDoseEventRecord(
+                    id: event.uuid,
+                    conceptIdentifier: identifier,
+                    medicationName: names[identifier] ?? identifier,
+                    doseQuantity: event.doseQuantity,
+                    scheduledDoseQuantity: event.scheduledDoseQuantity,
+                    unit: event.unit.unitString,
+                    dateTaken: event.startDate,
+                    scheduledDate: event.scheduledDate,
+                    status: event.logStatus,
+                    scheduleType: event.scheduleType
+                )
+            }
+    }
+
+    /// Doses actually taken within a date range, newest first.
+    ///
+    /// The status filter is the point of this method — see `takenStatuses`.
+    func takenDoses(from start: Date, to end: Date) -> [MedicationDoseEventRecord] {
+        doseEvents.filter { event in
+            Self.takenStatuses.contains(event.status)
+                && event.dateTaken >= start
+                && event.dateTaken < end
+        }
+    }
+
+    /// Kept for `RecentActivityViewModel`, which still asks for medications
+    /// rather than doses.
+    func fetchMedicationsFromHealthKit() async throws -> [MedicationRecord] {
+        try await fetchAnnotatedMedications().map(Self.medicationRecord(from:))
+    }
+
+    // MARK: - Mapping
+
+    /// The person's own name for a medication, falling back to the clinical one.
+    private static func displayName(for annotated: HKUserAnnotatedMedication) -> String {
+        if let nickname = annotated.nickname?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !nickname.isEmpty {
+            return nickname
+        }
+        return annotated.medication.displayText
+    }
+
+    private static func medicationRecord(from annotated: HKUserAnnotatedMedication) -> MedicationRecord {
+        let concept = annotated.medication
+
         return MedicationRecord(
-            id: sample.uuid.uuidString,
-            createdBy: "", // HealthKit doesn't provide user ID
-            name: medicationName,
+            id: concept.identifier.description,
+            createdBy: "",
+            name: displayName(for: annotated),
+            // Amount is deliberately zero. A medication concept carries no dose
+            // amount — in this model the amount belongs to each dose event, and
+            // inventing one here would put a number on screen that Health never
+            // said. Frequency reflects only whether reminders are set up;
+            // HealthKit does not expose the schedule itself.
             dosage: MedicationDosage(
-                amount: 0, // HealthKit doesn't provide dosage amounts
-                unit: "mg",
-                frequency: .asNeeded
+                amount: 0,
+                unit: "",
+                frequency: annotated.hasSchedule ? .custom : .asNeeded,
+                instructions: nil
             ),
-            startDate: sample.startDate,
-            endDate: endDate,
-            isActive: isActive,
-            notes: sample.metadata?["notes"] as? String,
+            // The Health app does not date when tracking began, and guessing
+            // would be worse than admitting it, so the record is open-ended and
+            // `isArchived` carries the only real lifecycle signal there is.
+            startDate: Date.distantPast,
+            endDate: nil,
+            isActive: !annotated.isArchived,
+            notes: nil,
             source: .healthKit,
             privacyLevel: .private,
-            healthKitUUID: sample.uuid
+            healthKitUUID: nil
         )
     }
-    
-    private nonisolated func extractMedicationName(from sample: HKClinicalRecord) -> String? {
-        // Try to extract medication name from various sources in the clinical record
-        if let medicationName = sample.metadata?["medicationName"] as? String {
-            return medicationName
-        }
-        
-        // displayName is non-optional in HKClinicalRecord
-        let displayName = sample.displayName
-        if !displayName.isEmpty {
-            return displayName
-        }
-        
-        // Fallback to UUID if no name is available
-        let uuidString = sample.uuid.uuidString
-        let shortUUID = String(uuidString.prefix(8))
-        return "Medication \(shortUUID)"
-    }
-    
-    // MARK: - Manual Medication Entry
-    
-    func addMedication(_ medication: MedicationRecord) async throws {
-        // For manual entries, we'll store locally since HealthKit doesn't support writing medication data
-        // This maintains privacy while allowing user input
-        await MainActor.run {
-            self.currentMedications.append(medication)
-            self.medicationHistory.append(medication)
-            self.lastUpdateTime = Date.now
-        }
-    }
-    
+
     // MARK: - Cleanup
-    
+
     deinit {
-        // For cleanup in deinit, we'll use weak references to avoid self capture
-        // This is a common pattern for cleanup operations
-        let healthStore = self.healthStore
-        let medicationObservers = self.medicationObservers
-        let backgroundDeliveryObservers = self.backgroundDeliveryObservers
-        
-        // Clean up observers directly without capturing self
-        medicationObservers.forEach { healthStore.stop($0) }
-        backgroundDeliveryObservers.forEach { healthStore.stop($0) }
-        
-        // Remove notification observer - use weak reference to avoid self capture
-        if let observer = self as? NSObject {
-            NotificationCenter.default.removeObserver(observer)
+        observers.forEach { healthStore.stop($0) }
+        if let activationObserver {
+            NotificationCenter.default.removeObserver(activationObserver)
         }
     }
 }
-
-// MARK: - HealthKit Extensions
-
-extension HKClinicalRecord {
-    var isActive: Bool {
-        // In HealthKit, endDate might be a distant future date to represent "no end date"
-        let distantFuture = Calendar.current.date(byAdding: .year, value: 100, to: Date.now) ?? Date.distantFuture
-        
-        if self.endDate > distantFuture {
-            // This represents "no end date" in HealthKit
-            return true
-        } else {
-            return self.endDate > Date.now
-        }
-    }
-}
-
