@@ -14,17 +14,37 @@ struct HealthDataIntegrationView: View {
             Form {
 
                 // MARK: - Connection
-                Section(header: Text("Apple Health")) {
-                    if healthKitVM.healthData != nil {
+                //
+                // Driven by `connectionState`, not by `healthData != nil`.
+                // `fetchUserHealthData()` used to return an all-nil struct
+                // rather than nil, so that check was true even when every
+                // permission had been denied and this read "Connected"
+                // unconditionally.
+                Section(
+                    header: Text("Apple Health"),
+                    footer: connectionFooter
+                ) {
+                    switch healthKitVM.connectionState {
+                    case .connected:
                         Label("Connected", systemImage: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
+                            .foregroundStyle(ColorTheme.success)
+                        openHealthAppButton
 
-                        Button {
-                            openHealthApp()
-                        } label: {
-                            Label("Open Health App", systemImage: "heart.circle")
-                        }
-                    } else {
+                    case .connectedNoData:
+                        Label("No Data Yet", systemImage: "exclamationmark.circle.fill")
+                            .foregroundStyle(ColorTheme.warning)
+                        openHealthAppButton
+
+                    case .needsAttention:
+                        Label("Needs Attention", systemImage: "exclamationmark.triangle.fill")
+                            .foregroundStyle(ColorTheme.warning)
+                        openHealthAppButton
+
+                    case .unavailable:
+                        Label("Not available on this device", systemImage: "xmark.circle.fill")
+                            .foregroundStyle(ColorTheme.secondaryText)
+
+                    case .notSetUp:
                         Button {
                             Task {
                                 await healthKitVM.requestHealthKitAccess()
@@ -253,6 +273,38 @@ struct HealthDataIntegrationView: View {
             .task {
                 await healthKitVM.fetchHealthData()
             }
+        }
+    }
+
+    // MARK: - Connection helpers
+
+    private var openHealthAppButton: some View {
+        Button {
+            openHealthApp()
+        } label: {
+            Label("Open Health App", systemImage: "heart.circle")
+        }
+    }
+
+    /// Explains each connection state, carefully.
+    ///
+    /// iOS never reports whether reading was permitted, so "No Data Yet"
+    /// genuinely cannot tell a refused permission apart from an empty Health
+    /// app. The wording names both possibilities rather than blaming someone
+    /// for a choice they may not have made.
+    @ViewBuilder
+    private var connectionFooter: some View {
+        switch healthKitVM.connectionState {
+        case .connected:
+            Text("GutCheck is reading health metrics from Apple Health.")
+        case .connectedNoData:
+            Text("Apple Health access has been set up, but GutCheck hasn't read any metrics yet. Either these permissions are off, or Apple Health holds no data for them. Tap Open Health App, then Privacy → Apps → GutCheck to check.")
+        case .needsAttention:
+            Text("Some permissions GutCheck needs are turned off. Tap Open Health App, then Privacy → Apps → GutCheck.")
+        case .notSetUp:
+            Text("Connect Apple Health so GutCheck can keep your profile current and write meals and symptoms back.")
+        case .unavailable:
+            Text("This device doesn't support Apple Health.")
         }
     }
 

@@ -11,13 +11,28 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("lastHealthKitSyncTimestamp") private var lastHealthKitSyncTimestamp: Double = 0
     @State private var showAppleHealth = false
+    @State private var healthKitVM = HealthKitViewModel()
 
+    /// Caption for the Apple Health row.
+    ///
+    /// Driven by authorization rather than by `lastHealthKitSyncTimestamp`.
+    /// That timestamp is written only by `HealthKitSyncManager`, so the row used
+    /// to read "Not Connected" forever if you granted access and no sync had
+    /// run yet — reporting sync history while appearing to report connection.
+    ///
+    /// The sync time is still shown, but as a detail once connected rather than
+    /// as the entire signal.
     private var appleHealthStatusText: String {
-        guard lastHealthKitSyncTimestamp > 0 else { return "Not Connected" }
-        let date = Date(timeIntervalSince1970: lastHealthKitSyncTimestamp)
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return "Synced \(formatter.localizedString(for: date, relativeTo: Date.now))"
+        switch healthKitVM.connectionState {
+        case .connected:
+            guard lastHealthKitSyncTimestamp > 0 else { return "Connected" }
+            let date = Date(timeIntervalSince1970: lastHealthKitSyncTimestamp)
+            let formatter = RelativeDateTimeFormatter()
+            formatter.unitsStyle = .abbreviated
+            return "Synced \(formatter.localizedString(for: date, relativeTo: Date.now))"
+        case .notSetUp, .connectedNoData, .needsAttention, .unavailable:
+            return healthKitVM.connectionState.label
+        }
     }
 
     var body: some View {
@@ -302,10 +317,17 @@ struct SettingsView: View {
                 )
             }
         }
-        .sheet(isPresented: $showAppleHealth) {
+        // Recomputed on dismiss so granting access inside the sheet is
+        // reflected on the row behind it rather than going stale.
+        .sheet(isPresented: $showAppleHealth, onDismiss: {
+            Task { await healthKitVM.refreshConnectionState() }
+        }) {
             HealthDataIntegrationView()
                 .environment(settingsVM)
                 .environment(userService)
+        }
+        .task {
+            await healthKitVM.refreshConnectionState()
         }
     }
 }

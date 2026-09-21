@@ -9,8 +9,16 @@ final class MockHealthKitManager: HealthKitManagerProtocol {
     /// When set, every throwing method throws this instead of succeeding.
     var errorToThrow: Error?
 
+    /// Drives the connection state under test. `.unnecessary` means the person
+    /// has already answered the permission sheet.
+    var authorizationRequestStatusToReturn: HKAuthorizationRequestStatus = .shouldRequest
+
     func requestAuthorization() async throws {
         if let errorToThrow { throw errorToThrow }
+    }
+
+    func authorizationRequestStatus() async -> HKAuthorizationRequestStatus {
+        authorizationRequestStatusToReturn
     }
 
     func fetchUserHealthData() async -> UserHealthData? {
