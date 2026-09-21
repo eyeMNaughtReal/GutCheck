@@ -72,10 +72,39 @@ struct IdentifiedFood {
     var portionHint: PortionHint
 }
 
+/// A single named dish that accounts for the whole plate.
+///
+/// Distinct from `IdentifiedFood` because a dish resolves against the database
+/// differently: the brand is wanted rather than avoided, and a hit returns the
+/// composed nutrition of the entire item instead of one ingredient's.
+@Generable
+struct IdentifiedDish {
+    @Guide(description: "The ordinary name of the dish, e.g. 'mexican pizza', 'pad thai', 'lasagna'. Two or three words at most.")
+    var name: String
+
+    @Guide(description: "The restaurant or company that makes this dish, if you can tell. Leave empty if you cannot.")
+    var brand: String?
+
+    @Guide(description: "How confident you are that the plate is this dish.")
+    var confidence: FoodIdentificationConfidence
+
+    @Guide(description: "How large this serving looks relative to a typical serving of this dish. A half portion is small.")
+    var portionHint: PortionHint
+}
+
 /// The model's reading of one plate photo.
-@Generable(description: "The foods visible in a photograph of a meal")
+///
+/// Property order is load-bearing. The model generates `@Generable` properties
+/// in declaration order, so `dish` is asked first deliberately: when the array
+/// of ingredients is generated first the model commits to a decomposition and
+/// never reconsiders the plate as a whole. Photographing half a Taco Bell
+/// Mexican Pizza returned "tortilla" and "tomato" for exactly that reason.
+@Generable(description: "The food visible in a photograph of a meal")
 struct PlateAnalysis {
-    @Guide(description: "Each distinct food you can identify. Omit anything you cannot name confidently.", .maximumCount(8))
+    @Guide(description: "The single named dish this plate is, if it is a recognizable one. Leave empty if the plate is separate foods rather than one dish.")
+    var dish: IdentifiedDish?
+
+    @Guide(description: "Each distinct food you can see. Fill this in whether or not you named a dish. Omit anything you cannot name confidently.", .maximumCount(8))
     var foods: [IdentifiedFood]
 
     @Guide(description: "True if seasoning, spice, sauce or dressing appears to be present but you cannot identify what it is.")
@@ -87,11 +116,19 @@ struct PlateAnalysis {
 /// What the service could tell the caller about a photo.
 enum FoodPhotoIdentificationResult: Sendable {
 
-    /// At least one food was named. `hasUnidentifiedSeasoning` asks the UI to
-    /// offer a free-text field, because seasonings are usually invisible to a
-    /// photo yet matter to trigger analysis — FoodCompoundDatabase carries
-    /// cayenne, chili, cumin, garlic, paprika and cinnamon.
-    case identified(foods: [IdentifiedFood], hasUnidentifiedSeasoning: Bool)
+    /// Something was named. `hasUnidentifiedSeasoning` asks the UI to offer a
+    /// free-text field, because seasonings are usually invisible to a photo yet
+    /// matter to trigger analysis — FoodCompoundDatabase carries cayenne,
+    /// chili, cumin, garlic, paprika and cinnamon.
+    ///
+    /// `dish` and `foods` are alternatives, not additions: logging both would
+    /// double-count the plate. The caller prefers the dish when it resolves to
+    /// a database entry and falls back to the loose foods when it does not.
+    case identified(
+        dish: IdentifiedDish?,
+        foods: [IdentifiedFood],
+        hasUnidentifiedSeasoning: Bool
+    )
 
     /// The model ran but named nothing usable. The caller should say so and
     /// fall back to manual entry.
@@ -153,10 +190,28 @@ enum FoodPhotoIdentificationResult: Sendable {
     /// photo can rewrite the task.
     private static let instructions = Instructions {
         """
-        You identify foods in a photograph of a meal so they can be looked up \
-        in a nutrition database.
+        You identify food in a photograph of a meal so it can be looked up in \
+        a nutrition database.
 
-        Rules you must follow:
+        Answer in two passes, in this order.
+
+        FIRST, the dish. Decide whether the whole plate is one recognizable \
+        named dish — a lasagna, a pad thai, a mexican pizza, a cheeseburger. \
+        If it is, give its ordinary name, and name the restaurant or company \
+        if you can tell which one it is, either from visible packaging or \
+        because the dish itself is distinctive to that chain. Give a brand \
+        only when you actually recognize it; leave it empty otherwise.
+
+        Naming the dish is the most useful thing you can do. The database \
+        holds whole dishes, including the parts hidden inside that a photo \
+        never shows, so one dish name is worth more than a list of the few \
+        toppings visible on top of it.
+
+        Leave the dish empty when the plate is genuinely separate foods, like \
+        a chicken breast next to rice and broccoli. Do not force unrelated \
+        foods into one dish name.
+
+        SECOND, the visible foods. List them whether or not you named a dish.
         - Name only foods you can actually see. Do not guess at what a dish \
         probably contains, and do not list ingredients you cannot see.
         - One food per entry. Never combine two foods into a single name. \
@@ -164,14 +219,15 @@ enum FoodPhotoIdentificationResult: Sendable {
         separate entries. A combined name cannot be looked up.
         - Use the shortest plain name a nutrition database would hold: \
         "chicken breast", "brown rice", "tomato". Leave out adjectives about \
-        size or colour, and avoid recipe or restaurant dish names.
-        - If the dish is composite and you cannot separate it, name the dish \
-        itself in one or two words, like "enchilada" or "lasagna", rather than \
-        describing what you think is inside it.
+        size or colour, and leave the brand off these — brands belong on the \
+        dish, not on a plain ingredient.
         - Omit any food you cannot name confidently. A short accurate list is \
         worth more than a long speculative one.
+
+        For both passes:
         - Never state a weight, a calorie count or any nutrition figure. \
-        Portion is a coarse impression only.
+        Portion is a coarse impression only. Half of something is a small \
+        portion.
         - If seasoning, spice, sauce or dressing seems present but you cannot \
         tell what it is, say so with the seasoning flag rather than guessing a \
         name.
@@ -207,14 +263,24 @@ enum FoodPhotoIdentificationResult: Sendable {
                     && food.confidence != .low
             }
 
+            // Held to the same confidence bar as the foods. A low-confidence
+            // dish name is worse than none: it would suppress the ingredient
+            // list that the fallback depends on.
+            let dish = analysis.dish.flatMap { dish -> IdentifiedDish? in
+                let name = dish.name.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !name.isEmpty, dish.confidence != .low else { return nil }
+                return dish
+            }
+
             // Low-confidence-only output is a failure to identify, not a
             // result. Presenting it would put guesses in front of someone who
             // cannot tell them apart from recognitions.
-            guard !usable.isEmpty else {
+            guard dish != nil || !usable.isEmpty else {
                 return .couldNotIdentify
             }
 
             return .identified(
+                dish: dish,
                 foods: usable,
                 hasUnidentifiedSeasoning: analysis.hasUnidentifiedSeasoning
             )

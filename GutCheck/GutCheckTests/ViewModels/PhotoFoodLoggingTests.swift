@@ -186,4 +186,92 @@ struct PhotoFoodLoggingTests {
 
         #expect(ranked.first?.id == first.id)
     }
+
+    // MARK: - Branded Dish Ranking
+    //
+    // The inverse of the lemon cases above. A plain ingredient wants the
+    // generic record; a named chain dish wants the branded one, because only
+    // the brand's record accounts for what is inside the dish. Photographing
+    // half a Taco Bell Mexican Pizza and logging "tortilla" and "tomato" drops
+    // the beef, beans and cheese entirely — and beans and dairy are exactly
+    // the entries a trigger tracker cannot afford to lose.
+
+    @Test("A branded dish beats a generic entry sharing a word")
+    func brandedDishBeatsGeneric() async {
+        let generic = FoodSearchResult(name: "Pizza, cheese", brand: nil)
+        let chain = FoodSearchResult(name: "Mexican Pizza", brand: "Taco Bell")
+
+        let ranked = PhotoFoodLoggingViewModel().rankedForTesting(
+            [generic, chain],
+            against: "taco bell mexican pizza",
+            preference: .brandedDish,
+            brandHint: "Taco Bell"
+        )
+
+        #expect(ranked.first?.brand == "Taco Bell")
+    }
+
+    @Test("The named brand outranks a different company's version of the dish")
+    func matchingBrandWins() async {
+        let wrongChain = FoodSearchResult(name: "Mexican Pizza", brand: "Del Taco")
+        let rightChain = FoodSearchResult(name: "Mexican Pizza", brand: "Taco Bell")
+
+        let ranked = PhotoFoodLoggingViewModel().rankedForTesting(
+            [wrongChain, rightChain],
+            against: "taco bell mexican pizza",
+            preference: .brandedDish,
+            brandHint: "Taco Bell"
+        )
+
+        #expect(ranked.first?.brand == "Taco Bell")
+    }
+
+    @Test("Ingredient ranking is unaffected by the branded-dish rule")
+    func genericPreferenceStillPrefersGeneric() async {
+        // Guards the inversion from leaking: the default preference must keep
+        // behaving exactly as the lemon cases expect.
+        let dressing = FoodSearchResult(name: "Lemon", brand: "T. Marzetti Company")
+        let fruit = FoodSearchResult(name: "Lemon, Raw", brand: nil)
+
+        let ranked = PhotoFoodLoggingViewModel().rankedForTesting(
+            [dressing, fruit],
+            against: "lemon",
+            preference: .genericIngredient
+        )
+
+        #expect(ranked.first?.brand == nil)
+    }
+
+    // MARK: - Dish Candidate
+
+    @Test("A dish candidate folds the brand into the search term")
+    func dishCandidateIncludesBrand() {
+        let candidate = PhotoFoodCandidate(
+            dish: IdentifiedDish(
+                name: "mexican pizza",
+                brand: "Taco Bell",
+                confidence: .high,
+                portionHint: .small
+            )
+        )
+
+        #expect(candidate.searchName == "Taco Bell mexican pizza")
+        #expect(candidate.preference == .brandedDish)
+        #expect(candidate.brandHint == "Taco Bell")
+    }
+
+    @Test("A dish with no brand searches on the dish name alone")
+    func unbrandedDishCandidate() {
+        let candidate = PhotoFoodCandidate(
+            dish: IdentifiedDish(
+                name: "lasagna",
+                brand: nil,
+                confidence: .medium,
+                portionHint: .medium
+            )
+        )
+
+        #expect(candidate.searchName == "lasagna")
+        #expect(candidate.brandHint == nil)
+    }
 }

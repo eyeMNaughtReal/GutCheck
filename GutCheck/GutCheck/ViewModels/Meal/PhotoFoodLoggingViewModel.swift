@@ -22,6 +22,19 @@ import SwiftUI
 /// what is actually going to be logged.
 @Observable final class PhotoFoodCandidate: Identifiable {
 
+    /// Which kind of database entry this candidate is trying to resolve to.
+    ///
+    /// The two pull in opposite directions, so ranking cannot have one fixed
+    /// rule. A plain ingredient wants the generic entry — photograph a lemon
+    /// and you mean the fruit, not a branded lemon dressing. A named dish
+    /// wants the branded entry — "mexican pizza" means Taco Bell's, whose
+    /// database record already accounts for the beef, beans and cheese that
+    /// no photo of it can show.
+    enum NamePreference: Equatable {
+        case genericIngredient
+        case brandedDish
+    }
+
     let id = UUID()
 
     /// What the model called it. Retained after lookup so the row can show
@@ -62,11 +75,37 @@ import SwiftUI
         case noMatch
     }
 
+    /// How this candidate should be ranked against search results.
+    let preference: NamePreference
+
+    /// The brand the model named, when it recognized one. Used to break ties
+    /// toward the right company's version of a dish.
+    let brandHint: String?
+
     init(food: IdentifiedFood) {
         self.identifiedName = food.name
         self.searchName = food.name
         self.portionHint = food.portionHint
         self.confidence = food.confidence
+        self.preference = .genericIngredient
+        self.brandHint = nil
+    }
+
+    /// Builds the candidate for a whole-plate dish.
+    ///
+    /// The brand goes into the search term rather than being kept aside: the
+    /// food sources index chain items under the company name, so "taco bell
+    /// mexican pizza" recalls the record that a bare "mexican pizza" misses.
+    init(dish: IdentifiedDish) {
+        let brand = dish.brand?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let brandPrefix = (brand?.isEmpty == false) ? "\(brand!) " : ""
+
+        self.identifiedName = brandPrefix + dish.name
+        self.searchName = brandPrefix + dish.name
+        self.portionHint = dish.portionHint
+        self.confidence = dish.confidence
+        self.preference = .brandedDish
+        self.brandHint = (brand?.isEmpty == false) ? brand : nil
     }
 
     /// True once the person has corrected the name the model produced.
@@ -134,16 +173,47 @@ import SwiftUI
         let result = await identificationService.identifyFoods(in: image)
 
         switch result {
-        case .identified(let foods, let hasSeasoning):
-            candidates = foods.map(PhotoFoodCandidate.init(food:))
+        case .identified(let dish, let foods, let hasSeasoning):
             needsSeasoningInput = hasSeasoning
             phase = .reviewing
-            await lookUpAllCandidates()
+            await resolve(dish: dish, orFallBackTo: foods)
 
         case .couldNotIdentify, .unavailable:
             // `userMessage` is non-nil for both of these.
             phase = .failed(message: result.userMessage ?? "Couldn't identify this photo.")
         }
+    }
+
+    /// Logs the plate as one dish when the database holds it, and as the
+    /// individual visible foods when it does not.
+    ///
+    /// The dish is tried first and kept only if it actually resolves. A dish
+    /// name no food source has heard of would otherwise strand the review
+    /// screen on a single unmatched row, having discarded the ingredient list
+    /// that could at least log something.
+    ///
+    /// Only one of the two ever survives. Logging the dish *and* its visible
+    /// parts would count the plate twice, which matters here beyond the
+    /// calorie total — a duplicated ingredient distorts the trigger analysis.
+    private func resolve(
+        dish: IdentifiedDish?,
+        orFallBackTo foods: [IdentifiedFood]
+    ) async {
+        if let dish {
+            let dishCandidate = PhotoFoodCandidate(dish: dish)
+            candidates = [dishCandidate]
+            await lookUp(dishCandidate)
+
+            // Keep the dish when it matched — and also when there is nothing
+            // to fall back to, since an unmatched row with an editable name is
+            // a recovery path and an empty review screen is not.
+            if dishCandidate.lookupState == .matched || foods.isEmpty {
+                return
+            }
+        }
+
+        candidates = foods.map(PhotoFoodCandidate.init(food:))
+        await lookUpAllCandidates()
     }
 
     /// Looks up every candidate against the food database.
@@ -187,7 +257,12 @@ import SwiftUI
         // which puts branded products above generic ones. Photographing a
         // lemon and defaulting to "T. Marzetti Company Lemon" (a dressing,
         // 2 Tbsp) is the failure that motivated this.
-        candidate.matches = rankMatches(results, against: query)
+        candidate.matches = rankMatches(
+            results,
+            against: query,
+            preference: candidate.preference,
+            brandHint: candidate.brandHint
+        )
         candidate.selectedItem = foodItem(for: candidate.matches[0], hint: candidate.portionHint)
         candidate.lookupState = .matched
     }
@@ -200,14 +275,17 @@ import SwiftUI
     /// product rather than the ingredient that was photographed.
     private func rankMatches(
         _ results: [FoodSearchResult],
-        against identifiedName: String
+        against identifiedName: String,
+        preference: PhotoFoodCandidate.NamePreference,
+        brandHint: String?
     ) -> [FoodSearchResult] {
         let target = identifiedName.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        let brand = brandHint?.lowercased()
 
         return results.enumerated()
             .sorted { lhs, rhs in
-                let lhsScore = matchScore(lhs.element, target: target)
-                let rhsScore = matchScore(rhs.element, target: target)
+                let lhsScore = matchScore(lhs.element, target: target, preference: preference, brand: brand)
+                let rhsScore = matchScore(rhs.element, target: target, preference: preference, brand: brand)
                 guard lhsScore == rhsScore else { return lhsScore > rhsScore }
                 // Ties keep the service's original order, which already
                 // reflects nutrition completeness.
@@ -225,11 +303,25 @@ import SwiftUI
     /// short names. Comparing whole names therefore hands every exact match to
     /// the branded entry: "Lemon" by T. Marzetti (a dressing) beat "Lemon, Raw"
     /// on the first version of this.
-    private func matchScore(_ result: FoodSearchResult, target: String) -> Int {
+    private func matchScore(
+        _ result: FoodSearchResult,
+        target: String,
+        preference: PhotoFoodCandidate.NamePreference,
+        brand: String?
+    ) -> Int {
         let name = result.name.lowercased()
         let head = name.split(separator: ",").first.map(String.init)?
             .trimmingCharacters(in: .whitespaces) ?? name
         let isGeneric = result.brand == nil
+
+        // A dish search carries the brand in the target ("taco bell mexican
+        // pizza"), but the sources disagree on where the brand lives: some put
+        // it in a separate field, some fold it into the name. Matching against
+        // both joined covers either layout.
+        let searchable: String = {
+            guard preference == .brandedDish, let resultBrand = result.brand else { return name }
+            return "\(resultBrand.lowercased()) \(name)"
+        }()
 
         var score = 0
 
@@ -246,17 +338,33 @@ import SwiftUI
             // which tied juice with the whole fruit. An extra word means a
             // different food, not a different spelling.
             score += 60
-        } else if name.contains(target) {
+        } else if searchable.contains(target) {
             score += 30
         }
 
         // Every word of the identified name present, in any order: catches
-        // "rice, brown, cooked" for "brown rice".
-        if targetWords.count > 1, targetWords.allSatisfy(name.contains) {
+        // "rice, brown, cooked" for "brown rice", and a record named "Mexican
+        // Pizza" under brand "Taco Bell" for "taco bell mexican pizza".
+        if targetWords.count > 1, targetWords.allSatisfy(searchable.contains) {
             score += 20
         }
 
-        if isGeneric { score += 25 }
+        switch preference {
+        case .genericIngredient:
+            // A brand in the name is nearly always a prepared product rather
+            // than the ingredient that was photographed.
+            if isGeneric { score += 25 }
+
+        case .brandedDish:
+            // Inverted on purpose. For a chain item the branded record is the
+            // accurate one: it accounts for the beef, beans and cheese inside
+            // a Mexican Pizza that the photo only shows a tortilla of.
+            if !isGeneric { score += 25 }
+
+            if let brand, result.brand?.lowercased().contains(brand) == true {
+                score += 40
+            }
+        }
 
         return score
     }
@@ -339,9 +447,16 @@ import SwiftUI
     /// quietly — a bad default is easy to miss in review.
     func rankedForTesting(
         _ results: [FoodSearchResult],
-        against identifiedName: String
+        against identifiedName: String,
+        preference: PhotoFoodCandidate.NamePreference = .genericIngredient,
+        brandHint: String? = nil
     ) -> [FoodSearchResult] {
-        rankMatches(results, against: identifiedName)
+        rankMatches(
+            results,
+            against: identifiedName,
+            preference: preference,
+            brandHint: brandHint
+        )
     }
 
     // MARK: - Reset
