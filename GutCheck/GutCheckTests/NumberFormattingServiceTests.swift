@@ -68,10 +68,15 @@ struct NumberFormattingServiceTests {
         #expect(result == "80.0")
     }
 
-    // MARK: - NumberFormat.formatter property
+    // MARK: - Format coverage
+    //
+    // Replaces a test that reached for `NumberFormat.formatter`. There is no
+    // formatter to hand out any more — each case maps to a format style
+    // applied at the call site — so this asserts the observable thing
+    // instead: every case renders something.
 
-    @Test("Each NumberFormat produces a valid formatter")
-    func eachFormatProducesFormatter() {
+    @Test("Every NumberFormat renders a value")
+    func everyFormatRenders() {
         let formats: [NumberFormat] = [
             .decimal(places: 2),
             .percent,
@@ -79,8 +84,7 @@ struct NumberFormattingServiceTests {
             .weight
         ]
         for format in formats {
-            let formatter = format.formatter
-            #expect(formatter.string(from: NSNumber(value: 1.0)) != nil)
+            #expect(!NumberFormattingService.string(from: 1.0, format: format).isEmpty)
         }
     }
 
