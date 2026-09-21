@@ -135,7 +135,7 @@ struct SymptomEditTimeSection: View {
                 displayedComponents: [.date, .hourAndMinute]
             )
             .datePickerStyle(.compact)
-            .accentColor(ColorTheme.primary)
+            .tint(ColorTheme.primary)
         }
         .padding()
         .background(ColorTheme.surface)
