@@ -3,239 +3,254 @@
 //  GutCheck
 //
 //  THROWAWAY MOCKUP — not wired into the app, not intended to ship.
-//  Exists so per-day logging indicators can be compared side by side before
-//  one is chosen. Delete this file once a direction is picked.
+//  Delete once a direction is locked.
 //
-//  The problem being solved: on the dashboard week strip, show at a glance
-//  which days have a meal / medication / symptom logged, so a day that was
-//  missed is obvious when scanning back.
+//  Iteration 2. Direction chosen: dots beneath the day number. These variants
+//  explore the three questions the first pass raised:
 //
-//  The constraint that shapes every option: a single day can carry all three
-//  categories at once, so "a circle around the date" can only encode one of
-//  them. Each variant below answers that differently.
+//  1. Fixed slots or collapsed? Collapsed dots shift position, so a lone dot
+//     tells you nothing without distinguishing its colour. Fixed slots mean
+//     left/middle/right always mean meal/medication/symptom, which is the
+//     cheap route to colour-blind safety — no 7pt glyphs needed.
 //
-//  Also note the existing cell already spends a ring on selection (an accent
-//  capsule stroke) and a white circle behind the number, so any indicator has
-//  to coexist with those rather than compete.
+//  2. Past vs future. A blank past day means "you missed it". A blank future
+//     day means "hasn't happened". Rendering both as empty space turns half
+//     the strip into noise, and the whole point of the feature is spotting
+//     the gap.
+//
+//  3. Legibility on the selected day, where dots sit on an accent-tinted
+//     capsule rather than the grey one.
 //
 
 import SwiftUI
 
 // MARK: - Mock data
 
-/// What was logged on a given day.
+private enum DayPosition {
+    case past
+    case today
+    case future
+}
+
 private struct DayLog {
     let weekday: String
     let day: Int
+    let position: DayPosition
     var meal = false
     var medication = false
     var symptom = false
-    var isToday = false
     var isSelected = false
 
     var count: Int { [meal, medication, symptom].filter(\.self).count }
-    var isComplete: Bool { meal && medication && symptom }
-    var isEmpty: Bool { count == 0 }
+
+    /// A past day with nothing logged. The case the feature exists to surface.
+    var isMissed: Bool { position == .past && count == 0 }
 }
 
-/// A deliberately mixed week: a complete day, partial days, and two blanks —
-/// the blanks are the whole point of the feature.
-private let sampleWeek: [DayLog] = [
-    DayLog(weekday: "Fri", day: 18, meal: true, medication: true, symptom: true),
-    DayLog(weekday: "Sat", day: 19, meal: true, medication: true),
-    DayLog(weekday: "Sun", day: 20),
-    DayLog(weekday: "Mon", day: 21, meal: true, symptom: true),
-    DayLog(weekday: "Tue", day: 22, meal: true, medication: true, symptom: true, isToday: true, isSelected: true),
-    DayLog(weekday: "Wed", day: 23, medication: true),
-    DayLog(weekday: "Thu", day: 24)
+/// Today is Tue 22. Sun 20 is the missed day; Wed/Thu are simply in the
+/// future. Those two cases must not look the same.
+private let week: [DayLog] = [
+    DayLog(weekday: "Fri", day: 18, position: .past, meal: true, medication: true, symptom: true),
+    DayLog(weekday: "Sat", day: 19, position: .past, meal: true, medication: true),
+    DayLog(weekday: "Sun", day: 20, position: .past),
+    DayLog(weekday: "Mon", day: 21, position: .past, meal: true, symptom: true),
+    DayLog(weekday: "Tue", day: 22, position: .today, meal: true, medication: true, isSelected: true),
+    DayLog(weekday: "Wed", day: 23, position: .future),
+    DayLog(weekday: "Thu", day: 24, position: .future)
 ]
 
-private enum MockPalette {
+private enum P {
     static let meal = Color.blue
     static let medication = Color.orange
     static let symptom = Color.green
     static let accent = Color(red: 0.95, green: 0.45, blue: 0.10)
     static let card = Color(white: 0.96)
-    static let secondary = Color.secondary
+    static let track = Color(white: 0.80)
+    static let missed = Color(white: 0.62)
 }
 
-// MARK: - A. Dots beneath the number
+// MARK: - A1 · Collapsed dots (iteration 1 baseline)
 
-private struct VariantDots: View {
+private struct A1: View {
     let day: DayLog
-
     var body: some View {
-        DayCell(day: day) {
+        Cell(day: day) {
             HStack(spacing: 3) {
-                if day.meal { Circle().fill(MockPalette.meal).frame(width: 5, height: 5) }
-                if day.medication { Circle().fill(MockPalette.medication).frame(width: 5, height: 5) }
-                if day.symptom { Circle().fill(MockPalette.symptom).frame(width: 5, height: 5) }
+                if day.meal { dot(P.meal) }
+                if day.medication { dot(P.medication) }
+                if day.symptom { dot(P.symptom) }
             }
-            .frame(height: 5)
+            .frame(height: 6)
         }
+    }
+    private func dot(_ c: Color) -> some View { Circle().fill(c).frame(width: 6, height: 6) }
+}
+
+// MARK: - A2 · Fixed slots, empties invisible
+
+private struct A2: View {
+    let day: DayLog
+    var body: some View {
+        Cell(day: day) {
+            HStack(spacing: 3) {
+                slot(day.meal, P.meal)
+                slot(day.medication, P.medication)
+                slot(day.symptom, P.symptom)
+            }
+            .frame(height: 6)
+        }
+    }
+    private func slot(_ on: Bool, _ c: Color) -> some View {
+        Circle().fill(on ? c : .clear).frame(width: 6, height: 6)
     }
 }
 
-// MARK: - B. Segmented ring around the number
+// MARK: - A3 · Fixed slots with a visible empty track
 
-private struct VariantSegmentedRing: View {
+private struct A3: View {
     let day: DayLog
-
-    private var segments: [Color] {
-        var colors: [Color] = []
-        if day.meal { colors.append(MockPalette.meal) }
-        if day.medication { colors.append(MockPalette.medication) }
-        if day.symptom { colors.append(MockPalette.symptom) }
-        return colors
-    }
-
     var body: some View {
-        DayCell(day: day, ringOverlay: {
-            ZStack {
-                ForEach(Array(segments.enumerated()), id: \.offset) { index, color in
-                    Circle()
-                        .trim(
-                            from: Double(index) / Double(segments.count),
-                            to: Double(index + 1) / Double(segments.count)
-                        )
-                        .stroke(color, style: StrokeStyle(lineWidth: 2.5, lineCap: .butt))
-                        .rotationEffect(.degrees(-90))
-                }
+        Cell(day: day) {
+            HStack(spacing: 3) {
+                slot(day.meal, P.meal)
+                slot(day.medication, P.medication)
+                slot(day.symptom, P.symptom)
             }
-            .padding(-3)
-        }) {
-            EmptyView()
+            .frame(height: 6)
         }
+    }
+    private func slot(_ on: Bool, _ c: Color) -> some View {
+        Circle()
+            .fill(on ? c : P.track.opacity(0.45))
+            .frame(width: 6, height: 6)
     }
 }
 
-// MARK: - C. One ring, completeness only
+// MARK: - A4 · Track on past days only
 
-private struct VariantCompleteness: View {
+private struct A4: View {
     let day: DayLog
-
-    private var ringColor: Color? {
-        if day.isEmpty { return nil }
-        return day.isComplete ? MockPalette.symptom : MockPalette.medication
-    }
-
     var body: some View {
-        DayCell(day: day, ringOverlay: {
-            if let ringColor {
-                Circle()
-                    .stroke(ringColor, lineWidth: 2.5)
-                    .padding(-3)
+        Cell(day: day) {
+            HStack(spacing: 3) {
+                slot(day.meal, P.meal)
+                slot(day.medication, P.medication)
+                slot(day.symptom, P.symptom)
             }
-        }) {
-            EmptyView()
+            .frame(height: 6)
+            // Future days carry no track at all — there is nothing to have
+            // missed yet, so an empty track there would be noise.
+            .opacity(day.position == .future ? 0 : 1)
         }
+    }
+    private func slot(_ on: Bool, _ c: Color) -> some View {
+        Circle()
+            .fill(on ? c : P.track.opacity(0.45))
+            .frame(width: 6, height: 6)
     }
 }
 
-// MARK: - D. Segmented bar underneath
+// MARK: - A5 · A4 plus an explicit "missed" mark
 
-private struct VariantBar: View {
+private struct A5: View {
     let day: DayLog
-
     var body: some View {
-        DayCell(day: day) {
-            HStack(spacing: 2) {
-                if day.meal { Capsule().fill(MockPalette.meal) }
-                if day.medication { Capsule().fill(MockPalette.medication) }
-                if day.symptom { Capsule().fill(MockPalette.symptom) }
+        Cell(day: day) {
+            Group {
+                if day.isMissed {
+                    // A past day with nothing at all reads as a dash rather
+                    // than three empty slots — it states the gap instead of
+                    // leaving the reader to notice an absence.
+                    Text("—")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(P.missed)
+                } else {
+                    HStack(spacing: 3) {
+                        slot(day.meal, P.meal)
+                        slot(day.medication, P.medication)
+                        slot(day.symptom, P.symptom)
+                    }
+                    .opacity(day.position == .future ? 0 : 1)
+                }
             }
-            .frame(width: 22, height: 3)
+            .frame(height: 6)
         }
+    }
+    private func slot(_ on: Bool, _ c: Color) -> some View {
+        Circle()
+            .fill(on ? c : P.track.opacity(0.45))
+            .frame(width: 6, height: 6)
     }
 }
 
-// MARK: - E. Glyphs instead of colour alone
+// MARK: - A6 · A4 at larger dots
 
-private struct VariantGlyphs: View {
+private struct A6: View {
     let day: DayLog
-
     var body: some View {
-        DayCell(day: day) {
-            HStack(spacing: 2) {
-                if day.meal {
-                    Image(systemName: "fork.knife").foregroundStyle(MockPalette.meal)
-                }
-                if day.medication {
-                    Image(systemName: "pills.fill").foregroundStyle(MockPalette.medication)
-                }
-                if day.symptom {
-                    Image(systemName: "heart.fill").foregroundStyle(MockPalette.symptom)
-                }
+        Cell(day: day) {
+            HStack(spacing: 3.5) {
+                slot(day.meal, P.meal)
+                slot(day.medication, P.medication)
+                slot(day.symptom, P.symptom)
             }
-            .font(.system(size: 7))
             .frame(height: 8)
+            .opacity(day.position == .future ? 0 : 1)
         }
+    }
+    private func slot(_ on: Bool, _ c: Color) -> some View {
+        Circle()
+            .fill(on ? c : P.track.opacity(0.45))
+            .frame(width: 8, height: 8)
     }
 }
 
 // MARK: - Shared cell
 
-/// Mirrors the real cell's geometry so the variants are judged in context:
-/// 78pt capsule, weekday label, day number in a 34pt circle.
-private struct DayCell<Indicator: View, Ring: View>: View {
+private struct Cell<Indicator: View>: View {
     let day: DayLog
-    @ViewBuilder var ringOverlay: () -> Ring
     @ViewBuilder var indicator: () -> Indicator
 
-    init(
-        day: DayLog,
-        @ViewBuilder ringOverlay: @escaping () -> Ring = { EmptyView() },
-        @ViewBuilder indicator: @escaping () -> Indicator
-    ) {
-        self.day = day
-        self.ringOverlay = ringOverlay
-        self.indicator = indicator
-    }
-
     var body: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 5) {
             Text(day.weekday)
                 .font(.caption)
-                .foregroundStyle(day.isSelected ? MockPalette.accent : MockPalette.secondary)
+                .foregroundStyle(day.isSelected ? P.accent : .secondary)
 
             Text("\(day.day)")
                 .font(.headline)
-                .foregroundStyle(.primary)
+                // Future days recede, so the eye lands on the days that
+                // could actually have been logged.
+                .foregroundStyle(day.position == .future ? .secondary : .primary)
                 .frame(width: 34, height: 34)
                 .background { if day.isSelected { Circle().fill(.white) } }
-                .overlay { ringOverlay() }
 
             indicator()
         }
         .frame(maxWidth: .infinity)
         .frame(height: 78)
         .background {
-            Capsule().fill(day.isSelected ? MockPalette.accent.opacity(0.22) : MockPalette.card)
+            Capsule().fill(day.isSelected ? P.accent.opacity(0.22) : P.card)
         }
         .overlay {
-            Capsule().strokeBorder(
-                day.isSelected ? MockPalette.accent : .clear,
-                lineWidth: 2
-            )
+            Capsule().strokeBorder(day.isSelected ? P.accent : .clear, lineWidth: 2)
         }
     }
 }
 
-// MARK: - Comparison sheet
+// MARK: - Comparison
 
-private struct VariantRow<Cell: View>: View {
+private struct Row<C: View>: View {
     let title: String
     let note: String
-    @ViewBuilder var cell: (DayLog) -> Cell
+    @ViewBuilder var cell: (DayLog) -> C
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 3) {
             Text(title).font(.subheadline.bold())
-            Text(note).font(.caption2).foregroundStyle(.secondary)
+            Text(note).font(.caption2).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             HStack(spacing: 6) {
-                ForEach(Array(sampleWeek.enumerated()), id: \.offset) { _, day in
-                    cell(day)
-                }
+                ForEach(Array(week.enumerated()), id: \.offset) { _, d in cell(d) }
             }
             .padding(.top, 2)
         }
@@ -245,63 +260,52 @@ private struct VariantRow<Cell: View>: View {
 struct WeekSelectorIndicatorMockups: View {
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 22) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Per-day logging indicators")
-                        .font(.title3.bold())
-                    Text("Sample week: Fri and Tue complete, Sat/Mon/Wed partial, Sun and Thu nothing logged. Tue is today and selected.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("Dots — iteration 2").font(.title3.bold())
+                    Text("Today is Tue 22. Sun 20 is a MISSED day. Wed/Thu are future — they should not look missed.")
+                        .font(.caption).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                     HStack(spacing: 10) {
-                        LegendChip(color: MockPalette.meal, label: "Meal")
-                        LegendChip(color: MockPalette.medication, label: "Medication")
-                        LegendChip(color: MockPalette.symptom, label: "Symptom")
+                        Chip(P.meal, "Meal"); Chip(P.medication, "Med"); Chip(P.symptom, "Symptom")
                     }
-                    .padding(.top, 2)
                 }
 
-                VariantRow(
-                    title: "A · Dots beneath the number",
-                    note: "Shows exactly which categories. Reads left-to-right, never collides with the selection ring."
-                ) { VariantDots(day: $0) }
+                Row(title: "A1 · Collapsed (iteration 1)",
+                    note: "Dots shift position. Wed's lone dot could be any category — colour is the only cue.") { A1(day: $0) }
 
-                VariantRow(
-                    title: "B · Segmented ring around the number",
-                    note: "Compact and closest to your original idea. Segments shrink as categories are added."
-                ) { VariantSegmentedRing(day: $0) }
+                Row(title: "A2 · Fixed slots, empties invisible",
+                    note: "Position now encodes category. But past-blank and future-blank still look identical.") { A2(day: $0) }
 
-                VariantRow(
-                    title: "C · One ring, completeness only",
-                    note: "Green = all three, amber = partial, none = nothing. Answers 'did I miss anything' but not 'what'."
-                ) { VariantCompleteness(day: $0) }
+                Row(title: "A3 · Fixed slots + empty track",
+                    note: "Gaps become visible. Downside: future days show three empty slots for nothing.") { A3(day: $0) }
 
-                VariantRow(
-                    title: "D · Segmented bar underneath",
-                    note: "Like A but continuous; width encodes how much was logged."
-                ) { VariantBar(day: $0) }
+                Row(title: "A4 · Track on past days only",
+                    note: "Future days drop the track entirely and their numbers recede. Sun 20 now stands out.") { A4(day: $0) }
 
-                VariantRow(
-                    title: "E · Tiny glyphs instead of colour alone",
-                    note: "Only option that survives colour-blindness and greyscale without a legend."
-                ) { VariantGlyphs(day: $0) }
+                Row(title: "A5 · A4 plus an explicit missed mark",
+                    note: "A fully blank past day shows a dash — states the gap rather than relying on absence.") { A5(day: $0) }
+
+                Row(title: "A6 · A4 at 8pt dots",
+                    note: "Same logic as A4, larger dots. Check legibility on the tinted selected capsule.") { A6(day: $0) }
             }
             .padding(16)
         }
     }
 }
 
-private struct LegendChip: View {
-    let color: Color
+private struct Chip: View {
+    let c: Color
     let label: String
-
+    init(_ c: Color, _ label: String) { self.c = c; self.label = label }
     var body: some View {
         HStack(spacing: 4) {
-            Circle().fill(color).frame(width: 7, height: 7)
+            Circle().fill(c).frame(width: 7, height: 7)
             Text(label).font(.caption2).foregroundStyle(.secondary)
         }
     }
 }
 
-#Preview("Indicator variants") {
+#Preview("Dots iteration") {
     WeekSelectorIndicatorMockups()
 }
