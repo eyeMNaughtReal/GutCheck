@@ -27,10 +27,9 @@ jobs:
     - name: Checkout Code
       uses: actions/checkout@v7
 
-    # 'latest' rather than 'latest-stable': multimodal prompting in
-    # FoundationModels (the Attachment type) exists only in the iOS 27 SDK,
-    # and latest-stable selected Xcode 26.6 / iOS 26.5, where the photo
-    # identification feature does not compile.
+    # 'latest' rather than 'latest-stable'. The project needs the iOS 27 SDK,
+    # which will likely arrive on the images as a prerelease Xcode first, and
+    # latest-stable would pass it over.
     - name: Set up Xcode
       uses: maxim-lobanov/setup-xcode@v1
       with:
@@ -48,6 +47,31 @@ jobs:
       run: |
         xcodebuild -version
         xcodebuild -showsdks | grep -i iphonesimulator || true
+
+    # Whether this runner can compile the project at all.
+    #
+    # Multimodal prompting in FoundationModels (the `Attachment` type) exists
+    # only in the iOS 27 SDK, and no hosted image carries Xcode 27 yet — the
+    # macos-26 image tops out at Xcode 26.6. Without a guard, every pull
+    # request would fail on a missing SDK rather than on anything in its own
+    # diff, which costs more signal than it gives.
+    #
+    # So the build is skipped, loudly, when the SDK is absent. It resumes by
+    # itself once an image ships Xcode 27; nothing here needs revisiting for
+    # that to happen. Delete this step and the `if` on the build below once
+    # `xcodebuild -showsdks` lists an iphonesimulator27 SDK.
+    #
+    # A skipped build is NOT a verified one. While this is in effect, the only
+    # real check on a change is building locally against an Xcode 27 toolchain.
+    - name: Check for the iOS 27 SDK
+      id: sdk
+      run: |
+        if xcodebuild -showsdks | grep -qi 'iphonesimulator2[7-9]'; then
+          echo "available=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "available=false" >> "$GITHUB_OUTPUT"
+          echo "::warning title=Build skipped, not verified::This runner has no iOS 27 SDK ($(xcodebuild -version | head -1)), which the project needs for FoundationModels multimodal prompting. The build did not run — do not read this job as a passing build."
+        fi
 
     - name: Cache Swift Package Manager
       uses: actions/cache@v6
@@ -80,6 +104,7 @@ jobs:
       working-directory: GutCheck/GutCheck
 
     - name: Build GutCheck
+      if: steps.sdk.outputs.available == 'true'
       run: |
         xcodebuild build \
           -project GutCheck.xcodeproj \

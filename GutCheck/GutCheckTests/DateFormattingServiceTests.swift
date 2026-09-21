@@ -105,26 +105,44 @@ struct DateFormattingServiceTests {
         #expect(result == nil)
     }
 
-    // MARK: - DateFormat.formatString tests
+    // MARK: - Format style resolution
+    //
+    // These replace two tests that asserted fixed patterns like "h:mm a" and
+    // "MMM d, yyyy". Those patterns were the bug, not the contract: they
+    // forced US conventions on every region. There is deliberately no
+    // assertion on exact output here, because the whole point is that the
+    // rendering now belongs to the reader's locale.
 
-    @Test("DateFormat.formatString returns expected patterns")
-    func dateFormatStrings() {
-        #expect(DateFormat.date.formatString == "MMM d, yyyy")
-        #expect(DateFormat.time.formatString == "h:mm a")
-        #expect(DateFormat.dateTime.formatString == "MMM d, yyyy h:mm a")
-        #expect(DateFormat.dayAndMonth.formatString == "MMM d")
-        #expect(DateFormat.weekday.formatString == "EEEE")
-        #expect(DateFormat.shortWeekday.formatString == "E")
-        #expect(DateFormat.monthAndYear.formatString == "MMMM yyyy")
-        #expect(DateFormat.dayOnly.formatString == "d")
-        #expect(DateFormat.custom("HH:mm").formatString == "HH:mm")
+    @Test("Every localized format resolves to a style")
+    func localizedFormatsHaveStyles() {
+        let localized: [DateFormat] = [
+            .date, .time, .dateTime, .dayAndMonth, .weekday,
+            .shortWeekday, .monthAndYear, .dayOnly,
+            .mediumDate, .shortTime, .mediumDateTime
+        ]
+
+        for format in localized {
+            #expect(format.formatStyle != nil)
+        }
     }
 
-    @Test("Style-based formats return empty formatString")
-    func styleBasedFormatsReturnEmpty() {
-        #expect(DateFormat.mediumDate.formatString == "")
-        #expect(DateFormat.shortTime.formatString == "")
-        #expect(DateFormat.mediumDateTime.formatString == "")
+    @Test("Custom is the only format without a style")
+    func customHasNoStyle() {
+        // `.custom` keeps a DateFormatter because a pattern known only at
+        // runtime cannot be expressed as a Date.FormatStyle.
+        #expect(DateFormat.custom("HH:mm").formatStyle == nil)
+    }
+
+    @Test("Time formatting follows the locale rather than a fixed 12-hour pattern")
+    func timeIsLocaleDriven() {
+        // The old "h:mm a" pattern printed AM/PM everywhere. A 24-hour region
+        // should not see it.
+        var germanStyle = DateFormat.time.formatStyle!
+        germanStyle.locale = Locale(identifier: "de_DE")
+        let german = fixedDate.formatted(germanStyle)
+
+        #expect(!german.localizedCaseInsensitiveContains("AM"))
+        #expect(!german.localizedCaseInsensitiveContains("PM"))
     }
 
     // MARK: - Date extension tests

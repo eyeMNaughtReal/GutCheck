@@ -20,6 +20,6 @@ struct SuspectedMeal: Identifiable, Hashable {
 
     /// Human-readable time gap, e.g. "8.2 hours before"
     var timeBeforeFormatted: String {
-        String(format: "%.1f hours before", timeBefore)
+        "\(timeBefore.formatted(.number.precision(.fractionLength(1)))) hours before"
     }
 }

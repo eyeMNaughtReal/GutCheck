@@ -871,7 +871,7 @@ class PatternRecognitionService {
             insights.append(TriggerSummaryInsight(
                 id: UUID(),
                 headline: "\(foodName) frequently leads to \(severityLabel) pain",
-                detail: "In \(significantPain) of \(total) instances (\(pct)%), \(foodName) was followed by \(severityLabel) pain within \(String(format: "%.1f", timing.averageOnsetHours)) hours.",
+                detail: "In \(significantPain) of \(total) instances (\(pct)%), \(foodName) was followed by \(severityLabel) pain within \(timing.averageOnsetHours.formatted(.number.precision(.fractionLength(1)))) hours.",
                 dataPoints: total,
                 confidence: score.correlationComponent
             ))
@@ -881,8 +881,8 @@ class PatternRecognitionService {
         if timing.averageOnsetHours > 0 {
             insights.append(TriggerSummaryInsight(
                 id: UUID(),
-                headline: "Symptoms typically appear \(String(format: "%.1f", timing.averageOnsetHours))h after \(foodName)",
-                detail: "Onset ranges from \(String(format: "%.1f", timing.minOnsetHours)) to \(String(format: "%.1f", timing.maxOnsetHours)) hours, with a median of \(String(format: "%.1f", timing.medianOnsetHours)) hours.",
+                headline: "Symptoms typically appear \(timing.averageOnsetHours.formatted(.number.precision(.fractionLength(1))))h after \(foodName)",
+                detail: "Onset ranges from \(timing.minOnsetHours.formatted(.number.precision(.fractionLength(1)))) to \(timing.maxOnsetHours.formatted(.number.precision(.fractionLength(1)))) hours, with a median of \(timing.medianOnsetHours.formatted(.number.precision(.fractionLength(1)))) hours.",
                 dataPoints: total,
                 confidence: score.correlationComponent
             ))
