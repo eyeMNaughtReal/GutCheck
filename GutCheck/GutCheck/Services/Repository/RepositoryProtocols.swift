@@ -87,5 +87,11 @@ protocol MedicationDoseRepositoryProtocol {
     func fetch(id: String) async throws -> MedicationDoseLog?
     func delete(id: String) async throws
     func fetchDosesForDate(_ date: Date, userId: String) async throws -> [MedicationDoseLog]
+    /// Doses across a span of days.
+    ///
+    /// Exists so a caller covering several days can issue one query rather than
+    /// one per day — the dashboard week strip needs seven. Meals and symptoms
+    /// already had a range query; doses did not.
+    func fetchDosesForDateRange(startDate: Date, endDate: Date, userId: String) async throws -> [MedicationDoseLog]
     func fetchRecentDoses(userId: String, limit: Int) async throws -> [MedicationDoseLog]
 }
