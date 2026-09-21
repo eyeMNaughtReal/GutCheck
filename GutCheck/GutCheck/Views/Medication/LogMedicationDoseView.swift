@@ -12,6 +12,9 @@ struct LogMedicationDoseView: View {
     @State private var viewModel = LogMedicationDoseViewModel()
     @Environment(\.dismiss) private var dismiss
 
+    /// Presents medication entry straight from the empty state.
+    @State private var showingAddMedication = false
+
     var onSave: (() -> Void)?
 
     // MARK: - Body
@@ -46,6 +49,14 @@ struct LogMedicationDoseView: View {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(viewModel.loadingState.errorMessage ?? "An error occurred. Please try again.")
+            }
+            // Reloads on save, so adding a medication replaces the empty state
+            // with the form in place rather than making someone dismiss this
+            // screen and open it again.
+            .sheet(isPresented: $showingAddMedication) {
+                AddMedicationView {
+                    Task { await viewModel.loadActiveMedications() }
+                }
             }
         }
         .task { await viewModel.loadActiveMedications() }
@@ -120,27 +131,34 @@ struct LogMedicationDoseView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    /// Empty state for when there is nothing to log against.
+    ///
+    /// `ContentUnavailableView` rather than a hand-built stack: it supplies the
+    /// platform's own metrics, spacing and Dynamic Type behaviour, which the
+    /// previous version approximated with a fixed `.padding(.horizontal, 32)`
+    /// and a hardcoded 56pt glyph.
+    ///
+    /// The old copy read "Settings → Health Data → My Medications". There is no
+    /// "Health Data" level in Settings — the real row sits under Medications —
+    /// so anyone following it went hunting for a screen that does not exist,
+    /// made worse by Settings having a plausible-looking "Healthcare" section.
+    /// That instruction is not corrected here, it is gone: the action is offered
+    /// directly, which leaves no path to describe and none to get wrong.
+    ///
+    /// The old "Dismiss" button is gone too. It sat where the useful action
+    /// belongs, and Cancel in the toolbar already dismisses, as does swiping
+    /// down — three ways out and none forward.
     private var emptyStateView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "pills.circle")
-                .font(.system(size: 56))
-                .foregroundStyle(.secondary)
-
-            Text("No Active Medications")
-                .typography(Typography.title2)
-                .fontWeight(.semibold)
-
-            Text("Add your medications in Settings → Health Data → My Medications before logging a dose.")
-                .typography(Typography.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-
-            Button("Dismiss") { dismiss() }
-                .buttonStyle(.bordered)
+        ContentUnavailableView {
+            Label("No Active Medications", systemImage: "pills")
+        } description: {
+            Text("Add a medication before logging a dose.")
+        } actions: {
+            Button("Add Medication") {
+                showingAddMedication = true
+            }
+            .buttonStyle(.borderedProminent)
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Toolbar
