@@ -315,7 +315,6 @@ struct LogSymptomView: View {
     @State private var coordinator = LogSymptomViewModel()
     @State private var showProfileSheet = false
     @State private var infoTypeToShow: SymptomInfoType? = nil
-    @State private var showingDatePicker = false
 
     var body: some View {
         NavigationStack {
@@ -361,9 +360,6 @@ struct LogSymptomView: View {
             .navigationBarTitleDisplayMode(.large)
             .sheet(item: $infoTypeToShow) { infoType in
                 SymptomInfoViews(infoType: infoType)
-            }
-            .sheet(isPresented: $showingDatePicker) {
-                datePickerSheet
             }
             .alert("Symptom Saved", isPresented: $coordinator.showingSuccessAlert) {
                 Button("OK") { 
@@ -411,39 +407,35 @@ struct SectionHeader: View {
     
     // MARK: - View Components
     
+    /// When the symptom happened.
+    ///
+    /// A native `DatePicker` rather than a button that opened a second sheet.
+    /// The old control was styled as a text field — same `ColorTheme.surface`
+    /// fill and corner radius as the inputs around it — while behaving as a
+    /// button, and it centred its value, which no iOS form does. It also nested
+    /// a surface fill inside a surface-filled card, so the control had no
+    /// contrast against its own container. That combination is what read as
+    /// "odd" rather than any one of them alone.
+    ///
+    /// `.compact` gives the platform's own arrangement: label left, tappable
+    /// value right, expanding in place. Changing the time is one tap instead of
+    /// tap → sheet → adjust → dismiss.
+    ///
+    /// No custom accessibility label. `DatePicker` supplies its own, and adding
+    /// one on top made VoiceOver read the value twice.
     private var symptomTimeSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Symptom Time")
-                .typography(Typography.title3)
-                .fontWeight(.semibold)
-                .foregroundStyle(ColorTheme.primaryText)
-            Button(action: {
-                HapticManager.shared.light()
-                showingDatePicker = true
-            }) {
-                HStack {
-                    Image(systemName: "calendar")
-                        .foregroundStyle(ColorTheme.primary)
-                        .accessibleDecorative()
-                    Text(coordinator.symptomDate.formattedDateTime)
-                        .typography(Typography.body)
-                        .foregroundStyle(ColorTheme.primaryText)
-                }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(ColorTheme.surface)
-                .clipShape(.rect(cornerRadius: 12))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(ColorTheme.border, lineWidth: 1)
-                )
-            }
-            .accessibleButton(
-                label: "Symptom date and time: \(coordinator.symptomDate.formattedDateTime)",
-                hint: "Tap to change when this symptom occurred"
-            )
-            .accessibilityIdentifier(AccessibilityIdentifiers.SymptomLogger.dateTimeButton)
-        }
+        DatePicker(
+            "Symptom Time",
+            // A symptom cannot have happened later than now, and an accidental
+            // future timestamp would sort a log entry outside the window any
+            // trigger analysis looks at. LogMedicationDoseView already bounds
+            // its picker the same way.
+            selection: $coordinator.symptomDate,
+            in: ...Date.now,
+            displayedComponents: [.date, .hourAndMinute]
+        )
+        .datePickerStyle(.compact)
+        .accessibilityIdentifier(AccessibilityIdentifiers.SymptomLogger.dateTimeButton)
         .padding()
         .background(ColorTheme.surface)
         .clipShape(.rect(cornerRadius: 12))
@@ -578,54 +570,6 @@ struct SectionHeader: View {
         .clipShape(.rect(cornerRadius: 12))
     }
 
-    private var datePickerSheet: some View {
-        NavigationStack {
-            VStack {
-                DatePicker(
-                    "Select Date and Time",
-                    selection: $coordinator.symptomDate,
-                    displayedComponents: [.date, .hourAndMinute]
-                )
-                .datePickerStyle(.graphical)
-                .accentColor(ColorTheme.primary)
-                .padding()
-                .accessibleFormField(
-                    label: "Symptom date and time",
-                    value: coordinator.symptomDate.formatted(date: .abbreviated, time: .shortened)
-                )
-                .accessibilityHint("Choose when this symptom occurred")
-                
-                Spacer()
-                
-                Button("Done") {
-                    HapticManager.shared.light()
-                    AccessibilityAnnouncement.announce("Date and time updated")
-                    showingDatePicker = false
-                }
-                .buttonStyle(.borderedProminent)
-                .padding()
-                .accessibleButton(
-                    label: "Done",
-                    hint: "Confirm the selected date and time"
-                )
-            }
-            .background(ColorTheme.surface)
-            .navigationTitle("Symptom Time")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        HapticManager.shared.light()
-                        showingDatePicker = false
-                    }
-                    .accessibleButton(
-                        label: "Cancel",
-                        hint: "Discard changes and close"
-                    )
-                }
-            }
-        }
-    }
 }
 
 // MARK: - Component Stubs
