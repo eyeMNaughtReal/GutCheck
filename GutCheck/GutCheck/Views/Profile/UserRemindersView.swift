@@ -28,7 +28,7 @@ struct UserRemindersView: View {
 
                     if localSettings.breakfastReminderEnabled {
                         DatePicker("Typical time", selection: $localSettings.breakfastReminderTime, displayedComponents: .hourAndMinute)
-                            .accentColor(ColorTheme.accent)
+                            .tint(ColorTheme.accent)
                     }
 
                     Divider()
@@ -38,7 +38,7 @@ struct UserRemindersView: View {
 
                     if localSettings.lunchReminderEnabled {
                         DatePicker("Typical time", selection: $localSettings.lunchReminderTime, displayedComponents: .hourAndMinute)
-                            .accentColor(ColorTheme.accent)
+                            .tint(ColorTheme.accent)
                     }
 
                     Divider()
@@ -48,7 +48,7 @@ struct UserRemindersView: View {
 
                     if localSettings.dinnerReminderEnabled {
                         DatePicker("Typical time", selection: $localSettings.dinnerReminderTime, displayedComponents: .hourAndMinute)
-                            .accentColor(ColorTheme.accent)
+                            .tint(ColorTheme.accent)
                     }
                 }
 
@@ -58,7 +58,7 @@ struct UserRemindersView: View {
 
                     if localSettings.symptomReminderEnabled {
                         DatePicker("Time", selection: $localSettings.symptomReminderTime, displayedComponents: .hourAndMinute)
-                            .accentColor(ColorTheme.accent)
+                            .tint(ColorTheme.accent)
                     }
 
                     Divider()
@@ -68,7 +68,7 @@ struct UserRemindersView: View {
 
                     if localSettings.medicationReminderEnabled {
                         DatePicker("Time", selection: $localSettings.medicationReminderTime, displayedComponents: .hourAndMinute)
-                            .accentColor(ColorTheme.accent)
+                            .tint(ColorTheme.accent)
                     }
 
                     Divider()
@@ -82,7 +82,7 @@ struct UserRemindersView: View {
                             }
                         }
                         .pickerStyle(MenuPickerStyle())
-                        .accentColor(ColorTheme.secondaryText)
+                        .tint(ColorTheme.secondaryText)
                     }
                 }
 
@@ -92,7 +92,7 @@ struct UserRemindersView: View {
 
                     if localSettings.weeklyInsightEnabled {
                         DatePicker("Time (Mondays)", selection: $localSettings.weeklyInsightTime, displayedComponents: .hourAndMinute)
-                            .accentColor(ColorTheme.secondary)
+                            .tint(ColorTheme.secondary)
                     }
                 }
 
