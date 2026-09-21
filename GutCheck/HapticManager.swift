@@ -51,8 +51,7 @@ class HapticManager {
         generator.impactOccurred()
     }
     
-    /// Soft impact (iOS 13+) - Use for: Gentle interactions
-    @available(iOS 13.0, *)
+    /// Soft impact - Use for: Gentle interactions
     func soft() {
         guard isHapticsEnabled else { return }
         let generator = UIImpactFeedbackGenerator(style: .soft)
@@ -60,8 +59,7 @@ class HapticManager {
         generator.impactOccurred()
     }
     
-    /// Rigid impact (iOS 13+) - Use for: Precise selections
-    @available(iOS 13.0, *)
+    /// Rigid impact - Use for: Precise selections
     func rigid() {
         guard isHapticsEnabled else { return }
         let generator = UIImpactFeedbackGenerator(style: .rigid)

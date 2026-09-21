@@ -13,16 +13,65 @@ on:
 jobs:
   build-and-test:
     name: Build and Test
-    runs-on: macos-15
+    # macOS 26 or newer. FoundationModels ships in the iOS 26 SDK, which the
+    # macos-15 images do not have — they top out at Xcode 16 / iOS 18, where
+    # `import FoundationModels` fails outright.
+    #
+    # Note the image currently provides Xcode 26.6 / iOS 26.5 while the project
+    # declares a 27.0 deployment target, so CI compiles against an older SDK
+    # than the app targets. That builds today but is worth revisiting once an
+    # Xcode 27 image is available.
+    runs-on: macos-26
 
     steps:
     - name: Checkout Code
       uses: actions/checkout@v7
 
+    # 'latest' rather than 'latest-stable'. The project needs the iOS 27 SDK,
+    # which will likely arrive on the images as a prerelease Xcode first, and
+    # latest-stable would pass it over.
     - name: Set up Xcode
       uses: maxim-lobanov/setup-xcode@v1
       with:
-        xcode-version: 'latest-stable'
+        xcode-version: 'latest'
+
+    # Lists every Xcode the image carries. If the build fails on a missing
+    # SDK, this says whether a newer toolchain was even available to pick.
+    - name: List available Xcode versions
+      run: ls -1 /Applications | grep -i '^Xcode' || true
+
+    # Records which Xcode and SDKs the runner actually provides. The project
+    # needs the iOS 27 SDK; if a future image regresses, this is the first
+    # place to look rather than reading it out of a compiler error.
+    - name: Report toolchain
+      run: |
+        xcodebuild -version
+        xcodebuild -showsdks | grep -i iphonesimulator || true
+
+    # Whether this runner can compile the project at all.
+    #
+    # Multimodal prompting in FoundationModels (the `Attachment` type) exists
+    # only in the iOS 27 SDK, and no hosted image carries Xcode 27 yet — the
+    # macos-26 image tops out at Xcode 26.6. Without a guard, every pull
+    # request would fail on a missing SDK rather than on anything in its own
+    # diff, which costs more signal than it gives.
+    #
+    # So the build is skipped, loudly, when the SDK is absent. It resumes by
+    # itself once an image ships Xcode 27; nothing here needs revisiting for
+    # that to happen. Delete this step and the `if` on the build below once
+    # `xcodebuild -showsdks` lists an iphonesimulator27 SDK.
+    #
+    # A skipped build is NOT a verified one. While this is in effect, the only
+    # real check on a change is building locally against an Xcode 27 toolchain.
+    - name: Check for the iOS 27 SDK
+      id: sdk
+      run: |
+        if xcodebuild -showsdks | grep -qi 'iphonesimulator2[7-9]'; then
+          echo "available=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "available=false" >> "$GITHUB_OUTPUT"
+          echo "::warning title=Build skipped, not verified::This runner has no iOS 27 SDK ($(xcodebuild -version | head -1)), which the project needs for FoundationModels multimodal prompting. The build did not run — do not read this job as a passing build."
+        fi
 
     - name: Cache Swift Package Manager
       uses: actions/cache@v6
@@ -55,6 +104,7 @@ jobs:
       working-directory: GutCheck/GutCheck
 
     - name: Build GutCheck
+      if: steps.sdk.outputs.available == 'true'
       run: |
         xcodebuild build \
           -project GutCheck.xcodeproj \

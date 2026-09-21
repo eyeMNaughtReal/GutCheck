@@ -15,10 +15,10 @@ struct MealBuilderView: View {
     @Environment(AppRouter.self) var router
     @Environment(RefreshManager.self) var refreshManager
     @State private var mealService = MealBuilderService.shared
-    @State private var showingDatePicker = false
     @State private var showingConfirmation = false
     @State private var showingDiscard = false
     @State private var showingFoodOptions = false
+    @State private var showingPhotoIdentification = false
     @State private var editingFoodItem: FoodItem?
 @State private var loadError: String? = nil
     @State private var riskService = MealRiskPredictionService.shared
@@ -80,31 +80,35 @@ struct MealBuilderView: View {
                     )
                     .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.mealTypePicker)
                     
-                    // Date/time button
-                    Button(action: {
-                        HapticManager.shared.light()
-                        showingDatePicker = true
-                    }) {
-                        HStack {
-                            Image(systemName: "calendar")
-                                .foregroundStyle(ColorTheme.primary)
-                                .accessibleDecorative()
-                            Text(mealService.formattedDateTime)
-                                .typography(Typography.body)
-                                .foregroundStyle(ColorTheme.primaryText)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(ColorTheme.surface)
-                        .clipShape(.rect(cornerRadius: 12))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(ColorTheme.border, lineWidth: 1)
-                        )
-                    }
-                    .accessibleButton(
-                        label: "Date and time: \(mealService.formattedDateTime)",
-                        hint: "Tap to change the date and time of this meal"
+                    // When the meal was eaten.
+                    //
+                    // A native DatePicker in place of a button that opened a
+                    // separate sheet. The old control was the worse of the two
+                    // patterns this app already contained: it copied the
+                    // surface fill, corner radius and border of the meal-name
+                    // field directly above it, so two controls looked identical
+                    // while one typed and one presented a modal. Its value was
+                    // also centred, which no iOS form does.
+                    //
+                    // The custom accessibility label is gone deliberately —
+                    // DatePicker provides one, and both together made VoiceOver
+                    // announce the date twice.
+                    DatePicker(
+                        "Date & Time",
+                        // A meal cannot have been eaten in the future, and a
+                        // stray future timestamp would place it outside the
+                        // window symptom correlation examines.
+                        selection: $mealService.mealDate,
+                        in: ...Date.now,
+                        displayedComponents: [.date, .hourAndMinute]
+                    )
+                    .datePickerStyle(.compact)
+                    .padding()
+                    .background(ColorTheme.surface)
+                    .clipShape(.rect(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(ColorTheme.border, lineWidth: 1)
                     )
                     .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.dateTimeButton)
                 }
@@ -212,7 +216,30 @@ struct MealBuilderView: View {
                     hint: "Tap to search for and add food items to your meal"
                 )
                 .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.addFoodButton)
-                
+
+                // Photo identification, alongside search rather than behind it:
+                // searching stays a single tap for the common case.
+                Button(action: {
+                    HapticManager.shared.medium()
+                    showingPhotoIdentification = true
+                }) {
+                    HStack {
+                        Image(systemName: "camera.viewfinder")
+                        Text("Identify from Photo")
+                            .typography(Typography.button)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(ColorTheme.surface)
+                    .foregroundStyle(ColorTheme.primaryText)
+                    .clipShape(.rect(cornerRadius: 12))
+                }
+                .accessibleButton(
+                    label: "Identify from Photo",
+                    hint: "Tap to photograph your plate and identify the foods on it"
+                )
+                .accessibilityIdentifier("mealBuilder.photoIdentify.button")
+
                 HStack(spacing: 12) {
                     // Cancel button
                     Button(action: {
@@ -304,9 +331,6 @@ struct MealBuilderView: View {
         } message: {
             Text(loadError ?? "")
         }
-        .sheet(isPresented: $showingDatePicker) {
-            DateTimePickerView(date: $mealService.mealDate)
-        }
         .sheet(isPresented: $showingFoodOptions) {
             NavigationStack {
                 FoodSearchView { foodItem in
@@ -317,6 +341,13 @@ struct MealBuilderView: View {
             }
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showingPhotoIdentification) {
+            // Declining or failing identification opens search, so the flow
+            // always ends somewhere the person can finish logging.
+            PhotoFoodLoggingView {
+                showingFoodOptions = true
+            }
         }
         .sheet(item: $editingFoodItem) { foodItem in
             UnifiedFoodDetailView(
@@ -446,53 +477,6 @@ struct NutrientLabel: View {
     }
 }
 
-struct DateTimePickerView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Binding var date: Date
-    
-    var body: some View {
-        NavigationStack {
-            VStack {
-                DatePicker("Select date and time", selection: $date, displayedComponents: [.date, .hourAndMinute])
-                    .datePickerStyle(.graphical)
-                    .padding()
-                    .accessibleFormField(
-                        label: "Date and time",
-                        value: date.formatted(date: .abbreviated, time: .shortened)
-                    )
-                    .accessibilityHint("Choose the date and time when you ate this meal")
-                
-                Spacer()
-                
-                Button("Done") {
-                    HapticManager.shared.light()
-                    AccessibilityAnnouncement.announce("Date and time updated")
-                    dismiss()
-                }
-                .buttonStyle(.borderedProminent)
-                .padding()
-                .accessibleButton(
-                    label: "Done",
-                    hint: "Confirm the selected date and time"
-                )
-            }
-            .navigationTitle("Select Date & Time")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        HapticManager.shared.light()
-                        dismiss()
-                    }
-                    .accessibleButton(
-                        label: "Cancel",
-                        hint: "Discard changes and close"
-                    )
-                }
-            }
-        }
-    }
-}
 
 // Preview
 #Preview {

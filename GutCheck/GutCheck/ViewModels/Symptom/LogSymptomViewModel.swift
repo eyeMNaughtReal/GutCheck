@@ -38,7 +38,29 @@ import UserNotifications
     init(symptomRepository: any SymptomRepositoryProtocol = SymptomRepository.shared) {
         self.symptomRepository = symptomRepository
     }
-    
+
+    // MARK: - Pain Level Mapping
+
+    /// Maps the pain picker's selected index onto `PainLevel`.
+    ///
+    /// The picker offers five levels (None, Mild, Moderate, Severe, Extreme)
+    /// against `PainLevel`'s four cases, so Extreme is recorded as severe — the
+    /// strongest value the model can represent.
+    ///
+    /// This used to bucket the index on a 0-10 scale (1...3 → mild,
+    /// 4...6 → moderate, 7+ → severe). The picker only ever produces 0...4, so
+    /// choosing "Severe" was stored as `.mild` and `.severe` was unreachable:
+    /// severe pain was recorded as mild, and the dashboard's high-pain alert
+    /// could never fire.
+    static func painLevel(forPickerIndex index: Int) -> PainLevel {
+        switch index {
+        case 0: .none
+        case 1: .mild
+        case 2: .moderate
+        default: .severe
+        }
+    }
+
     // Computed properties (unchanged)
     var isFormValid: Bool {
         selectedStoolType != nil
@@ -95,18 +117,8 @@ import UserNotifications
         loadingState.startSaving()
         loadingState.clearError()
         
-        let painLevel: PainLevel
-        switch selectedPainLevel {
-        case 0:
-            painLevel = .none
-        case 1...3:
-            painLevel = .mild
-        case 4...6:
-            painLevel = .moderate
-        default:
-            painLevel = .severe
-        }
-        
+        let painLevel = Self.painLevel(forPickerIndex: selectedPainLevel)
+
         let symptom = Symptom(
             date: symptomDate,
             stoolType: stoolType,
@@ -150,7 +162,7 @@ import UserNotifications
     // MARK: - HealthKit Integration
     private func writeToHealthKit(_ symptom: Symptom) async {
         guard UserDefaults.standard.bool(forKey: "healthKitWriteSymptoms") else { return }
-        await HealthKitAsyncWrapper.shared.writeSymptomWithLogging(symptom)
+        try? await HealthKitManager.shared.writeSymptomToHealthKit(symptom)
     }
     
     // Other methods remain unchanged

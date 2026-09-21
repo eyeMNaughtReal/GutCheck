@@ -6,7 +6,6 @@
 //  Updated with Phase 2 Accessibility - February 23, 2026
 
 import SwiftUI
-import Combine
 
 struct FoodSearchView: View {
     @Environment(\.dismiss) private var dismiss

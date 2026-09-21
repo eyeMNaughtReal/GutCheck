@@ -55,11 +55,7 @@ import Foundation
 
     /// Computed: does the app currently hold full Reminders access?
     var isAuthorized: Bool {
-        if #available(iOS 17.0, *) {
-            return authorizationStatus == .fullAccess
-        } else {
-            return authorizationStatus == .authorized
-        }
+        authorizationStatus == .fullAccess
     }
 
     /// Refreshes the cached authorization status from the system.
@@ -71,12 +67,7 @@ import Foundation
     /// Returns `true` if access was granted.
     func requestAccess() async -> Bool {
         do {
-            let granted: Bool
-            if #available(iOS 17.0, *) {
-                granted = try await store.requestFullAccessToReminders()
-            } else {
-                granted = try await store.requestAccess(to: .reminder)
-            }
+            let granted = try await store.requestFullAccessToReminders()
             refreshAuthorizationStatus()
             return granted
         } catch {
@@ -96,7 +87,7 @@ import Foundation
 
         do {
             let calendar = try getOrCreateGutCheckCalendar()
-            try removeExistingGutCheckReminders(in: calendar)
+            try await removeExistingGutCheckReminders(in: calendar)
 
             // Meal reminders — each fires 15 min after the user's typical meal time
             let mealReminders: [(enabled: Bool, time: Date, title: String)] = [
@@ -152,7 +143,7 @@ import Foundation
             guard let calendar = store.calendars(for: .reminder).first(where: { $0.title == gutCheckListName }) else {
                 return
             }
-            try removeExistingGutCheckReminders(in: calendar)
+            try await removeExistingGutCheckReminders(in: calendar)
             try store.commit()
             #if DEBUG
             #endif
@@ -175,25 +166,26 @@ import Foundation
         return cal
     }
 
-    private func removeExistingGutCheckReminders(in calendar: EKCalendar) throws {
+    private func removeExistingGutCheckReminders(in calendar: EKCalendar) async throws {
         let predicate = store.predicateForReminders(in: [calendar])
-        // fetchReminders is callback-based; use a checked continuation to bridge to async/await
-        let reminders: [EKReminder] = try fetchRemindersSynchronously(predicate: predicate)
+        let reminders = await fetchReminders(matching: predicate)
         for reminder in reminders {
             try store.remove(reminder, commit: false)
         }
     }
 
     /// Bridges EKEventStore's callback-based fetchReminders to async/await.
-    private func fetchRemindersSynchronously(predicate: NSPredicate) throws -> [EKReminder] {
-        var result: [EKReminder] = []
-        let semaphore = DispatchSemaphore(value: 0)
-        store.fetchReminders(matching: predicate) { reminders in
-            result = reminders ?? []
-            semaphore.signal()
+    ///
+    /// This previously blocked on a DispatchSemaphore. Because the whole service is
+    /// `@MainActor`, that stalled the main thread until EventKit called back — and it
+    /// also mutated a captured `var` from EventKit's arbitrary callback queue. The
+    /// continuation suspends instead of blocking, and hands the array back as a value.
+    private func fetchReminders(matching predicate: NSPredicate) async -> [EKReminder] {
+        await withCheckedContinuation { continuation in
+            store.fetchReminders(matching: predicate) { reminders in
+                continuation.resume(returning: reminders ?? [])
+            }
         }
-        semaphore.wait()
-        return result
     }
 
     private func addReminder(

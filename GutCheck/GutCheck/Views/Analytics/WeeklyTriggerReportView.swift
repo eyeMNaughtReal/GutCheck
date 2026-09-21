@@ -286,7 +286,7 @@ private struct TriggerEntryRow: View {
                 }
 
                 // Average onset
-                Label(String(format: "%.1fh onset", trigger.averageOnsetHours), systemImage: "clock")
+                Label("\(trigger.averageOnsetHours.formatted(.number.precision(.fractionLength(1))))h onset", systemImage: "clock")
                     .typography(Typography.caption)
                     .foregroundStyle(ColorTheme.secondaryText)
             }

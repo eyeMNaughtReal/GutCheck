@@ -1,6 +1,6 @@
 # Changelog
 
-<!-- changelog:last_sha=8c1cb6a86c37976e25791ee54c9647de3c00651e -->
+<!-- changelog:last_sha=cde91048c41055a668128feca6b2895b0b49a2c9 -->
 
 All notable changes to GutCheck, newest first. Each section is dated by the day
 the work reached `main`.
@@ -10,6 +10,12 @@ New sections are prepended automatically after every successful CI run on
 before editing this file by hand.
 
 ## 2026-08-09
+
+- fix(serving): recognise comma-decimal labels, scale risk badge icon with type (#409) (d771c31)
+- Log foods at a real serving size instead of per 100 g (#359) (#407) (1a1c92f)
+- feat(risk): persist the meal risk assessment and surface it in history (#360) (#405) (b97462d)
+- test: make the nil-mealId test actually exercise the nil branch (#406) (675667c)
+- docs(changelog): update after successful CI on main [skip ci] (68e5016)
 
 - fix(risk): stop reporting 'no data' as 'no risk' (#356) (#403) (e2d15ca)
 - docs(changelog): update after successful CI on main [skip ci] (b557f17)

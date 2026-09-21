@@ -26,3 +26,18 @@ extension PainLevel {
         }
     }
 }
+
+// MARK: - Comparable
+
+/// Lets severity be compared as `pain >= .moderate` rather than through
+/// `rawValue`.
+///
+/// Added after three unreachable branches were found in DashboardDataStore
+/// comparing `painLevel.rawValue` against 7 and 8 — thresholds from a 0-10
+/// scale this enum has never used. Comparing raw integers silently accepts any
+/// number; comparing cases can only be written against values that exist.
+extension PainLevel: Comparable {
+    static func < (lhs: PainLevel, rhs: PainLevel) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
+}

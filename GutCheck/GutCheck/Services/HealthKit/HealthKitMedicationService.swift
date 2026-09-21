@@ -14,7 +14,6 @@
 
 import Foundation
 import HealthKit
-import Combine
 import UIKit
 
 /// Main service for HealthKit medication integration
