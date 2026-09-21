@@ -35,7 +35,7 @@ jobs:
       # ("GH013: Changes must be made through a pull request"). development is
       # unprotected, and the entry reaches main with the next release.
       - name: Checkout development
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: development
           fetch-depth: 0
