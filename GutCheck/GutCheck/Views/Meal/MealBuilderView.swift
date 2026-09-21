@@ -15,7 +15,6 @@ struct MealBuilderView: View {
     @Environment(AppRouter.self) var router
     @Environment(RefreshManager.self) var refreshManager
     @State private var mealService = MealBuilderService.shared
-    @State private var showingDatePicker = false
     @State private var showingConfirmation = false
     @State private var showingDiscard = false
     @State private var showingFoodOptions = false
@@ -81,31 +80,35 @@ struct MealBuilderView: View {
                     )
                     .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.mealTypePicker)
                     
-                    // Date/time button
-                    Button(action: {
-                        HapticManager.shared.light()
-                        showingDatePicker = true
-                    }) {
-                        HStack {
-                            Image(systemName: "calendar")
-                                .foregroundStyle(ColorTheme.primary)
-                                .accessibleDecorative()
-                            Text(mealService.formattedDateTime)
-                                .typography(Typography.body)
-                                .foregroundStyle(ColorTheme.primaryText)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(ColorTheme.surface)
-                        .clipShape(.rect(cornerRadius: 12))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(ColorTheme.border, lineWidth: 1)
-                        )
-                    }
-                    .accessibleButton(
-                        label: "Date and time: \(mealService.formattedDateTime)",
-                        hint: "Tap to change the date and time of this meal"
+                    // When the meal was eaten.
+                    //
+                    // A native DatePicker in place of a button that opened a
+                    // separate sheet. The old control was the worse of the two
+                    // patterns this app already contained: it copied the
+                    // surface fill, corner radius and border of the meal-name
+                    // field directly above it, so two controls looked identical
+                    // while one typed and one presented a modal. Its value was
+                    // also centred, which no iOS form does.
+                    //
+                    // The custom accessibility label is gone deliberately —
+                    // DatePicker provides one, and both together made VoiceOver
+                    // announce the date twice.
+                    DatePicker(
+                        "Date & Time",
+                        // A meal cannot have been eaten in the future, and a
+                        // stray future timestamp would place it outside the
+                        // window symptom correlation examines.
+                        selection: $mealService.mealDate,
+                        in: ...Date.now,
+                        displayedComponents: [.date, .hourAndMinute]
+                    )
+                    .datePickerStyle(.compact)
+                    .padding()
+                    .background(ColorTheme.surface)
+                    .clipShape(.rect(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(ColorTheme.border, lineWidth: 1)
                     )
                     .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.dateTimeButton)
                 }
@@ -328,9 +331,6 @@ struct MealBuilderView: View {
         } message: {
             Text(loadError ?? "")
         }
-        .sheet(isPresented: $showingDatePicker) {
-            DateTimePickerView(date: $mealService.mealDate)
-        }
         .sheet(isPresented: $showingFoodOptions) {
             NavigationStack {
                 FoodSearchView { foodItem in
@@ -477,53 +477,6 @@ struct NutrientLabel: View {
     }
 }
 
-struct DateTimePickerView: View {
-    @Environment(\.dismiss) private var dismiss
-    @Binding var date: Date
-    
-    var body: some View {
-        NavigationStack {
-            VStack {
-                DatePicker("Select date and time", selection: $date, displayedComponents: [.date, .hourAndMinute])
-                    .datePickerStyle(.graphical)
-                    .padding()
-                    .accessibleFormField(
-                        label: "Date and time",
-                        value: date.formatted(date: .abbreviated, time: .shortened)
-                    )
-                    .accessibilityHint("Choose the date and time when you ate this meal")
-                
-                Spacer()
-                
-                Button("Done") {
-                    HapticManager.shared.light()
-                    AccessibilityAnnouncement.announce("Date and time updated")
-                    dismiss()
-                }
-                .buttonStyle(.borderedProminent)
-                .padding()
-                .accessibleButton(
-                    label: "Done",
-                    hint: "Confirm the selected date and time"
-                )
-            }
-            .navigationTitle("Select Date & Time")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        HapticManager.shared.light()
-                        dismiss()
-                    }
-                    .accessibleButton(
-                        label: "Cancel",
-                        hint: "Discard changes and close"
-                    )
-                }
-            }
-        }
-    }
-}
 
 // Preview
 #Preview {
