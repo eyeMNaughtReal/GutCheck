@@ -65,16 +65,12 @@ final class HealthKitManager: HealthKitManagerProtocol {
 
             // Stress indicators
             HKObjectType.quantityType(forIdentifier: .respiratoryRate),
-            HKObjectType.quantityType(forIdentifier: .oxygenSaturation),
+            HKObjectType.quantityType(forIdentifier: .oxygenSaturation)
 
-            // Medications the person tracks in the Health app, and the doses
-            // they log against them. Read-only: HealthKit does not allow
-            // sharing these types, so they never appear in `writeTypes`.
-            //
-            // Requested here rather than separately so connecting Apple Health
-            // asks once for everything. See HealthKitMedicationService.
-            HKObjectType.userAnnotatedMedicationType(),
-            HKObjectType.medicationDoseEventType()
+            // Medication types are deliberately NOT requested here. Asking for
+            // them without the required entitlement raises an Objective-C
+            // exception that terminates the app at launch — see
+            // HealthKitMedicationService.isEnabled.
         ].compactMap { $0 })
 
         let writeTypes: Set<HKSampleType> = Set([

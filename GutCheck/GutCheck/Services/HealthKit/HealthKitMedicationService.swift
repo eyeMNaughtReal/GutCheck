@@ -162,6 +162,33 @@ struct MedicationDoseEventRecord: Identifiable, Sendable, Hashable {
 
     // MARK: - Authorization
 
+    /// Whether reading medications may be attempted at all.
+    ///
+    /// Off, and it must stay off until the app carries whatever entitlement
+    /// HealthKit wants for these types. Requesting authorization without it
+    /// does not fail politely:
+    ///
+    ///     NSInvalidArgumentException: Authorization to read the following
+    ///     types is disallowed: HKMedicationDoseEventTypeIdentifier...,
+    ///     HKDataTypeUserAnnotatedMedicationConcept
+    ///
+    /// That is an Objective-C exception rather than a Swift error, so no
+    /// `do`/`catch` can contain it — the process terminates with signal 6.
+    /// Because GutCheck requests Health authorization during startup, the
+    /// result was an app that closed immediately every time it was opened.
+    /// Confirmed on device, not theorised.
+    ///
+    /// Xcode publishes no medications value for
+    /// `com.apple.developer.healthkit.access` — only `health-records` and
+    /// `verifiable-health-records` — and no medications capability exists in
+    /// its capability list, so this most likely needs an entitlement requested
+    /// from Apple. Everything below is written and compiles; it is waiting on
+    /// that, not on code.
+    ///
+    /// Do not flip this to `true` without confirming on a real device that
+    /// launch survives. A unit test cannot catch this failure.
+    static let isEnabled = false
+
     @ObservationIgnored private var hasRequestedAuthorization = false
 
     /// Requests read access to tracked medications and dose events.
@@ -188,6 +215,13 @@ struct MedicationDoseEventRecord: Identifiable, Sendable, Hashable {
     /// person has answered, so calling it is cheap and does not nag.
     @discardableResult
     private func ensureAuthorization() async -> Bool {
+        // The single gate. Every fetch routes through here, so this one check
+        // keeps the crashing request unreachable.
+        guard Self.isEnabled else {
+            isAuthorized = false
+            return false
+        }
+
         guard HKHealthStore.isHealthDataAvailable() else {
             isAuthorized = false
             return false
