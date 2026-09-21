@@ -1,6 +1,6 @@
 # Changelog
 
-<!-- changelog:last_sha=cde91048c41055a668128feca6b2895b0b49a2c9 -->
+<!-- changelog:last_sha=221b1d7894cc13b5383add13707f770cc44ac6ac -->
 
 All notable changes to GutCheck, newest first. Each section is dated by the day
 the work reached `main`.
@@ -8,6 +8,30 @@ the work reached `main`.
 New sections are prepended automatically after every successful CI run on
 `main`; the marker above records where the bot last read from. See CLAUDE.md
 before editing this file by hand.
+
+## 2026-09-21
+
+- Guard CodeQL's Swift analysis on the iOS 27 SDK too (021a7c8)
+- Clear the remaining deprecated SwiftUI modifiers (31fc387)
+- Use a native DatePicker on the logging screens (6ad8128)
+- Give the Log Medication empty state somewhere to go (fc59397)
+- Report the real Apple Health connection state (907fb56)
+- Skip the CI build when the runner has no iOS 27 SDK (394fa85)
+- Identify a plate as one named dish, not its visible toppings (cf45350)
+- build(deps): Bump github/codeql-action from 4.37.4 to 4.38.1 (8a0b7d3)
+- chore: remove unreachable views and rehome the extensions they carried (5916403)
+- chore: remove empty and untargeted scratch files (86248f2)
+- refactor: format dates and numbers with FormatStyle (39f5057)
+- ci: select the newest Xcode for the iOS 27 SDK (3c10df1)
+- feat: identify foods from a plate photo (34e0be6)
+- ci: correct the runner comments (72c74a6)
+- ci: build on macos-26 for the iOS 27 SDK (f7650bb)
+- feat: narrate dashboard insights with the on-device model (8f6dba8)
+- fix: record pain levels at the severity the user chose (4eed196)
+- refactor: move HealthKit onto async query descriptors (ead1c44)
+- chore: retire vestigial Combine, fix concurrency in EventKit and formatters (17683e1)
+- build(deps): Bump actions/checkout from 4 to 7 (3499ccc)
+- docs(changelog): update after successful CI on main [skip ci] (ebf2d97)
 
 ## 2026-08-09
 
