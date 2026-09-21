@@ -11,6 +11,23 @@ struct UserHealthData {
     var bloodPressureDiastolic: Double?  // mmHg
     var bloodGlucose: Double?            // mg/dL
     var heartRate: Double?               // bpm
+
+    /// Whether anything at all could be read.
+    ///
+    /// Every field is optional, so an instance where they are all nil means
+    /// HealthKit returned nothing — either access was refused or the store is
+    /// genuinely empty. The two are indistinguishable by design, and callers
+    /// should not present "connected" on the strength of an instance existing.
+    var hasAnyData: Bool {
+        dateOfBirth != nil
+            || biologicalSex != nil
+            || weight != nil
+            || height != nil
+            || bloodPressureSystolic != nil
+            || bloodPressureDiastolic != nil
+            || bloodGlucose != nil
+            || heartRate != nil
+    }
 }
 
 /// HealthKit read/write access for GutCheck.
@@ -28,12 +45,10 @@ final class HealthKitManager: HealthKitManagerProtocol {
     private init() {}
 
     // MARK: - Request Authorization
-    func requestAuthorization() async throws {
-        guard HKHealthStore.isHealthDataAvailable() else {
-            throw HealthKitError.notAvailable
-        }
-
-        let readTypes: Set<HKObjectType> = Set([
+    // Declared once, at type level, so the authorization request and the
+    // request-status check below can never fall out of step. Asking about a
+    // different set than you requested silently reports the wrong status.
+    static let readTypes: Set<HKObjectType> = Set([
             // Basic health characteristics
             HKObjectType.characteristicType(forIdentifier: .dateOfBirth),
             HKObjectType.characteristicType(forIdentifier: .biologicalSex),
@@ -68,7 +83,7 @@ final class HealthKitManager: HealthKitManagerProtocol {
             HKObjectType.quantityType(forIdentifier: .oxygenSaturation)
         ].compactMap { $0 })
 
-        let writeTypes: Set<HKSampleType> = Set([
+    static let writeTypes: Set<HKSampleType> = Set([
             // Nutrition data
             HKObjectType.quantityType(forIdentifier: .dietaryEnergyConsumed),
             HKObjectType.quantityType(forIdentifier: .dietaryProtein),
@@ -88,7 +103,12 @@ final class HealthKitManager: HealthKitManagerProtocol {
             HKObjectType.categoryType(forIdentifier: .nausea)
         ].compactMap { $0 })
 
-        try await healthStore.requestAuthorization(toShare: writeTypes, read: readTypes)
+    func requestAuthorization() async throws {
+        guard HKHealthStore.isHealthDataAvailable() else {
+            throw HealthKitError.notAvailable
+        }
+
+        try await healthStore.requestAuthorization(toShare: Self.writeTypes, read: Self.readTypes)
     }
 
     // MARK: - Write Authorization Status
@@ -134,7 +154,33 @@ final class HealthKitManager: HealthKitManagerProtocol {
         healthData.bloodGlucose = await glucose?.doubleValue(for: mgPerDL)
         healthData.heartRate = await heartRate?.doubleValue(for: beatsPerMinute)
 
-        return healthData
+        // Nil when nothing came back, rather than an instance of all-nil
+        // fields. The old unconditional return made `healthData != nil`
+        // meaningless: it was true even when every permission was denied, so
+        // the settings screen showed "Connected" regardless.
+        return healthData.hasAnyData ? healthData : nil
+    }
+
+    // MARK: - Authorization Request Status
+
+    /// Whether requesting authorization would still show a permission sheet.
+    ///
+    /// The closest thing to a connection check HealthKit offers. Read
+    /// authorization is deliberately never disclosed — `authorizationStatus(for:)`
+    /// reports sharing only, so that an app cannot infer the absence of data
+    /// from a refusal. This at least distinguishes "never asked" from
+    /// "already answered", which is what a settings screen actually needs.
+    func authorizationRequestStatus() async -> HKAuthorizationRequestStatus {
+        guard HKHealthStore.isHealthDataAvailable() else { return .unknown }
+
+        return await withCheckedContinuation { continuation in
+            healthStore.getRequestStatusForAuthorization(
+                toShare: Self.writeTypes,
+                read: Self.readTypes
+            ) { status, _ in
+                continuation.resume(returning: status)
+            }
+        }
     }
 
     // MARK: - Query Helpers

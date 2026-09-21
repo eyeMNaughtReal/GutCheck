@@ -10,6 +10,8 @@ import HealthKit
 
 protocol HealthKitManagerProtocol {
     func requestAuthorization() async throws
+    /// Whether asking for authorization would still present a permission sheet.
+    func authorizationRequestStatus() async -> HKAuthorizationRequestStatus
     func fetchUserHealthData() async -> UserHealthData?
     func writeMealToHealthKit(_ meal: Meal) async throws
     func writeSymptomToHealthKit(_ symptom: Symptom) async throws
