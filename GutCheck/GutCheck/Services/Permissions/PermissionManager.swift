@@ -21,6 +21,7 @@ import UIKit
     
     // MARK: - Observable States
     var cameraStatus: PermissionStatus = .notDetermined
+    var microphoneStatus: PermissionStatus = .notDetermined
     var photoLibraryStatus: PermissionStatus = .notDetermined
     var notificationStatus: PermissionStatus = .notDetermined
     var healthKitStatus: PermissionStatus = .notDetermined
@@ -51,35 +52,40 @@ import UIKit
     // MARK: - Permission Types
     enum PermissionType: CaseIterable {
         case camera
+        case microphone
         case photoLibrary
         case notifications
         case healthKit
         case location
-        
+
         var title: String {
             switch self {
             case .camera: return "Camera"
+            case .microphone: return "Microphone"
             case .photoLibrary: return "Photo Library"
             case .notifications: return "Notifications"
             case .healthKit: return "Health Data"
             case .location: return "Location"
             }
         }
-        
+
         var icon: String {
             switch self {
             case .camera: return "camera"
+            case .microphone: return "mic"
             case .photoLibrary: return "photo"
             case .notifications: return "bell"
             case .healthKit: return "heart.text.square"
             case .location: return "location"
             }
         }
-        
+
         var description: String {
             switch self {
             case .camera:
                 return "Scan food barcodes and estimate portion sizes with advanced camera technology"
+            case .microphone:
+                return "Log a meal by describing it out loud. Transcription happens on your device and no recording is stored or sent anywhere"
             case .photoLibrary:
                 return "Save meal photos to help you visually track your food intake"
             case .notifications:
@@ -90,10 +96,11 @@ import UIKit
                 return "Get contextual meal suggestions when dining out (optional)"
             }
         }
-        
+
         var isRequired: Bool {
             switch self {
             case .camera: return true // Required for core barcode scanning
+            case .microphone: return false // Speaking a meal is one of several ways to log
             case .photoLibrary: return false
             case .notifications: return false
             case .healthKit: return false
@@ -117,6 +124,7 @@ import UIKit
     // MARK: - Permission State Updates
     func updateAllPermissionStates() {
         updateCameraStatus()
+        updateMicrophoneStatus()
         updatePhotoLibraryStatus()
         updateNotificationStatus()
         updateHealthKitStatus()
@@ -128,6 +136,10 @@ import UIKit
         cameraStatus = authStatus.toPermissionStatus()
     }
     
+    private func updateMicrophoneStatus() {
+        microphoneStatus = AVAudioApplication.shared.recordPermission.toPermissionStatus()
+    }
+
     private func updatePhotoLibraryStatus() {
         let authStatus = PHPhotoLibrary.authorizationStatus(for: .addOnly)
         photoLibraryStatus = authStatus.toPermissionStatus()
@@ -175,6 +187,27 @@ import UIKit
         return granted
     }
     
+    /// Request microphone permission for logging a meal by speaking it.
+    ///
+    /// Asked at the point of use rather than at launch: the person has just
+    /// tapped "Speak Your Meal", so the reason for the prompt is on screen
+    /// behind it. Nothing is recorded before this returns true.
+    func requestMicrophonePermission() async -> Bool {
+        guard microphoneStatus.needsRequest else {
+            return microphoneStatus.isGranted
+        }
+
+        microphoneStatus = .requesting
+
+        let granted = await AVAudioApplication.requestRecordPermission()
+
+        await MainActor.run {
+            self.microphoneStatus = granted ? .granted : .denied
+        }
+
+        return granted
+    }
+
     /// Request photo library permission for saving meal photos
     func requestPhotoLibraryPermission() async -> Bool {
         guard photoLibraryStatus.needsRequest else {
@@ -300,6 +333,7 @@ import UIKit
     func isPermissionGranted(_ type: PermissionType) -> Bool {
         switch type {
         case .camera: return cameraStatus.isGranted
+        case .microphone: return microphoneStatus.isGranted
         case .photoLibrary: return photoLibraryStatus.isGranted
         case .notifications: return notificationStatus.isGranted
         case .healthKit: return healthKitStatus.isGranted
@@ -311,6 +345,7 @@ import UIKit
     func getPermissionStatus(_ type: PermissionType) -> PermissionStatus {
         switch type {
         case .camera: return cameraStatus
+        case .microphone: return microphoneStatus
         case .photoLibrary: return photoLibraryStatus
         case .notifications: return notificationStatus
         case .healthKit: return healthKitStatus
@@ -354,6 +389,17 @@ extension AVAuthorizationStatus {
         case .restricted: return .restricted
         case .denied: return .denied
         case .authorized: return .granted
+        @unknown default: return .notDetermined
+        }
+    }
+}
+
+extension AVAudioApplication.recordPermission {
+    func toPermissionStatus() -> PermissionManager.PermissionStatus {
+        switch self {
+        case .undetermined: return .notDetermined
+        case .denied: return .denied
+        case .granted: return .granted
         @unknown default: return .notDetermined
         }
     }
