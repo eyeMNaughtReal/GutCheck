@@ -19,6 +19,7 @@ struct MealBuilderView: View {
     @State private var showingDiscard = false
     @State private var showingFoodOptions = false
     @State private var showingPhotoIdentification = false
+    @State private var showingVoiceLogging = false
     @State private var editingFoodItem: FoodItem?
 @State private var loadError: String? = nil
     @State private var riskService = MealRiskPredictionService.shared
@@ -139,8 +140,10 @@ struct MealBuilderView: View {
                     
                     // Food items
                     if mealService.currentMeal.isEmpty {
+                        // No .padding() here: ContentUnavailableView supplies its
+                        // own insets, and the extra ring pushed the title below
+                        // the fold on a 6.3" screen.
                         emptyStateView
-                            .padding()
                             .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.emptyState)
                     } else {
                         ForEach(Array(mealService.currentMeal.enumerated()), id: \.element.id) { index, item in
@@ -217,28 +220,56 @@ struct MealBuilderView: View {
                 )
                 .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.addFoodButton)
 
-                // Photo identification, alongside search rather than behind it:
-                // searching stays a single tap for the common case.
-                Button(action: {
-                    HapticManager.shared.medium()
-                    showingPhotoIdentification = true
-                }) {
-                    HStack {
-                        Image(systemName: "camera.viewfinder")
-                        Text("Identify from Photo")
-                            .typography(Typography.button)
+                // The two capture options, alongside search rather than behind
+                // it: searching stays a single tap for the common case.
+                //
+                // Side by side rather than stacked. This bar already carried
+                // three rows of chrome before voice existed (#428), and a
+                // fourth full-width button pushed the food list off the
+                // screen entirely on a 6.3" phone.
+                HStack(spacing: 12) {
+                    Button(action: {
+                        HapticManager.shared.medium()
+                        showingPhotoIdentification = true
+                    }) {
+                        VStack(spacing: 4) {
+                            Image(systemName: "camera.viewfinder")
+                            Text("From Photo")
+                                .typography(Typography.button)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(ColorTheme.surface)
+                        .foregroundStyle(ColorTheme.primaryText)
+                        .clipShape(.rect(cornerRadius: 12))
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(ColorTheme.surface)
-                    .foregroundStyle(ColorTheme.primaryText)
-                    .clipShape(.rect(cornerRadius: 12))
+                    .accessibleButton(
+                        label: "Identify from Photo",
+                        hint: "Tap to photograph your plate and identify the foods on it"
+                    )
+                    .accessibilityIdentifier("mealBuilder.photoIdentify.button")
+
+                    Button(action: {
+                        HapticManager.shared.medium()
+                        showingVoiceLogging = true
+                    }) {
+                        VStack(spacing: 4) {
+                            Image(systemName: "waveform")
+                            Text("Speak It")
+                                .typography(Typography.button)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(ColorTheme.surface)
+                        .foregroundStyle(ColorTheme.primaryText)
+                        .clipShape(.rect(cornerRadius: 12))
+                    }
+                    .accessibleButton(
+                        label: "Speak Your Meal",
+                        hint: "Tap to describe your meal out loud and have the foods looked up"
+                    )
+                    .accessibilityIdentifier("mealBuilder.voiceLog.button")
                 }
-                .accessibleButton(
-                    label: "Identify from Photo",
-                    hint: "Tap to photograph your plate and identify the foods on it"
-                )
-                .accessibilityIdentifier("mealBuilder.photoIdentify.button")
 
                 HStack(spacing: 12) {
                     // Cancel button
@@ -349,6 +380,12 @@ struct MealBuilderView: View {
                 showingFoodOptions = true
             }
         }
+        .sheet(isPresented: $showingVoiceLogging) {
+            // Same fallback as the photo flow: every dead end opens search.
+            VoiceMealLoggingView {
+                showingFoodOptions = true
+            }
+        }
         .sheet(item: $editingFoodItem) { foodItem in
             UnifiedFoodDetailView(
                 foodItem: foodItem, 
@@ -386,28 +423,10 @@ struct MealBuilderView: View {
     }
     
     private var emptyStateView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "fork.knife")
-                .font(.system(size: 48))
-                .foregroundStyle(ColorTheme.secondaryText.opacity(0.5))
-                .accessibleDecorative()
-            
-            Text("No food items yet")
-                .typography(Typography.headline)
-                .foregroundStyle(ColorTheme.secondaryText)
-            
-            Text("Tap \"Add Food Item\" to start building your meal")
-                .typography(Typography.caption)
-                .foregroundStyle(ColorTheme.secondaryText.opacity(0.8))
-                .multilineTextAlignment(.center)
-        }
-        .padding()
-        .frame(maxWidth: .infinity)
-        .background(ColorTheme.surface)
-        .clipShape(.rect(cornerRadius: 12))
-        .accessibleGroup(
-            label: "No food items yet. Tap Add Food Item button to start building your meal",
-            hint: nil
+        EmptyStateView(
+            title: "No Food Items Yet",
+            systemImage: "fork.knife",
+            description: "Tap Add Food Item to start building your meal."
         )
     }
 }

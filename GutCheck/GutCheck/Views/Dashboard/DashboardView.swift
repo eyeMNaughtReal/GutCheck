@@ -48,11 +48,22 @@ struct DashboardView: View {
                         .padding(.top, 8)
                     
                     // Week selector with refined design
-                    WeekSelector(selectedDate: $dashboardStore.selectedDate) { selectedDate in
-                        dashboardStore.selectedDate = selectedDate
-                        dashboardStore.loadDataForSelectedDate()
-                        recentActivityViewModel.loadRecentActivity(for: selectedDate, userService: userService)
-                    }
+                    // Arguments are labelled rather than using a trailing
+                    // closure: with two closure parameters a trailing closure
+                    // binds to the last one, which would silently wire the
+                    // date-selection handler to the wrong callback.
+                    WeekSelector(
+                        selectedDate: $dashboardStore.selectedDate,
+                        onDateSelected: { selectedDate in
+                            dashboardStore.selectedDate = selectedDate
+                            dashboardStore.loadDataForSelectedDate()
+                            recentActivityViewModel.loadRecentActivity(for: selectedDate, userService: userService)
+                        },
+                        daySummaries: dashboardStore.weekSummaries,
+                        onVisibleDatesChanged: { dates in
+                            dashboardStore.loadWeekSummaries(for: dates)
+                        }
+                    )
                     .padding(.horizontal, -4)
                     
                     // Combined Today's Summary and Activity with enhanced card
@@ -129,6 +140,10 @@ struct DashboardView: View {
         }
         .onChange(of: refreshManager.refreshToken) { _, _ in
             loadData()
+            // The strip covers days other than the selected one, so it needs
+            // its own reload — otherwise a meal logged today leaves the dot
+            // unfilled until the week is navigated away and back.
+            dashboardStore.reloadWeekSummaries()
         }
     }
     

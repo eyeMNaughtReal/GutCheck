@@ -113,11 +113,49 @@ enum AIInsightSeverity {
         }
     }
     
+    // MARK: - Week Summaries
+
+    /// What was logged on each day of the visible week, keyed by start of day.
+    ///
+    /// Separate from `todaysMeals` / `todaysSymptoms`, which cover the selected
+    /// day only. The week strip needs presence across seven days, which is a
+    /// different question and a different query.
+    var weekSummaries: [Date: DayLogSummary] = [:]
+
+    /// The days currently on screen, remembered so a refresh can reload the
+    /// same window without the view having to re-report it.
+    @ObservationIgnored private var visibleWeekDates: [Date] = []
+
+    @ObservationIgnored private let weekSummaryService = WeekLogSummaryService.shared
+
+    /// Loads summaries for the days the week strip is showing.
+    ///
+    /// Skipped in previews and tests, which have no repository data and would
+    /// otherwise blank the mock summaries out.
+    func loadWeekSummaries(for dates: [Date]) {
+        guard !isPreview else { return }
+
+        visibleWeekDates = dates
+
+        Task { @MainActor in
+            guard let userId = userService?.currentUser?.id else { return }
+            weekSummaries = await weekSummaryService.summaries(for: dates, userId: userId)
+        }
+    }
+
+    /// Re-reads the visible week. Call after anything is logged, or the strip
+    /// keeps showing the state from before the save.
+    func reloadWeekSummaries() {
+        guard !visibleWeekDates.isEmpty else { return }
+        loadWeekSummaries(for: visibleWeekDates)
+    }
+
     // MARK: - Public Methods
-    
+
     /// Refresh all dashboard data
     func refresh() {
         load()
+        reloadWeekSummaries()
     }
     
     /// Load data specifically for the currently selected date

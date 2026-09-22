@@ -872,7 +872,7 @@ struct NutritionDetailsView: View {
                 .foregroundStyle(ColorTheme.primaryText)
 
             if let emptyMessage, rows.allSatisfy({ $0.value == nil }) {
-                EmptyStateView(message: emptyMessage, imageName: "leaf")
+                EmptyStateView(title: emptyMessage, systemImage: "leaf")
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
                     .background(ColorTheme.cardBackground)
