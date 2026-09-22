@@ -383,6 +383,22 @@ final class MedicationDoseRepository: MedicationDoseRepositoryProtocol {
         return try Store.fetch(descriptor).map(\.domainModel)
     }
 
+    /// Doses between two dates, oldest first.
+    ///
+    /// The bounds are taken as given rather than snapped to day boundaries, to
+    /// match `fetchMealsForDateRange` and `fetchSymptomsForDateRange`. Callers
+    /// wanting whole days should pass `startOfDay` and the start of the day
+    /// after the last one they want.
+    func fetchDosesForDateRange(startDate: Date, endDate: Date, userId: String) async throws -> [MedicationDoseLog] {
+        let descriptor = FetchDescriptor<StoredMedicationDose>(
+            predicate: #Predicate { dose in
+                dose.createdBy == userId && dose.dateTaken >= startDate && dose.dateTaken < endDate
+            },
+            sortBy: [SortDescriptor(\.dateTaken, order: .forward)]
+        )
+        return try Store.fetch(descriptor).map(\.domainModel)
+    }
+
     func fetchRecentDoses(userId: String, limit: Int = 50) async throws -> [MedicationDoseLog] {
         var descriptor = FetchDescriptor<StoredMedicationDose>(
             predicate: #Predicate { $0.createdBy == userId },
