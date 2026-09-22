@@ -1,6 +1,6 @@
 # Changelog
 
-<!-- changelog:last_sha=221b1d7894cc13b5383add13707f770cc44ac6ac -->
+<!-- changelog:last_sha=f97e64bf7b40ab30c424f417af47de28aff37543 -->
 
 All notable changes to GutCheck, newest first. Each section is dated by the day
 the work reached `main`.
@@ -8,6 +8,14 @@ the work reached `main`.
 New sections are prepended automatically after every successful CI run on
 `main`; the marker above records where the bot last read from. See CLAUDE.md
 before editing this file by hand.
+
+## 2026-09-22
+
+- Log a meal by speaking it (344bc93)
+- Sweep the remaining empty states onto ContentUnavailableView (bb409c5)
+- Show per-day logging indicators on the dashboard week strip (a363699)
+- Add per-day log summaries for a span of days (ca74d37)
+- docs(changelog): update after successful CI on main [skip ci] (798c67e)
 
 ## 2026-09-21
 
