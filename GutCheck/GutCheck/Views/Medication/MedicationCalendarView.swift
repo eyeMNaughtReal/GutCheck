@@ -46,12 +46,11 @@ struct MedicationCalendarView: View {
                         .listRowBackground(Color.clear)
 
                 } else if viewModel.doses.isEmpty {
-                    EmptyStateCard(
-                        icon: "pills.fill",
-                        title: "No doses logged",
-                        message: "Tap Log Dose below to record a medication"
+                    EmptyStateView(
+                        title: "No Doses Logged",
+                        systemImage: "pills.fill",
+                        description: "Tap Log Dose below to record a medication."
                     )
-                    .padding(.horizontal, 16)
                     .padding(.bottom, 16)
                     .listRowInsets(EdgeInsets())
                     .listRowSeparator(.hidden)

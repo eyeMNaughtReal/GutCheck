@@ -73,8 +73,9 @@ struct CalendarDetailView: View {
                 // No Data View
                 if viewModel.isEmpty {
                     EmptyStateView(
-                        message: "Log meals and symptoms to see them here",
-                        imageName: "calendar.badge.plus"
+                        title: "Nothing Logged",
+                        systemImage: "calendar.badge.plus",
+                        description: "Log meals and symptoms to see them here."
                     )
                 }
             }

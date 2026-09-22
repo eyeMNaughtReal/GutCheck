@@ -63,12 +63,11 @@ struct CalendarView: View {
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
                     } else if viewModel.meals.isEmpty {
-                        EmptyStateCard(
-                            icon: "fork.knife",
-                            title: "No meals logged",
-                            message: "Tap Log Meal below to get started"
+                        EmptyStateView(
+                            title: "No Meals Logged",
+                            systemImage: "fork.knife",
+                            description: "Tap Log Meal below to get started."
                         )
-                        .padding(.horizontal, 16)
                         .padding(.bottom, 16)
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden)
@@ -131,12 +130,11 @@ struct CalendarView: View {
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
                     } else if viewModel.symptoms.isEmpty {
-                        EmptyStateCard(
-                            icon: "heart.text.square",
-                            title: "No symptoms logged",
-                            message: "Tap Log Symptom below to get started"
+                        EmptyStateView(
+                            title: "No Symptoms Logged",
+                            systemImage: "heart.text.square",
+                            description: "Tap Log Symptom below to get started."
                         )
-                        .padding(.horizontal, 16)
                         .padding(.bottom, 16)
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden)
@@ -316,42 +314,6 @@ struct CalendarSymptomsSectionHeader: View {
                 .padding(.top, 8)
                 .padding(.bottom, 12)
         }
-    }
-}
-
-// MARK: - Empty State Card
-struct EmptyStateCard: View {
-    let icon: String
-    let title: String
-    let message: String
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 40))
-                .foregroundStyle(ColorTheme.secondaryText.opacity(0.5))
-                // Decorative. The title and message already say everything the
-                // glyph does, so describing it would make VoiceOver announce the
-                // same thing twice.
-                .accessibilityHidden(true)
-
-            Text(title)
-                .typography(Typography.headline)
-                .foregroundStyle(ColorTheme.secondaryText)
-
-            Text(message)
-                .typography(Typography.subheadline)
-                .foregroundStyle(ColorTheme.secondaryText.opacity(0.8))
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        // Read as one announcement instead of two separate text fragments.
-        .accessibilityElement(children: .combine)
-        .padding(.vertical, 40)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(ColorTheme.cardBackground)
-        )
     }
 }
 

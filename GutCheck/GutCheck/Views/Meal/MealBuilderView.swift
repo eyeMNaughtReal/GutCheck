@@ -139,8 +139,10 @@ struct MealBuilderView: View {
                     
                     // Food items
                     if mealService.currentMeal.isEmpty {
+                        // No .padding() here: ContentUnavailableView supplies its
+                        // own insets, and the extra ring pushed the title below
+                        // the fold on a 6.3" screen.
                         emptyStateView
-                            .padding()
                             .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.emptyState)
                     } else {
                         ForEach(Array(mealService.currentMeal.enumerated()), id: \.element.id) { index, item in
@@ -386,28 +388,10 @@ struct MealBuilderView: View {
     }
     
     private var emptyStateView: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "fork.knife")
-                .font(.system(size: 48))
-                .foregroundStyle(ColorTheme.secondaryText.opacity(0.5))
-                .accessibleDecorative()
-            
-            Text("No food items yet")
-                .typography(Typography.headline)
-                .foregroundStyle(ColorTheme.secondaryText)
-            
-            Text("Tap \"Add Food Item\" to start building your meal")
-                .typography(Typography.caption)
-                .foregroundStyle(ColorTheme.secondaryText.opacity(0.8))
-                .multilineTextAlignment(.center)
-        }
-        .padding()
-        .frame(maxWidth: .infinity)
-        .background(ColorTheme.surface)
-        .clipShape(.rect(cornerRadius: 12))
-        .accessibleGroup(
-            label: "No food items yet. Tap Add Food Item button to start building your meal",
-            hint: nil
+        EmptyStateView(
+            title: "No Food Items Yet",
+            systemImage: "fork.knife",
+            description: "Tap Add Food Item to start building your meal."
         )
     }
 }
