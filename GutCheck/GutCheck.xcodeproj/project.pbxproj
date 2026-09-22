@@ -441,7 +441,9 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "GutCheck uses your health data to provide personalized nutrition insights and help identify food triggers that may affect your digestive health.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "GutCheck saves your meal nutrition and symptom data to the Health app to help you track patterns and share with healthcare providers.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "GutCheck can optionally use your location to suggest nearby restaurants and provide contextual meal logging when dining out.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "GutCheck uses your microphone so you can log a meal by describing it out loud. Your speech is transcribed on this device and no recording is stored or sent anywhere.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "GutCheck can save meal photos to your photo library to help you visually track your food intake and portion sizes.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "GutCheck turns what you say about a meal into text so it can look the foods up. Transcription happens on this device.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -483,7 +485,9 @@
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "GutCheck uses your health data to provide personalized nutrition insights and help identify food triggers that may affect your digestive health.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "GutCheck saves your meal nutrition and symptom data to the Health app to help you track patterns and share with healthcare providers.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "GutCheck can optionally use your location to suggest nearby restaurants and provide contextual meal logging when dining out.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "GutCheck uses your microphone so you can log a meal by describing it out loud. Your speech is transcribed on this device and no recording is stored or sent anywhere.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "GutCheck can save meal photos to your photo library to help you visually track your food intake and portion sizes.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "GutCheck turns what you say about a meal into text so it can look the foods up. Transcription happens on this device.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

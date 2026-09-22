@@ -19,6 +19,7 @@ struct MealBuilderView: View {
     @State private var showingDiscard = false
     @State private var showingFoodOptions = false
     @State private var showingPhotoIdentification = false
+    @State private var showingVoiceLogging = false
     @State private var editingFoodItem: FoodItem?
 @State private var loadError: String? = nil
     @State private var riskService = MealRiskPredictionService.shared
@@ -219,28 +220,56 @@ struct MealBuilderView: View {
                 )
                 .accessibilityIdentifier(AccessibilityIdentifiers.MealBuilder.addFoodButton)
 
-                // Photo identification, alongside search rather than behind it:
-                // searching stays a single tap for the common case.
-                Button(action: {
-                    HapticManager.shared.medium()
-                    showingPhotoIdentification = true
-                }) {
-                    HStack {
-                        Image(systemName: "camera.viewfinder")
-                        Text("Identify from Photo")
-                            .typography(Typography.button)
+                // The two capture options, alongside search rather than behind
+                // it: searching stays a single tap for the common case.
+                //
+                // Side by side rather than stacked. This bar already carried
+                // three rows of chrome before voice existed (#428), and a
+                // fourth full-width button pushed the food list off the
+                // screen entirely on a 6.3" phone.
+                HStack(spacing: 12) {
+                    Button(action: {
+                        HapticManager.shared.medium()
+                        showingPhotoIdentification = true
+                    }) {
+                        VStack(spacing: 4) {
+                            Image(systemName: "camera.viewfinder")
+                            Text("From Photo")
+                                .typography(Typography.button)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(ColorTheme.surface)
+                        .foregroundStyle(ColorTheme.primaryText)
+                        .clipShape(.rect(cornerRadius: 12))
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(ColorTheme.surface)
-                    .foregroundStyle(ColorTheme.primaryText)
-                    .clipShape(.rect(cornerRadius: 12))
+                    .accessibleButton(
+                        label: "Identify from Photo",
+                        hint: "Tap to photograph your plate and identify the foods on it"
+                    )
+                    .accessibilityIdentifier("mealBuilder.photoIdentify.button")
+
+                    Button(action: {
+                        HapticManager.shared.medium()
+                        showingVoiceLogging = true
+                    }) {
+                        VStack(spacing: 4) {
+                            Image(systemName: "waveform")
+                            Text("Speak It")
+                                .typography(Typography.button)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(ColorTheme.surface)
+                        .foregroundStyle(ColorTheme.primaryText)
+                        .clipShape(.rect(cornerRadius: 12))
+                    }
+                    .accessibleButton(
+                        label: "Speak Your Meal",
+                        hint: "Tap to describe your meal out loud and have the foods looked up"
+                    )
+                    .accessibilityIdentifier("mealBuilder.voiceLog.button")
                 }
-                .accessibleButton(
-                    label: "Identify from Photo",
-                    hint: "Tap to photograph your plate and identify the foods on it"
-                )
-                .accessibilityIdentifier("mealBuilder.photoIdentify.button")
 
                 HStack(spacing: 12) {
                     // Cancel button
@@ -348,6 +377,12 @@ struct MealBuilderView: View {
             // Declining or failing identification opens search, so the flow
             // always ends somewhere the person can finish logging.
             PhotoFoodLoggingView {
+                showingFoodOptions = true
+            }
+        }
+        .sheet(isPresented: $showingVoiceLogging) {
+            // Same fallback as the photo flow: every dead end opens search.
+            VoiceMealLoggingView {
                 showingFoodOptions = true
             }
         }
